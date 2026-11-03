@@ -10539,6 +10539,11 @@ function loadAssets() {
 /* =========================================================================
    BOOT
    ========================================================================= */
+/* quick test hook: load the page with ?test in the URL and it skips the lobby
+   and the What's New popup, dropping you straight into a match. flip the
+   constant to true to make it always do that while testing. */
+const TEST_QUICK_START = /[?&]test\b/.test(location.search);
+
 function boot() {
   window.__sfBooted = true;
   buildHotbarDOM();
@@ -10565,6 +10570,8 @@ function boot() {
     hideLoading();
     if (pendingStart) {
       pendingStart = false;
+      startMatch();
+    } else if (TEST_QUICK_START) {
       startMatch();
     } else {
       showWhatsNew();
