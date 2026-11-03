@@ -2256,6 +2256,76 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 @media (max-width: 760px) {
   #adminEntry { padding:5px 7px; font-size:9px; letter-spacing:.12em; }
 }
+
+/* ============================== REPORTS / ANTI-CHEAT ============================== */
+.mapReport {
+  position:absolute; right:7px; bottom:7px; width:24px; height:22px; pointer-events:auto;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--display); font-size:13px; color:#ffb0b6;
+  background:rgba(60,8,18,.75); border:1px solid rgba(255,77,94,.55);
+  transition:background .15s, color .15s, transform .15s;
+}
+.mapReport:hover { background:rgba(255,77,94,.28); color:#fff; transform:scale(1.06); }
+
+#suspBanner {
+  display:flex; align-items:center; gap:10px; margin:0 4px 10px; padding:9px 14px;
+  font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.18em;
+  color:#ffb0b6; background:rgba(255,77,94,.1); border:1px solid rgba(255,77,94,.4);
+  border-left:3px solid var(--danger);
+}
+#suspBanner b { color:#fff; font-size:11px; letter-spacing:.24em; }
+#suspBanner span { font-family:var(--display); font-size:16px; color:#fff; letter-spacing:.02em; }
+#suspBanner em { font-style:normal; margin-left:auto; font-size:9px; color:rgba(255,176,182,.75); }
+
+#report, #reported {
+  position:fixed; inset:0; z-index:66; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:radial-gradient(80% 70% at 50% 30%, rgba(40,10,20,.55), rgba(2,5,12,.92));
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+}
+#reported { z-index:74; background:radial-gradient(80% 70% at 50% 30%, rgba(120,12,26,.5), rgba(10,2,6,.95)); }
+
+.repCard {
+  width:min(420px,100%); max-height:88%; overflow:auto;
+  display:flex; flex-direction:column; gap:12px; padding:20px;
+  background:linear-gradient(160deg, rgba(24,26,38,.97), rgba(6,9,16,.99));
+  border:1px solid rgba(255,77,94,.28);
+  box-shadow:0 30px 90px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.05);
+  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  animation:panelIn .22s cubic-bezier(.2,.9,.3,1);
+}
+.repKicker { font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.36em; color:var(--danger); }
+.repTitle { font-family:var(--display); font-size:26px; font-style:italic; line-height:1; }
+.repSub { font-family:var(--label); font-size:10.5px; letter-spacing:.06em; color:var(--ink-dim); }
+.repList { display:flex; flex-direction:column; gap:5px; overflow:auto; max-height:220px; padding-right:4px; }
+.repRow {
+  display:flex; align-items:center; gap:8px; width:100%; padding:9px 11px; cursor:pointer; text-align:left;
+  border:1px solid var(--line); background:rgba(9,17,30,.72);
+  font-family:var(--label); font-size:11px; font-weight:700; letter-spacing:.12em; color:rgba(234,243,255,.78);
+  transition:border-color .12s, background .12s, color .12s;
+}
+.repRow:hover { border-color:rgba(255,77,94,.45); color:#fff; }
+.repRow.sel { border-color:var(--danger); background:rgba(255,77,94,.15); color:#fff; }
+.repRow b { flex:1; }
+.repRow span { font-size:9px; color:var(--ink-dim); letter-spacing:.14em; }
+.repReasons { display:flex; gap:6px; }
+.repReason {
+  flex:1; padding:8px 4px; cursor:pointer; text-align:center;
+  font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.1em;
+  border:1px solid var(--line); background:rgba(9,17,30,.7); color:var(--ink-dim);
+  transition:color .12s, border-color .12s, background .12s;
+}
+.repReason.sel { color:#fff; border-color:var(--danger); background:rgba(255,77,94,.16); }
+.repNote { font-family:var(--label); font-size:9.5px; line-height:1.5; letter-spacing:.05em; color:rgba(234,243,255,.42); }
+.repActions { display:flex; gap:8px; }
+.repActions > * { flex:1; }
+
+.banCard { align-items:center; text-align:center; gap:8px; border-color:rgba(255,77,94,.45); }
+.banSkull { width:64px; height:64px; color:var(--danger); filter:drop-shadow(0 0 18px rgba(255,77,94,.5)); }
+.banSkull svg { width:100%; height:100%; }
+.banTitle { font-family:var(--display); font-size:40px; font-style:italic; line-height:1; color:#fff; }
+.banSub { font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.28em; color:var(--danger); }
+.banSecs { font-family:var(--display); font-size:52px; line-height:1; color:#ffb0b6; letter-spacing:.02em; }
+.banNote { font-family:var(--label); font-size:9.5px; line-height:1.6; letter-spacing:.05em; color:rgba(234,243,255,.45); }
 </style>
 </head>
 <body>
@@ -2296,6 +2366,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <span class="mapCmp e">E</span>
       <span class="mapCmp s">S</span>
       <span class="mapCmp w">W</span>
+      <button class="mapReport" id="reportBtn" title="Report a player">!</button>
     </div>
     <div id="mapMeta">
       <div class="metaCell"><b id="aliveCount">1</b><span>ALIVE</span></div>
@@ -2546,6 +2617,12 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
   </div>
 
+  <div id="suspBanner" class="hide">
+    <b>SUSPENDED</b>
+    <span id="suspSecs">30s</span>
+    <em>REPORTED FOR CHEATING · PLAY LOCKED</em>
+  </div>
+
   <div class="playRow" id="playRowEl">
     <div class="playerCard">
       <div class="pcAvatar" id="pcAvatar"></div>
@@ -2732,6 +2809,37 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <button class="mpBack" id="adminCancel">CANCEL</button>
       <button class="mpAction" id="adminSubmit">UNLOCK</button>
     </div>
+  </div>
+</div>
+
+<!-- ============================== REPORT ============================== -->
+<div id="report" class="hide">
+  <div class="repCard">
+    <div class="repKicker">ANTI-CHEAT</div>
+    <div class="repTitle">REPORT A PLAYER</div>
+    <div class="repSub">Pick a suspect and a reason, then send it in.</div>
+    <div class="repList" id="reportList"></div>
+    <div class="repReasons" id="reportReasons">
+      <button class="repReason sel" data-reason="AIMBOT">AIMBOT</button>
+      <button class="repReason" data-reason="WALLHACK">WALLHACK</button>
+      <button class="repReason" data-reason="TEAMING">TEAMING</button>
+    </div>
+    <div class="repNote">Reports are acted on in ranked and tournament matches: a confirmed report pulls the player out of the match and suspends them for 10–30 seconds.</div>
+    <div class="repActions">
+      <button class="mpBack" id="reportCancel">CANCEL</button>
+      <button class="mpAction" id="reportSubmit">SEND REPORT</button>
+    </div>
+  </div>
+</div>
+
+<div id="reported" class="hide">
+  <div class="repCard banCard">
+    <div class="banSkull" id="banSkull"></div>
+    <div class="repKicker">ANTI-CHEAT</div>
+    <div class="banTitle">REPORTED</div>
+    <div class="banSub" id="banReason">CHEATING · AIMBOT</div>
+    <div class="banSecs" id="banSecs">30s</div>
+    <div class="banNote">You were removed from the match. Ranked and tournament progress from it is void.</div>
   </div>
 </div>
 
@@ -8486,6 +8594,7 @@ function endMatch(win, killerName) {
   player.channel = null;
   player.knocked = false;
   hideDownOverlay();
+  closeReport();
 
   const placement = placementNow(!!win);
 
@@ -8625,6 +8734,7 @@ function backToMenu() {
   document.getElementById('touch').classList.add('hide');
   hideDownOverlay();
   hideRankedRecap();
+  closeReport();
   const teamScore = document.getElementById('teamScore');
   if (teamScore) teamScore.classList.add('hide');
   const stormInfo = document.getElementById('stormInfo');
@@ -8799,6 +8909,7 @@ function defaultProfile() {
     tourneyModes: {},
     mods: {},
     season: SEASON,
+    banUntil: 0,
     settings: { sens: 1, fps: false, dmg: true, autoSprint: false, perf: false },
   };
 }
@@ -8819,6 +8930,7 @@ function loadProfile() {
         base.tourney = normalizeTourney(p.tourney);
         base.tourneyModes = (p.tourneyModes && typeof p.tourneyModes === 'object') ? p.tourneyModes : {};
         base.mods = (p.mods && typeof p.mods === 'object') ? p.mods : {};
+        base.banUntil = Math.max(0, Math.floor(p.banUntil || 0));
         base.settings = Object.assign({ sens: 1, fps: false, dmg: true, autoSprint: false }, p.settings || {});
         if (p.season === SEASON) {
           base.battlePass = !!p.battlePass;
@@ -9074,6 +9186,11 @@ function refreshCash() {
 function startTournament(id) {
   const def = tourneyDef(id);
   if (!def || profile.tourney) return;
+  if (banLeft() > 0) {
+    toast('SUSPENDED FOR ' + Math.ceil(banLeft() / 1000) + 's', 'sub');
+    sfx('reload');
+    return;
+  }
   if (rankInfo(profile.rankRp || 0).tier < def.tier) {
     toast('REQUIRES ' + RANKS[def.tier].name, 'sub');
     sfx('reload');
@@ -9097,6 +9214,11 @@ function startTournament(id) {
 function playTournamentGame() {
   const t = profile.tourney;
   if (!t || t.done) return;
+  if (banLeft() > 0) {
+    toast('SUSPENDED FOR ' + Math.ceil(banLeft() / 1000) + 's', 'sub');
+    sfx('reload');
+    return;
+  }
   const def = tourneyDef(t.id);
   if (!def) return;
   state.tourneyId = def.id;
@@ -9849,6 +9971,11 @@ function showWhatsNew() {
 
 document.getElementById('playBtn').addEventListener('click', () => {
   audioInit();
+  if (banLeft() > 0) {
+    toast('SUSPENDED · ' + Math.ceil(banLeft() / 1000) + 's', 'sub');
+    sfx('reload');
+    return;
+  }
   if (!assets.ready) {
     pendingStart = true;
     showLoading();
@@ -9991,6 +10118,7 @@ function animate(now) {
     updateRenderDistance(dt);
     updateLootVisuals(dt);
     updateFX(dt);
+    updateAntiCheat(dtBase);
     renderer.render(scene, camera);
     return;
   }
@@ -10032,6 +10160,7 @@ function animate(now) {
     updateHUD();
     drawMinimap();
   }
+  updateAntiCheat(dtBase);
 
   if (state.phase === 'play' && !player.alive && !state.ended && !playerWaiting()) {
     endMatch(false, player.lastHitBy || 'The Storm');
@@ -10863,6 +10992,189 @@ document.querySelectorAll('.adminChip').forEach((c) => {
     sfx('switch');
     toast((admin[key] ? 'ON · ' : 'OFF · ') + ADMIN_LABEL[key], 'sub');
   });
+});
+
+/* =========================================================================
+   REPORTS / ANTI-CHEAT
+   ========================================================================= */
+const BAN_MIN = 10;
+const BAN_MAX = 30;
+
+function competitiveMatch() { return isRanked() || !!state.tourneyId; }
+
+function banLeft() { return Math.max(0, (profile.banUntil || 0) - Date.now()); }
+
+/* Feed line that is not an elimination ("ANTI-CHEAT banned X"). */
+function feedNote(html) {
+  const row = document.createElement('div');
+  row.className = 'feedRow';
+  row.innerHTML = html;
+  feedEl.appendChild(row);
+  while (feedEl.childElementCount > 5) feedEl.firstElementChild.remove();
+  setTimeout(() => { if (row.parentNode) row.remove(); }, 7000);
+}
+
+/* Lobby banner, PLAY lock and the suspension countdown, all in one place. */
+function refreshSuspension() {
+  const secs = Math.ceil(banLeft() / 1000);
+  const locked = secs > 0;
+  const banner = document.getElementById('suspBanner');
+  if (banner) banner.classList.toggle('hide', !locked);
+  const secsEl = document.getElementById('suspSecs');
+  if (secsEl) secsEl.textContent = secs + 's';
+  const play = document.getElementById('playBtn');
+  if (play) play.disabled = locked || (net.connected && !net.isHost);
+  const overlay = document.getElementById('reported');
+  if (overlay && !overlay.classList.contains('hide')) {
+    if (locked) {
+      const banSecs = document.getElementById('banSecs');
+      if (banSecs) banSecs.textContent = secs + 's';
+    } else {
+      overlay.classList.add('hide');
+    }
+  }
+}
+
+/* Busted in a ranked or tournament match: out of the match, into a timeout. */
+function kickForCheating(reason) {
+  const secs = randInt(BAN_MIN, BAN_MAX);
+  profile.banUntil = Date.now() + secs * 1000;
+  saveProfile();
+  cheatSeen = 0;
+  admin.god = false;
+  admin.aimbot = false;
+  admin.oneShot = false;
+  admin.infAmmo = false;
+  admin.infMats = false;
+  admin.speed = false;
+  renderAdmin();
+  const overlay = document.getElementById('reported');
+  const reasonEl = document.getElementById('banReason');
+  const secsEl = document.getElementById('banSecs');
+  if (reasonEl) reasonEl.textContent = 'CHEATING · ' + reason;
+  if (secsEl) secsEl.textContent = secs + 's';
+  if (overlay) overlay.classList.remove('hide');
+  backToMenu();
+  sfx('death');
+  refreshSuspension();
+}
+
+let cheatSeen = 0;
+let suspAcc = 0;
+
+/* Watches for the dev cheats being used in ranked or tournament play. */
+function updateAntiCheat(dt) {
+  suspAcc += dt;
+  if (suspAcc >= 0.25) { suspAcc = 0; refreshSuspension(); }
+
+  if (state.phase !== 'play' && state.phase !== 'drop') { cheatSeen = 0; return; }
+  if (!competitiveMatch() || banLeft() > 0) { cheatSeen = 0; return; }
+
+  let seen = null;
+  for (const k in ADMIN_LABEL) {
+    if (adminOn(k)) { seen = ADMIN_LABEL[k]; break; }
+  }
+  if (!seen) { cheatSeen = Math.max(0, cheatSeen - dt * 2); return; }
+  cheatSeen += dt;
+  if (cheatSeen >= 2.5) kickForCheating(seen);
+}
+
+/* ---------------- manual reports ---------------- */
+let reportBot = null;
+let reportReason = 'AIMBOT';
+
+function openReport() {
+  if (state.phase !== 'play' && state.phase !== 'drop') {
+    toast('REPORTS OPEN DURING A MATCH', 'sub');
+    return;
+  }
+  const el = document.getElementById('report');
+  const list = document.getElementById('reportList');
+  if (!el || !list) return;
+
+  reportBot = null;
+  list.innerHTML = '';
+  const alive = bots.filter((b) => b.alive && !b.dropping)
+    .sort((a, b) => a.pos.distanceTo(player.pos) - b.pos.distanceTo(player.pos))
+    .slice(0, 8);
+
+  if (!alive.length) { toast('NO PLAYERS TO REPORT', 'sub'); return; }
+
+  alive.forEach((b) => {
+    const row = document.createElement('button');
+    row.className = 'repRow';
+    row.innerHTML = '<b>' + b.name + '</b><span>' + Math.round(b.pos.distanceTo(player.pos)) + 'M</span>';
+    row.addEventListener('click', () => {
+      reportBot = b;
+      list.querySelectorAll('.repRow').forEach((r) => r.classList.remove('sel'));
+      row.classList.add('sel');
+      sfx('switch');
+    });
+    list.appendChild(row);
+  });
+
+  document.querySelectorAll('.repReason').forEach((r) => {
+    r.classList.toggle('sel', r.dataset.reason === reportReason);
+  });
+
+  el.classList.remove('hide');
+  sfx('switch');
+}
+
+function closeReport() {
+  const el = document.getElementById('report');
+  if (el) el.classList.add('hide');
+  reportBot = null;
+}
+
+function submitReport() {
+  if (!reportBot) { toast('PICK A PLAYER FIRST', 'sub'); return; }
+  const b = reportBot;
+  closeReport();
+
+  if (!competitiveMatch()) {
+    toast('REPORTS COUNT IN RANKED AND TOURNAMENTS', 'sub');
+    return;
+  }
+
+  const secs = randInt(BAN_MIN, BAN_MAX);
+  b.alive = false;
+  b.out = true;
+  b.respawnAt = 0;
+  b.dropping = false;
+  b.knocked = false;
+  if (b.rig) b.rig.group.visible = false;
+
+  feedNote('<b>ANTI-CHEAT</b> banned ' + b.name + ' · ' + reportReason);
+  toast(b.name.toUpperCase() + ' SUSPENDED ' + secs + 's', 'sub');
+  sfx('switch');
+  checkMatchEnd();
+}
+
+const reportBtnEl = document.getElementById('reportBtn');
+if (reportBtnEl) reportBtnEl.addEventListener('click', () => { audioInit(); openReport(); });
+const reportCancelEl = document.getElementById('reportCancel');
+if (reportCancelEl) reportCancelEl.addEventListener('click', closeReport);
+const reportSubmitEl = document.getElementById('reportSubmit');
+if (reportSubmitEl) reportSubmitEl.addEventListener('click', submitReport);
+
+document.querySelectorAll('.repReason').forEach((r) => {
+  r.addEventListener('click', () => {
+    reportReason = r.dataset.reason;
+    document.querySelectorAll('.repReason').forEach((o) => {
+      o.classList.toggle('sel', o === r);
+    });
+    sfx('switch');
+  });
+});
+
+const banSkullEl = document.getElementById('banSkull');
+if (banSkullEl) banSkullEl.innerHTML = SKULL_SVG;
+
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Escape') return;
+  const el = document.getElementById('report');
+  if (el && !el.classList.contains('hide')) closeReport();
 });
 
 /* =========================================================================
