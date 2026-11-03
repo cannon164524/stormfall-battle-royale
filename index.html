@@ -570,6 +570,45 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
   font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.3em;
   color:rgba(200,230,255,.55);
 }
+.lensTint {
+  position:absolute; inset:0; opacity:0; pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, rgba(90,255,190,.12) 0 30vmin, rgba(24,70,60,.28) 33.6vmin, transparent 36vmin);
+}
+.rRing {
+  display:none; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  border-radius:50%;
+}
+
+/* Red dot: a big dot in a thin ring, no crosshair lines. */
+#scope[data-scope="rd"] .reticle .rH,
+#scope[data-scope="rd"] .reticle .rV,
+#scope[data-scope="rd"] .reticle .rTick { display:none; }
+#scope[data-scope="rd"] .reticle .rDot { width:7px; height:7px; margin:-3.5px 0 0 -3.5px; }
+#scope[data-scope="rd"] .reticle .rRing { display:block; width:24vmin; height:24vmin; border:1px solid rgba(255,70,70,.35); }
+
+/* Holo: a cyan dot inside a lens circle, faint crosshair. */
+#scope[data-scope="holo"] .reticle .rTick { display:none; }
+#scope[data-scope="holo"] .reticle .rH,
+#scope[data-scope="holo"] .reticle .rV { background:rgba(6,8,10,.55); }
+#scope[data-scope="holo"] .reticle .rRing {
+  display:block; width:30vmin; height:30vmin;
+  border:1px solid rgba(120,220,255,.42); box-shadow:0 0 14px rgba(80,200,255,.22);
+}
+#scope[data-scope="holo"] .reticle .rDot { background:#7fe3ff; box-shadow:0 0 8px rgba(120,220,255,.9); }
+
+/* 6x / 8x / thermal: heavier mil ticks and a faint outer ring. */
+#scope[data-scope="6x"] .reticle .rTick,
+#scope[data-scope="8x"] .reticle .rTick,
+#scope[data-scope="thermal"] .reticle .rTick { width:16px; margin-left:-8px; background:rgba(6,8,10,.9); }
+#scope[data-scope="6x"] .reticle .rRing,
+#scope[data-scope="8x"] .reticle .rRing,
+#scope[data-scope="thermal"] .reticle .rRing {
+  display:block; width:52vmin; height:52vmin; border:1px solid rgba(160,200,230,.14);
+}
+#scope[data-scope="thermal"] .lensTint { opacity:1; }
+#scope[data-scope="thermal"] .reticle i { background:rgba(8,34,28,.9); }
+#scope[data-scope="thermal"] .reticle .rDot { background:#8dffd0; box-shadow:0 0 9px rgba(120,255,200,.95); }
+#scope[data-scope="thermal"] .scopeLabel { color:rgba(150,255,210,.7); }
 
 #wipeLayer { position:absolute; left:50%; top:31%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
 .wipeBanner {
@@ -2385,7 +2424,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   <div id="scope" class="hide">
     <div class="lensMask"></div>
     <div class="lensRing"></div>
+    <div class="lensTint"></div>
     <div class="reticle">
+      <span class="rRing"></span>
       <i class="rH"></i>
       <i class="rV"></i>
       <b class="rDot"></b>
@@ -2514,6 +2555,12 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
           <span class="modeKicker">RANKED · DUO</span>
           <span class="modeName">RANKED DUOS</span>
           <span class="modeFoot"><b>1</b> MATE · <b>RP</b></span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="rankedreload">
+          <span class="modeKicker new">SEPARATE LADDER</span>
+          <span class="modeName">RANKED RELOAD</span>
+          <span class="modeFoot"><b>25</b> PLAYERS · <b>3</b> LIVES</span>
           <span class="modeTick"></span>
         </button>
       </div>
@@ -2979,6 +3026,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">14</span><div><b>VICTORY ROYALE</b> — winning drops the world into slow motion for a beat, then the card arrives with a crown crest, rotating gold rays, falling confetti and a VICTORY callout.</div></li>
       <li><span class="wnTag">15</span><div><b>GROUPED MODES</b> — the lobby list is now split into BATTLE ROYALE, RANKED and ARCADE sections with hairline headings, so the ten modes read at a glance.</div></li>
       <li><span class="wnTag">16</span><div><b>GUN GAME RESPAWNS</b> — dying in Gun Game now respawns you after 3 seconds one weapon back, and bots respawn too. A bot that reaches the final weapon ends your run.</div></li>
+      <li><span class="wnTag">17</span><div><b>RANKED RELOAD</b> — 25 players, three lives, and a whole second ladder. Reload rank climbs on its own: Battle Royale RP is never touched by a Reload match, and the recap card says RELOAD RANK when you climb.</div></li>
+      <li><span class="wnTag">18</span><div><b>SCOPE TYPES</b> — optics are no longer one look. Red dots, holos, 2x, 4x, 6x, 8x and a green thermal sniper each draw their own reticle, ring and tint.</div></li>
+      <li><span class="wnTag">19</span><div><b>NEW LOOT POOL</b> — three new guns (Red Dot Rifle, Holo Rifle, Thermal Sniper) and a rebalanced drop table: fewer duplicate shotguns, more optics, and the railgun stays rare.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -3086,6 +3136,12 @@ const MODE_DEFS = {
     toggle: true,
     queue: () => 'YOU + MATE · RANKED',
   },
+  rankedreload: {
+    name: 'RANKED RELOAD', short: 'R-RELOAD', kicker: 'COMPETITIVE · 3 LIVES',
+    desc: 'Ranked Reload: 25 players, three lives each, and a Reload ladder that climbs on its own — your Battle Royale rank stays where it is.',
+    rules: ['<b>25</b> PLAYERS', '<b>3</b> LIVES', 'RELOAD RP'],
+    queue: () => '25 PLAYERS · 3 LIVES · RP',
+  },
   duos: {
     name: 'DUOS', short: 'DUOS', kicker: 'BOT MATE',
     desc: 'You and a bot partner against eight rival pairs. Go down and your mate can pick you up.',
@@ -3137,16 +3193,17 @@ const MODE_DEFS = {
 const MODE_KEYS = Object.keys(MODE_DEFS);
 
 function modeDef() { return MODE_DEFS[state.mode] || MODE_DEFS.br; }
-function isReload() { return state.mode === 'reload'; }
+function isReload() { return state.mode === 'reload' || state.mode === 'rankedreload'; }
 function isReloadDuos() { return state.mode === 'reloadduos'; }
 function isRumble() { return state.mode === 'rumble'; }
 function isDuos() { return state.mode === 'duos' || state.mode === 'rankedduos' || state.mode === 'reloadduos'; }
 function isKnockMode() { return state.mode === 'duos' || state.mode === 'rankedduos'; }
 function isGunGame() { return state.mode === 'gungame'; }
 function isSandbox() { return state.mode === 'sandbox'; }
-function isRanked() { return state.mode === 'ranked' || state.mode === 'rankedduos'; }
+function isRankedReload() { return state.mode === 'rankedreload'; }
+function isRanked() { return state.mode === 'ranked' || state.mode === 'rankedduos' || state.mode === 'rankedreload'; }
 function isBlitz() { return state.mode === 'blitz'; }
-function respawnMode() { return state.mode === 'reload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
+function respawnMode() { return state.mode === 'reload' || state.mode === 'rankedreload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
 function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox'; }
 function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
 const SIPHON_AMOUNT = 100;
@@ -3183,7 +3240,14 @@ function rankInfo(rp) {
     progress: clamp(within / RP_PER_RANK, 0, 1),
   };
 }
-function rankBotTier() { return clamp((profile.rankRp || 0) / (RP_PER_RANK * 7), 0, 1); }
+/* Ranked Reload runs its own ladder; the BR pool is only touched by BR queues. */
+function rankedRp() { return isRankedReload() ? (profile.reloadRp || 0) : (profile.rankRp || 0); }
+function setRankedRp(v) {
+  const n = Math.max(0, Math.round(v || 0));
+  if (isRankedReload()) profile.reloadRp = n;
+  else profile.rankRp = n;
+}
+function rankBotTier() { return clamp((rankedRp() || 0) / (RP_PER_RANK * 7), 0, 1); }
 
 /* =========================================================================
    SMALL UTILITIES
@@ -4035,36 +4099,43 @@ const RARITY = [
 const WEAPONS = {
   pistol: { name: 'Pistol', ammo: 'light', dmg: 25, rpm: 380, mag: 16, reload: 1.6, spread: 0.016, ads: 0.006, pellets: 1, hs: 1.9, range: 160, auto: true, sfx: 'pistol' },
   ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.4, spread: 0.042, ads: 0.015, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
-  scopedar: { name: 'Scoped Assault Rifle', ammo: 'medium', dmg: 29, rpm: 300, mag: 20, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.7, range: 320, auto: true, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 34 },
-  redeye: { name: 'Red-Eye Rifle', ammo: 'medium', dmg: 34, rpm: 420, mag: 25, reload: 2.5, spread: 0.040, ads: 0.0001, pellets: 1, hs: 1.7, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 44 },
-  tactical: { name: 'Tactical Scoped Rifle', ammo: 'medium', dmg: 30, rpm: 240, mag: 20, reload: 2.8, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 330, auto: false, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 32 },
-  marksman: { name: 'Marksman Rifle', ammo: 'medium', dmg: 46, rpm: 150, mag: 12, reload: 2.8, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.0, range: 380, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26 },
-  revolver: { name: 'Scoped Revolver', ammo: 'light', dmg: 62, rpm: 110, mag: 6, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 1.9, range: 220, auto: true, sfx: 'pistol', scoped: true, zoom: '2X', scopedFov: 42 },
+  scopedar: { name: 'Scoped Assault Rifle', ammo: 'medium', dmg: 29, rpm: 300, mag: 20, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.7, range: 320, auto: true, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 34, scope: '4x' },
+  redeye: { name: 'Red-Eye Rifle', ammo: 'medium', dmg: 34, rpm: 420, mag: 25, reload: 2.5, spread: 0.040, ads: 0.0001, pellets: 1, hs: 1.7, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 44, scope: 'holo' },
+  tactical: { name: 'Tactical Scoped Rifle', ammo: 'medium', dmg: 30, rpm: 240, mag: 20, reload: 2.8, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 330, auto: false, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x' },
+  marksman: { name: 'Marksman Rifle', ammo: 'medium', dmg: 46, rpm: 150, mag: 12, reload: 2.8, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.0, range: 380, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: '6x' },
+  revolver: { name: 'Scoped Revolver', ammo: 'light', dmg: 62, rpm: 110, mag: 6, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 1.9, range: 220, auto: true, sfx: 'pistol', scoped: true, zoom: '2X', scopedFov: 42, scope: 'rd' },
   smg: { name: 'SMG', ammo: 'light', dmg: 18, rpm: 750, mag: 30, reload: 2.0, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 135, auto: true, sfx: 'smg' },
   shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 13, rpm: 80, mag: 5, reload: 3.1, spread: 0.062, ads: 0.048, pellets: 10, hs: 1.75, range: 62, auto: false, sfx: 'shotgun' },
   heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 38, rpm: 260, mag: 25, reload: 2.9, spread: 0.050, ads: 0.018, pellets: 1, hs: 1.7, range: 270, auto: true, sfx: 'ar' },
   doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 12, rpm: 150, mag: 2, reload: 2.6, spread: 0.070, ads: 0.055, pellets: 8, hs: 1.7, range: 48, auto: false, sfx: 'shotgun' },
-  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22 },
-  railgun: { name: 'Railgun', ammo: 'heavy', dmg: 150, rpm: 22, mag: 1, reload: 3.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.5, range: 520, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 18 },
+  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x' },
+  railgun: { name: 'Railgun', ammo: 'heavy', dmg: 150, rpm: 22, mag: 1, reload: 3.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.5, range: 520, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 18, scope: '8x' },
+  reddot: { name: 'Red Dot Rifle', ammo: 'light', dmg: 27, rpm: 420, mag: 20, reload: 2.2, spread: 0.036, ads: 0.0001, pellets: 1, hs: 1.7, range: 220, auto: true, sfx: 'ar', scoped: true, zoom: '1.5X', scopedFov: 46, scope: 'rd' },
+  holo: { name: 'Holo Rifle', ammo: 'medium', dmg: 33, rpm: 320, mag: 24, reload: 2.5, spread: 0.034, ads: 0.0001, pellets: 1, hs: 1.75, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo' },
+  thermal: { name: 'Thermal Sniper', ammo: 'heavy', dmg: 118, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal' },
 };
 
-/* Weighted loot pool — scoped weapons are ~62% of gun drops (25% up from 50%). */
+/* Weighted loot pool — scoped weapons are ~54% of gun drops, spread across
+   red dot, holo, 4x, 6x, 8x and thermal optics. */
 const LOOT_WEAPON_POOL = [
   // short-range brawlers
-  'smg', 'smg', 'smg',
-  'shotgun', 'shotgun', 'shotgun',
-  'doublebarrel', 'doublebarrel',
+  'smg', 'smg',
+  'shotgun', 'shotgun',
+  'doublebarrel',
   'pistol', 'pistol',
   // mid-range
-  'ar', 'ar', 'ar',
-  'heavyar', 'heavyar',
-  'revolver', 'revolver',
+  'ar', 'ar',
+  'heavyar',
+  'reddot', 'reddot',
   // scoped and long-range
-  'scopedar', 'scopedar', 'scopedar',
-  'redeye', 'redeye', 'redeye', 'redeye',
-  'tactical', 'tactical', 'tactical',
-  'marksman', 'marksman', 'marksman',
-  'sniper', 'sniper',
+  'redeye', 'redeye',
+  'holo', 'holo',
+  'scopedar', 'scopedar',
+  'tactical', 'tactical',
+  'revolver',
+  'marksman', 'marksman',
+  'sniper',
+  'thermal',
   'railgun',
 ];
 
@@ -4093,6 +4164,9 @@ const GUN_ICONS = {
 GUN_ICONS.heavyar = GUN_ICONS.ar;
 GUN_ICONS.doublebarrel = GUN_ICONS.shotgun;
 GUN_ICONS.railgun = GUN_ICONS.sniper;
+GUN_ICONS.reddot = GUN_ICONS.redeye;
+GUN_ICONS.holo = GUN_ICONS.tactical;
+GUN_ICONS.thermal = GUN_ICONS.sniper;
 
 const HEALS = {
   shield: { name: 'Shield Potion', icon: 'shield', time: 2.6, shield: 50, color: '#3fa9f5' },
@@ -4324,7 +4398,7 @@ function buildWeaponModel(type) {
       g.scale.set(1.12, 1.1, 1.12);
       tip = 0.82;
     }
-  } else if (type === 'scopedar' || type === 'redeye' || type === 'tactical' || type === 'marksman') {
+  } else if (type === 'scopedar' || type === 'redeye' || type === 'tactical' || type === 'marksman' || type === 'reddot' || type === 'holo') {
     box(0.11, 0.16, 0.6, metal, 0, 0, 0);
     cyl(0.028, 0.028, 0.5, dark, 0, 0.02, 0.48, 'z');
     box(0.09, 0.1, 0.3, poly, 0, -0.01, -0.42);
@@ -4358,7 +4432,7 @@ function buildWeaponModel(type) {
       cyl(0.03, 0.03, 0.3, wood, 0, -0.01, -0.42);
       tip = 0.72;
     }
-  } else if (type === 'sniper' || type === 'railgun') {
+  } else if (type === 'sniper' || type === 'railgun' || type === 'thermal') {
     box(0.09, 0.13, 0.5, metal, 0, 0, 0);
     cyl(0.025, 0.025, 0.9, dark, 0, 0.02, 0.62, 'z');
     cyl(0.045, 0.045, 0.34, dark, 0, 0.13, 0.06, 'z');
@@ -5087,7 +5161,7 @@ function killBot(b, killerName) {
     awardVbucks(50);
     awardBpXp(100);
     awardTourPoints(3, 'ELIMINATION', b.name);
-    awardRankPoints(12, 'ELIMINATION', b.name);
+    awardRankPoints(isRankedReload() ? 10 : 12, 'ELIMINATION', b.name);
     if (siphonActive()) applySiphon();
     advanceGunGame();
   }
@@ -6084,7 +6158,7 @@ function botWeaponType(level) {
   if (mod('snipers')) return pick(['sniper', 'marksman', 'marksman']);
   if (mod('shotguns')) return 'shotgun';
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['ar', 'heavyar', 'scopedar', 'redeye', 'tactical', 'marksman', 'revolver', 'smg', 'shotgun', 'doublebarrel', 'sniper']);
+  return pick(['ar', 'heavyar', 'reddot', 'holo', 'scopedar', 'redeye', 'tactical', 'marksman', 'revolver', 'smg', 'shotgun', 'doublebarrel', 'sniper', 'thermal']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -7539,6 +7613,9 @@ function updateCrosshair(dt) {
   if (!crosshairEl) return;
 
   if (scopeEl) {
+    const held = currentItem();
+    const sc = (held && held.kind === 'weapon' && WEAPONS[held.type].scope) || '';
+    if (sc) scopeEl.dataset.scope = sc;
     scopeEl.style.opacity = String(clamp(scopeAmount, 0, 1).toFixed(2));
     scopeEl.classList.toggle('hide', scopeAmount < 0.03);
   }
@@ -7949,8 +8026,8 @@ function updateHUD() {
     tourneyHudEl.classList.toggle('hide', !on);
     if (on && thPtsEl && thGameEl && thLabelEl && thUnitEl) {
       if (ranked) {
-        const rp = (profile.rankRp || 0) + state.rpPoints;
-        thLabelEl.textContent = 'RANKED';
+        const rp = rankedRp() + state.rpPoints;
+        thLabelEl.textContent = isRankedReload() ? 'RELOAD' : 'RANKED';
         thUnitEl.textContent = 'RP';
         thPtsEl.textContent = String(rp);
         thGameEl.textContent = rankInfo(rp).name;
@@ -8367,6 +8444,7 @@ function resetPlayerForMatch() {
 function plannedBotCount() {
   switch (state.mode) {
     case 'reload': return RELOAD_TOTAL - 1;
+    case 'rankedreload': return RELOAD_TOTAL - 1;
     case 'rumble': return RUMBLE_TEAMMATES + RUMBLE_ENEMIES;
     case 'duos': return DUO_ENEMY_TEAMS * 2 + 1;
     case 'rankedduos': return DUO_ENEMY_TEAMS * 2 + 1;
@@ -8423,6 +8501,7 @@ function positionFighters() {
 
 function badgeText() {
   if (isRumble()) return 'RUMBLE · <b>BLUE v RED</b>';
+  if (isRankedReload()) return 'RANKED RELOAD · <b>' + rankInfo(rankedRp()).name + '</b>';
   if (isReloadDuos()) return 'RELOAD DUOS · <b>MATE SURVIVES 20s</b>';
   if (isDuos()) return (isRanked() ? 'RANKED DUOS · <b>' + rankInfo(profile.rankRp || 0).name + '</b>' : 'DUOS · <b>YOU + MATE</b>');
   if (isGunGame()) return 'GUN GAME · <b>1/' + GUN_ORDER.length + '</b>';
@@ -8516,6 +8595,7 @@ function startMatch() {
     gungame: 'GUN GAME · UPGRADE ON ELIM', blitz: 'BLITZ',
     sandbox: 'SANDBOX · BUILD ANYTHING', ranked: 'RANKED · ' + rankInfo(profile.rankRp || 0).name,
     rankedduos: 'RANKED DUOS · ' + rankInfo(profile.rankRp || 0).name,
+    rankedreload: 'RANKED RELOAD · ' + rankInfo(profile.reloadRp || 0).name,
     reload: 'RELOAD · 3 LIVES',
   }[state.mode] || 'DROPPING IN';
   const hint = isRumble() ? 'ENDLESS RESPAWNS · FIRST TO 30'
@@ -8524,6 +8604,7 @@ function startMatch() {
     : isSandbox() ? 'INFINITE MATS · NO STORM'
     : isGunGame() ? 'NEW WEAPON ON EVERY ELIMINATION'
     : isBlitz() ? 'THE STORM IS ALREADY CLOSING'
+    : isRankedReload() ? 'RELOAD RP · YOUR BR RANK IS SAFE'
     : isRanked() ? 'EARN RP FOR ELIMS AND PLACEMENT'
     : 'LOOT UP · SURVIVE THE STORM';
   toast(startToast, '');
@@ -8624,17 +8705,22 @@ function endMatch(win, killerName) {
   let rankRecap = null;
   if (isRanked()) {
     syncRankPlacement(placement);
-    const beforeRp = profile.rankRp || 0;
-    const killRp = player.kills * 12;
-    const rawGain = state.rpPoints + (state.rpPlaceAwarded === 0 && placement > 5 ? -18 : 0);
-    profile.rankRp = Math.max(0, beforeRp + rawGain);
-    const gain = profile.rankRp - beforeRp;
+    const reload = isRankedReload();
+    const perKill = reload ? 10 : 12;
+    const cutoff = reload ? 8 : 5;
+    const lossRp = reload ? -12 : -18;
+    const beforeRp = rankedRp();
+    const killRp = player.kills * perKill;
+    const rawGain = state.rpPoints + (state.rpPlaceAwarded === 0 && placement > cutoff ? lossRp : 0);
+    setRankedRp(beforeRp + rawGain);
+    const gain = rankedRp() - beforeRp;
     saveProfile();
     refreshRank();
-    sub += ' · ' + (gain >= 0 ? '+' : '') + gain + ' RP · ' + rankInfo(profile.rankRp).name;
+    sub += ' · ' + (gain >= 0 ? '+' : '') + gain + ' RP · ' + rankInfo(rankedRp()).name;
     rankRecap = {
-      beforeRp, afterRp: profile.rankRp, gain, rawGain,
+      beforeRp, afterRp: rankedRp(), gain, rawGain,
       killRp, placeRp: rawGain - killRp, kills: player.kills, placement, win: !!win,
+      perKill, ladder: reload ? 'RELOAD' : 'BATTLE ROYALE',
     };
   }
 
@@ -8802,6 +8888,7 @@ function setMode(m) {
   }
   const sub = document.getElementById('queueSub');
   if (sub) sub.textContent = def.desc;
+  refreshRank();
 }
 
 /* ---------------- versioning ----------------
@@ -8809,8 +8896,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 6, patch: 0 };
-const VERSION_PREV = '4.5.0';
+const VERSION = { major: 4, minor: 7, patch: 0 };
+const VERSION_PREV = '4.6.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -8904,6 +8991,7 @@ function defaultProfile() {
     battlePass: false, bpXp: 0, claimed: [],
     pocket: 'shock',
     rankRp: 0,
+    reloadRp: 0,
     cash: 0,
     tourney: null,
     tourneyModes: {},
@@ -8926,6 +9014,7 @@ function loadProfile() {
         base.equipped = p.equipped || 'default';
         base.pocket = p.pocket || 'shock';
         base.rankRp = Math.max(0, Math.floor(p.rankRp || 0));
+        base.reloadRp = Math.max(0, Math.floor(p.reloadRp || 0));
         base.cash = Math.max(0, Math.floor(p.cash || 0));
         base.tourney = normalizeTourney(p.tourney);
         base.tourneyModes = (p.tourneyModes && typeof p.tourneyModes === 'object') ? p.tourneyModes : {};
@@ -8938,6 +9027,7 @@ function loadProfile() {
           base.claimed = Array.isArray(p.claimed) ? p.claimed : [];
         } else {
           base.rankRp = 0;
+          base.reloadRp = 0;
         }
       }
     }
@@ -8993,15 +9083,18 @@ function refreshWallet() {
 }
 
 function refreshRank() {
-  const info = rankInfo(profile.rankRp || 0);
+  const rpv = rankedRp();
+  const info = rankInfo(rpv);
   const crest = document.getElementById('rankCrest');
   const name = document.getElementById('rankName');
   const rp = document.getElementById('rankRp');
   const fill = document.getElementById('rankFill');
   if (crest) crest.textContent = ROMAN[info.div - 1];
   if (name) name.textContent = info.name;
-  if (rp) rp.textContent = (profile.rankRp || 0) + ' RP';
+  if (rp) rp.textContent = rpv + ' RP';
   if (fill) fill.style.width = (info.progress * 100).toFixed(1) + '%';
+  const lbl = document.querySelector('#rankPanel .seatLabel');
+  if (lbl) lbl.textContent = isRankedReload() ? 'RELOAD RANK' : 'RANK';
 }
 
 function renderMods() {
@@ -9105,7 +9198,7 @@ function awardRankPoints(n, label, detail) {
   if (!isRanked() || !n) return;
   state.rpPoints += n;
   showPointsCard(n, label, detail, 'rp');
-  if (thPtsEl) thPtsEl.textContent = String((profile.rankRp || 0) + state.rpPoints);
+  if (thPtsEl) thPtsEl.textContent = String(rankedRp() + state.rpPoints);
   bumpPointsHud();
   sfx('pickup');
 }
@@ -9120,10 +9213,16 @@ function updateTourPlacement() {
   awardTourPoints(add, place === 1 ? 'WINNER' : place <= 3 ? 'TOP ' + place : 'TOP ' + (place <= 5 ? 5 : 10), '#' + place + ' PLACE');
 }
 
+/* Reload places lower but ranks faster: 60 RP for the win, 20 for a top five. */
+function rankPlaceTarget(place) {
+  if (isRankedReload()) return place === 1 ? 60 : place <= 5 ? 20 : 0;
+  return place === 1 ? 75 : place <= 5 ? 20 : 0;
+}
+
 function updateRankPlacement() {
   if (!isRanked() || state.ended || !player.alive) return;
   const place = placementNow(false);
-  const target = place === 1 ? 75 : place <= 5 ? 20 : 0;
+  const target = rankPlaceTarget(place);
   if (target <= state.rpPlaceAwarded) return;
   const add = target - state.rpPlaceAwarded;
   state.rpPlaceAwarded = target;
@@ -9142,7 +9241,7 @@ function syncTourPlacement(placement) {
 
 function syncRankPlacement(placement) {
   if (!isRanked()) return;
-  const target = placement === 1 ? 75 : placement <= 5 ? 20 : 0;
+  const target = rankPlaceTarget(placement);
   if (target > state.rpPlaceAwarded) {
     state.rpPoints += target - state.rpPlaceAwarded;
     state.rpPlaceAwarded = target;
@@ -9534,13 +9633,13 @@ function showRankedRecap(d) {
   const rankSub = document.getElementById('rrRankSub');
   crest.textContent = ROMAN[before.div - 1];
   nameText.textContent = before.name;
-  rankSub.textContent = 'YOUR RANK';
+  rankSub.textContent = d.ladder === 'RELOAD' ? 'RELOAD RANK' : 'YOUR RANK';
 
   const fill = document.getElementById('rrFill');
   fill.className = d.gain < 0 ? 'down' : '';
 
   document.getElementById('rrBreak').innerHTML =
-    '<div class="rrRow"><span>ELIMINATIONS</span><em>' + d.kills + ' × 12</em><b>' +
+    '<div class="rrRow"><span>ELIMINATIONS</span><em>' + d.kills + ' × ' + (d.perKill || 12) + '</em><b>' +
     (d.killRp < 0 ? '' : '+') + d.killRp + '</b></div>' +
     '<div class="rrRow"><span>PLACEMENT</span><em>#' + d.placement + '</em><b class="' +
     (d.placeRp < 0 ? 'neg' : '') + '">' + (d.placeRp >= 0 ? '+' : '') + d.placeRp + '</b></div>';
