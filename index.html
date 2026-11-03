@@ -2756,6 +2756,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">13</span><div><b>NEW END SCREENS</b> — elimination is now a clean card with a skull crest and staggered stats, and the respawn screen has a circular countdown ring instead of a bare number.</div></li>
       <li><span class="wnTag">14</span><div><b>VICTORY ROYALE</b> — winning drops the world into slow motion for a beat, then the card arrives with a crown crest, rotating gold rays, falling confetti and a VICTORY callout.</div></li>
       <li><span class="wnTag">15</span><div><b>GROUPED MODES</b> — the lobby list is now split into BATTLE ROYALE, RANKED and ARCADE sections with hairline headings, so the ten modes read at a glance.</div></li>
+      <li><span class="wnTag">16</span><div><b>GUN GAME RESPAWNS</b> — dying in Gun Game now respawns you after 3 seconds one weapon back, and bots respawn too. A bot that reaches the final weapon ends your run.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -2923,7 +2924,7 @@ function isGunGame() { return state.mode === 'gungame'; }
 function isSandbox() { return state.mode === 'sandbox'; }
 function isRanked() { return state.mode === 'ranked' || state.mode === 'rankedduos'; }
 function isBlitz() { return state.mode === 'blitz'; }
-function respawnMode() { return state.mode === 'reload' || state.mode === 'reloadduos' || state.mode === 'rumble'; }
+function respawnMode() { return state.mode === 'reload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
 function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox'; }
 function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
 const SIPHON_AMOUNT = 100;
@@ -4789,6 +4790,20 @@ function playerDie(killer) {
   sfx('death');
   hideDownOverlay();
 
+  if (isGunGame()) {
+    player.respawnAt = state.time + 3;
+    player.gunLevel = Math.max(0, player.gunLevel - 1);
+    const gun = GUN_ORDER[player.gunLevel];
+    player.inv[0] = makeWeapon(gun, 0);
+    player.ammo = ammoKit(gun);
+    player.ammo[WEAPONS[gun].ammo] = 240;
+    player.slot = 0;
+    const badge = document.getElementById('modeBadge');
+    if (badge) badge.innerHTML = 'GUN GAME · <b>' + (player.gunLevel + 1) + '/' + GUN_ORDER.length + '</b>';
+    showRespawnOverlay('DEMOTED', 'RESPAWNING · ' + WEAPONS[gun].name.toUpperCase());
+    refreshHotbar();
+    return;
+  }
   if (isReload() && player.respawnsLeft > 0) {
     player.respawnsLeft--;
     player.respawnAt = state.time + 5;
@@ -4852,12 +4867,33 @@ function killBot(b, killerName) {
     advanceGunGame();
   }
 
+  if (isGunGame() && killerName !== 'You' && killerName !== 'Storm') {
+    const killer = bots.find((o) => o.name === killerName);
+    if (killer) {
+      killer.gunLevel = (killer.gunLevel || 0) + 1;
+      if (killer.gunLevel >= GUN_ORDER.length) { endMatch(false, killer.name); return; }
+      const gt = GUN_ORDER[killer.gunLevel];
+      killer.weapon = makeWeapon(gt, 0);
+      killer.mag = WEAPONS[gt].mag;
+      if (killer.rig && !state.remoteJoin) setRigWeapon(killer.rig, gt);
+    }
+  }
+
   if (state.teamMode) addTeamScore(1 - b.team);
   dropBotLoot(b);
 
   if (isRumble()) {
     b.out = false;
     b.respawnAt = state.time + 3;
+    checkMatchEnd();
+    return;
+  }
+  if (isGunGame()) {
+    b.out = false;
+    b.respawnAt = state.time + 3;
+    b.gunLevel = Math.max(0, (b.gunLevel || 0) - 1);
+    b.weapon = makeWeapon(GUN_ORDER[Math.min(GUN_ORDER.length - 1, b.gunLevel)], 0);
+    b.mag = WEAPONS[b.weapon.type].mag;
     checkMatchEnd();
     return;
   }
@@ -4886,7 +4922,7 @@ function killBot(b, killerName) {
 
 function checkMatchEnd() {
   if (state.ended) return;
-  if (isRumble() || isSandbox()) return;
+  if (isRumble() || isSandbox() || isGunGame()) return;
   if (isReload()) {
     const anyLeft = bots.some((x) => !x.out);
     if (!anyLeft && (player.alive || player.respawnAt > 0)) endMatch(true);
@@ -8274,6 +8310,7 @@ function startMatch() {
 }
 
 function playerWaiting() {
+  if (isGunGame()) return player.respawnAt > 0;
   if (isReload() && player.respawnAt > 0) return true;
   if (isReloadDuos()) return player.respawnAt > 0 || mateAlive();
   if (isRumble()) return true;
@@ -8543,8 +8580,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 5, patch: 0 };
-const VERSION_PREV = '4.4.0';
+const VERSION = { major: 4, minor: 6, patch: 0 };
+const VERSION_PREV = '4.5.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10537,6 +10574,7 @@ function boot() {
   });
 }
 boot();
+
 
 
 
