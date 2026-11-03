@@ -785,6 +785,11 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 .card .rarBar { position:absolute; top:0; left:0; right:0; height:3px; }
 .card .cName { font-family:var(--label); font-size:12px; font-weight:700; letter-spacing:.1em; }
 .card .cType { font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.2em; color:var(--ink-dim); }
+.card .cNew {
+  display:inline-block; margin-right:6px; padding:1px 5px;
+  font-family:var(--label); font-size:8px; font-weight:700; letter-spacing:.16em;
+  color:#08131f; background:var(--gold);
+}
 .card .cFoot { margin-top:auto; }
 .cardBtn {
   width:100%; padding:8px 6px; font-family:var(--label); font-size:10.5px; font-weight:700; letter-spacing:.16em;
@@ -2691,7 +2696,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
         <div class="mpKicker">STORE</div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
-      <div class="mpMeta">FEATURED · SEASON 3</div>
+      <div class="mpMeta">SEASON 4 · NEW ROTATION</div>
     </div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -2712,7 +2717,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 3</div>
+        <div class="mpKicker">SEASON 4</div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -3010,25 +3015,12 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>A WHOLE NEW LOOK</b> — the interface has been rebuilt: amber and teal on oxidised steel, flat slabs instead of angled clips, upright display type and sharper contrast across the lobby, HUD, shop, pass and end screens.</div></li>
-      <li><span class="wnTag">02</span><div><b>NEW LOOT</b> — Shield Minis heal 25 shield in a heartbeat and the Chug Jug refills health and shield in one long drink. Bandages are gone.</div></li>
-      <li><span class="wnTag">03</span><div><b>IMPULSE GRENADES</b> — a new throwable that launches only you, harder and further than a shockwave. Use it to rotate or to escape.</div></li>
-      <li><span class="wnTag">04</span><div><b>TOURNAMENT CLEAN-UP</b> — Team Rumble events are gone, and an active tournament now has a WITHDRAW button so you can pull out of an event you entered.</div></li>
-      <li><span class="wnTag">05</span><div><b>TUNED HUD</b> — health, shield, hotbar, minimap, storm and team panels all recoloured and reshaped to match the new look.</div></li>
-      <li><span class="wnTag">06</span><div><b>WEAPON LOOT OVERHAUL</b> — the floor pool is rebuilt: pistols and double barrels now spawn, close-range guns are far more common, and a rare <b>Railgun</b> (150 damage, 8x optic) has joined the sniper tier.</div></li>
-      <li><span class="wnTag">07</span><div><b>GIVE UP</b> — knocked in Duos? A GIVE UP button (or G) lets you bleed out immediately instead of waiting to be saved.</div></li>
-      <li><span class="wnTag">08</span><div><b>RELOAD DUOS</b> — pairs with three lives. Die and you spectate; your mate must stay alive 20 seconds to bring you back.</div></li>
-      <li><span class="wnTag">09</span><div><b>OVERShield BAR</b> — the overshield now draws as its own striped segment after your normal shield instead of blending into it.</div></li>
-      <li><span class="wnTag">10</span><div><b>ANNOUNCEMENT CARDS</b> — eliminations, knocks, team wipes, storm changes and respawns now slide in as modern glass cards with icons, kickers, sub-lines and a draining timer bar, plus smoother entrances for every small in-game message.</div></li>
-      <li><span class="wnTag">11</span><div><b>IMPACT KILLS</b> — elimination and knock cards slam in skewed with a red skull, a shock ring, a light sweep and a screen-edge flash plus camera punch. The storm now keeps a live status chip pinned under the timer instead of flashing past.</div></li>
-      <li><span class="wnTag">12</span><div><b>SIMPLE UI</b> — a new lobby option that strips every animation, transition, blur and glow and runs the renderer at 1x pixel ratio for lower-end machines.</div></li>
-      <li><span class="wnTag">13</span><div><b>NEW END SCREENS</b> — elimination is now a clean card with a skull crest and staggered stats, and the respawn screen has a circular countdown ring instead of a bare number.</div></li>
-      <li><span class="wnTag">14</span><div><b>VICTORY ROYALE</b> — winning drops the world into slow motion for a beat, then the card arrives with a crown crest, rotating gold rays, falling confetti and a VICTORY callout.</div></li>
-      <li><span class="wnTag">15</span><div><b>GROUPED MODES</b> — the lobby list is now split into BATTLE ROYALE, RANKED and ARCADE sections with hairline headings, so the ten modes read at a glance.</div></li>
-      <li><span class="wnTag">16</span><div><b>GUN GAME RESPAWNS</b> — dying in Gun Game now respawns you after 3 seconds one weapon back, and bots respawn too. A bot that reaches the final weapon ends your run.</div></li>
-      <li><span class="wnTag">17</span><div><b>RANKED RELOAD</b> — 25 players, three lives, and a whole second ladder. Reload rank climbs on its own: Battle Royale RP is never touched by a Reload match, and the recap card says RELOAD RANK when you climb.</div></li>
-      <li><span class="wnTag">18</span><div><b>SCOPE TYPES</b> — optics are no longer one look. Red dots, holos, 2x, 4x, 6x, 8x and a green thermal sniper each draw their own reticle, ring and tint.</div></li>
-      <li><span class="wnTag">19</span><div><b>NEW LOOT POOL</b> — three new guns (Red Dot Rifle, Holo Rifle, Thermal Sniper) and a rebalanced drop table: fewer duplicate shotguns, more optics, and the railgun stays rare.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON 4</b> — a brand new battle pass with five skins of its own: Ember Warden, Glacier Ops, Venom Reign, Solar Flare and Obsidian Prime. Last season's pass has been retired, so this one has to be bought again.</div></li>
+      <li><span class="wnTag">02</span><div><b>NEW ITEM SHOP</b> — the store has rotated. Dune Raider, Coral Drift, Verdant Ghost, Ice Monarch, Cyber Wraith and Ash Ronin are in, tagged NEW and listed first while the rotation is fresh.</div></li>
+      <li><span class="wnTag">03</span><div><b>NO MORE INVISIBLE WALLS</b> — the hard barrier that stopped you on the sand is gone. You can walk down to the waterline and wade in; only the deep ocean at the edge of the map turns you back now.</div></li>
+      <li><span class="wnTag">04</span><div><b>ROCKS FIXED</b> — rock collisions are now tied to the rock itself, so a rock that gets shot away takes its collision with it instead of leaving something you can bump into.</div></li>
+      <li><span class="wnTag">05</span><div><b>SEASON ROLLOVER</b> — a new season means a fresh start: Battle Royale and Reload ranks are back to Bronze, battle pass progress is cleared and the new track starts at tier 0.</div></li>
+      <li><span class="wnTag">06</span><div><b>ALSO IN</b> — Ranked Reload with its own ladder, seven optic types from red dot to thermal, and the rebalanced loot pool with the Red Dot Rifle, Holo Rifle and Thermal Sniper.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -3080,6 +3072,7 @@ const STEP_UP = 0.62;
 const PLAYER_R = 0.42;
 const EYE = 1.58;
 const TERRAIN_FLOOR = WATER_Y - 1.0;
+const WORLD_EDGE = 362;         // deep ocean, well past the walkable shoreline
 
 const state = {
   phase: 'menu',         // menu | drop | play | over
@@ -3380,7 +3373,7 @@ scene.add(terrainGroup, propsGroup, buildGroup, dynGroup, fxGroup);
 const _matCache = {};
 function mat(color, flat) {
   const k = color + '|' + (flat ? 1 : 0);
-  if (!_matCache[k]) _matCache[k] = new THREE.MeshLambertMaterial({ color, flatShading: !!flat });
+  if (!_matCache[k]) _matCache[k] = new THREE.MeshLambertMaterial({ color, flatShading: !!flat, side: THREE.DoubleSide });
   return _matCache[k];
 }
 
@@ -3728,7 +3721,7 @@ function makeRock(x, z, rng) {
   m.castShadow = true;
   m.receiveShadow = true;
   propsGroup.add(m);
-  addBox(x, y + s * 0.4, z, s * 0.85, s * 0.4, s * 0.85, null, { hp: 220, kind: 'rock' });
+  addBox(x, y + s * 0.4, z, s * 0.85, s * 0.4, s * 0.85, m, { hp: 220, kind: 'rock' });
 }
 
 function localBox(g, x, z, baseY, rot, lx, ly, lz, hx, hy, hz, material, opts) {
@@ -7394,8 +7387,13 @@ function updatePlayer(dt) {
     player.onGround = false;
   }
 
+  // Soft world edge: the shoreline is walkable, only the deep ocean stops you.
   const r = Math.hypot(player.pos.x, player.pos.z);
-  if (r > 318) { player.pos.x *= 318 / r; player.pos.z *= 318 / r; }
+  if (r > WORLD_EDGE) {
+    const k = WORLD_EDGE / r;
+    player.pos.x *= k;
+    player.pos.z *= k;
+  }
 
   if (player.rig) {
     if (player.alive) player.rig.group.visible = scopeAmount < 0.5;
@@ -8896,8 +8894,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 7, patch: 0 };
-const VERSION_PREV = '4.6.0';
+const VERSION = { major: 4, minor: 8, patch: 0 };
+const VERSION_PREV = '4.7.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -8935,26 +8933,39 @@ const SKINS = [
   { id: 's3c', name: 'Storm Sage', shirt: 0x6bd0ff, pants: 0x243a52, skin: 0xb07a4a, accent: 0x14304a, rarity: 3 },
   { id: 's3d', name: 'Crimson Vanguard', shirt: 0xc0392b, pants: 0x2b0f0f, skin: 0xd8a878, accent: 0x5a1a1a, rarity: 4 },
   { id: 's3e', name: 'Mythic Core', shirt: 0xffc844, pants: 0x3a2a08, skin: 0xe8b98a, accent: 0x7a5a10, rarity: 4 },
+  // Season 4 battle pass
+  { id: 's4a', name: 'Ember Warden', shirt: 0xff7a3d, pants: 0x2b1508, skin: 0xe8b98a, accent: 0x5a2208, rarity: 2 },
+  { id: 's4b', name: 'Glacier Ops', shirt: 0x7fd0ff, pants: 0x1d3a4a, skin: 0xf0c9a0, accent: 0x1a3040, rarity: 3 },
+  { id: 's4c', name: 'Venom Reign', shirt: 0x8dff5a, pants: 0x1a2b12, skin: 0x9fd8a0, accent: 0x14200f, rarity: 3 },
+  { id: 's4d', name: 'Solar Flare', shirt: 0xffc844, pants: 0x3a2a08, skin: 0xe8b98a, accent: 0x7a5a10, rarity: 4 },
+  { id: 's4e', name: 'Obsidian Prime', shirt: 0x2b2f3a, pants: 0x0f1116, skin: 0xd8a878, accent: 0x5eead4, rarity: 4 },
+  // Season 4 item shop rotation
+  { id: 'shop_dune', name: 'Dune Raider', shirt: 0xd8b06a, pants: 0x4a3a1e, skin: 0xb07a4a, accent: 0x2a2010, rarity: 2, price: 800, fresh: true },
+  { id: 'shop_coral', name: 'Coral Drift', shirt: 0xff8fa3, pants: 0x3a1a26, skin: 0xf0c9a0, accent: 0x5a2030, rarity: 3, price: 1200, fresh: true },
+  { id: 'shop_verdant', name: 'Verdant Ghost', shirt: 0x6bd07f, pants: 0x1d3a26, skin: 0xd8a878, accent: 0x103018, rarity: 3, price: 1200, fresh: true },
+  { id: 'shop_ice', name: 'Ice Monarch', shirt: 0xcfefff, pants: 0x2a4a5a, skin: 0xf0c9a0, accent: 0x1a3040, rarity: 4, price: 1500, fresh: true },
+  { id: 'shop_cyber', name: 'Cyber Wraith', shirt: 0x9b5cff, pants: 0x18122a, skin: 0xb07a4a, accent: 0x2a1a4a, rarity: 4, price: 1500, fresh: true },
+  { id: 'shop_ronin', name: 'Ash Ronin', shirt: 0x6f7787, pants: 0x22262e, skin: 0xd8a878, accent: 0x3a3f4a, rarity: 2, price: 800, fresh: true },
 ];
 
 const SHOP_ITEMS = SKINS.filter((s) => s.price);
 
 const BP_TIERS = [
   { xp: 250, type: 'vb', amount: 100, name: '100 V-BUCKS' },
-  { xp: 500, type: 'skin', id: 's3a', name: 'Frost Warden' },
-  { xp: 750, type: 'vb', amount: 150, name: '150 V-BUCKS' },
-  { xp: 1000, type: 'skin', id: 's3c', name: 'Storm Sage' },
-  { xp: 1250, type: 'vb', amount: 200, name: '200 V-BUCKS' },
-  { xp: 1500, type: 'skin', id: 's3b', name: 'Neon Ronin' },
-  { xp: 1750, type: 'vb', amount: 250, name: '250 V-BUCKS' },
-  { xp: 2000, type: 'skin', id: 's3d', name: 'Crimson Vanguard' },
-  { xp: 2250, type: 'vb', amount: 300, name: '300 V-BUCKS' },
-  { xp: 2500, type: 'skin', id: 's3e', name: 'Mythic Core' },
+  { xp: 500, type: 'skin', id: 's4a', name: 'Ember Warden' },
+  { xp: 800, type: 'vb', amount: 150, name: '150 V-BUCKS' },
+  { xp: 1100, type: 'skin', id: 's4b', name: 'Glacier Ops' },
+  { xp: 1450, type: 'vb', amount: 200, name: '200 V-BUCKS' },
+  { xp: 1800, type: 'skin', id: 's4c', name: 'Venom Reign' },
+  { xp: 2200, type: 'vb', amount: 250, name: '250 V-BUCKS' },
+  { xp: 2600, type: 'skin', id: 's4d', name: 'Solar Flare' },
+  { xp: 3000, type: 'vb', amount: 300, name: '300 V-BUCKS' },
+  { xp: 3500, type: 'skin', id: 's4e', name: 'Obsidian Prime' },
 ];
 const BP_COST = 1000;
 const PROFILE_KEY = 'stormfall.profile.v1';
 
-const SEASON = 3;
+const SEASON = 4;
 
 const TOURNEY_GAMES = 3;
 
@@ -9739,8 +9750,9 @@ function renderShop() {
   const grid = document.getElementById('shopGrid');
   if (!grid) return;
   grid.innerHTML = '';
-  for (let i = 0; i < SHOP_ITEMS.length; i++) {
-    const sk = SHOP_ITEMS[i];
+  const pool = SHOP_ITEMS.slice().sort((a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0));
+  for (let i = 0; i < pool.length; i++) {
+    const sk = pool[i];
     const owned = ownsSkin(sk.id);
     const d = document.createElement('div');
     d.className = 'card' + (owned ? ' equipped' : '');
@@ -9748,7 +9760,7 @@ function renderShop() {
       '<div class="rarBar" style="background:' + RARITY[sk.rarity].color + '"></div>' +
       miniHTML(sk) +
       '<div class="cName">' + sk.name + '</div>' +
-      '<div class="cType">' + RARITY[sk.rarity].name + ' OUTFIT</div>' +
+      '<div class="cType">' + (sk.fresh ? '<span class="cNew">NEW</span>' : '') + RARITY[sk.rarity].name + ' OUTFIT</div>' +
       '<div class="cFoot"><button class="cardBtn ' + (owned ? '' : 'buy') + '"' +
       (owned ? ' disabled' : '') + '>' + (owned ? 'OWNED' : 'BUY · ' + sk.price) + '</button></div>';
     if (!owned) d.querySelector('button').addEventListener('click', () => buySkin(sk.id));
@@ -9853,7 +9865,7 @@ function buyBattlePass() {
   renderLocker();
   sfx('bpBuy');
   playReveal({
-    kicker: 'SEASON 3',
+    kicker: 'SEASON 4',
     title: 'BATTLE PASS',
     name: 'UNLOCKED',
     sub: 'ALL REWARDS ARE NOW YOURS TO EARN',
