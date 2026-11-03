@@ -2190,6 +2190,72 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   .modeGroup + .modeGroup { margin-top:10px; }
   .modeGroupLabel { font-size:7.5px; letter-spacing:.2em; margin-bottom:3px; }
 }
+
+/* ============================== ADMIN ============================== */
+#adminEntry {
+  padding:5px 10px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.2em;
+  color:rgba(234,243,255,.32); border:1px solid rgba(234,243,255,.12); background:transparent;
+  transition:color .15s, border-color .15s, background .15s;
+}
+#adminEntry:hover { color:#ff8c96; border-color:rgba(255,77,94,.5); background:rgba(255,77,94,.08); }
+#adminEntry.on { color:#fff; border-color:var(--danger); background:rgba(255,77,94,.14); box-shadow:0 0 16px rgba(255,77,94,.24); }
+
+#adminGate {
+  position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:radial-gradient(80% 70% at 50% 25%, rgba(58,14,28,.62), rgba(3,6,14,.93));
+  backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);
+}
+.gateBox {
+  width:min(370px,100%); display:flex; flex-direction:column; gap:12px; padding:22px;
+  background:linear-gradient(160deg, rgba(26,32,48,.97), rgba(6,11,20,.99));
+  border:1px solid rgba(255,77,94,.3);
+  box-shadow:0 30px 90px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.05);
+  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  animation:panelIn .25s cubic-bezier(.2,.9,.3,1);
+}
+.gateKicker { font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.36em; color:var(--danger); }
+.gateTitle { font-family:var(--display); font-size:30px; font-style:italic; line-height:1; }
+.gateNote { font-family:var(--label); font-size:11px; letter-spacing:.06em; line-height:1.5; color:var(--ink-dim); }
+.gateInput {
+  width:100%; padding:11px 12px; text-align:center;
+  font-family:var(--display); font-size:20px; letter-spacing:.3em; color:#fff;
+  background:rgba(4,9,18,.92); border:1px solid var(--line); outline:none;
+  transition:border-color .15s, box-shadow .15s;
+}
+.gateInput::placeholder { font-size:15px; letter-spacing:.24em; color:rgba(234,243,255,.2); }
+.gateInput:focus { border-color:var(--danger); box-shadow:0 0 22px rgba(255,77,94,.18); }
+.gateInput.err { border-color:var(--danger); animation:gateShake .38s ease; }
+@keyframes gateShake {
+  0%,100% { transform:translateX(0); }
+  20% { transform:translateX(-8px); }
+  40% { transform:translateX(7px); }
+  60% { transform:translateX(-5px); }
+  80% { transform:translateX(3px); }
+}
+.gateErr { min-height:13px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.2em; color:var(--danger); }
+.gateRow { display:flex; gap:8px; }
+.gateRow > * { flex:1; }
+
+.adminWarn {
+  font-family:var(--label); font-size:10.5px; letter-spacing:.06em; line-height:1.5;
+  color:#ffb0b6; background:rgba(255,77,94,.07); border-left:2px solid var(--danger);
+  padding:9px 12px; margin-bottom:14px;
+}
+.adminGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin-bottom:16px; }
+.adminChip {
+  padding:11px 8px; cursor:pointer; text-align:center;
+  font-family:var(--label); font-size:9.5px; font-weight:700; letter-spacing:.12em;
+  border:1px solid var(--line); background:rgba(9,17,30,.7); color:var(--ink-dim);
+  transition:color .12s, border-color .12s, background .12s;
+}
+.adminChip b { display:block; margin-top:3px; font-size:8.5px; letter-spacing:.1em; color:rgba(234,243,255,.38); }
+.adminChip:hover { color:#fff; border-color:rgba(255,77,94,.4); }
+.adminChip.on { color:#fff; border-color:var(--danger); background:rgba(255,77,94,.16); box-shadow:0 0 14px rgba(255,77,94,.22); }
+.adminChip.on b { color:rgba(255,255,255,.68); }
+.adminActions { display:flex; gap:8px; flex-wrap:wrap; }
+@media (max-width: 760px) {
+  #adminEntry { padding:5px 7px; font-size:9px; letter-spacing:.12em; }
+}
 </style>
 </head>
 <body>
@@ -2318,6 +2384,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     <div class="topRight">
       <div class="cashTag"><i class="cashCoin">$</i><b id="cashAmount">0</b></div>
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
+      <button id="adminEntry">ADMIN</button>
       <div class="verTag" id="verTag">v2.2.0</div>
     </div>
   </div>
@@ -2619,6 +2686,53 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <button class="mpBack" data-back>BACK</button>
     </div>
   </section>
+
+  <section id="panelAdmin" class="menuPanel hide">
+    <div class="mpHead">
+      <div>
+        <div class="mpKicker">DEVELOPER</div>
+        <div class="mpTitle">ADMIN PANEL</div>
+      </div>
+      <div class="mpMeta" id="adminMeta">LOCKED</div>
+    </div>
+    <div class="mpScroll">
+      <div class="adminWarn">Session only — every toggle resets when you reload the page. Use it to test, not to play ranked.</div>
+      <div class="seatLabel">CHEATS</div>
+      <div class="adminGrid">
+        <button class="adminChip" data-adm="god">GOD MODE<b>NO DAMAGE</b></button>
+        <button class="adminChip" data-adm="aimbot">AIMBOT<b>LOCK + NO SPREAD</b></button>
+        <button class="adminChip" data-adm="oneShot">ONE SHOT<b>1000 DAMAGE</b></button>
+        <button class="adminChip" data-adm="infAmmo">INFINITE AMMO<b>NEVER RELOAD</b></button>
+        <button class="adminChip" data-adm="infMats">INFINITE MATS<b>FREE BUILDS</b></button>
+        <button class="adminChip" data-adm="speed">SUPER SPEED<b>2.4X MOVE</b></button>
+      </div>
+      <div class="seatLabel">QUICK ACTIONS</div>
+      <div class="adminActions">
+        <button class="mpAction" id="adminRefill">REFILL HEALTH + AMMO</button>
+        <button class="mpAction" id="adminLoadout">GIVE LOADOUT</button>
+        <button class="mpAction" id="adminKillAll">ELIMINATE ALL BOTS</button>
+      </div>
+    </div>
+    <div class="mpFoot">
+      <button class="mpBack" data-back>BACK</button>
+      <button class="mpBack" id="adminLock">LOCK PANEL</button>
+    </div>
+  </section>
+</div>
+
+<!-- ============================== ADMIN GATE ============================== -->
+<div id="adminGate" class="hide">
+  <div class="gateBox">
+    <div class="gateKicker">RESTRICTED</div>
+    <div class="gateTitle">ADMIN ACCESS</div>
+    <p class="gateNote">Enter the admin password to open the developer panel.</p>
+    <input id="adminPass" class="gateInput" type="password" placeholder="PASSWORD" autocomplete="off" spellcheck="false">
+    <div class="gateErr" id="adminErr"></div>
+    <div class="gateRow">
+      <button class="mpBack" id="adminCancel">CANCEL</button>
+      <button class="mpAction" id="adminSubmit">UNLOCK</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============================== END ============================== -->
@@ -4549,30 +4663,32 @@ function playerFire() {
   const w = WEAPONS[it.type];
   if (it.mag <= 0) { startReload(); return; }
 
-  it.mag--;
+  if (!adminOn('infAmmo')) it.mag--;
   player.nextFire = state.time + 60 / w.rpm;
 
   const origin = camera.position.clone();
   const base = new THREE.Vector3();
   camera.getWorldDirection(base);
+  // Admin aimbot: snap the shot onto the closest enemy your crosshair is near.
+  const aimDir = adminOn('aimbot') ? adminAim(origin, base, w.range) : null;
   const scopedAds = aimDown && !!w.scoped;
   // First shot after a second of not firing is pinpoint — everything but shotguns.
   const firstShot = w.pellets <= 1 && (state.time - (player.lastShotAt || -99)) >= 1;
-  const spread = firstShot ? 0.0002 : scopedAds ? 0.0002 : (aimDown ? w.ads : w.spread);
+  const spread = aimDir ? 0 : firstShot ? 0.0002 : scopedAds ? 0.0002 : (aimDown ? w.ads : w.spread);
   player.lastShotAt = state.time;
   const muzzle = player.pos.clone();
   muzzle.y += 1.35;
   flashMuzzle(player.rig);
 
   for (let p = 0; p < w.pellets; p++) {
-    const dir = base.clone();
+    const dir = (aimDir || base).clone();
     dir.x += rand(-1, 1) * spread;
     dir.y += rand(-1, 1) * spread;
     dir.z += rand(-1, 1) * spread;
     dir.normalize();
     const hit = hitTest(origin, dir, w.range, null, player.team);
     tracerFX(muzzle, hit.point, 0xfff2a8);
-    const dmg = w.dmg * RARITY[it.rarity].mult;
+    const dmg = w.dmg * RARITY[it.rarity].mult * (adminOn('oneShot') ? 100 : 1);
     if (net.connected && !net.isHost) {
       netSend({
         t: 'shot',
@@ -4635,7 +4751,7 @@ function finishReload() {
   const need = w.mag - it.mag;
   const take = Math.min(need, player.ammo[w.ammo]);
   it.mag += take;
-  player.ammo[w.ammo] -= take;
+  if (!adminOn('infAmmo')) player.ammo[w.ammo] -= take;
   refreshHotbar();
 }
 
@@ -4698,6 +4814,7 @@ function applySiphon() {
 
 function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (!player.alive) return;
+  if (adminOn('god')) return;
   let d = dmg;
   let shieldPart = 0;
   let healthPart = 0;
@@ -6419,10 +6536,11 @@ function placeRamp(spec) {
 function placeBuild() {
   if (!player.alive || player.knocked) return;
   if (mod('nobuild')) return;
-  const cost = isSandbox() ? 0 : 10;
+  const freeBuild = isSandbox() || adminOn('infMats');
+  const cost = freeBuild ? 0 : 10;
   if (player.wood < cost) { toast('NOT ENOUGH WOOD', 'sub'); sfx('reload'); return; }
   const spec = currentBuildSpec();
-  player.wood -= cost;
+  if (!freeBuild) player.wood -= cost;
   if (spec.kind === 'wall') placeWall(spec, 0xb98a53, false);
   else if (spec.kind === 'floor') placeFloor(spec, 0xb98a53);
   else placeRamp(spec);
@@ -7059,6 +7177,7 @@ function updatePlayer(dt) {
   if ((input.sprint || autoSprint) && !aimDown && input.fwd > 0) speed = 8.8;
   if (aimDown) speed = 3.6;
   if (player.using) speed = 2.2;
+  if (adminOn('speed')) speed *= 2.4;
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -9580,7 +9699,7 @@ function switchTab(tab) {
   const playRowEl = document.getElementById('playRowEl');
   if (lobbyEl) lobbyEl.classList.toggle('hide', !play);
   if (playRowEl) playRowEl.classList.toggle('hide', !play);
-  const panels = { locker: 'panelLocker', shop: 'panelShop', pass: 'panelPass', comp: 'panelComp', mp: 'panelMp' };
+  const panels = { locker: 'panelLocker', shop: 'panelShop', pass: 'panelPass', comp: 'panelComp', mp: 'panelMp', admin: 'panelAdmin' };
   Object.keys(panels).forEach((k) => {
     const el = document.getElementById(panels[k]);
     if (el) el.classList.toggle('hide', k !== tab);
@@ -9589,6 +9708,7 @@ function switchTab(tab) {
   if (tab === 'locker') renderLocker();
   if (tab === 'pass') renderPass();
   if (tab === 'comp') renderCompetitive();
+  if (tab === 'admin') renderAdmin();
   refreshWallet();
   if (tab !== 'play') sfx('switch');
 }
@@ -10537,6 +10657,215 @@ function loadAssets() {
 }
 
 /* =========================================================================
+   ADMIN PANEL
+   ========================================================================= */
+const ADMIN_PASS = 'password123';
+
+/* Session-only cheats: nothing here is written to the profile or localStorage,
+   and every flag drops back to off when the page reloads. */
+const admin = {
+  unlocked: false,
+  god: false,
+  aimbot: false,
+  oneShot: false,
+  infAmmo: false,
+  infMats: false,
+  speed: false,
+};
+
+function adminOn(key) { return admin.unlocked && !!admin[key]; }
+
+const adminToVec = new THREE.Vector3();
+const adminHeadVec = new THREE.Vector3();
+
+/* Closest enemy near the crosshair with a clear line of sight: the aimbot
+   target. Returns a normalised camera-to-head direction, or null. */
+function adminAim(origin, dir, range) {
+  let best = null, bestScore = Infinity;
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.alive || b.dropping) continue;
+    if (state.teamMode && b.team === player.team) continue;
+    const to = adminToVec.set(b.pos.x, b.pos.y + 1.72, b.pos.z).sub(origin);
+    const dist = to.length();
+    if (dist < 1 || dist > range) continue;
+    to.divideScalar(dist);
+    const dot = dir.dot(to);
+    if (dot < 0.4) continue;
+    const los = hitTest(origin, to, dist + 0.6, null, player.team);
+    if (los.kind !== 'bot' || los.bot !== b) continue;
+    const score = (1 - dot) * 120 + dist * 0.05;
+    if (score < bestScore) { bestScore = score; best = b; }
+  }
+  if (!best) return null;
+  return adminHeadVec.set(best.pos.x, best.pos.y + 1.72, best.pos.z).sub(origin).normalize();
+}
+
+function adminTopUpAmmo() {
+  Object.keys(player.ammo).forEach((k) => { player.ammo[k] = Math.max(player.ammo[k], 999); });
+  const it = currentItem();
+  if (it && it.kind === 'weapon') it.mag = WEAPONS[it.type].mag;
+}
+
+function renderAdmin() {
+  document.querySelectorAll('.adminChip').forEach((c) => {
+    c.classList.toggle('on', adminOn(c.dataset.adm));
+  });
+  const meta = document.getElementById('adminMeta');
+  if (meta) meta.textContent = admin.unlocked ? 'UNLOCKED · SESSION ONLY' : 'LOCKED';
+  const entry = document.getElementById('adminEntry');
+  if (entry) {
+    entry.classList.toggle('on', admin.unlocked);
+    entry.textContent = admin.unlocked ? 'ADMIN ·' : 'ADMIN';
+  }
+}
+
+function gateError(msg) {
+  const input = document.getElementById('adminPass');
+  const err = document.getElementById('adminErr');
+  if (input) {
+    input.classList.remove('err');
+    void input.offsetWidth;
+    input.classList.add('err');
+    input.value = '';
+  }
+  if (err) err.textContent = msg;
+}
+
+function openAdminGate() {
+  if (admin.unlocked) { switchTab('admin'); return; }
+  const gate = document.getElementById('adminGate');
+  if (!gate) return;
+  gate.classList.remove('hide');
+  const input = document.getElementById('adminPass');
+  if (input) { input.value = ''; input.classList.remove('err'); }
+  const err = document.getElementById('adminErr');
+  if (err) err.textContent = '';
+  setTimeout(() => { try { if (input) input.focus(); } catch (e) { /* ignore */ } }, 40);
+}
+
+function closeAdminGate() {
+  const gate = document.getElementById('adminGate');
+  if (gate) gate.classList.add('hide');
+  const input = document.getElementById('adminPass');
+  if (input) input.value = '';
+}
+
+function adminUnlock() {
+  const input = document.getElementById('adminPass');
+  if (!input || input.value.trim() !== ADMIN_PASS) {
+    gateError('WRONG PASSWORD');
+    sfx('reload');
+    return;
+  }
+  admin.unlocked = true;
+  closeAdminGate();
+  renderAdmin();
+  switchTab('admin');
+  sfx('switch');
+  toast('ADMIN UNLOCKED', 'sub');
+}
+
+function adminLock() {
+  admin.unlocked = false;
+  admin.god = false;
+  admin.aimbot = false;
+  admin.oneShot = false;
+  admin.infAmmo = false;
+  admin.infMats = false;
+  admin.speed = false;
+  renderAdmin();
+  switchTab('play');
+  toast('ADMIN LOCKED', 'sub');
+}
+
+function adminRefill() {
+  if (!player.alive) { toast('START A MATCH FIRST', 'sub'); return; }
+  player.hp = player.maxHp;
+  player.shield = player.maxShield;
+  player.overshield = player.maxOvershield;
+  player.wood = Math.max(player.wood, 999);
+  player.reloading = false;
+  adminTopUpAmmo();
+  refreshHotbar();
+  sfx('heal');
+  toast('REFILLED', 'sub');
+}
+
+function adminLoadout() {
+  if (!player.alive) { toast('START A MATCH FIRST', 'sub'); return; }
+  const picks = ['railgun', 'shotgun', 'ar', 'redeye', 'sniper'];
+  for (let i = 0; i < picks.length && i < player.inv.length; i++) {
+    player.inv[i] = makeWeapon(picks[i], 4);
+  }
+  player.slot = 0;
+  player.reloading = false;
+  adminTopUpAmmo();
+  refreshHotbar();
+  sfx('switch');
+  toast('LEGENDARY LOADOUT', 'sub');
+}
+
+function adminKillAll() {
+  if (state.phase !== 'play' && state.phase !== 'drop') { toast('START A MATCH FIRST', 'sub'); return; }
+  let n = 0;
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.alive) continue;
+    n++;
+    damageBot(b, 9999, 'You', true, b.pos.clone());
+  }
+  toast(n ? n + ' BOTS ELIMINATED' : 'NO BOTS LEFT', 'sub');
+  sfx('switch');
+}
+
+const adminEntryEl = document.getElementById('adminEntry');
+if (adminEntryEl) adminEntryEl.addEventListener('click', () => { audioInit(); openAdminGate(); });
+const adminCancelEl = document.getElementById('adminCancel');
+if (adminCancelEl) adminCancelEl.addEventListener('click', closeAdminGate);
+const adminSubmitEl = document.getElementById('adminSubmit');
+if (adminSubmitEl) adminSubmitEl.addEventListener('click', adminUnlock);
+const adminLockEl = document.getElementById('adminLock');
+if (adminLockEl) adminLockEl.addEventListener('click', adminLock);
+const adminRefillEl = document.getElementById('adminRefill');
+if (adminRefillEl) adminRefillEl.addEventListener('click', adminRefill);
+const adminLoadoutEl = document.getElementById('adminLoadout');
+if (adminLoadoutEl) adminLoadoutEl.addEventListener('click', adminLoadout);
+const adminKillAllEl = document.getElementById('adminKillAll');
+if (adminKillAllEl) adminKillAllEl.addEventListener('click', adminKillAll);
+
+const gateEl = document.getElementById('adminGate');
+if (gateEl) {
+  gateEl.addEventListener('click', (e) => { if (e.target === gateEl) closeAdminGate(); });
+}
+const adminPassEl = document.getElementById('adminPass');
+if (adminPassEl) {
+  adminPassEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); adminUnlock(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeAdminGate(); }
+  });
+}
+
+const ADMIN_LABEL = {
+  god: 'GOD MODE', aimbot: 'AIMBOT', oneShot: 'ONE SHOT',
+  infAmmo: 'INFINITE AMMO', infMats: 'INFINITE MATS', speed: 'SUPER SPEED',
+};
+
+document.querySelectorAll('.adminChip').forEach((c) => {
+  c.addEventListener('click', () => {
+    if (!admin.unlocked) return;
+    const key = c.dataset.adm;
+    admin[key] = !admin[key];
+    if (key === 'infAmmo' && admin.infAmmo) adminTopUpAmmo();
+    if (key === 'infMats' && admin.infMats) player.wood = Math.max(player.wood, 999);
+    renderAdmin();
+    refreshHotbar();
+    sfx('switch');
+    toast((admin[key] ? 'ON · ' : 'OFF · ') + ADMIN_LABEL[key], 'sub');
+  });
+});
+
+/* =========================================================================
    BOOT
    ========================================================================= */
 /* quick test hook: load the page with ?test in the URL and it skips the lobby
@@ -10558,6 +10887,7 @@ function boot() {
   renderMods();
   renderOpts();
   applyOpts();
+  renderAdmin();
   renderCompetitive();
   state.mods = Object.assign({}, profile.mods || {});
   switchTab('play');
