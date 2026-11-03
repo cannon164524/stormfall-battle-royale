@@ -3015,12 +3015,14 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEASON 4</b> — a brand new battle pass with five skins of its own: Ember Warden, Glacier Ops, Venom Reign, Solar Flare and Obsidian Prime. Last season's pass has been retired, so this one has to be bought again.</div></li>
-      <li><span class="wnTag">02</span><div><b>NEW ITEM SHOP</b> — the store has rotated. Dune Raider, Coral Drift, Verdant Ghost, Ice Monarch, Cyber Wraith and Ash Ronin are in, tagged NEW and listed first while the rotation is fresh.</div></li>
-      <li><span class="wnTag">03</span><div><b>NO MORE INVISIBLE WALLS</b> — the hard barrier that stopped you on the sand is gone. You can walk down to the waterline and wade in; only the deep ocean at the edge of the map turns you back now.</div></li>
-      <li><span class="wnTag">04</span><div><b>ROCKS FIXED</b> — rock collisions are now tied to the rock itself, so a rock that gets shot away takes its collision with it instead of leaving something you can bump into.</div></li>
-      <li><span class="wnTag">05</span><div><b>SEASON ROLLOVER</b> — a new season means a fresh start: Battle Royale and Reload ranks are back to Bronze, battle pass progress is cleared and the new track starts at tier 0.</div></li>
-      <li><span class="wnTag">06</span><div><b>ALSO IN</b> — Ranked Reload with its own ladder, seven optic types from red dot to thermal, and the rebalanced loot pool with the Red Dot Rifle, Holo Rifle and Thermal Sniper.</div></li>
+      <li><span class="wnTag">01</span><div><b>LOOT POOL REBUILT</b> — the floor drop table is completely different. Seven guns are gone (Scoped AR, Red-Eye, Tactical Scoped, Marksman, Scoped Revolver, Red Dot Rifle and Railgun) and four have moved in.</div></li>
+      <li><span class="wnTag">02</span><div><b>BURST RIFLE</b> — a new medium-ammo rifle that throws a three-round burst with tight spread and no full-auto spray. Tap it and the whole burst lands together.</div></li>
+      <li><span class="wnTag">03</span><div><b>DRUM GUN</b> — light ammo, fifty rounds, 780 rpm. The spray weapon of the season, at the cost of reach and accuracy.</div></li>
+      <li><span class="wnTag">04</span><div><b>COMBAT SHOTGUN</b> — an automatic shotgun with an eight-shell mag. Far more forgiving than the pump, much less forgiving at range.</div></li>
+      <li><span class="wnTag">05</span><div><b>HUNTING RIFLE</b> — a 4x bolt rifle on medium ammo: 78 damage, five rounds, fast handling. The scout's answer to the heavy snipers.</div></li>
+      <li><span class="wnTag">06</span><div><b>HEALS SHAKEN UP</b> — medkits are out. Bandages are back for quick chip healing, and Slurp Juice is in, restoring health and shield in one drink.</div></li>
+      <li><span class="wnTag">07</span><div><b>FRAG GRENADES</b> — a damage grenade at last: it explodes for up to 72 damage in a 7.5 m radius, with a smaller shove than a shockwave.</div></li>
+      <li><span class="wnTag">08</span><div><b>GUN GAME REFRESHED</b> — the ten-gun ladder is rebuilt around the new pool, from pistol up to the Bolt Sniper.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -3106,7 +3108,7 @@ const REVIVE_TIME = 3.4;
 const REVIVE_RANGE = 3.6;
 const REBOOT_TIME = 10;
 const SURVIVE_TIME = 20;   // Reload Duos: how long your mate must stay alive
-const GUN_ORDER = ['pistol', 'smg', 'shotgun', 'ar', 'revolver', 'scopedar', 'redeye', 'tactical', 'marksman', 'sniper'];
+const GUN_ORDER = ['pistol', 'smg', 'drum', 'shotgun', 'combat', 'ar', 'burst', 'holo', 'hunting', 'sniper'];
 
 const MODE_DEFS = {
   br: {
@@ -4091,45 +4093,39 @@ const RARITY = [
 
 const WEAPONS = {
   pistol: { name: 'Pistol', ammo: 'light', dmg: 25, rpm: 380, mag: 16, reload: 1.6, spread: 0.016, ads: 0.006, pellets: 1, hs: 1.9, range: 160, auto: true, sfx: 'pistol' },
-  ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.4, spread: 0.042, ads: 0.015, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
-  scopedar: { name: 'Scoped Assault Rifle', ammo: 'medium', dmg: 29, rpm: 300, mag: 20, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.7, range: 320, auto: true, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 34, scope: '4x' },
-  redeye: { name: 'Red-Eye Rifle', ammo: 'medium', dmg: 34, rpm: 420, mag: 25, reload: 2.5, spread: 0.040, ads: 0.0001, pellets: 1, hs: 1.7, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 44, scope: 'holo' },
-  tactical: { name: 'Tactical Scoped Rifle', ammo: 'medium', dmg: 30, rpm: 240, mag: 20, reload: 2.8, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 330, auto: false, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x' },
-  marksman: { name: 'Marksman Rifle', ammo: 'medium', dmg: 46, rpm: 150, mag: 12, reload: 2.8, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.0, range: 380, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: '6x' },
-  revolver: { name: 'Scoped Revolver', ammo: 'light', dmg: 62, rpm: 110, mag: 6, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 1.9, range: 220, auto: true, sfx: 'pistol', scoped: true, zoom: '2X', scopedFov: 42, scope: 'rd' },
   smg: { name: 'SMG', ammo: 'light', dmg: 18, rpm: 750, mag: 30, reload: 2.0, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 135, auto: true, sfx: 'smg' },
+  drum: { name: 'Drum Gun', ammo: 'light', dmg: 19, rpm: 780, mag: 50, reload: 3.4, spread: 0.062, ads: 0.032, pellets: 1, hs: 1.4, range: 140, auto: true, sfx: 'smg' },
   shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 13, rpm: 80, mag: 5, reload: 3.1, spread: 0.062, ads: 0.048, pellets: 10, hs: 1.75, range: 62, auto: false, sfx: 'shotgun' },
-  heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 38, rpm: 260, mag: 25, reload: 2.9, spread: 0.050, ads: 0.018, pellets: 1, hs: 1.7, range: 270, auto: true, sfx: 'ar' },
   doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 12, rpm: 150, mag: 2, reload: 2.6, spread: 0.070, ads: 0.055, pellets: 8, hs: 1.7, range: 48, auto: false, sfx: 'shotgun' },
-  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x' },
-  railgun: { name: 'Railgun', ammo: 'heavy', dmg: 150, rpm: 22, mag: 1, reload: 3.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.5, range: 520, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 18, scope: '8x' },
-  reddot: { name: 'Red Dot Rifle', ammo: 'light', dmg: 27, rpm: 420, mag: 20, reload: 2.2, spread: 0.036, ads: 0.0001, pellets: 1, hs: 1.7, range: 220, auto: true, sfx: 'ar', scoped: true, zoom: '1.5X', scopedFov: 46, scope: 'rd' },
+  combat: { name: 'Combat Shotgun', ammo: 'shells', dmg: 11, rpm: 170, mag: 8, reload: 2.9, spread: 0.066, ads: 0.050, pellets: 9, hs: 1.7, range: 58, auto: true, sfx: 'shotgun' },
+  ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.4, spread: 0.042, ads: 0.015, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
+  heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 38, rpm: 260, mag: 25, reload: 2.9, spread: 0.050, ads: 0.018, pellets: 1, hs: 1.7, range: 270, auto: true, sfx: 'ar' },
+  burst: { name: 'Burst Rifle', ammo: 'medium', dmg: 30, rpm: 200, mag: 27, reload: 2.6, spread: 0.026, ads: 0.012, pellets: 1, burst: 3, hs: 1.75, range: 250, auto: false, sfx: 'ar' },
   holo: { name: 'Holo Rifle', ammo: 'medium', dmg: 33, rpm: 320, mag: 24, reload: 2.5, spread: 0.034, ads: 0.0001, pellets: 1, hs: 1.75, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo' },
+  hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 78, rpm: 55, mag: 5, reload: 2.9, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
+  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x' },
   thermal: { name: 'Thermal Sniper', ammo: 'heavy', dmg: 118, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal' },
 };
 
-/* Weighted loot pool — scoped weapons are ~54% of gun drops, spread across
-   red dot, holo, 4x, 6x, 8x and thermal optics. */
+/* Weighted loot pool — shotguns and spray guns carry the early game, optics
+   are about a quarter of gun drops, and the heavy snipers stay rare. */
 const LOOT_WEAPON_POOL = [
   // short-range brawlers
   'smg', 'smg',
+  'drum', 'drum',
   'shotgun', 'shotgun',
   'doublebarrel',
+  'combat',
   'pistol', 'pistol',
   // mid-range
   'ar', 'ar',
+  'burst', 'burst',
   'heavyar',
-  'reddot', 'reddot',
   // scoped and long-range
-  'redeye', 'redeye',
   'holo', 'holo',
-  'scopedar', 'scopedar',
-  'tactical', 'tactical',
-  'revolver',
-  'marksman', 'marksman',
+  'hunting',
   'sniper',
   'thermal',
-  'railgun',
 ];
 
 const GUN_ICONS = {
@@ -4155,22 +4151,27 @@ const GUN_ICONS = {
   mist: '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="24" cy="34" r="11" opacity=".8"/><circle cx="39" cy="30" r="13" opacity=".7"/><circle cx="45" cy="40" r="9" opacity=".6"/><rect x="28" y="10" width="8" height="10" rx="2"/><circle cx="42" cy="16" r="3" opacity=".7"/></svg>',
 };
 GUN_ICONS.heavyar = GUN_ICONS.ar;
+GUN_ICONS.burst = GUN_ICONS.ar;
+GUN_ICONS.drum = GUN_ICONS.smg;
 GUN_ICONS.doublebarrel = GUN_ICONS.shotgun;
-GUN_ICONS.railgun = GUN_ICONS.sniper;
-GUN_ICONS.reddot = GUN_ICONS.redeye;
+GUN_ICONS.combat = GUN_ICONS.shotgun;
 GUN_ICONS.holo = GUN_ICONS.tactical;
 GUN_ICONS.thermal = GUN_ICONS.sniper;
+GUN_ICONS.hunting = GUN_ICONS.sniper;
+GUN_ICONS.frag = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="13"/><rect x="27" y="16" width="10" height="8" rx="2"/><rect x="30" y="10" width="4" height="7" rx="2"/><rect x="26" y="26" width="12" height="3" opacity=".35"/><circle cx="26" cy="36" r="2.4" fill="#0b1a2b"/><circle cx="38" cy="36" r="2.4" fill="#0b1a2b"/></svg>';
 
 const HEALS = {
-  shield: { name: 'Shield Potion', icon: 'shield', time: 2.6, shield: 50, color: '#3fa9f5' },
+  bandage: { name: 'Bandage', icon: 'bandage', time: 0.9, hp: 15, color: '#e8e0d0' },
   mini: { name: 'Shield Mini', icon: 'minishield', time: 1.4, shield: 25, color: '#7fd8ff' },
-  medkit: { name: 'Medkit', icon: 'medkit', time: 3.4, hp: 100, color: '#5ad63a' },
-  chug: { name: 'Chug Jug', icon: 'chugjug', time: 4.2, hp: 100, shield: 100, color: '#b06bff' },
+  shield: { name: 'Shield Potion', icon: 'shield', time: 2.6, shield: 50, color: '#3fa9f5' },
+  slurp: { name: 'Slurp Juice', icon: 'chugjug', time: 2.0, hp: 25, shield: 25, color: '#b06bff' },
+  chug: { name: 'Chug Jug', icon: 'chugjug', time: 4.2, hp: 100, shield: 100, color: '#7d5bff' },
 };
 
 const GRENADES = {
   shockwave: { name: 'Shockwave Grenade', icon: 'shockwave', color: '#7fd6ff', radius: 12, force: 54 },
   impulse: { name: 'Impulse Grenade', icon: 'impulse', color: '#5eead4', radius: 9, force: 68, selfOnly: true },
+  frag: { name: 'Frag Grenade', icon: 'frag', color: '#ff8c42', radius: 7.5, force: 26, dmg: 72 },
 };
 
 /* Pocket abilities — pick one before each match. */
@@ -4377,7 +4378,7 @@ function buildWeaponModel(type) {
 
   let tip = 0.6;
 
-  if (type === 'ar' || type === 'heavyar') {
+  if (type === 'ar' || type === 'heavyar' || type === 'drum' || type === 'burst') {
     box(0.11, 0.16, 0.62, metal, 0, 0, 0);
     cyl(0.028, 0.028, 0.46, dark, 0, 0.02, 0.5, 'z');
     box(0.09, 0.1, 0.3, poly, 0, -0.01, -0.44);
@@ -4391,7 +4392,7 @@ function buildWeaponModel(type) {
       g.scale.set(1.12, 1.1, 1.12);
       tip = 0.82;
     }
-  } else if (type === 'scopedar' || type === 'redeye' || type === 'tactical' || type === 'marksman' || type === 'reddot' || type === 'holo') {
+  } else if (type === 'scopedar' || type === 'redeye' || type === 'tactical' || type === 'marksman' || type === 'reddot' || type === 'holo' || type === 'hunting') {
     box(0.11, 0.16, 0.6, metal, 0, 0, 0);
     cyl(0.028, 0.028, 0.5, dark, 0, 0.02, 0.48, 'z');
     box(0.09, 0.1, 0.3, poly, 0, -0.01, -0.42);
@@ -4412,7 +4413,7 @@ function buildWeaponModel(type) {
     box(0.03, 0.06, 0.02, accent, 0, 0.1, 0.22);
     box(0.06, 0.05, 0.18, poly, 0, 0.01, -0.3);
     tip = 0.46;
-  } else if (type === 'shotgun' || type === 'doublebarrel') {
+  } else if (type === 'shotgun' || type === 'doublebarrel' || type === 'combat') {
     box(0.1, 0.14, 0.36, metal, 0, 0, -0.02);
     cyl(0.034, 0.034, 0.72, dark, 0, 0.04, 0.44, 'z');
     cyl(0.03, 0.03, 0.5, accent, 0, -0.06, 0.32, 'z');
@@ -4615,8 +4616,8 @@ function clearLoot() {
 }
 
 function lootWeaponType() {
-  if (mod('snipers')) return pick(['sniper', 'marksman', 'marksman']);
-  if (mod('shotguns')) return 'shotgun';
+  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
+  if (mod('shotguns')) return pick(['shotgun', 'combat']);
   return pick(LOOT_WEAPON_POOL);
 }
 
@@ -4644,10 +4645,10 @@ function rollLootItem(rng, bonus) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
   }
   if (r < 0.70) return makeAmmo(pick(['light', 'medium', 'medium', 'medium', 'shells', 'heavy']), randInt(30, 72));
-  if (r < 0.82) return makeGrenade(pick(['shockwave', 'shockwave', 'impulse']), 1);
-  if (r < 0.90) return makeHeal(pick(['mini', 'shield', 'medkit']), 1);
-  if (r < 0.96) return makeHeal('mini', 2);
-  return makeHeal('chug', 1);
+  if (r < 0.82) return makeGrenade(pick(['shockwave', 'shockwave', 'impulse', 'frag']), 1);
+  if (r < 0.90) return makeHeal(pick(['bandage', 'mini', 'shield']), 1);
+  if (r < 0.96) return makeHeal(pick(['mini', 'bandage']), 2);
+  return makeHeal(pick(['slurp', 'chug']), 1);
 }
 
 function scatterLoot(rng) {
@@ -4838,7 +4839,7 @@ function playerFire() {
   const w = WEAPONS[it.type];
   if (it.mag <= 0) { startReload(); return; }
 
-  if (!adminOn('infAmmo')) it.mag--;
+  if (!adminOn('infAmmo')) it.mag = Math.max(0, it.mag - (w.burst || 1));
   player.nextFire = state.time + 60 / w.rpm;
 
   const origin = camera.position.clone();
@@ -4855,7 +4856,8 @@ function playerFire() {
   muzzle.y += 1.35;
   flashMuzzle(player.rig);
 
-  for (let p = 0; p < w.pellets; p++) {
+  const shots = Math.max(1, w.pellets * (w.burst || 1));
+  for (let p = 0; p < shots; p++) {
     const dir = (aimDir || base).clone();
     dir.x += rand(-1, 1) * spread;
     dir.y += rand(-1, 1) * spread;
@@ -5842,7 +5844,7 @@ function damageBot(b, amount, attackerName, head, point) {
 
 function dropBotLoot(b) {
   const items = [b.weapon, makeAmmo(WEAPONS[b.weapon.type].ammo, randInt(40, 80))];
-  if (Math.random() < 0.6) items.push(makeHeal(pick(['mini', 'shield', 'medkit']), 1));
+  if (Math.random() < 0.6) items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   for (const it of items) {
     spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
   }
@@ -6091,6 +6093,11 @@ function detonateShockwave(pos, def) {
     const nx = d > 0.001 ? dx / d : rand(-1, 1);
     const nz = d > 0.001 ? dz / d : rand(-1, 1);
 
+    if (def.dmg) {
+      if (t === player) hurtPlayer(def.dmg * fall, def.name || 'Frag Grenade', false, pos.clone());
+      else damageBot(t, def.dmg * fall, 'You', false, t.pos.clone());
+    }
+
     if (t === player) {
       player.vel.x += nx * F * fall * 1.3;
       player.vel.z += nz * F * fall * 1.3;
@@ -6148,10 +6155,10 @@ const bots = [];
 let botNamePool = [];
 
 function botWeaponType(level) {
-  if (mod('snipers')) return pick(['sniper', 'marksman', 'marksman']);
-  if (mod('shotguns')) return 'shotgun';
+  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
+  if (mod('shotguns')) return pick(['shotgun', 'combat']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['ar', 'heavyar', 'reddot', 'holo', 'scopedar', 'redeye', 'tactical', 'marksman', 'revolver', 'smg', 'shotgun', 'doublebarrel', 'sniper', 'thermal']);
+  return pick(['ar', 'heavyar', 'burst', 'holo', 'hunting', 'drum', 'smg', 'shotgun', 'combat', 'doublebarrel', 'sniper', 'thermal']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -8894,8 +8901,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 8, patch: 0 };
-const VERSION_PREV = '4.7.0';
+const VERSION = { major: 4, minor: 9, patch: 0 };
+const VERSION_PREV = '4.8.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11034,7 +11041,7 @@ function adminRefill() {
 
 function adminLoadout() {
   if (!player.alive) { toast('START A MATCH FIRST', 'sub'); return; }
-  const picks = ['railgun', 'shotgun', 'ar', 'redeye', 'sniper'];
+  const picks = ['thermal', 'shotgun', 'ar', 'holo', 'sniper'];
   for (let i = 0; i < picks.length && i < player.inv.length; i++) {
     player.inv[i] = makeWeapon(picks[i], 4);
   }
