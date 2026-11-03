@@ -1907,8 +1907,7 @@ kbd { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.16); colo
 /* final placement for the team-mate panel */
 #teamPanel {
   left:18px; right:auto; top:50%; transform:translateY(-50%); width:200px;
-}
-@media (max-width: 1000px), (max-height: 620px) {
+}@media (max-width: 1000px), (max-height: 620px) {
   #teamPanel { left:12px; right:auto; top:46%; transform:translateY(-50%); width:150px; }
 }
 
@@ -2165,6 +2164,32 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 }
 .respRing b { position:relative; font-family:var(--display); font-size:40px; color:#fff; line-height:1; }
 #respawn .respSub { color:var(--accent); margin-top:2px; }
+
+/* =========================================================================
+   MODE GROUPS
+   ========================================================================= */
+.modeGroup { display:flex; flex-direction:column; }
+.modeGroup + .modeGroup { margin-top:14px; }
+.modeGroupLabel {
+  display:flex; align-items:center; gap:8px;
+  margin:0 0 5px 6px;
+  font-family:var(--label); font-size:8px; font-weight:700; letter-spacing:.26em;
+  color:rgba(234,243,255,.4);
+}
+.modeGroupLabel::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(90deg, rgba(122,178,255,.24), transparent);
+}
+.modeGroup .modeBtn:nth-child(2) { animation-delay:.02s; }
+.modeGroup .modeBtn:nth-child(3) { animation-delay:.05s; }
+.modeGroup .modeBtn:nth-child(4) { animation-delay:.08s; }
+.modeGroup .modeBtn:nth-child(5) { animation-delay:.11s; }
+.modeGroup .modeBtn:nth-child(6) { animation-delay:.14s; }
+.modeGroup .modeBtn:nth-child(7) { animation-delay:.17s; }
+@media (max-width: 1000px), (max-height: 620px) {
+  .modeGroup + .modeGroup { margin-top:10px; }
+  .modeGroupLabel { font-size:7.5px; letter-spacing:.2em; margin-bottom:3px; }
+}
 </style>
 </head>
 <body>
@@ -2299,66 +2324,77 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 
   <div class="lobby" id="lobbyEl">
     <div class="modeRow" id="modeRowEl">
-      <button class="modeBtn active" data-mode="br">
-        <span class="modeKicker">SOLO</span>
-        <span class="modeName">BATTLE ROYALE</span>
-        <span class="modeFoot"><b class="mcount">24</b> OPPONENTS</span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="ranked">
-        <span class="modeKicker">COMPETITIVE</span>
-        <span class="modeName">RANKED</span>
-        <span class="modeFoot"><b class="mcount">24</b> OPPONENTS</span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="rankedduos">
-        <span class="modeKicker">RANKED · DUO</span>
-        <span class="modeName">RANKED DUOS</span>
-        <span class="modeFoot"><b>1</b> MATE · <b>RP</b></span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="reloadduos">
-        <span class="modeKicker new">NEW</span>
-        <span class="modeName">RELOAD DUOS</span>
-        <span class="modeFoot"><b>1</b> MATE · SURVIVE <b>20s</b></span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="duos">
-        <span class="modeKicker new">NEW</span>
-        <span class="modeName">DUOS</span>
-        <span class="modeFoot"><b>1</b> MATE · <b>16</b> RIVALS</span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="reload">
-        <span class="modeKicker">3 LIVES</span>
-        <span class="modeName">RELOAD</span>
-        <span class="modeFoot"><b>25</b> PLAYERS · <b>3</b> LIVES</span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="gungame">
-        <span class="modeKicker new">NEW</span>
-        <span class="modeName">GUN GAME</span>
-        <span class="modeFoot"><b>10</b> WEAPONS · NO LOOT</span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="blitz">
-        <span class="modeKicker new">NEW</span>
-        <span class="modeName">BLITZ</span>
-        <span class="modeFoot"><b>7</b> MINUTE MATCHES</span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="rumble">
-        <span class="modeKicker new">NEW</span>
-        <span class="modeName">TEAM RUMBLE</span>
-        <span class="modeFoot"><b>6v12</b> · FIRST TO <b>30</b></span>
-        <span class="modeTick"></span>
-      </button>
-      <button class="modeBtn" data-mode="sandbox">
-        <span class="modeKicker">CREATIVE</span>
-        <span class="modeName">SANDBOX</span>
-        <span class="modeFoot">INFINITE MATS · NO STORM</span>
-        <span class="modeTick"></span>
-      </button>
+      <div class="modeGroup">
+        <div class="modeGroupLabel">BATTLE ROYALE</div>
+        <button class="modeBtn active" data-mode="br">
+          <span class="modeKicker">SOLO</span>
+          <span class="modeName">BATTLE ROYALE</span>
+          <span class="modeFoot"><b class="mcount">24</b> OPPONENTS</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="duos">
+          <span class="modeKicker new">DUO</span>
+          <span class="modeName">DUOS</span>
+          <span class="modeFoot"><b>1</b> MATE · <b>16</b> RIVALS</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="reload">
+          <span class="modeKicker">3 LIVES</span>
+          <span class="modeName">RELOAD</span>
+          <span class="modeFoot"><b>25</b> PLAYERS · <b>3</b> LIVES</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="reloadduos">
+          <span class="modeKicker new">NEW</span>
+          <span class="modeName">RELOAD DUOS</span>
+          <span class="modeFoot"><b>1</b> MATE · SURVIVE <b>20s</b></span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="blitz">
+          <span class="modeKicker">FAST</span>
+          <span class="modeName">BLITZ</span>
+          <span class="modeFoot"><b>7</b> MINUTE MATCHES</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="rumble">
+          <span class="modeKicker">2 TEAMS</span>
+          <span class="modeName">TEAM RUMBLE</span>
+          <span class="modeFoot"><b>6v12</b> · FIRST TO <b>30</b></span>
+          <span class="modeTick"></span>
+        </button>
+      </div>
+
+      <div class="modeGroup">
+        <div class="modeGroupLabel">RANKED</div>
+        <button class="modeBtn" data-mode="ranked">
+          <span class="modeKicker">COMPETITIVE</span>
+          <span class="modeName">RANKED</span>
+          <span class="modeFoot"><b class="mcount">24</b> OPPONENTS</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="rankedduos">
+          <span class="modeKicker">RANKED · DUO</span>
+          <span class="modeName">RANKED DUOS</span>
+          <span class="modeFoot"><b>1</b> MATE · <b>RP</b></span>
+          <span class="modeTick"></span>
+        </button>
+      </div>
+
+      <div class="modeGroup">
+        <div class="modeGroupLabel">ARCADE</div>
+        <button class="modeBtn" data-mode="gungame">
+          <span class="modeKicker">ARMS RACE</span>
+          <span class="modeName">GUN GAME</span>
+          <span class="modeFoot"><b>10</b> WEAPONS · NO LOOT</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="sandbox">
+          <span class="modeKicker">CREATIVE</span>
+          <span class="modeName">SANDBOX</span>
+          <span class="modeFoot">INFINITE MATS · NO STORM</span>
+          <span class="modeTick"></span>
+        </button>
+      </div>
     </div>
 
     <div class="lobbyFoot">
@@ -2719,6 +2755,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">12</span><div><b>SIMPLE UI</b> — a new lobby option that strips every animation, transition, blur and glow and runs the renderer at 1x pixel ratio for lower-end machines.</div></li>
       <li><span class="wnTag">13</span><div><b>NEW END SCREENS</b> — elimination is now a clean card with a skull crest and staggered stats, and the respawn screen has a circular countdown ring instead of a bare number.</div></li>
       <li><span class="wnTag">14</span><div><b>VICTORY ROYALE</b> — winning drops the world into slow motion for a beat, then the card arrives with a crown crest, rotating gold rays, falling confetti and a VICTORY callout.</div></li>
+      <li><span class="wnTag">15</span><div><b>GROUPED MODES</b> — the lobby list is now split into BATTLE ROYALE, RANKED and ARCADE sections with hairline headings, so the ten modes read at a glance.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8506,8 +8543,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 4, patch: 0 };
-const VERSION_PREV = '4.3.0';
+const VERSION = { major: 4, minor: 5, patch: 0 };
+const VERSION_PREV = '4.4.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10500,6 +10537,7 @@ function boot() {
   });
 }
 boot();
+
 
 
 
