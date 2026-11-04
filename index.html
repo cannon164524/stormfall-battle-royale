@@ -881,71 +881,74 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 
 /* ============================== RARE CHEST FIND ============================== */
 #rareFind {
-  position:fixed; inset:0; z-index:78; display:flex; align-items:center; justify-content:center;
-  pointer-events:none; overflow:hidden;
+  position:absolute; top:0; left:0; right:0; z-index:78; display:flex; justify-content:center;
+  padding-top:72px; pointer-events:none;
 }
 .rfBackdrop {
-  position:absolute; inset:0; opacity:0;
-  background:radial-gradient(60% 60% at 50% 45%, rgba(255,190,40,.22), rgba(2,4,10,.78));
+  position:fixed; inset:0; opacity:0;
+  background:radial-gradient(80% 46% at 50% 10%, rgba(255,190,40,.22), rgba(2,4,10,.5) 55%, rgba(2,4,10,.78));
 }
 #rareFind[data-tier="exotic"] .rfBackdrop {
-  background:radial-gradient(60% 60% at 50% 45%, rgba(40,230,255,.2), rgba(2,4,10,.78));
+  background:radial-gradient(80% 46% at 50% 10%, rgba(40,230,255,.2), rgba(2,4,10,.5) 55%, rgba(2,4,10,.78));
 }
-#rareFind.on .rfBackdrop { animation:rfFadeIn .4s ease-out forwards; }
-.rfInner { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; }
-#rareFind.on .rfInner { animation:rfFadeIn .4s ease-out forwards; }
+#rareFind.on .rfBackdrop { animation:rfFadeIn .35s ease-out forwards; }
+.rfInner { position:relative; display:flex; justify-content:center; opacity:0; }
+#rareFind.on .rfInner { animation:rfFadeIn .35s ease-out forwards; }
 @keyframes rfFadeIn { to { opacity:1; } }
 .rfRays {
-  position:absolute; width:190vmax; height:190vmax; opacity:.7;
-  background:conic-gradient(from 0deg, transparent 0deg 7deg, rgba(255,210,63,.22) 7deg 14deg, transparent 14deg 21deg);
-  animation:rfSpin 11s linear infinite;
+  position:absolute; top:-70vmax; left:50%; margin-left:-75vmax; width:150vmax; height:150vmax; opacity:.4;
+  background:conic-gradient(from 0deg, transparent 0deg 7deg, rgba(255,210,63,.2) 7deg 14deg, transparent 14deg 21deg);
+  animation:rfSpin 14s linear infinite;
 }
 #rareFind[data-tier="exotic"] .rfRays {
-  background:conic-gradient(from 0deg, transparent 0deg 7deg, rgba(63,245,255,.22) 7deg 14deg, transparent 14deg 21deg);
+  background:conic-gradient(from 0deg, transparent 0deg 7deg, rgba(63,245,255,.2) 7deg 14deg, transparent 14deg 21deg);
 }
-@keyframes rfSpin { to { transform:rotate(360deg); } }
+@keyframes rfSpin { transform-origin:center; from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 .rfCard {
-  position:relative; z-index:3; width:min(560px,86vw); padding:24px 26px 22px; text-align:center;
-  background:linear-gradient(180deg, rgba(44,34,8,.95), rgba(8,8,14,.97));
-  border:2px solid rgba(255,210,63,.6);
-  clip-path:polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
-  box-shadow:0 30px 90px rgba(0,0,0,.8), 0 0 70px rgba(255,200,50,.4);
-  transform:scale(.7); opacity:0;
+  position:relative; z-index:2; display:flex; align-items:center; gap:14px; text-align:left;
+  width:min(520px,92vw); padding:12px 18px;
+  background:linear-gradient(90deg, rgba(44,34,8,.97), rgba(12,12,18,.97));
+  border:2px solid rgba(255,210,63,.65);
+  border-radius:2px;
+  box-shadow:0 16px 44px rgba(0,0,0,.7), 0 0 34px rgba(255,200,50,.3);
+  transform:translateY(-26px); opacity:0;
 }
 #rareFind[data-tier="exotic"] .rfCard {
-  background:linear-gradient(180deg, rgba(8,38,44,.95), rgba(6,10,14,.97));
-  border-color:rgba(63,245,255,.6);
-  box-shadow:0 30px 90px rgba(0,0,0,.8), 0 0 70px rgba(60,225,255,.4);
+  background:linear-gradient(90deg, rgba(8,38,44,.96), rgba(8,12,18,.97));
+  border-color:rgba(60,235,255,.65);
+  box-shadow:0 16px 44px rgba(0,0,0,.7), 0 0 34px rgba(60,235,255,.3);
 }
-#rareFind.on .rfCard { animation:rfCardIn .55s cubic-bezier(.18,1.3,.3,1) forwards; }
-@keyframes rfCardIn { from { opacity:0; transform:scale(.7) translateY(26px); } to { opacity:1; transform:scale(1); } }
-.rfKicker { font-family:var(--label); font-size:11px; font-weight:700; letter-spacing:.42em; color:var(--gold); }
+#rareFind.on .rfCard { animation:rfCardIn .38s cubic-bezier(.18,1.25,.3,1) forwards; }
+@keyframes rfCardIn { from { opacity:0; transform:translateY(-26px) scale(.94); } to { opacity:1; transform:translateY(0) scale(1); } }
+.rfArt {
+  width:52px; height:52px; flex:0 0 52px;
+  color:#ffd23f; filter:drop-shadow(0 0 14px rgba(255,200,60,.6));
+}
+#rareFind[data-tier="exotic"] .rfArt { color:#3ff5ff; filter:drop-shadow(0 0 14px rgba(60,225,255,.6)); }
+.rfArt svg { width:100%; height:100%; display:block; }
+.rfText { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.rfKicker { font-family:var(--label); font-size:8.5px; font-weight:700; letter-spacing:.3em; color:var(--gold); }
 #rareFind[data-tier="exotic"] .rfKicker { color:#3ff5ff; }
 .rfTitle {
-  font-family:var(--display); font-style:italic; font-size:clamp(34px,9vw,72px); line-height:.95;
-  letter-spacing:-1px; color:#fff; text-shadow:0 0 32px rgba(255,200,60,.55); margin-top:4px;
+  font-family:var(--display); font-style:italic; font-size:clamp(18px,3.6vw,26px); line-height:1;
+  color:#fff; text-shadow:0 0 16px rgba(255,200,60,.45);
 }
-#rareFind[data-tier="exotic"] .rfTitle { text-shadow:0 0 32px rgba(60,225,255,.55); }
-.rfArt {
-  width:clamp(84px,17vw,140px); height:clamp(84px,17vw,140px); margin:10px auto 2px;
-  color:#ffd23f; filter:drop-shadow(0 0 26px rgba(255,200,60,.65));
-  animation:rfPop .6s .08s backwards cubic-bezier(.2,1.3,.3,1);
+#rareFind[data-tier="exotic"] .rfTitle { text-shadow:0 0 16px rgba(60,225,255,.45); }
+.rfName {
+  font-family:var(--label); font-size:clamp(12px,2.5vw,15px); font-weight:700; letter-spacing:.06em;
+  color:#ffe9a8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-#rareFind[data-tier="exotic"] .rfArt { color:#3ff5ff; filter:drop-shadow(0 0 26px rgba(60,225,255,.65)); }
-.rfArt svg { width:100%; height:100%; }
-@keyframes rfPop { from { opacity:0; transform:scale(.4) rotate(-8deg); } }
-.rfName { font-family:var(--display); font-style:italic; font-size:clamp(18px,4.6vw,30px); letter-spacing:.02em; color:#ffe9a8; }
 #rareFind[data-tier="exotic"] .rfName { color:#bdf8ff; }
-.rfSub { font-family:var(--label); font-size:9.5px; font-weight:700; letter-spacing:.28em; color:rgba(234,243,255,.55); margin-top:6px; }
+.rfSub { font-family:var(--label); font-size:8px; font-weight:700; letter-spacing:.16em; color:rgba(234,243,255,.5); }
 .rfSpark {
-  position:absolute; left:50%; top:50%; width:7px; height:7px; border-radius:50%;
-  background:#ffe08a; box-shadow:0 0 12px rgba(255,210,80,.9);
-  animation:rfSpark 1.3s ease-out forwards;
+  position:absolute; left:50%; top:26%; width:6px; height:6px; border-radius:50%;
+  background:#ffe08a; box-shadow:0 0 10px rgba(255,210,80,.9);
+  animation:rfSpark 1.1s ease-out forwards;
 }
-#rareFind[data-tier="exotic"] .rfSpark { background:#a8f6ff; box-shadow:0 0 12px rgba(80,230,255,.9); }
+#rareFind[data-tier="exotic"] .rfSpark { background:#a8f6ff; box-shadow:0 0 10px rgba(80,230,255,.9); }
 @keyframes rfSpark {
   from { opacity:1; transform:translate(0,0) scale(1); }
-  to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(.2); }
+  to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(.3); }
 }
 
 /* ============================== RANKED RECAP ============================== */
@@ -3053,11 +3056,13 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   <div class="rfInner">
     <div class="rfRays"></div>
     <div class="rfCard">
-      <div class="rfKicker">RARE CHEST FIND</div>
-      <div class="rfTitle" id="rfTitle">MYTHIC FOUND</div>
       <div class="rfArt" id="rfArt"></div>
-      <div class="rfName" id="rfName"></div>
-      <div class="rfSub" id="rfSub"></div>
+      <div class="rfText">
+        <div class="rfKicker">RARE CHEST FIND</div>
+        <div class="rfTitle" id="rfTitle">MYTHIC FOUND</div>
+        <div class="rfName" id="rfName"></div>
+        <div class="rfSub" id="rfSub"></div>
+      </div>
     </div>
   </div>
   <div class="rfSparks" id="rfSparks"></div>
@@ -3107,6 +3112,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">05</span><div><b>RARITY TIERS</b> — Mythic and Exotic are now real rarity tiers above Legendary, with their own colours through the nameplate, inventory and kill feed.</div></li>
       <li><span class="wnTag">06</span><div><b>JACKPOT CHESTS</b> — every chest has a small chance to cough up something special. When it happens the whole screen lights up: rotating rays, gold or cyan spark bursts and a huge card naming the find for a few seconds.</div></li>
       <li><span class="wnTag">07</span><div><b>EASIER EARLY RANKS</b> — Bronze now costs 100 RP a tier instead of 220, and Silver, Gold and Platinum step up gently from there. Bronze and Silver also never lose RP on a bad game, and the loss penalty only grows once you reach Gold.</div></li>
+      <li><span class="wnTag">08</span><div><b>MORE MYTHICS AND EXOTICS</b> — the special pool doubled to twenty: ten mythics including the Mythic Pistol, Double Barrel, Combat Shotgun, Heavy AR and Hunting Rifle, plus five new exotics — Bottomless Drum Gun, Freezing Bolt Sniper, Chaining Holo Rifle, Siphoning Hunting Rifle and Blasting Thermal Sniper. They drop about twice as often too, and the jackpot card is now a slim banner at the top of the screen instead of a big box.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4215,19 +4221,31 @@ const WEAPONS = {
   mythic_smg: { name: 'Mythic SMG', ammo: 'light', dmg: 24, rpm: 820, mag: 36, reload: 1.8, spread: 0.050, ads: 0.026, pellets: 1, hs: 1.6, range: 155, auto: true, sfx: 'smg' },
   mythic_sniper: { name: 'Mythic Bolt Sniper', ammo: 'heavy', dmg: 145, rpm: 46, mag: 1, reload: 2.4, spread: 0.040, ads: 0.0001, pellets: 1, hs: 2.8, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 21, scope: '8x' },
   mythic_drum: { name: 'Mythic Drum Gun', ammo: 'light', dmg: 24, rpm: 810, mag: 60, reload: 3.0, spread: 0.056, ads: 0.030, pellets: 1, hs: 1.5, range: 155, auto: true, sfx: 'smg' },
+  mythic_pistol: { name: 'Mythic Pistol', ammo: 'light', dmg: 34, rpm: 420, mag: 20, reload: 1.3, spread: 0.012, ads: 0.005, pellets: 1, hs: 2.0, range: 180, auto: true, sfx: 'pistol' },
+  mythic_doublebarrel: { name: 'Mythic Double Barrel', ammo: 'shells', dmg: 16, rpm: 170, mag: 3, reload: 2.2, spread: 0.062, ads: 0.050, pellets: 10, hs: 1.8, range: 54, auto: false, sfx: 'shotgun' },
+  mythic_combat: { name: 'Mythic Combat Shotgun', ammo: 'shells', dmg: 14, rpm: 190, mag: 10, reload: 2.5, spread: 0.058, ads: 0.044, pellets: 10, hs: 1.8, range: 64, auto: true, sfx: 'shotgun' },
+  mythic_heavyar: { name: 'Mythic Heavy Assault Rifle', ammo: 'medium', dmg: 46, rpm: 280, mag: 30, reload: 2.6, spread: 0.042, ads: 0.014, pellets: 1, hs: 1.8, range: 300, auto: true, sfx: 'ar' },
+  mythic_hunting: { name: 'Mythic Hunting Rifle', ammo: 'medium', dmg: 96, rpm: 60, mag: 6, reload: 2.5, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.3, range: 370, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
   // Exotic — ordinary guns with a twist.
   exotic_holo: { name: 'Leeching Holo Rifle', ammo: 'medium', dmg: 33, rpm: 330, mag: 26, reload: 2.2, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.75, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'siphon', siphon: 6 },
   exotic_combat: { name: 'Shoving Combat Shotgun', ammo: 'shells', dmg: 12, rpm: 170, mag: 8, reload: 2.7, spread: 0.062, ads: 0.048, pellets: 9, hs: 1.7, range: 58, auto: true, sfx: 'shotgun', onHit: 'knock', knockForce: 18 },
   exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 3.4, blastDmg: 38 },
   exotic_pistol: { name: 'Endless Pistol', ammo: 'light', dmg: 24, rpm: 320, mag: 18, reload: 1.2, spread: 0.014, ads: 0.006, pellets: 1, burst: 2, hs: 2.0, range: 170, auto: true, sfx: 'pistol', noAmmo: true },
   exotic_burst: { name: 'Piercing Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', pierce: true },
+  exotic_drum: { name: 'Bottomless Drum Gun', ammo: 'light', dmg: 21, rpm: 800, mag: 60, reload: 3.0, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 150, auto: true, sfx: 'smg', noAmmo: true },
+  exotic_sniper: { name: 'Freezing Bolt Sniper', ammo: 'heavy', dmg: 100, rpm: 42, mag: 1, reload: 2.8, spread: 0.050, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x', onHit: 'freeze', freezeTime: 2.6 },
+  exotic_chain: { name: 'Chaining Holo Rifle', ammo: 'medium', dmg: 30, rpm: 330, mag: 26, reload: 2.3, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.7, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'chain', chainR: 9, chainMul: 0.5 },
+  exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'siphon', siphon: 12 },
+  exotic_thermal: { name: 'Blasting Thermal Sniper', ammo: 'heavy', dmg: 100, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.4, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal', onHit: 'explode', blastR: 4.2, blastDmg: 46 },
 };
 
-const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_sniper', 'mythic_drum'];
-const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_combat', 'exotic_hunting', 'exotic_pistol', 'exotic_burst'];
+const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_sniper', 'mythic_drum', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_combat', 'mythic_heavyar', 'mythic_hunting'];
+const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_combat', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_drum', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_thermal'];
 const SPECIAL_BASE = {
   mythic_ar: 'ar', mythic_shotgun: 'shotgun', mythic_smg: 'smg', mythic_sniper: 'sniper', mythic_drum: 'drum',
+  mythic_pistol: 'pistol', mythic_doublebarrel: 'doublebarrel', mythic_combat: 'combat', mythic_heavyar: 'heavyar', mythic_hunting: 'hunting',
   exotic_holo: 'holo', exotic_combat: 'combat', exotic_hunting: 'hunting', exotic_pistol: 'pistol', exotic_burst: 'burst',
+  exotic_drum: 'drum', exotic_sniper: 'sniper', exotic_chain: 'holo', exotic_siphonhunt: 'hunting', exotic_thermal: 'thermal',
 };
 
 /* Weighted loot pool — shotguns and spray guns carry the early game, optics
@@ -4291,6 +4309,16 @@ GUN_ICONS.exotic_combat = GUN_ICONS.shotgun;
 GUN_ICONS.exotic_hunting = GUN_ICONS.sniper;
 GUN_ICONS.exotic_pistol = GUN_ICONS.pistol;
 GUN_ICONS.exotic_burst = GUN_ICONS.ar;
+GUN_ICONS.mythic_pistol = GUN_ICONS.pistol;
+GUN_ICONS.mythic_doublebarrel = GUN_ICONS.shotgun;
+GUN_ICONS.mythic_combat = GUN_ICONS.shotgun;
+GUN_ICONS.mythic_heavyar = GUN_ICONS.ar;
+GUN_ICONS.mythic_hunting = GUN_ICONS.sniper;
+GUN_ICONS.exotic_drum = GUN_ICONS.smg;
+GUN_ICONS.exotic_sniper = GUN_ICONS.sniper;
+GUN_ICONS.exotic_chain = GUN_ICONS.tactical;
+GUN_ICONS.exotic_siphonhunt = GUN_ICONS.sniper;
+GUN_ICONS.exotic_thermal = GUN_ICONS.sniper;
 GUN_ICONS.frag = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="13"/><rect x="27" y="16" width="10" height="8" rx="2"/><rect x="30" y="10" width="4" height="7" rx="2"/><rect x="26" y="26" width="12" height="3" opacity=".35"/><circle cx="26" cy="36" r="2.4" fill="#0b1a2b"/><circle cx="38" cy="36" r="2.4" fill="#0b1a2b"/></svg>';
 
 const HEALS = {
@@ -4795,8 +4823,8 @@ function ammoTypeForPlayer() {
 
 function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
-  if (Math.random() < 0.025) return makeWeapon(pick(MYTHIC_WEAPONS), 5);
-  if (Math.random() < 0.025) return makeWeapon(pick(EXOTIC_WEAPONS), 6);
+  if (Math.random() < 0.04) return makeWeapon(pick(MYTHIC_WEAPONS), 5);
+  if (Math.random() < 0.04) return makeWeapon(pick(EXOTIC_WEAPONS), 6);
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -4891,7 +4919,7 @@ function openChest(c) {
     spawnLoot(c.x + Math.cos(ang) * r, c.y + 0.6, c.z + Math.sin(ang) * r, it);
   }
   spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
-  if (Math.random() < 0.04) {
+  if (Math.random() < 0.12) {
     const id = Math.random() < 0.5 ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
     const rareItem = makeWeapon(id, MYTHIC_WEAPONS.indexOf(id) >= 0 ? 5 : 6);
     const ang = Math.random() * TAU;
@@ -5030,6 +5058,27 @@ function weaponSpecial(w, hit, dir, dmg) {
     }
   } else if (w.onHit === 'explode' && hit.point) {
     blastDamage(hit.point, w.blastR || 3.2, w.blastDmg || 34, hit.bot);
+  } else if (w.onHit === 'freeze') {
+    if (hit.kind === 'bot' && hit.bot) {
+      hit.bot.frozenUntil = Math.max(hit.bot.frozenUntil || 0, state.time + (w.freezeTime || 2.5));
+      if (hit.point) tracerFX(hit.point, hit.point.clone().setY(hit.point.y + 1.2), 0x9ff4ff);
+    }
+  } else if (w.onHit === 'chain') {
+    if (hit.kind === 'bot' && hit.bot) {
+      const src = hit.bot;
+      const reach = w.chainR || 9;
+      let nearest = null, nd = reach;
+      for (let i = 0; i < bots.length; i++) {
+        const o = bots[i];
+        if (!o.alive || o === src) continue;
+        const d = Math.hypot(o.pos.x - src.pos.x, o.pos.z - src.pos.z);
+        if (d < nd) { nd = d; nearest = o; }
+      }
+      if (nearest) {
+        damageBot(nearest, dmg * (w.chainMul || 0.5), 'You', false, nearest.pos.clone());
+        tracerFX(hit.point, nearest.pos.clone().setY(nearest.pos.y + 1.2), 0x8ff6ff);
+      }
+    }
   }
   if (w.pierce && hit.kind === 'bot' && hit.point) {
     const start = hit.point.clone().addScaledVector(dir, 0.6);
@@ -6668,6 +6717,8 @@ function updateBot(b, dt) {
     b.goal = new THREE.Vector3(storm.center.x, b.pos.y, storm.center.z);
     b.goalTime = state.time + 3;
   }
+
+  if (b.frozenUntil > state.time) speed *= 0.45;
 
   if (moveX || moveZ) {
     const sx = b.pos.x, sz = b.pos.z;
@@ -9115,8 +9166,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 1, patch: 0 };
-const VERSION_PREV = '5.0.1';
+const VERSION = { major: 5, minor: 2, patch: 0 };
+const VERSION_PREV = '5.1.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
