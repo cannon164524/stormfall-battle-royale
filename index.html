@@ -987,6 +987,25 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
   animation:rfSpark 1.1s ease-out forwards;
 }
 #rareFind[data-tier="exotic"] .rfSpark { background:#a8f6ff; box-shadow:0 0 10px rgba(80,230,255,.9); }
+#rareFind[data-tier="ascendant"] .rfBackdrop {
+  background:radial-gradient(80% 46% at 50% 10%, rgba(232,121,249,.24), rgba(2,4,10,.5) 55%, rgba(2,4,10,.78));
+}
+#rareFind.noDim[data-tier="ascendant"] .rfBackdrop {
+  background:radial-gradient(80% 46% at 50% 8%, rgba(232,121,249,.18), rgba(2,4,10,0) 62%);
+}
+#rareFind[data-tier="ascendant"] .rfRays {
+  background:conic-gradient(from 0deg, transparent 0deg 7deg, rgba(232,121,249,.22) 7deg 14deg, transparent 14deg 21deg);
+}
+#rareFind[data-tier="ascendant"] .rfCard {
+  background:linear-gradient(90deg, rgba(44,14,44,.97), rgba(12,8,18,.97));
+  border-color:rgba(232,121,249,.66);
+  box-shadow:0 16px 44px rgba(0,0,0,.7), 0 0 34px rgba(232,121,249,.3);
+}
+#rareFind[data-tier="ascendant"] .rfArt { color:#e879f9; filter:drop-shadow(0 0 14px rgba(232,121,249,.6)); }
+#rareFind[data-tier="ascendant"] .rfKicker { color:#e879f9; }
+#rareFind[data-tier="ascendant"] .rfTitle { text-shadow:0 0 16px rgba(232,121,249,.5); }
+#rareFind[data-tier="ascendant"] .rfName { color:#f6ccff; }
+#rareFind[data-tier="ascendant"] .rfSpark { background:#f3b6ff; box-shadow:0 0 10px rgba(232,121,249,.9); }
 @keyframes rfSpark {
   from { opacity:1; transform:translate(0,0) scale(1); }
   to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(.3); }
@@ -3020,7 +3039,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
         <div class="mpKicker">STORE</div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
-      <div class="mpMeta">SEASON 4 · NEW ROTATION</div>
+      <div class="mpMeta">SEASON 5 · NEW ROTATION</div>
     </div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -3041,7 +3060,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 4</div>
+        <div class="mpKicker">SEASON 5</div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -3357,8 +3376,11 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BULLETS STAY INSIDE THE RETICLE</b> — the spread test jitters each shot on X and Z at once, so the corner of the cone reached about 1.41× the number the ring was drawn from, and the odd pellet slipped outside. Shots are now scaled to 0.62 of that figure, which keeps the whole cone — diagonals included — inside the bloom.</div></li>
-      <li><span class="wnTag">02</span><div><b>SLIGHTLY TIGHTER GUNS</b> — the practical effect is a touch less than a third off the real spread cone on every automatic weapon, with the reticle unchanged, so what you see is a guarantee rather than an average.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON 5 — THE ARSENAL REFORGED</b> — a new season opens with a clean slate: rank points and battle pass progress reset for everyone, the pass track rebuilt around five new outfits, and the item shop turned into a real rotation — six featured looks at a time instead of a wall of everything ever sold.</div></li>
+      <li><span class="wnTag">02</span><div><b>A NEW RARITY: ASCENDANT</b> — a pink tier between Legendary and Mythic, worth ×1.3 damage and rolled on ordinary guns rather than reserved for named weapons. It glows on the ground, lights up a chest find, and gives the loot ladder a step that is not just "legendary again".</div></li>
+      <li><span class="wnTag">03</span><div><b>SMGs ACTUALLY HIT</b> — the reticle draws the real cone now, so the old spray numbers read like a shotgun pattern on screen. The SMG goes from 0.058 to 0.015 spread (0.008 aimed), and the rest of the spray class lines up behind it: Tactical SMG 0.013, LMG 0.024, Minigun 0.038. A held trigger can now add at most 0.020 to that cone, and fast automatics are allowed only 1.1× their own base spread — spraying is still loose, but it is never a cloud.</div></li>
+      <li><span class="wnTag">04</span><div><b>FIRST-SHOT ACCURACY IN 0.4s</b> — the ready window was a full second, which made a settled gun feel like it never settled. It now returns in 0.4 s, the same beat it takes the bloom to bleed off, so pacing your trigger is a real decision instead of a guess.</div></li>
+      <li><span class="wnTag">05</span><div><b>LOOT POOL OVERHAUL</b> — in: Tactical SMG, Suppressed Pistol, LMG, Tactical Shotgun, Lever Action Rifle, Minigun. Out: Drum Gun, Combat Shotgun, Thermal Sniper, along with their mythic and exotic versions. The mythic ladder gained a Tactical SMG, an LMG and a Lever Action; the exotic shelf gained a Shoving Tactical Shotgun, a Shredding Minigun and a Piercing Lever Rifle. Gun Game runs a 13-gun ladder with the new guns in it.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -3444,7 +3466,7 @@ const REVIVE_TIME = 3.4;
 const REVIVE_RANGE = 3.6;
 const REBOOT_TIME = 10;
 const SURVIVE_TIME = 20;   // Reload Duos: how long your mate must stay alive
-const GUN_ORDER = ['pistol', 'smg', 'drum', 'shotgun', 'combat', 'ar', 'burst', 'holo', 'hunting', 'sniper'];
+const GUN_ORDER = ['pistol', 'silenced', 'tacsmg', 'smg', 'doublebarrel', 'tacshot', 'shotgun', 'lmg', 'ar', 'burst', 'holo', 'hunting', 'sniper'];
 
 const MODE_DEFS = {
   br: {
@@ -4615,14 +4637,25 @@ const RARITY = [
   { name: 'Rare', color: '#3fa9f5', mult: 1.10 },
   { name: 'Epic', color: '#b45cf0', mult: 1.17 },
   { name: 'Legendary', color: '#f2a72b', mult: 1.25 },
-  { name: 'Mythic', color: '#ffd23f', mult: 1.32 },
-  { name: 'Exotic', color: '#3ff5ff', mult: 1.20 },
+  { name: 'Ascendant', color: '#e879f9', mult: 1.30 },
+  { name: 'Mythic', color: '#ffd23f', mult: 1.36 },
+  { name: 'Exotic', color: '#3ff5ff', mult: 1.24 },
 ];
+const R_LEGENDARY = 4;
+const R_ASCENDANT = 5;
+const R_MYTHIC = 6;
+const R_EXOTIC = 7;
 
 const WEAPONS = {
   pistol: { name: 'Pistol', ammo: 'light', dmg: 25, rpm: 380, mag: 16, reload: 1.6, spread: 0.016, ads: 0.006, pellets: 1, hs: 1.9, range: 160, auto: true, sfx: 'pistol' },
-  smg: { name: 'SMG', ammo: 'light', dmg: 18, rpm: 750, mag: 30, reload: 2.0, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 135, auto: true, sfx: 'smg' },
-  drum: { name: 'Drum Gun', ammo: 'light', dmg: 19, rpm: 780, mag: 50, reload: 3.4, spread: 0.062, ads: 0.032, pellets: 1, hs: 1.4, range: 140, auto: true, sfx: 'smg' },
+  smg: { name: 'SMG', ammo: 'light', dmg: 19, rpm: 750, mag: 30, reload: 2.0, spread: 0.015, ads: 0.008, pellets: 1, hs: 1.5, range: 155, auto: true, sfx: 'smg' },
+  drum: { name: 'Drum Gun', ammo: 'light', dmg: 19, rpm: 780, mag: 50, reload: 3.4, spread: 0.020, ads: 0.013, pellets: 1, hs: 1.4, range: 145, auto: true, sfx: 'smg' },
+  tacsmg: { name: 'Tactical SMG', ammo: 'light', dmg: 17, rpm: 800, mag: 30, reload: 1.9, spread: 0.013, ads: 0.007, pellets: 1, hs: 1.6, range: 155, auto: true, sfx: 'smg' },
+  silenced: { name: 'Suppressed Pistol', ammo: 'light', dmg: 24, rpm: 400, mag: 16, reload: 1.5, spread: 0.012, ads: 0.006, pellets: 1, hs: 2.1, range: 175, auto: true, sfx: 'pistol' },
+  lmg: { name: 'Light Machine Gun', ammo: 'medium', dmg: 28, rpm: 470, mag: 60, reload: 3.4, spread: 0.024, ads: 0.013, pellets: 1, hs: 1.6, range: 210, auto: true, sfx: 'ar' },
+  lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 88, rpm: 60, mag: 6, reload: 3.0, spread: 0.015, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 36, scope: '4x' },
+  tacshot: { name: 'Tactical Shotgun', ammo: 'shells', dmg: 12, rpm: 120, mag: 6, reload: 2.8, spread: 0.050, ads: 0.040, pellets: 8, hs: 1.75, range: 58, auto: false, sfx: 'shotgun' },
+  minigun: { name: 'Minigun', ammo: 'light', dmg: 17, rpm: 1000, mag: 80, reload: 4.0, spread: 0.038, ads: 0.026, pellets: 1, hs: 1.4, range: 150, auto: true, sfx: 'smg' },
   shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 13, rpm: 80, mag: 5, reload: 3.1, spread: 0.062, ads: 0.048, pellets: 10, hs: 1.75, range: 62, auto: false, sfx: 'shotgun' },
   doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 12, rpm: 150, mag: 2, reload: 2.6, spread: 0.070, ads: 0.055, pellets: 8, hs: 1.7, range: 48, auto: false, sfx: 'shotgun' },
   combat: { name: 'Combat Shotgun', ammo: 'shells', dmg: 11, rpm: 170, mag: 8, reload: 2.9, spread: 0.066, ads: 0.050, pellets: 9, hs: 1.7, range: 58, auto: true, sfx: 'shotgun' },
@@ -4636,55 +4669,63 @@ const WEAPONS = {
   // Mythic — stronger versions of guns already in the pool.
   mythic_ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 46, rpm: 400, mag: 35, reload: 2.0, spread: 0.030, ads: 0.010, pellets: 1, hs: 1.8, range: 280, auto: true, sfx: 'ar' },
   mythic_shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 18, rpm: 95, mag: 6, reload: 2.5, spread: 0.055, ads: 0.045, pellets: 12, hs: 1.9, range: 70, auto: false, sfx: 'shotgun' },
-  mythic_smg: { name: 'SMG', ammo: 'light', dmg: 24, rpm: 820, mag: 36, reload: 1.8, spread: 0.050, ads: 0.026, pellets: 1, hs: 1.6, range: 155, auto: true, sfx: 'smg' },
+  mythic_smg: { name: 'SMG', ammo: 'light', dmg: 24, rpm: 820, mag: 36, reload: 1.8, spread: 0.016, ads: 0.008, pellets: 1, hs: 1.6, range: 160, auto: true, sfx: 'smg' },
+  mythic_tacsmg: { name: 'Tactical SMG', ammo: 'light', dmg: 21, rpm: 860, mag: 36, reload: 1.7, spread: 0.014, ads: 0.007, pellets: 1, hs: 1.7, range: 160, auto: true, sfx: 'smg' },
   mythic_sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 145, rpm: 46, mag: 1, reload: 2.4, spread: 0.040, ads: 0.0001, pellets: 1, hs: 2.8, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 21, scope: '8x' },
-  mythic_drum: { name: 'Drum Gun', ammo: 'light', dmg: 24, rpm: 810, mag: 60, reload: 3.0, spread: 0.056, ads: 0.030, pellets: 1, hs: 1.5, range: 155, auto: true, sfx: 'smg' },
   mythic_pistol: { name: 'Pistol', ammo: 'light', dmg: 34, rpm: 420, mag: 20, reload: 1.3, spread: 0.012, ads: 0.005, pellets: 1, hs: 2.0, range: 180, auto: true, sfx: 'pistol' },
   mythic_doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 16, rpm: 170, mag: 3, reload: 2.2, spread: 0.062, ads: 0.050, pellets: 10, hs: 1.8, range: 54, auto: false, sfx: 'shotgun' },
-  mythic_combat: { name: 'Combat Shotgun', ammo: 'shells', dmg: 14, rpm: 190, mag: 10, reload: 2.5, spread: 0.058, ads: 0.044, pellets: 10, hs: 1.8, range: 64, auto: true, sfx: 'shotgun' },
   mythic_heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 46, rpm: 280, mag: 30, reload: 2.6, spread: 0.042, ads: 0.014, pellets: 1, hs: 1.8, range: 300, auto: true, sfx: 'ar' },
+  mythic_lmg: { name: 'Light Machine Gun', ammo: 'medium', dmg: 34, rpm: 500, mag: 70, reload: 3.0, spread: 0.021, ads: 0.011, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'ar' },
+  mythic_lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 104, rpm: 66, mag: 7, reload: 2.7, spread: 0.012, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 34, scope: '4x' },
   mythic_hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 96, rpm: 60, mag: 6, reload: 2.5, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.3, range: 370, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
   // Exotic — ordinary guns with a twist.
   exotic_holo: { name: 'Leeching Holo Rifle', ammo: 'medium', dmg: 33, rpm: 330, mag: 26, reload: 2.2, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.75, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'siphon', siphon: 6 },
-  exotic_combat: { name: 'Shoving Combat Shotgun', ammo: 'shells', dmg: 12, rpm: 170, mag: 8, reload: 2.7, spread: 0.062, ads: 0.048, pellets: 9, hs: 1.7, range: 58, auto: true, sfx: 'shotgun', onHit: 'knock', knockForce: 18 },
+  exotic_tacshot: { name: 'Shoving Tactical Shotgun', ammo: 'shells', dmg: 12, rpm: 130, mag: 7, reload: 2.7, spread: 0.048, ads: 0.038, pellets: 8, hs: 1.75, range: 58, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 16 },
   exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 3.4, blastDmg: 38 },
   exotic_pistol: { name: 'Endless Pistol', ammo: 'light', dmg: 24, rpm: 320, mag: 18, reload: 1.2, spread: 0.014, ads: 0.006, pellets: 1, burst: 2, hs: 2.0, range: 170, auto: true, sfx: 'pistol', noAmmo: true },
   exotic_burst: { name: 'Piercing Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', pierce: true },
-  exotic_drum: { name: 'Bottomless Drum Gun', ammo: 'light', dmg: 21, rpm: 800, mag: 60, reload: 3.0, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 150, auto: true, sfx: 'smg', noAmmo: true },
+  exotic_minigun: { name: 'Shredding Minigun', ammo: 'light', dmg: 17, rpm: 1050, mag: 90, reload: 3.8, spread: 0.036, ads: 0.024, pellets: 1, hs: 1.5, range: 160, auto: true, sfx: 'smg', onHit: 'knock', knockForce: 4 },
   exotic_sniper: { name: 'Freezing Bolt Sniper', ammo: 'heavy', dmg: 100, rpm: 42, mag: 1, reload: 2.8, spread: 0.050, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x', onHit: 'freeze', freezeTime: 2.6 },
   exotic_chain: { name: 'Chaining Holo Rifle', ammo: 'medium', dmg: 30, rpm: 330, mag: 26, reload: 2.3, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.7, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'chain', chainR: 9, chainMul: 0.5 },
   exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'siphon', siphon: 12 },
-  exotic_thermal: { name: 'Blasting Thermal Sniper', ammo: 'heavy', dmg: 100, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.4, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal', onHit: 'explode', blastR: 4.2, blastDmg: 46 },
+  exotic_lever: { name: 'Piercing Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x', pierce: true },
 };
 
-const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_sniper', 'mythic_drum', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_combat', 'mythic_heavyar', 'mythic_hunting'];
-const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_combat', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_drum', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_thermal'];
+const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_heavyar', 'mythic_lmg', 'mythic_lever', 'mythic_hunting'];
+const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_minigun', 'exotic_lever'];
 const SPECIAL_BASE = {
-  mythic_ar: 'ar', mythic_shotgun: 'shotgun', mythic_smg: 'smg', mythic_sniper: 'sniper', mythic_drum: 'drum',
-  mythic_pistol: 'pistol', mythic_doublebarrel: 'doublebarrel', mythic_combat: 'combat', mythic_heavyar: 'heavyar', mythic_hunting: 'hunting',
-  exotic_holo: 'holo', exotic_combat: 'combat', exotic_hunting: 'hunting', exotic_pistol: 'pistol', exotic_burst: 'burst',
-  exotic_drum: 'drum', exotic_sniper: 'sniper', exotic_chain: 'holo', exotic_siphonhunt: 'hunting', exotic_thermal: 'thermal',
+  mythic_ar: 'ar', mythic_tacsmg: 'tacsmg', mythic_smg: 'smg', mythic_sniper: 'sniper', mythic_lmg: 'lmg',
+  mythic_shotgun: 'shotgun', mythic_pistol: 'pistol', mythic_doublebarrel: 'doublebarrel', mythic_heavyar: 'heavyar',
+  mythic_hunting: 'hunting', mythic_lever: 'lever',
+  exotic_holo: 'holo', exotic_tacshot: 'tacshot', exotic_hunting: 'hunting', exotic_pistol: 'pistol',
+  exotic_burst: 'burst', exotic_sniper: 'sniper', exotic_chain: 'holo', exotic_siphonhunt: 'hunting',
+  exotic_minigun: 'minigun', exotic_lever: 'lever',
 };
 
-/* Weighted loot pool — shotguns and spray guns carry the early game, optics
-   are about a quarter of gun drops, and the heavy snipers stay rare. */
+/* Weighted loot pool — Season 5 reforged it. The drum gun, combat shotgun and
+   thermal sniper are vaulted, six new guns share the table, and the spray
+   weapons that carry the early game are tight enough to actually hit. */
 const LOOT_WEAPON_POOL = [
-  // short-range brawlers
+  // close range
+  'tacsmg', 'tacsmg',
   'smg', 'smg',
-  'drum', 'drum',
   'shotgun', 'shotgun',
+  'tacshot', 'tacshot',
   'doublebarrel',
-  'combat',
   'pistol', 'pistol',
-  // mid-range
+  'silenced',
+  // mid range
   'ar', 'ar',
-  'burst', 'burst',
+  'burst',
   'heavyar',
-  // scoped and long-range
+  'lmg',
+  // scoped and long range
   'holo', 'holo',
+  'lever',
   'hunting',
   'sniper',
-  'thermal',
+  // heavy suppression
+  'minigun',
 ];
 
 const GUN_ICONS = {
@@ -4711,32 +4752,39 @@ const GUN_ICONS = {
 };
 GUN_ICONS.heavyar = GUN_ICONS.ar;
 GUN_ICONS.burst = GUN_ICONS.ar;
+GUN_ICONS.lmg = GUN_ICONS.ar;
+GUN_ICONS.minigun = GUN_ICONS.ar;
 GUN_ICONS.drum = GUN_ICONS.smg;
+GUN_ICONS.tacsmg = GUN_ICONS.smg;
+GUN_ICONS.silenced = GUN_ICONS.pistol;
 GUN_ICONS.doublebarrel = GUN_ICONS.shotgun;
 GUN_ICONS.combat = GUN_ICONS.shotgun;
+GUN_ICONS.tacshot = GUN_ICONS.shotgun;
 GUN_ICONS.holo = GUN_ICONS.tactical;
 GUN_ICONS.thermal = GUN_ICONS.sniper;
 GUN_ICONS.hunting = GUN_ICONS.sniper;
+GUN_ICONS.lever = GUN_ICONS.marksman;
 GUN_ICONS.mythic_ar = GUN_ICONS.ar;
 GUN_ICONS.mythic_shotgun = GUN_ICONS.shotgun;
 GUN_ICONS.mythic_smg = GUN_ICONS.smg;
+GUN_ICONS.mythic_tacsmg = GUN_ICONS.smg;
 GUN_ICONS.mythic_sniper = GUN_ICONS.sniper;
-GUN_ICONS.mythic_drum = GUN_ICONS.smg;
+GUN_ICONS.mythic_pistol = GUN_ICONS.pistol;
+GUN_ICONS.mythic_doublebarrel = GUN_ICONS.shotgun;
+GUN_ICONS.mythic_heavyar = GUN_ICONS.ar;
+GUN_ICONS.mythic_lmg = GUN_ICONS.ar;
+GUN_ICONS.mythic_lever = GUN_ICONS.marksman;
+GUN_ICONS.mythic_hunting = GUN_ICONS.sniper;
 GUN_ICONS.exotic_holo = GUN_ICONS.tactical;
-GUN_ICONS.exotic_combat = GUN_ICONS.shotgun;
+GUN_ICONS.exotic_tacshot = GUN_ICONS.shotgun;
 GUN_ICONS.exotic_hunting = GUN_ICONS.sniper;
 GUN_ICONS.exotic_pistol = GUN_ICONS.pistol;
 GUN_ICONS.exotic_burst = GUN_ICONS.ar;
-GUN_ICONS.mythic_pistol = GUN_ICONS.pistol;
-GUN_ICONS.mythic_doublebarrel = GUN_ICONS.shotgun;
-GUN_ICONS.mythic_combat = GUN_ICONS.shotgun;
-GUN_ICONS.mythic_heavyar = GUN_ICONS.ar;
-GUN_ICONS.mythic_hunting = GUN_ICONS.sniper;
-GUN_ICONS.exotic_drum = GUN_ICONS.smg;
 GUN_ICONS.exotic_sniper = GUN_ICONS.sniper;
 GUN_ICONS.exotic_chain = GUN_ICONS.tactical;
 GUN_ICONS.exotic_siphonhunt = GUN_ICONS.sniper;
-GUN_ICONS.exotic_thermal = GUN_ICONS.sniper;
+GUN_ICONS.exotic_minigun = GUN_ICONS.ar;
+GUN_ICONS.exotic_lever = GUN_ICONS.marksman;
 GUN_ICONS.frag = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="13"/><rect x="27" y="16" width="10" height="8" rx="2"/><rect x="30" y="10" width="4" height="7" rx="2"/><rect x="26" y="26" width="12" height="3" opacity=".35"/><circle cx="26" cy="36" r="2.4" fill="#0b1a2b"/><circle cx="38" cy="36" r="2.4" fill="#0b1a2b"/></svg>';
 GUN_ICONS.grappler = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="26" height="10" rx="2"/><rect x="30" y="29" width="12" height="4" rx="1"/><path d="M42 31h8l4-8h6l-6 10 6 10h-6l-4-8h-8z" opacity=".9"/><rect x="14" y="36" width="10" height="14" rx="2"/><rect x="10" y="20" width="14" height="6" rx="2"/></svg>';
 
@@ -4967,7 +5015,7 @@ function buildWeaponModel(type) {
 
   let tip = 0.6;
 
-  if (type === 'ar' || type === 'heavyar' || type === 'drum' || type === 'burst') {
+  if (type === 'ar' || type === 'heavyar' || type === 'drum' || type === 'burst' || type === 'lmg') {
     box(0.11, 0.16, 0.62, metal, 0, 0, 0);
     cyl(0.028, 0.028, 0.46, dark, 0, 0.02, 0.5, 'z');
     box(0.09, 0.1, 0.3, poly, 0, -0.01, -0.44);
@@ -4980,6 +5028,13 @@ function buildWeaponModel(type) {
       box(0.13, 0.1, 0.34, dark, 0, -0.2, -0.02);
       g.scale.set(1.12, 1.1, 1.12);
       tip = 0.82;
+    }
+    if (type === 'lmg') {
+      box(0.17, 0.2, 0.26, dark, 0, -0.22, 0.02);
+      box(0.05, 0.9, 0.05, accent, 0, -0.22, 0.02, 0, 0, 0.5);
+      box(0.05, 0.05, 0.2, accent, 0, 0.14, 0.2);
+      g.scale.set(1.16, 1.12, 1.16);
+      tip = 0.86;
     }
   } else if (type === 'scopedar' || type === 'redeye' || type === 'tactical' || type === 'marksman' || type === 'reddot' || type === 'holo' || type === 'hunting') {
     box(0.11, 0.16, 0.6, metal, 0, 0, 0);
@@ -4994,7 +5049,7 @@ function buildWeaponModel(type) {
       box(0.02, 0.02, 0.02, new THREE.MeshBasicMaterial({ color: 0xff4d5e }), 0, 0.15, 0.22);
     }
     tip = 0.72;
-  } else if (type === 'smg') {
+  } else if (type === 'smg' || type === 'tacsmg') {
     box(0.1, 0.15, 0.44, metal, 0, 0, 0);
     cyl(0.026, 0.026, 0.2, dark, 0, 0.02, 0.32, 'z');
     box(0.06, 0.26, 0.09, dark, 0, -0.19, 0.02);
@@ -5002,7 +5057,12 @@ function buildWeaponModel(type) {
     box(0.03, 0.06, 0.02, accent, 0, 0.1, 0.22);
     box(0.06, 0.05, 0.18, poly, 0, 0.01, -0.3);
     tip = 0.46;
-  } else if (type === 'shotgun' || type === 'doublebarrel' || type === 'combat') {
+    if (type === 'tacsmg') {
+      box(0.05, 0.04, 0.24, accent, 0, 0.1, 0.08);
+      box(0.03, 0.03, 0.04, dark, 0, 0.12, 0.22);
+      tip = 0.5;
+    }
+  } else if (type === 'shotgun' || type === 'doublebarrel' || type === 'combat' || type === 'tacshot') {
     box(0.1, 0.14, 0.36, metal, 0, 0, -0.02);
     cyl(0.034, 0.034, 0.72, dark, 0, 0.04, 0.44, 'z');
     cyl(0.03, 0.03, 0.5, accent, 0, -0.06, 0.32, 'z');
@@ -5015,7 +5075,7 @@ function buildWeaponModel(type) {
       cyl(0.03, 0.03, 0.3, wood, 0, -0.01, -0.42);
       tip = 0.72;
     }
-  } else if (type === 'sniper' || type === 'railgun' || type === 'thermal') {
+  } else if (type === 'sniper' || type === 'railgun' || type === 'thermal' || type === 'lever') {
     box(0.09, 0.13, 0.5, metal, 0, 0, 0);
     cyl(0.025, 0.025, 0.9, dark, 0, 0.02, 0.62, 'z');
     cyl(0.045, 0.045, 0.34, dark, 0, 0.13, 0.06, 'z');
@@ -5029,6 +5089,22 @@ function buildWeaponModel(type) {
       box(0.06, 0.05, 0.24, new THREE.MeshBasicMaterial({ color: 0x5eead4 }), 0, 0.16, 0.42);
       tip = 1.36;
     }
+    if (type === 'lever') {
+      box(0.03, 0.16, 0.03, accent, 0, -0.06, -0.04, 0.55, 0, 0);
+      box(0.02, 0.02, 0.14, accent, 0, 0.06, 0.12);
+      box(0.05, 0.05, 0.2, wood, 0, 0.01, 0.28);
+      tip = 1.08;
+    }
+  } else if (type === 'minigun') {
+    box(0.14, 0.16, 0.4, metal, 0, 0, -0.02);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * TAU;
+      cyl(0.018, 0.018, 0.62, dark, Math.cos(a) * 0.045, 0.04 + Math.sin(a) * 0.045, 0.5, 'z');
+    }
+    cyl(0.075, 0.075, 0.12, accent, 0, 0.04, 0.24, 'z');
+    box(0.12, 0.24, 0.13, dark, 0, -0.2, -0.04, 0.12, 0, 0);
+    box(0.07, 0.05, 0.22, poly, 0, 0.02, -0.34);
+    tip = 0.86;
   } else if (type === 'heal') {
     cyl(0.055, 0.055, 0.2, mat(0x3fa9f5, true), 0, -0.02, 0);
     cyl(0.02, 0.02, 0.06, mat(0xd8e6f2, true), 0, 0.1, 0);
@@ -5191,7 +5267,7 @@ function spawnLoot(x, y, z, item) {
   model.position.y = 0.45;
   g.add(model);
 
-  const special = item.kind === 'weapon' && item.rarity >= 5;
+  const special = item.kind === 'weapon' && item.rarity >= R_ASCENDANT;
   let halo = null;
 
   const ring = new THREE.Mesh(
@@ -5237,7 +5313,7 @@ function clearLoot() {
 
 function lootWeaponType() {
   if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
-  if (mod('shotguns')) return pick(['shotgun', 'combat']);
+  if (mod('shotguns')) return pick(['shotgun', 'tacshot']);
   return pick(LOOT_WEAPON_POOL);
 }
 
@@ -5260,8 +5336,10 @@ function ammoTypeForPlayer() {
 
 function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
-  if (Math.random() < 0.04) return makeWeapon(pick(MYTHIC_WEAPONS), 5);
-  if (Math.random() < 0.04) return makeWeapon(pick(EXOTIC_WEAPONS), 6);
+  if (Math.random() < 0.03) return makeWeapon(pick(MYTHIC_WEAPONS), R_MYTHIC);
+  if (Math.random() < 0.03) return makeWeapon(pick(EXOTIC_WEAPONS), R_EXOTIC);
+  // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
+  if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
@@ -5355,14 +5433,14 @@ function openChest(c) {
     const ang = Math.random() * TAU;
     const r = 0.8 + Math.random() * 1.2;
     spawnLoot(c.x + Math.cos(ang) * r, c.y + 0.6, c.z + Math.sin(ang) * r, it);
-    if (it && it.kind === 'weapon' && it.rarity >= 5) {
+    if (it && it.kind === 'weapon' && it.rarity >= R_ASCENDANT) {
       showRareFind(it, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
     }
   }
   spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
   if (Math.random() < 0.12) {
     const id = Math.random() < 0.5 ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
-    const rareItem = makeWeapon(id, MYTHIC_WEAPONS.indexOf(id) >= 0 ? 5 : 6);
+    const rareItem = makeWeapon(id, MYTHIC_WEAPONS.indexOf(id) >= 0 ? R_MYTHIC : R_EXOTIC);
     const ang = Math.random() * TAU;
     spawnLoot(c.x + Math.cos(ang) * 1.5, c.y + 0.7, c.z + Math.sin(ang) * 1.5, rareItem);
     showRareFind(rareItem);
@@ -5535,6 +5613,15 @@ function weaponSpecial(w, hit, dir, dmg) {
   }
 }
 
+/* Spray bloom is what a held trigger looks like on the reticle. A fast
+   automatic earns a much smaller window than a slow rifle, and no gun ever
+   adds more than BLOOM_ADD_MAX to its cone, or the reticle stops reading as
+   a gun. */
+const BLOOM_ADD_MAX = 0.020;
+function rapidFire(w) { return !!w.auto && (w.rpm || 0) >= 450; }
+function bloomGain(w) { return w.spread * (rapidFire(w) ? 0.55 : 0.8); }
+function bloomCap(w) { return Math.min(BLOOM_ADD_MAX, w.spread * (rapidFire(w) ? 1.1 : 1.6)); }
+
 function playerFire() {
   if (!player.alive || player.dropping || player.knocked) return;
   if (player.using) return;
@@ -5557,7 +5644,7 @@ function playerFire() {
   // The crosshair and the bullets now read from this same number.
   const spread = aimDir ? 0 : currentSpread(w);
   player.lastShotAt = state.time;
-  player.bloom = Math.min(w.spread * 1.6, (player.bloom || 0) + w.spread * 0.8);
+  player.bloom = Math.min(bloomCap(w), (player.bloom || 0) + bloomGain(w));
   const muzzle = player.pos.clone();
   muzzle.y += 1.35;
   flashMuzzle(player.rig);
@@ -5858,7 +5945,7 @@ function killBot(b, killerName) {
     player.kills++;
     hitmarker(true);
     toast('ELIMINATED ' + b.name.toUpperCase(), 'sub');
-    const rareGun = b.weapon && b.weapon.kind === 'weapon' && b.weapon.rarity >= 5;
+    const rareGun = b.weapon && b.weapon.kind === 'weapon' && b.weapon.rarity >= R_ASCENDANT;
     if (rareGun) {
       showRareFind(b.weapon, 'ELIMINATION JACKPOT', 'TAKE IT OFF ' + b.name.toUpperCase() + ' · DROPPED WHERE THEY FELL');
     } else {
@@ -6587,11 +6674,14 @@ function spawnShockwaveGrenade(origin, dir, power, def) {
 }
 
 /* One source of truth for accuracy: the crosshair gap and the actual pellet
-   cone are both derived from this. */
+   cone are both drawn from this. A trigger that has been quiet for a beat
+   shoots dead straight again. */
+const FIRST_ACCURACY_TIME = 0.4;
+
 function currentSpread(w) {
   const scopedAds = aimDown && !!w.scoped;
-  const firstReady = w.pellets <= 1 && (state.time - (player.lastShotAt || -99)) >= 1;
-  let s = (firstReady || scopedAds) ? 0.0002 : (aimDown ? w.ads : w.spread);
+  const first = w.pellets <= 1 && (state.time - (player.lastShotAt || -1e9)) >= FIRST_ACCURACY_TIME;
+  let s = (first || scopedAds) ? 0.0002 : (aimDown ? w.ads : w.spread);
   s += player.bloom || 0;
   if (!aimDown) {
     const spd = Math.hypot(player.vel.x, player.vel.z);
@@ -6934,9 +7024,9 @@ let botNamePool = [];
 
 function botWeaponType(level) {
   if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
-  if (mod('shotguns')) return pick(['shotgun', 'combat']);
+  if (mod('shotguns')) return pick(['shotgun', 'tacshot']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['ar', 'heavyar', 'burst', 'holo', 'hunting', 'drum', 'smg', 'shotgun', 'combat', 'doublebarrel', 'sniper', 'thermal']);
+  return pick(['ar', 'tacsmg', 'smg', 'shotgun', 'tacshot', 'lmg', 'burst', 'holo', 'hunting', 'sniper', 'silenced', 'doublebarrel', 'heavyar', 'lever']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -6960,7 +7050,7 @@ function spawnBot(i) {
   // Bots can carry the good stuff too, more often as the lobby gets harder.
   const specialChance = isGunGame() ? 0 : 0.06 + tier * 0.2;
   if (Math.random() < specialChance) {
-    w = Math.random() < 0.5 ? makeWeapon(pick(MYTHIC_WEAPONS), 5) : makeWeapon(pick(EXOTIC_WEAPONS), 6);
+    w = Math.random() < 0.5 ? makeWeapon(pick(MYTHIC_WEAPONS), R_MYTHIC) : makeWeapon(pick(EXOTIC_WEAPONS), R_EXOTIC);
   } else {
     w = makeWeapon(type, rarityRoll(0.05 + tier * 0.12));
   }
@@ -7219,8 +7309,8 @@ function updateBot(b, dt) {
           c.glow.material.opacity = 0.12;
           c.beam.material.opacity = 0.03;
           if (Math.random() < 0.65) b.shield = Math.min(100, b.shield + 50);
-          if (b.weapon.rarity < 5) {
-            b.weapon = makeWeapon(b.weapon.type, Math.min(4, b.weapon.rarity + 1));
+          if (b.weapon.rarity < R_ASCENDANT) {
+            b.weapon = makeWeapon(b.weapon.type, Math.min(R_LEGENDARY, b.weapon.rarity + 1));
             b.mag = WEAPONS[b.weapon.type].mag;
             setRigWeapon(b.rig, b.weapon.type);
           }
@@ -9440,7 +9530,7 @@ function updateBlitzWheel() {
 function blitzGrantReward() {
   const mythic = Math.random() < 0.5;
   const type = mythic ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
-  const item = makeWeapon(type, mythic ? 5 : 6);
+  const item = makeWeapon(type, mythic ? R_MYTHIC : R_EXOTIC);
   let free = -1;
   for (let i = 0; i < player.inv.length; i++) {
     if (!player.inv[i]) { free = i; break; }
@@ -9839,8 +9929,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 6, patch: 5 };
-const VERSION_PREV = '5.6.4';
+const VERSION = { major: 6, minor: 0, patch: 0 };
+const VERSION_PREV = '5.6.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -9884,33 +9974,47 @@ const SKINS = [
   { id: 's4c', name: 'Venom Reign', shirt: 0x8dff5a, pants: 0x1a2b12, skin: 0x9fd8a0, accent: 0x14200f, rarity: 3 },
   { id: 's4d', name: 'Solar Flare', shirt: 0xffc844, pants: 0x3a2a08, skin: 0xe8b98a, accent: 0x7a5a10, rarity: 4 },
   { id: 's4e', name: 'Obsidian Prime', shirt: 0x2b2f3a, pants: 0x0f1116, skin: 0xd8a878, accent: 0x5eead4, rarity: 4 },
-  // Season 4 item shop rotation
-  { id: 'shop_dune', name: 'Dune Raider', shirt: 0xd8b06a, pants: 0x4a3a1e, skin: 0xb07a4a, accent: 0x2a2010, rarity: 2, price: 800, fresh: true },
-  { id: 'shop_coral', name: 'Coral Drift', shirt: 0xff8fa3, pants: 0x3a1a26, skin: 0xf0c9a0, accent: 0x5a2030, rarity: 3, price: 1200, fresh: true },
-  { id: 'shop_verdant', name: 'Verdant Ghost', shirt: 0x6bd07f, pants: 0x1d3a26, skin: 0xd8a878, accent: 0x103018, rarity: 3, price: 1200, fresh: true },
-  { id: 'shop_ice', name: 'Ice Monarch', shirt: 0xcfefff, pants: 0x2a4a5a, skin: 0xf0c9a0, accent: 0x1a3040, rarity: 4, price: 1500, fresh: true },
-  { id: 'shop_cyber', name: 'Cyber Wraith', shirt: 0x9b5cff, pants: 0x18122a, skin: 0xb07a4a, accent: 0x2a1a4a, rarity: 4, price: 1500, fresh: true },
-  { id: 'shop_ronin', name: 'Ash Ronin', shirt: 0x6f7787, pants: 0x22262e, skin: 0xd8a878, accent: 0x3a3f4a, rarity: 2, price: 800, fresh: true },
+  // Season 5 battle pass
+  { id: 's5a', name: 'Rift Marauder', shirt: 0x5b7cff, pants: 0x141a2e, skin: 0xe8b98a, accent: 0x2a3a6a, rarity: 2 },
+  { id: 's5b', name: 'Ashfall', shirt: 0x8a94a6, pants: 0x1c2028, skin: 0xd8a878, accent: 0x3b4552, rarity: 3 },
+  { id: 's5c', name: 'Volt Ranger', shirt: 0x7dffb0, pants: 0x123023, skin: 0xb07a4a, accent: 0x1e5a3a, rarity: 3 },
+  { id: 's5d', name: 'Solar Sentinel', shirt: 0xffd23f, pants: 0x3a2d08, skin: 0xf0c9a0, accent: 0x7a5c10, rarity: 4 },
+  { id: 's5e', name: 'Nightfall Prime', shirt: 0x2b2f5a, pants: 0x0f1120, skin: 0xb07a4a, accent: 0xa06bff, rarity: 4 },
+  // Season 5 item shop rotation
+  { id: 'shop_rift', name: 'Riftwalker', shirt: 0x7b6bff, pants: 0x161228, skin: 0xe8b98a, accent: 0x3a2a7a, rarity: 3, price: 1200, fresh: true },
+  { id: 'shop_tide', name: 'Tide Breaker', shirt: 0x39c6c0, pants: 0x0f2a2a, skin: 0xf0c9a0, accent: 0x1a4a48, rarity: 3, price: 1200, fresh: true },
+  { id: 'shop_sun', name: 'Sunstrike', shirt: 0xffa63d, pants: 0x3a2208, skin: 0xd8a878, accent: 0x7a3a08, rarity: 2, price: 800, fresh: true },
+  { id: 'shop_hoar', name: 'Hoarfrost', shirt: 0xd8f4ff, pants: 0x243a4a, skin: 0xf0c9a0, accent: 0x6ab8d8, rarity: 4, price: 1500, fresh: true },
+  { id: 'shop_grave', name: 'Grave Warden', shirt: 0x4a5a68, pants: 0x161a20, skin: 0xb07a4a, accent: 0x8dff5a, rarity: 4, price: 1500, fresh: true },
+  { id: 'shop_pulse', name: 'Pulse Gambit', shirt: 0xff3fa4, pants: 0x1a0f1f, skin: 0xe8b98a, accent: 0x6b2fff, rarity: 2, price: 800, fresh: true },
+  // Last season's rotation — still owned by whoever bought them.
+  { id: 'shop_dune', name: 'Dune Raider', shirt: 0xd8b06a, pants: 0x4a3a1e, skin: 0xb07a4a, accent: 0x2a2010, rarity: 2, price: 800 },
+  { id: 'shop_coral', name: 'Coral Drift', shirt: 0xff8fa3, pants: 0x3a1a26, skin: 0xf0c9a0, accent: 0x5a2030, rarity: 3, price: 1200 },
+  { id: 'shop_verdant', name: 'Verdant Ghost', shirt: 0x6bd07f, pants: 0x1d3a26, skin: 0xd8a878, accent: 0x103018, rarity: 3, price: 1200 },
+  { id: 'shop_ice', name: 'Ice Monarch', shirt: 0xcfefff, pants: 0x2a4a5a, skin: 0xf0c9a0, accent: 0x1a3040, rarity: 4, price: 1500 },
+  { id: 'shop_cyber', name: 'Cyber Wraith', shirt: 0x9b5cff, pants: 0x18122a, skin: 0xb07a4a, accent: 0x2a1a4a, rarity: 4, price: 1500 },
+  { id: 'shop_ronin', name: 'Ash Ronin', shirt: 0x6f7787, pants: 0x22262e, skin: 0xd8a878, accent: 0x3a3f4a, rarity: 2, price: 800 },
 ];
 
-const SHOP_ITEMS = SKINS.filter((s) => s.price);
+/* The shop is a rotation now: only this season's featured outfits are on sale. */
+const SHOP_ITEMS = SKINS.filter((s) => s.price && s.fresh);
 
 const BP_TIERS = [
   { xp: 250, type: 'vb', amount: 100, name: '100 V-BUCKS' },
-  { xp: 500, type: 'skin', id: 's4a', name: 'Ember Warden' },
+  { xp: 500, type: 'skin', id: 's5a', name: 'Rift Marauder' },
   { xp: 800, type: 'vb', amount: 150, name: '150 V-BUCKS' },
-  { xp: 1100, type: 'skin', id: 's4b', name: 'Glacier Ops' },
+  { xp: 1100, type: 'skin', id: 's5b', name: 'Ashfall' },
   { xp: 1450, type: 'vb', amount: 200, name: '200 V-BUCKS' },
-  { xp: 1800, type: 'skin', id: 's4c', name: 'Venom Reign' },
+  { xp: 1800, type: 'skin', id: 's5c', name: 'Volt Ranger' },
   { xp: 2200, type: 'vb', amount: 250, name: '250 V-BUCKS' },
-  { xp: 2600, type: 'skin', id: 's4d', name: 'Solar Flare' },
+  { xp: 2600, type: 'skin', id: 's5d', name: 'Solar Sentinel' },
   { xp: 3000, type: 'vb', amount: 300, name: '300 V-BUCKS' },
-  { xp: 3500, type: 'skin', id: 's4e', name: 'Obsidian Prime' },
+  { xp: 3500, type: 'skin', id: 's5e', name: 'Nightfall Prime' },
 ];
 const BP_COST = 1000;
 const PROFILE_KEY = 'stormfall.profile.v1';
 
-const SEASON = 4;
+const SEASON = 5;
 
 const TOURNEY_GAMES = 3;
 
@@ -10541,8 +10645,9 @@ let rareFindTimer = 0;
 function showRareFind(item, kicker, subLine) {
   const el = document.getElementById('rareFind');
   if (!el) return;
-  const mythic = item.rarity === 5;
-  el.dataset.tier = mythic ? 'mythic' : 'exotic';
+  const mythic = item.rarity >= R_MYTHIC;
+  const ascendant = !mythic && item.rarity >= R_ASCENDANT;
+  el.dataset.tier = mythic ? 'mythic' : ascendant ? 'ascendant' : 'exotic';
   el.classList.toggle('noDim', isBlitz());
 
   const kick = document.getElementById('rfKicker');
@@ -10551,7 +10656,7 @@ function showRareFind(item, kicker, subLine) {
   const sub = document.getElementById('rfSub');
   const art = document.getElementById('rfArt');
   if (kick) kick.textContent = kicker || 'RARE CHEST FIND';
-  if (title) title.textContent = mythic ? 'MYTHIC FOUND' : 'EXOTIC FOUND';
+  if (title) title.textContent = RARITY[item.rarity].name.toUpperCase() + ' FOUND';
   if (name) name.textContent = (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
   if (sub) sub.textContent = subLine || (RARITY[item.rarity].name.toUpperCase() + ' · GRAB IT BEFORE IT VANISHES');
   if (art) art.innerHTML = GUN_ICONS[item.type] || '';
@@ -10867,7 +10972,7 @@ function buyBattlePass() {
   renderLocker();
   sfx('bpBuy');
   playReveal({
-    kicker: 'SEASON 4',
+    kicker: 'SEASON 5',
     title: 'BATTLE PASS',
     name: 'UNLOCKED',
     sub: 'ALL REWARDS ARE NOW YOURS TO EARN',
@@ -12066,7 +12171,7 @@ function adminRefill() {
 
 function adminLoadout() {
   if (!player.alive) { toast('START A MATCH FIRST', 'sub'); return; }
-  const picks = ['thermal', 'shotgun', 'ar', 'holo', 'sniper'];
+  const picks = ['lever', 'tacshot', 'ar', 'holo', 'sniper'];
   for (let i = 0; i < picks.length && i < player.inv.length; i++) {
     player.inv[i] = makeWeapon(picks[i], 4);
   }
