@@ -3357,9 +3357,8 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SHOTGUN RETICLE</b> — shotgun pellet spread now draws as a ring of eight dots that blooms with the spread, instead of the usual four ticks.</div></li>
-      <li><span class="wnTag">02</span><div><b>GRAPPLER RETICLE</b> — holding the grappler swaps the crosshair for a single green dot when something is in range, and a red X when the shot is out of reach.</div></li>
-      <li><span class="wnTag">03</span><div><b>FULL GRAPPLE PULL</b> — the grappler no longer gives a nudge and lets you fall. Once hooked, you're steered straight into the anchor and land on the spot you shot, whether that's a roof, a wall or open air.</div></li>
+      <li><span class="wnTag">01</span><div><b>NO MORE SLIDING ACROSS THE ISLAND</b> — the grapple briefly disabled normal movement damping, and a shockwave used during that window left you gliding at full blast until you hit the sea. Movement damping now always applies outside an active grapple, so blast momentum fades like it should.</div></li>
+      <li><span class="wnTag">02</span><div><b>NO MORE FREEZING</b> — arriving at a grapple point could leave you unable to move for a second or so, because the grapple window stayed open after the pull ended. Reaching the anchor now closes it immediately, and the state is cleared on respawn and at the start of every match.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6036,6 +6035,8 @@ function respawnPlayer() {
   player.overshield = player.maxOvershield;
   player.lastDamage = -99;
   player.pocketCd = 0;
+  player.grappleTo = null;
+  player.grappleUntil = 0;
   player.alive = true;
   player.dropping = true;
   player.onGround = false;
@@ -8182,7 +8183,7 @@ function updatePlayer(dt) {
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
   const k = 1 - Math.exp(-accel * dt);
-  if (player.grappleTo && state.time < (player.grappleUntil || 0) && player.alive) {
+  if (player.grappleTo && state.time < (player.grappleUntil || 0) && player.alive && !player.knocked) {
     // fly to the hook: steer the velocity straight at the anchor every frame
     const tx = player.grappleTo.x, ty = player.grappleTo.y + 1.0, tz = player.grappleTo.z;
     const dx = tx - player.pos.x;
@@ -8191,6 +8192,7 @@ function updatePlayer(dt) {
     const dist3 = Math.hypot(dx, dy, dz);
     if (dist3 < 2.0) {
       player.grappleTo = null;
+      player.grappleUntil = 0;
       player.vel.x *= 0.35;
       player.vel.z *= 0.35;
     } else {
@@ -8200,10 +8202,11 @@ function updatePlayer(dt) {
       player.vel.z = (dz / dist3) * sp;
       player.onGround = false;
     }
-  } else if (player.grappleUntil && state.time < player.grappleUntil) {
-    // riding the grapple — don't damp the pull away
   } else {
+    // no grapple: always let normal movement damping act, so blast momentum
+    // can never leave us sliding across the island
     player.grappleTo = null;
+    player.grappleUntil = 0;
     player.vel.x += (mx * speed - player.vel.x) * k;
     player.vel.z += (mz * speed - player.vel.z) * k;
   }
@@ -9286,6 +9289,8 @@ function resetPlayerForMatch() {
   player.using = null;
   player.lastHitBy = '';
   player.rig = null;
+  player.grappleTo = null;
+  player.grappleUntil = 0;
   player.coyote = 0;
   player.respawnsLeft = (isReload() || isReloadDuos()) ? RELOAD_LIVES - 1 : 0;
   player.respawnAt = 0;
@@ -9753,6 +9758,8 @@ function backToMenu() {
   populateWorld();
   resetStorm();
   player.rig = null;
+  player.grappleTo = null;
+  player.grappleUntil = 0;
   if (document.pointerLockElement) document.exitPointerLock();
   setTimeout(processRevealQueue, 420);
 }
@@ -9806,8 +9813,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 6, patch: 1 };
-const VERSION_PREV = '5.6.0';
+const VERSION = { major: 5, minor: 6, patch: 2 };
+const VERSION_PREV = '5.6.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
