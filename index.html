@@ -241,6 +241,40 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 #crosshair i.l { width:9px; height:2px; transform:translate(calc(-9px - var(--gap)), -1px); }
 #crosshair i.r { width:9px; height:2px; transform:translate(var(--gap), -1px); }
 #crosshair b { position:absolute; left:0; top:0; width:3px; height:3px; margin:-1.5px 0 0 -1.5px; background:#fff; border-radius:50%; opacity:var(--dot); }
+#crosshair .pellets { position:absolute; left:0; top:0; width:0; height:0; opacity:0; transition:opacity .1s linear; }
+#crosshair.shotgun .pellets { opacity:1; }
+#crosshair.shotgun .u, #crosshair.shotgun .d, #crosshair.shotgun .l, #crosshair.shotgun .r { opacity:0; }
+#crosshair .pellets i {
+  position:absolute; left:0; top:0; width:3px; height:3px; margin:-1.5px 0 0 -1.5px;
+  border-radius:50%; background:#fff; box-shadow:0 0 3px rgba(0,0,0,.95);
+  transform:rotate(var(--a)) translateY(calc(-1 * var(--pel, 14px)));
+}
+#crosshair .pellets i:nth-child(1) { --a:0deg; }
+#crosshair .pellets i:nth-child(2) { --a:45deg; }
+#crosshair .pellets i:nth-child(3) { --a:90deg; }
+#crosshair .pellets i:nth-child(4) { --a:135deg; }
+#crosshair .pellets i:nth-child(5) { --a:180deg; }
+#crosshair .pellets i:nth-child(6) { --a:225deg; }
+#crosshair .pellets i:nth-child(7) { --a:270deg; }
+#crosshair .pellets i:nth-child(8) { --a:315deg; }
+#crosshair .grapX {
+  position:absolute; left:0; top:0; width:22px; height:22px; margin:-11px 0 0 -11px;
+  opacity:0; transition:opacity .08s linear;
+  background:
+    linear-gradient(45deg, transparent 43%, #ff6b7a 43% 57%, transparent 57%),
+    linear-gradient(-45deg, transparent 43%, #ff6b7a 43% 57%, transparent 57%);
+  filter:drop-shadow(0 0 3px rgba(0,0,0,.9));
+}
+#crosshair .grapDot {
+  position:absolute; left:0; top:0; width:7px; height:7px; margin:-3.5px 0 0 -3.5px;
+  border-radius:50%; background:#7dffb0; box-shadow:0 0 9px rgba(125,255,176,.9);
+  opacity:0; transition:opacity .08s linear;
+}
+#crosshair.grapIn .grapDot { opacity:1; }
+#crosshair.grapIn .grapX, #crosshair.grapOut .grapX { opacity:0; }
+#crosshair.grapOut .grapX { opacity:1; }
+#crosshair.grapIn .u, #crosshair.grapIn .d, #crosshair.grapIn .l, #crosshair.grapIn .r,
+#crosshair.grapOut .u, #crosshair.grapOut .d, #crosshair.grapOut .l, #crosshair.grapOut .r { opacity:0; }
 
 #hitmarker { position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; opacity:0; }
 #hitmarker i { position:absolute; left:50%; top:50%; width:2px; height:11px; margin-left:-1px; background:#fff; border-radius:2px; box-shadow:0 0 5px rgba(255,255,255,.9); }
@@ -2710,7 +2744,11 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   <div id="wipeLayer"></div>
   <div id="ptsFeed"></div>
 
-  <div id="crosshair"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><b></b></div>
+  <div id="crosshair"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><b></b>
+    <span class="pellets"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+    <span class="grapX"></span>
+    <span class="grapDot"></span>
+  </div>
   <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
   <div id="scope" class="hide">
     <div class="lensMask"></div>
@@ -3319,9 +3357,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>GRAPPLER</b> — a new utility item in every mode. Aim at anything within 62 m and pull the trigger: a hook fires out and yanks you toward the point, up walls, across gaps or straight over a roof. 15 uses, then it's spent. Found on the floor and in chests.</div></li>
-      <li><span class="wnTag">02</span><div><b>ROOMIER APARTMENTS</b> — the blocks are now 13×12 m with a 6 m stair well instead of 11×10 with a cramped 4.4 m one, so you've got clearance walking up and around the landing instead of scraping the walls.</div></li>
-      <li><span class="wnTag">03</span><div><b>WALLS FIXED</b> — building pieces now rotate with their colliders, so rotated houses and apartments are the shape they look like and the invisible walls indoors are gone.</div></li>
+      <li><span class="wnTag">01</span><div><b>SHOTGUN RETICLE</b> — shotgun pellet spread now draws as a ring of eight dots that blooms with the spread, instead of the usual four ticks.</div></li>
+      <li><span class="wnTag">02</span><div><b>GRAPPLER RETICLE</b> — holding the grappler swaps the crosshair for a single green dot when something is in range, and a red X when the shot is out of reach.</div></li>
+      <li><span class="wnTag">03</span><div><b>FULL GRAPPLE PULL</b> — the grappler no longer gives a nudge and lets you fall. Once hooked, you're steered straight into the anchor and land on the spot you shot, whether that's a roof, a wall or open air.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6565,7 +6603,8 @@ function grappleFire() {
   player.vel.x = to.x * pull;
   player.vel.z = to.z * pull;
   player.vel.y = Math.max(8.5, to.y * pull * 0.8 + 8);
-  player.grappleUntil = state.time + 0.38;
+  player.grappleUntil = state.time + clamp(0.35 + dist / 45, 0.35, 1.6);
+  player.grappleTo = target.clone();
   player.onGround = false;
   camRig.landDip = Math.max(camRig.landDip, 0.22);
   shake(0.1);
@@ -8143,9 +8182,28 @@ function updatePlayer(dt) {
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
   const k = 1 - Math.exp(-accel * dt);
-  if (player.grappleUntil && state.time < player.grappleUntil) {
+  if (player.grappleTo && state.time < (player.grappleUntil || 0) && player.alive) {
+    // fly to the hook: steer the velocity straight at the anchor every frame
+    const tx = player.grappleTo.x, ty = player.grappleTo.y + 1.0, tz = player.grappleTo.z;
+    const dx = tx - player.pos.x;
+    const dy = ty - (player.pos.y + 1.0);
+    const dz = tz - player.pos.z;
+    const dist3 = Math.hypot(dx, dy, dz);
+    if (dist3 < 2.0) {
+      player.grappleTo = null;
+      player.vel.x *= 0.35;
+      player.vel.z *= 0.35;
+    } else {
+      const sp = Math.min(46, 16 + dist3 * 2.0);
+      player.vel.x = (dx / dist3) * sp;
+      player.vel.y = (dy / dist3) * sp;
+      player.vel.z = (dz / dist3) * sp;
+      player.onGround = false;
+    }
+  } else if (player.grappleUntil && state.time < player.grappleUntil) {
     // riding the grapple — don't damp the pull away
   } else {
+    player.grappleTo = null;
     player.vel.x += (mx * speed - player.vel.x) * k;
     player.vel.z += (mz * speed - player.vel.z) * k;
   }
@@ -8426,6 +8484,23 @@ function updateCrosshair(dt) {
   crosshairEl.style.setProperty('--gap', g.toFixed(1) + 'px');
   crosshairEl.style.setProperty('--dot', (g > 15 ? 0 : 1).toFixed(2));
   crosshairEl.classList.toggle('ads', !!aimDown);
+
+  const held = currentItem();
+  const shotgun = !!(held && held.kind === 'weapon' && WEAPONS[held.type].pellets > 1);
+  crosshairEl.classList.toggle('shotgun', shotgun);
+  if (shotgun) crosshairEl.style.setProperty('--pel', (g * 1.05 + 6).toFixed(1) + 'px');
+
+  let grapIn = false;
+  const grappling = !!(held && held.kind === 'grappler');
+  if (grappling) {
+    const o = camera.position.clone();
+    const d = new THREE.Vector3();
+    camera.getWorldDirection(d);
+    const gh = hitTest(o, d, 62, null, player.team);
+    grapIn = gh.kind !== 'none';
+  }
+  crosshairEl.classList.toggle('grapIn', grapIn);
+  crosshairEl.classList.toggle('grapOut', grappling && !grapIn);
 }
 
 /* =========================================================================
@@ -9731,8 +9806,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 6, patch: 0 };
-const VERSION_PREV = '5.5.3';
+const VERSION = { major: 5, minor: 6, patch: 1 };
+const VERSION_PREV = '5.6.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
