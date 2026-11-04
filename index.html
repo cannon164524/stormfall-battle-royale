@@ -3319,7 +3319,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>CHEST JACKPOTS FIXED</b> — every mythic and exotic that comes out of a chest now announces itself. Before, only the bonus chest drop fired the banner, so specials that rolled as ordinary chest loot could slip out silently.</div></li>
+      <li><span class="wnTag">01</span><div><b>NO MORE OVERLAPPING BUILDINGS</b> — houses and containers now claim space before they're placed, so two buildings can no longer spawn inside each other. Trees and rocks also keep clear of anything built.</div></li>
+      <li><span class="wnTag">02</span><div><b>APARTMENT BLOCKS</b> — new two- and three-storey buildings with an interior stair well: walk in the ground floor, take the stairs up, and loot a chest on every floor. They're scattered through the POIs and out in the open.</div></li>
+      <li><span class="wnTag">03</span><div><b>INVISIBLE WALLS TRIMMED</b> — tree collisions were a wide square around a thin trunk, so you'd stop well before touching the bark. They now hug the trunk, and rocks keep their colliders slightly inside the visible shape.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4023,7 +4025,7 @@ function makeTree(x, z, rng) {
   g.position.set(x, y, z);
   g.rotation.y = rng() * TAU;
   propsGroup.add(g);
-  addBox(x, y + th * 0.5, z, 0.6 * s, th * 0.5, 0.6 * s, g, { hp: 130, kind: 'tree' });
+  addBox(x, y + th * 0.5, z, 0.38 * s, th * 0.5, 0.38 * s, g, { hp: 130, kind: 'tree' });
 }
 
 function makeRock(x, z, rng) {
@@ -4127,6 +4129,111 @@ function makeHouse(x, z, rot, rng) {
   }
 }
 
+/* Two- or three-storey building with an interior stair well in one corner. */
+function makeApartment(x, z, rot, rng, floors) {
+  floors = clamp(floors || 2, 2, 3);
+  const w = 11, d = 10, floorH = 3.4, t = 0.16;
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const hw = w / 2, hd = d / 2;
+
+  let lowY = Infinity, highY = -Infinity;
+  const corners = [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd], [0, 0]];
+  for (let i = 0; i < corners.length; i++) {
+    const wx = x + corners[i][0] * cs + corners[i][1] * sn;
+    const wz = z - corners[i][0] * sn + corners[i][1] * cs;
+    const h = terrainHeight(wx, wz);
+    if (h < lowY) lowY = h;
+    if (h > highY) highY = h;
+  }
+
+  const bottom = lowY - 1.5;
+  const base = highY + 0.12;
+  const shellTop = base + floorH * floors;
+
+  const pal = pick(HOUSE_COLORS);
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  propsGroup.add(g);
+
+  const wallMat = mat(pal.wall, true);
+  const slabMat = mat(0x5d564a, true);
+  const roofMat = mat(pal.roof, true);
+  const opt = { hp: 380, kind: 'wall' };
+
+  const hy = (shellTop - bottom) / 2;
+  const cy = (shellTop + bottom) / 2;
+
+  // outer walls (extend below ground so there are no gaps on slopes)
+  localBox(g, x, z, 0, rot, -hw, cy, 0, t, hy, hd, wallMat, opt);
+  localBox(g, x, z, 0, rot, hw, cy, 0, t, hy, hd, wallMat, opt);
+
+  const segW = Math.max(0.8, (hw - 2.0) / 2);
+  const segCx = 2.0 + segW;
+  const headerBot = base + 2.9;
+  const headerHy = Math.max(0.1, (shellTop - headerBot) / 2);
+  const headerCy = (shellTop + headerBot) / 2;
+  for (let s = 0; s < 2; s++) {
+    const zz = s === 0 ? hd : -hd;
+    localBox(g, x, z, 0, rot, -segCx, cy, zz, segW, hy, t, wallMat, opt);
+    localBox(g, x, z, 0, rot, segCx, cy, zz, segW, hy, t, wallMat, opt);
+    localBox(g, x, z, 0, rot, 0, headerCy, zz, 2.0, headerHy, t, wallMat, opt);
+  }
+
+  // interior floors with a stair-well corner cut out
+  const hole = 4.4;
+  const mainLx = hole / 2;
+  const mainHx = hw - hole / 2;
+  const stripLx = -hw + hole / 2;
+  const stripHx = hole / 2;
+  const stripLz = hole / 2;
+  const stripHz = hd - hole / 2;
+  for (let f = 1; f < floors; f++) {
+    const y = base + floorH * f;
+    localBox(g, x, z, 0, rot, mainLx, y, 0, mainHx, 0.12, hd, slabMat, opt);
+    localBox(g, x, z, 0, rot, stripLx, y, stripLz, stripHx, 0.12, stripHz, slabMat, opt);
+  }
+
+  // stairs: a sloped slab per floor, registered as a walkable ramp
+  const dirX = Math.cos(rot), dirZ = -Math.sin(rot);
+  const alongX = Math.abs(dirX) > 0.5;
+  const stSx = alongX ? Math.sign(dirX) : 0;
+  const stSz = alongX ? 0 : Math.sign(dirZ);
+  const stLx = -hw + 2.2, stLz = -hd + 2.2;
+  const stWx = x + stLx * cs + stLz * sn;
+  const stWz = z - stLx * sn + stLz * cs;
+  const run = 4;
+  const slope = Math.atan2(floorH, run);
+  const slopeLen = Math.hypot(run, floorH);
+  for (let f = 0; f < floors - 1; f++) {
+    const yLow = base + floorH * f;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.22, 4), slabMat);
+    mesh.position.set(stLx, yLow + floorH / 2, stLz);
+    mesh.rotation.z = slope;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    g.add(mesh);
+    ramps.push({ cx: stWx, cz: stWz, axis: alongX ? 'x' : 'z', sx: stSx, sz: stSz, yLow, yHigh: yLow + floorH, mesh, dead: false });
+  }
+
+  // roof slab and a low parapet
+  localBox(g, x, z, 0, rot, 0, shellTop + 0.22, 0, hw + 0.4, 0.22, hd + 0.4, roofMat, { hp: 420, kind: 'wall' });
+  localBox(g, x, z, 0, rot, 0, shellTop + 0.8, hd + 0.28, hw + 0.4, 0.44, 0.12, wallMat, { hp: 200, kind: 'wall', noStand: true });
+  localBox(g, x, z, 0, rot, 0, shellTop + 0.8, -hd - 0.28, hw + 0.4, 0.44, 0.12, wallMat, { hp: 200, kind: 'wall', noStand: true });
+
+  // one chest per floor, kept out of the stair well
+  for (let f = 0; f < floors; f++) {
+    let lx = 0, lz = 0;
+    for (let t2 = 0; t2 < 8; t2++) {
+      lx = (rng() - 0.5) * (w - 5);
+      lz = (rng() - 0.5) * (d - 5);
+      if (lx > -hw + hole + 0.6 || lz > -hd + hole + 0.6) break;
+    }
+    const wx = x + lx * cs + lz * sn;
+    const wz = z - lx * sn + lz * cs;
+    addChest(wx, wz, f === 0 ? terrainHeight(wx, wz) : base + floorH * f + 0.12);
+  }
+}
+
 function makeContainer(x, z, rng) {
   const y = terrainHeight(x, z);
   const w = 6.2, h = 2.6, d = 2.7;
@@ -4193,6 +4300,15 @@ function addChest(x, z, y) {
 function populateWorld() {
   const rng = mulberry32(20240607);
 
+  const sites = [];
+  const siteFree = (x, z, r) => {
+    for (let i = 0; i < sites.length; i++) {
+      if (Math.hypot(x - sites[i].x, z - sites[i].z) < r + sites[i].r) return false;
+    }
+    return true;
+  };
+  const siteClaim = (x, z, r) => sites.push({ x, z, r });
+
   // POI clusters
   for (let i = 0; i < 9; i++) {
     const ang = (i / 9) * TAU + rng() * 0.5;
@@ -4202,37 +4318,54 @@ function populateWorld() {
     if (terrainHeight(px, pz) < 2.5) continue;
     const n = 2 + Math.floor(rng() * 4);
     for (let j = 0; j < n; j++) {
-      const ox = px + (rng() - 0.5) * 62;
-      const oz = pz + (rng() - 0.5) * 62;
-      if (terrainHeight(ox, oz) < 2.2) continue;
-      makeHouse(ox, oz, Math.floor(rng() * 4) * (Math.PI / 2), rng);
+      let ox = 0, oz = 0, ok = false;
+      for (let t = 0; t < 14; t++) {
+        ox = px + (rng() - 0.5) * 62;
+        oz = pz + (rng() - 0.5) * 62;
+        if (terrainHeight(ox, oz) > 2.2 && siteFree(ox, oz, 9)) { ok = true; break; }
+      }
+      if (!ok) continue;
+      const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+      if (rng() < 0.34) makeApartment(ox, oz, rot, rng, rng() < 0.4 ? 3 : 2);
+      else makeHouse(ox, oz, rot, rng);
+      siteClaim(ox, oz, 9);
     }
     for (let j = 0; j < 3; j++) {
-      const ox = px + (rng() - 0.5) * 72;
-      const oz = pz + (rng() - 0.5) * 72;
-      if (terrainHeight(ox, oz) < 2.2) continue;
+      let ox = 0, oz = 0, ok = false;
+      for (let t = 0; t < 14; t++) {
+        ox = px + (rng() - 0.5) * 72;
+        oz = pz + (rng() - 0.5) * 72;
+        if (terrainHeight(ox, oz) > 2.2 && siteFree(ox, oz, 5)) { ok = true; break; }
+      }
+      if (!ok) continue;
       makeContainer(ox, oz, rng);
+      sites.push({ x: ox, z: oz, r: 5 });
     }
   }
 
-  // lone houses
+  // lone houses and the odd apartment block
   for (let i = 0; i < 12; i++) {
     let x = 0, z = 0, ok = false;
-    for (let t = 0; t < 30; t++) {
+    for (let t = 0; t < 40; t++) {
       const ang = rng() * TAU;
       const rad = rng() * 215;
       x = Math.cos(ang) * rad; z = Math.sin(ang) * rad;
-      if (terrainHeight(x, z) > 3) { ok = true; break; }
+      if (terrainHeight(x, z) > 3 && siteFree(x, z, 9)) { ok = true; break; }
     }
-    if (ok) makeHouse(x, z, Math.floor(rng() * 4) * (Math.PI / 2), rng);
+    if (!ok) continue;
+    const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+    if (i % 3 === 0) makeApartment(x, z, rot, rng, rng() < 0.5 ? 3 : 2);
+    else makeHouse(x, z, rot, rng);
+    siteClaim(x, z, 9);
   }
 
-  // trees
+  // trees (kept out of buildings)
   for (let i = 0; i < 200; i++) {
     const ang = rng() * TAU;
     const rad = Math.sqrt(rng()) * 255;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.6) continue;
+    if (!siteFree(x, z, 2.4)) continue;
     makeTree(x, z, rng);
   }
 
@@ -4242,6 +4375,7 @@ function populateWorld() {
     const rad = Math.sqrt(rng()) * 265;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.0) continue;
+    if (!siteFree(x, z, 1.6)) continue;
     makeRock(x, z, rng);
   }
 
@@ -9492,8 +9626,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 4, patch: 2 };
-const VERSION_PREV = '5.4.1';
+const VERSION = { major: 5, minor: 5, patch: 0 };
+const VERSION_PREV = '5.4.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
