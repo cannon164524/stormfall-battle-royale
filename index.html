@@ -2477,6 +2477,137 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 }
 #end.win .endConfetti i { box-shadow:0 0 8px rgba(255,220,120,.55); }
 #end.win .endStats b { color:#ffe9a8; }
+
+/* ============================== LOBBY / MODE SELECTOR ============================== */
+.lobby {
+  display:grid;
+  grid-template-columns:minmax(320px, 430px) minmax(0, 1fr);
+  gap:24px;
+  align-items:stretch;
+  min-height:0;
+  padding:18px 0 0;
+  overflow:hidden;
+}
+.modeRow {
+  counter-reset:modes;
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(148px, 1fr));
+  gap:8px;
+  align-content:start;
+  min-height:0;
+  max-height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:2px 8px 8px 2px;
+  scrollbar-width:thin;
+}
+.modeRow::-webkit-scrollbar { width:6px; }
+.modeRow::-webkit-scrollbar-thumb { background:rgba(79,195,255,.28); border-radius:3px; }
+.modeGroup { display:contents; }
+.modeGroup + .modeGroup { margin-top:0; }
+.modeGroupLabel {
+  grid-column:1 / -1;
+  margin:12px 0 2px;
+  padding-left:2px;
+  font-size:8px;
+  letter-spacing:.26em;
+}
+.modeGroup:first-child .modeGroupLabel { margin-top:0; }
+.modeBtn {
+  position:relative;
+  counter-increment:modes;
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end;
+  gap:2px;
+  min-height:68px;
+  padding:9px 28px 9px 11px;
+  text-align:left;
+  border:1px solid var(--line);
+  border-left:2px solid transparent;
+  border-radius:3px;
+  background:linear-gradient(160deg, rgba(20,32,52,.62), rgba(7,12,22,.72));
+  animation:uiRise .4s backwards;
+  transition:background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.modeBtn::before {
+  content:counter(modes, decimal-leading-zero);
+  position:absolute; top:8px; right:9px;
+  font-family:var(--label); font-size:8px; font-weight:700; letter-spacing:.08em;
+  color:rgba(244,246,249,.22);
+}
+.modeBtn .modeKicker {
+  font-size:7.5px; letter-spacing:.18em;
+  max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.modeBtn .modeName {
+  font-size:15px; line-height:1.05; letter-spacing:.01em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.modeBtn .modeFoot {
+  margin-top:3px;
+  width:100%;
+  font-size:7.5px; letter-spacing:.1em; text-align:left;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:rgba(244,246,249,.32);
+}
+.modeBtn:hover {
+  background:rgba(255,255,255,.05);
+  border-color:rgba(79,195,255,.35);
+  border-left-color:rgba(79,195,255,.6);
+  transform:translateY(-1px);
+}
+.modeBtn:hover::before { color:rgba(79,195,255,.8); }
+.modeBtn.active {
+  background:linear-gradient(150deg, rgba(30,86,150,.55), rgba(9,20,36,.85));
+  border-color:rgba(79,195,255,.55);
+  border-left-color:var(--accent);
+  box-shadow:0 10px 26px rgba(20,90,180,.3);
+}
+.modeBtn.active::before { color:var(--accent); }
+.modeBtn.active .modeFoot { color:rgba(190,232,255,.8); }
+.modeBtn.active .modeKicker { color:#bfe9ff; }
+
+.lobbyFoot { max-height:100%; }
+
+@media (max-width: 1080px) {
+  .lobby { grid-template-columns:minmax(280px, 340px) minmax(0, 1fr); gap:18px; }
+  .modeRow { grid-template-columns:repeat(auto-fill, minmax(132px, 1fr)); }
+  .lobbyFoot { columns:1; }
+}
+@media (max-width: 820px) {
+  .lobby {
+    grid-template-columns:1fr;
+    grid-template-rows:auto minmax(0, 1fr);
+    gap:14px;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  .modeRow {
+    max-height:none;
+    overflow:visible;
+    grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+    padding-right:2px;
+  }
+  .lobbyFoot { max-height:none; overflow:visible; columns:1; }
+  .playRow { flex-wrap:wrap; gap:12px; padding-top:12px; }
+  .playRow .queueInfo { order:3; width:100%; margin-left:0; }
+  #playBtn { padding:12px 40px; }
+}
+@media (max-width: 520px) {
+  .modeBtn { min-height:60px; padding:8px 24px 8px 9px; }
+  .modeBtn .modeName { font-size:13.5px; }
+  .modeRow { grid-template-columns:repeat(auto-fill, minmax(122px, 1fr)); gap:6px; }
+  #menu { padding:14px 14px 16px; }
+  .playRow { justify-content:center; }
+  .playerCard { flex:1; }
+  #playBtn { width:100%; }
+}
+@media (max-height: 640px) {
+  .lobby { padding-top:10px; }
+  .modeBtn { min-height:56px; padding:7px 24px 7px 9px; }
+  .modeBtn .modeName { font-size:13.5px; }
+  .lobbyFoot > * { margin-bottom:12px; }
+}
+#menu { overflow:hidden; }
 </style>
 </head>
 <body>
@@ -3151,6 +3282,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">09</span><div><b>BOTS CARRY MYTHICS</b> — bots now spawn holding mythic and exotic weapons, more often the higher the lobby tier, so the good guns are out in the world instead of waiting until the last chest. Kill one and the ELIMINATION card is replaced by a gold or cyan JACKPOT banner naming what they were carrying.</div></li>
       <li><span class="wnTag">10</span><div><b>BIGGER VICTORY ROYALE</b> — winning now lands with a brass fanfare, a gold flash that blooms out of the centre, faster sweeping rays, a pulsing crown, a shine that runs across the title, 80 pieces of confetti and your elimination and damage stats counting up under the crown.</div></li>
       <li><span class="wnTag">11</span><div><b>END SCREEN BUTTONS</b> — the gold button is now <b>PLAY AGAIN</b> and drops you straight into another match of the same mode, while the blue one takes you back to the <b>MAIN MENU</b>. The old 50 V-Buck revive is gone.</div></li>
+      <li><span class="wnTag">12</span><div><b>NEW MODE PICKER</b> — the lobby's mode list is now a responsive grid of cards instead of one long column: numbered, grouped under BATTLE ROYALE / RANKED / ARCADE headings, laid out in two or three columns depending on your screen, and it scrolls inside its own panel so it can never run off the bottom of the page. Phones get a single-column layout with a full-width PLAY button.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9247,8 +9379,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 2, patch: 3 };
-const VERSION_PREV = '5.2.2';
+const VERSION = { major: 5, minor: 3, patch: 0 };
+const VERSION_PREV = '5.2.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
