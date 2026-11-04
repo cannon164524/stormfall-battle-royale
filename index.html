@@ -3319,9 +3319,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO MORE OVERLAPPING BUILDINGS</b> — houses and containers now claim space before they're placed, so two buildings can no longer spawn inside each other. Trees and rocks also keep clear of anything built.</div></li>
-      <li><span class="wnTag">02</span><div><b>APARTMENT BLOCKS</b> — new two- and three-storey buildings with an interior stair well: walk in the ground floor, take the stairs up, and loot a chest on every floor. They're scattered through the POIs and out in the open.</div></li>
-      <li><span class="wnTag">03</span><div><b>INVISIBLE WALLS TRIMMED</b> — tree collisions were a wide square around a thin trunk, so you'd stop well before touching the bark. They now hug the trunk, and rocks keep their colliders slightly inside the visible shape.</div></li>
+      <li><span class="wnTag">01</span><div><b>BUILDINGS CAN'T OVERLAP</b> — houses now reserve their real footprint (their diagonal, not a guessed circle) plus a 2.5 m gap before they're placed, so two buildings can no longer spawn half inside each other. That overlap was also what created "invisible walls": you were walking into the walls of a second house buried in the first one.</div></li>
+      <li><span class="wnTag">02</span><div><b>REBOOT VANS KEEP CLEAR</b> — vans now check the map before they park and shuffle to a nearby open spot if a building is already there.</div></li>
+      <li><span class="wnTag">03</span><div><b>WIDER POIs</b> — with proper spacing the clusters needed more room, so buildings spread across a wider area at each point of interest. Density feels similar, overlaps don't happen.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4057,9 +4057,9 @@ function localBox(g, x, z, baseY, rot, lx, ly, lz, hx, hy, hz, material, opts) {
   return m;
 }
 
-function makeHouse(x, z, rot, rng) {
-  const w = 9 + Math.floor(rng() * 4) * 2;
-  const d = 8 + Math.floor(rng() * 3) * 2;
+function makeHouse(x, z, rot, rng, dims) {
+  const w = (dims && dims.w) || (9 + Math.floor(rng() * 4) * 2);
+  const d = (dims && dims.d) || (8 + Math.floor(rng() * 3) * 2);
   const cs = Math.cos(rot), sn = Math.sin(rot);
   const hw = w / 2, hd = d / 2;
 
@@ -4297,17 +4297,31 @@ function addChest(x, z, y) {
   chests.push({ x, z, y, opened: false, mesh: g, lid, glow, beam });
 }
 
+/* ---- world placement: buildings claim their real footprint so nothing
+   can spawn inside anything else (overlapping colliders read as invisible
+   walls once you're inside someone else's room). ---- */
+const worldSites = [];
+const SITE_GAP = 2.5;
+
+function siteFreeAt(x, z, r) {
+  for (let i = 0; i < worldSites.length; i++) {
+    const s = worldSites[i];
+    if (Math.hypot(x - s.x, z - s.z) < r + s.r + SITE_GAP) return false;
+  }
+  return true;
+}
+function claimSite(x, z, r) { worldSites.push({ x, z, r }); }
+
+function rollHouseDims(rng) {
+  return { w: 9 + Math.floor(rng() * 4) * 2, d: 8 + Math.floor(rng() * 3) * 2 };
+}
+function houseRadius(dims) { return Math.hypot(dims.w / 2, dims.d / 2) + 0.6; }
+const APARTMENT_R = Math.hypot(11 / 2, 10 / 2) + 0.7;
+const CONTAINER_R = Math.hypot(6.2 / 2, 2.7 / 2) + 0.4;
+
 function populateWorld() {
   const rng = mulberry32(20240607);
-
-  const sites = [];
-  const siteFree = (x, z, r) => {
-    for (let i = 0; i < sites.length; i++) {
-      if (Math.hypot(x - sites[i].x, z - sites[i].z) < r + sites[i].r) return false;
-    }
-    return true;
-  };
-  const siteClaim = (x, z, r) => sites.push({ x, z, r });
+  worldSites.length = 0;
 
   // POI clusters
   for (let i = 0; i < 9; i++) {
@@ -4318,45 +4332,51 @@ function populateWorld() {
     if (terrainHeight(px, pz) < 2.5) continue;
     const n = 2 + Math.floor(rng() * 4);
     for (let j = 0; j < n; j++) {
-      let ox = 0, oz = 0, ok = false;
-      for (let t = 0; t < 14; t++) {
-        ox = px + (rng() - 0.5) * 62;
-        oz = pz + (rng() - 0.5) * 62;
-        if (terrainHeight(ox, oz) > 2.2 && siteFree(ox, oz, 9)) { ok = true; break; }
+      let ox = 0, oz = 0, rad2 = 0, ok = false, apt = false, dims = null;
+      for (let t = 0; t < 40; t++) {
+        ox = px + (rng() - 0.5) * 105;
+        oz = pz + (rng() - 0.5) * 105;
+        apt = rng() < 0.34;
+        dims = apt ? null : rollHouseDims(rng);
+        rad2 = apt ? APARTMENT_R : houseRadius(dims);
+        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, rad2)) { ok = true; break; }
       }
       if (!ok) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
-      if (rng() < 0.34) makeApartment(ox, oz, rot, rng, rng() < 0.4 ? 3 : 2);
-      else makeHouse(ox, oz, rot, rng);
-      siteClaim(ox, oz, 9);
+      if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.4 ? 3 : 2);
+      else makeHouse(ox, oz, rot, rng, dims);
+      claimSite(ox, oz, rad2);
     }
     for (let j = 0; j < 3; j++) {
       let ox = 0, oz = 0, ok = false;
-      for (let t = 0; t < 14; t++) {
-        ox = px + (rng() - 0.5) * 72;
-        oz = pz + (rng() - 0.5) * 72;
-        if (terrainHeight(ox, oz) > 2.2 && siteFree(ox, oz, 5)) { ok = true; break; }
+      for (let t = 0; t < 24; t++) {
+        ox = px + (rng() - 0.5) * 110;
+        oz = pz + (rng() - 0.5) * 110;
+        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, CONTAINER_R)) { ok = true; break; }
       }
       if (!ok) continue;
       makeContainer(ox, oz, rng);
-      sites.push({ x: ox, z: oz, r: 5 });
+      claimSite(ox, oz, CONTAINER_R);
     }
   }
 
   // lone houses and the odd apartment block
-  for (let i = 0; i < 12; i++) {
-    let x = 0, z = 0, ok = false;
-    for (let t = 0; t < 40; t++) {
+  for (let i = 0; i < 14; i++) {
+    let x = 0, z = 0, rad2 = 0, ok = false, apt = false, dims = null;
+    for (let t = 0; t < 60; t++) {
       const ang = rng() * TAU;
-      const rad = rng() * 215;
-      x = Math.cos(ang) * rad; z = Math.sin(ang) * rad;
-      if (terrainHeight(x, z) > 3 && siteFree(x, z, 9)) { ok = true; break; }
+      const dist = rng() * 215;
+      x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
+      apt = i % 3 === 0;
+      dims = apt ? null : rollHouseDims(rng);
+      rad2 = apt ? APARTMENT_R : houseRadius(dims);
+      if (terrainHeight(x, z) > 3 && siteFreeAt(x, z, rad2)) { ok = true; break; }
     }
     if (!ok) continue;
     const rot = Math.floor(rng() * 4) * (Math.PI / 2);
-    if (i % 3 === 0) makeApartment(x, z, rot, rng, rng() < 0.5 ? 3 : 2);
-    else makeHouse(x, z, rot, rng);
-    siteClaim(x, z, 9);
+    if (apt) makeApartment(x, z, rot, rng, rng() < 0.5 ? 3 : 2);
+    else makeHouse(x, z, rot, rng, dims);
+    claimSite(x, z, rad2);
   }
 
   // trees (kept out of buildings)
@@ -4365,7 +4385,7 @@ function populateWorld() {
     const rad = Math.sqrt(rng()) * 255;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.6) continue;
-    if (!siteFree(x, z, 2.4)) continue;
+    if (!siteFreeAt(x, z, 2.4)) continue;
     makeTree(x, z, rng);
   }
 
@@ -4375,7 +4395,7 @@ function populateWorld() {
     const rad = Math.sqrt(rng()) * 265;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.0) continue;
-    if (!siteFree(x, z, 1.6)) continue;
+    if (!siteFreeAt(x, z, 1.6)) continue;
     makeRock(x, z, rng);
   }
 
@@ -4424,6 +4444,19 @@ function buildRebootVans() {
   for (let s = 0; s < spots.length; s++) {
     let x = spots[s][0], z = spots[s][1];
     if (terrainHeight(x, z) < 3) { x *= 0.72; z *= 0.72; }
+    // nudge vans out of any building they would clip into
+    if (!siteFreeAt(x, z, 3.6)) {
+      let moved = false;
+      for (let k = 0; k < 14; k++) {
+        const a = Math.random() * TAU;
+        const dist = 6 + Math.random() * 20;
+        const nx = x + Math.cos(a) * dist;
+        const nz = z + Math.sin(a) * dist;
+        if (terrainHeight(nx, nz) > 3 && siteFreeAt(nx, nz, 3.6)) { x = nx; z = nz; moved = true; break; }
+      }
+      if (!moved) continue;
+    }
+    claimSite(x, z, 2.8);
     const y = terrainHeight(x, z);
 
     const g = new THREE.Group();
@@ -9626,8 +9659,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 5, patch: 0 };
-const VERSION_PREV = '5.4.2';
+const VERSION = { major: 5, minor: 5, patch: 1 };
+const VERSION_PREV = '5.5.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
