@@ -2608,6 +2608,36 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
   .lobbyFoot > * { margin-bottom:12px; }
 }
 #menu { overflow:hidden; }
+
+/* ============================== BLITZ LEVEL WHEEL ============================== */
+#blitzWheel {
+  position:absolute; right:24px; top:50%; transform:translateY(-50%);
+  width:92px; height:92px; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+  filter:drop-shadow(0 8px 20px rgba(0,0,0,.55));
+}
+#blitzWheel svg { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+.bwTrack { fill:none; stroke:rgba(255,255,255,.13); stroke-width:7; }
+.bwFill {
+  fill:none; stroke:var(--gold); stroke-width:7; stroke-linecap:round;
+  stroke-dasharray:263.89; stroke-dashoffset:263.89;
+  transition:stroke-dashoffset .35s ease, stroke .3s ease;
+}
+.bwMid { position:relative; text-align:center; line-height:1; }
+.bwMid b {
+  display:block; font-family:var(--display); font-style:italic; font-size:34px;
+  color:#fff; text-shadow:0 0 18px rgba(255,200,70,.5);
+}
+.bwMid span {
+  display:block; margin-top:2px;
+  font-family:var(--label); font-size:7px; font-weight:700; letter-spacing:.22em;
+  color:rgba(234,243,255,.45);
+}
+@media (max-width: 760px) {
+  #blitzWheel { width:68px; height:68px; right:12px; }
+  .bwMid b { font-size:26px; }
+  .bwMid span { font-size:6px; letter-spacing:.16em; }
+}
 </style>
 </head>
 <body>
@@ -2618,6 +2648,17 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 <div id="hud">
   <div id="modeBadge">SOLO</div>
   <button id="quitBtn" class="hide">LEAVE MATCH</button>
+
+  <div id="blitzWheel" class="hide">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="bwTrack" cx="50" cy="50" r="42"></circle>
+      <circle class="bwFill" id="bwFill" cx="50" cy="50" r="42"></circle>
+    </svg>
+    <div class="bwMid">
+      <b id="bwLvl">1</b>
+      <span>LEVEL</span>
+    </div>
+  </div>
 
   <div id="teamScore" class="hide">
     <div class="tsSide blue"><b id="scoreBlue">0</b><span>BLUE</span></div>
@@ -8377,6 +8418,7 @@ function fmtTime(sec) {
 let interactTarget = null;
 
 function updateHUD() {
+  updateBlitzWheel();
   const hpPct = clamp(player.hp / player.maxHp, 0, 1) * 100;
   const totalShield = player.shield + (player.overshield || 0);
   const maxBoth = player.maxShield + player.maxOvershield;
@@ -9026,6 +9068,32 @@ function badgeText() {
    hands you a random mythic or exotic (or drops it if the bag is full). ---- */
 function blitzNeed() { return 2 + ((state.blitzLvl || 1) - 1) * 2; }
 
+let blitzWheelLvl = -1;
+let blitzWheelPct = -1;
+
+/* Ring gauge on the right: level in the middle, progress round the rim. */
+function updateBlitzWheel() {
+  const el = document.getElementById('blitzWheel');
+  if (!el) return;
+  const on = isBlitz() && (state.phase === 'play' || state.phase === 'drop');
+  el.classList.toggle('hide', !on);
+  if (!on) return;
+
+  const lvl = state.blitzLvl || 1;
+  if (lvl !== blitzWheelLvl) {
+    const b = document.getElementById('bwLvl');
+    if (b) b.textContent = String(lvl);
+    blitzWheelLvl = lvl;
+  }
+  const pct = clamp((state.blitzXp || 0) / blitzNeed(), 0, 1);
+  const rounded = Math.round(pct * 100);
+  if (rounded !== blitzWheelPct) {
+    const f = document.getElementById('bwFill');
+    if (f) f.style.strokeDashoffset = String(263.89 * (1 - pct));
+    blitzWheelPct = rounded;
+  }
+}
+
 function blitzGrantReward() {
   const mythic = Math.random() < 0.5;
   const type = mythic ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
@@ -9084,6 +9152,8 @@ function startMatch() {
   state.rpPlaceAwarded = 0;
   state.blitzLvl = 1;
   state.blitzXp = 0;
+  blitzWheelLvl = -1;
+  blitzWheelPct = -1;
 
   const botCount = plannedBotCount();
 
