@@ -3283,6 +3283,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">10</span><div><b>BIGGER VICTORY ROYALE</b> — winning now lands with a brass fanfare, a gold flash that blooms out of the centre, faster sweeping rays, a pulsing crown, a shine that runs across the title, 80 pieces of confetti and your elimination and damage stats counting up under the crown.</div></li>
       <li><span class="wnTag">11</span><div><b>END SCREEN BUTTONS</b> — the gold button is now <b>PLAY AGAIN</b> and drops you straight into another match of the same mode, while the blue one takes you back to the <b>MAIN MENU</b>. The old 50 V-Buck revive is gone.</div></li>
       <li><span class="wnTag">12</span><div><b>NEW MODE PICKER</b> — the lobby's mode list is now a responsive grid of cards instead of one long column: numbered, grouped under BATTLE ROYALE / RANKED / ARCADE headings, laid out in two or three columns depending on your screen, and it scrolls inside its own panel so it can never run off the bottom of the page. Phones get a single-column layout with a full-width PLAY button.</div></li>
+      <li><span class="wnTag">13</span><div><b>BLITZ LEVELS</b> — Blitz now has its own levelling track: kills and surviving storm circles fill the bar shown beside BLITZ at the top of the screen, and every level hands you a random mythic or exotic. If your five slots are full it drops at your feet instead — either way the jackpot banner names it.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -3426,8 +3427,8 @@ const MODE_DEFS = {
   },
   blitz: {
     name: 'BLITZ', short: 'BLITZ', kicker: 'FAST',
-    desc: 'Straight into the fight. No drop, the storm is already moving, loot everywhere.',
-    rules: ['<b>7</b> MINUTES', 'FAST STORM', 'MORE LOOT'],
+    desc: 'Straight into the fight. No drop, the storm is already moving, and every kill or storm circle levels you up into a free mythic or exotic.',
+    rules: ['<b>7</b> MINUTES', 'FAST STORM', 'LEVEL UP <b>MYTHICS</b>'],
     adjustable: true,
     queue: (n) => n + ' OPPONENTS · FAST',
   },
@@ -5594,6 +5595,7 @@ function killBot(b, killerName) {
     awardBpXp(100);
     awardTourPoints(3, 'ELIMINATION', b.name);
     awardRankPoints(isRankedReload() ? 10 : 12, 'ELIMINATION', b.name);
+    blitzAddXp(1);
     if (siphonActive()) applySiphon();
     advanceGunGame();
   }
@@ -7305,6 +7307,7 @@ function nextStormPhase() {
   storm.timer = p.shrink * stormScale();
   storm.dps = p.dps;
   storm.phase++;
+  blitzAddXp(2);
   toast('STORM CLOSING', 'sub');
   sfx('storm');
 }
@@ -9015,8 +9018,48 @@ function badgeText() {
   if (isReload()) return 'RELOAD · <b>3</b> LIVES';
   if (isRanked()) return 'RANKED · <b>' + rankInfo(profile.rankRp || 0).name + '</b>';
   if (isSandbox()) return 'SANDBOX · <b>CREATIVE</b>';
-  if (isBlitz()) return 'BLITZ · <b>' + (bots.length + 1) + '</b> PLAYERS';
+  if (isBlitz()) return 'BLITZ · LV <b>' + (state.blitzLvl || 1) + '</b> · ' + (state.blitzXp || 0) + '/' + blitzNeed();
   return 'SOLO · <b>' + (bots.length + 1) + '</b> PLAYERS';
+}
+
+/* ---- Blitz progression: kills and storm circles level you up, each level
+   hands you a random mythic or exotic (or drops it if the bag is full). ---- */
+function blitzNeed() { return 2 + ((state.blitzLvl || 1) - 1) * 2; }
+
+function blitzGrantReward() {
+  const mythic = Math.random() < 0.5;
+  const type = mythic ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
+  const item = makeWeapon(type, mythic ? 5 : 6);
+  let free = -1;
+  for (let i = 0; i < player.inv.length; i++) {
+    if (!player.inv[i]) { free = i; break; }
+  }
+  if (free >= 0) {
+    player.inv[free] = item;
+    player.slot = free;
+    refreshHotbar();
+    showRareFind(item, 'BLITZ LEVEL ' + state.blitzLvl, 'ADDED TO YOUR INVENTORY');
+  } else {
+    spawnLoot(player.pos.x + rand(-1.6, 1.6), player.pos.y, player.pos.z + rand(-1.6, 1.6), item);
+    showRareFind(item, 'BLITZ LEVEL ' + state.blitzLvl, 'NO FREE SLOT · DROPPED AT YOUR FEET');
+  }
+}
+
+function blitzAddXp(n) {
+  if (!isBlitz() || !n) return;
+  if (!state.blitzLvl) { state.blitzLvl = 1; state.blitzXp = 0; }
+  state.blitzXp += n;
+  let levels = 0;
+  while (state.blitzXp >= blitzNeed()) {
+    state.blitzXp -= blitzNeed();
+    state.blitzLvl++;
+    levels++;
+  }
+  if (!levels) return;
+  const badge = document.getElementById('modeBadge');
+  if (badge) badge.innerHTML = badgeText();
+  toast('BLITZ LEVEL ' + state.blitzLvl, '');
+  for (let i = 0; i < levels; i++) blitzGrantReward();
 }
 
 function startMatch() {
@@ -9039,6 +9082,8 @@ function startMatch() {
   state.tourPlaceAwarded = 0;
   state.rpPoints = 0;
   state.rpPlaceAwarded = 0;
+  state.blitzLvl = 1;
+  state.blitzXp = 0;
 
   const botCount = plannedBotCount();
 
@@ -9379,8 +9424,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 3, patch: 0 };
-const VERSION_PREV = '5.2.3';
+const VERSION = { major: 5, minor: 4, patch: 0 };
+const VERSION_PREV = '5.3.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
