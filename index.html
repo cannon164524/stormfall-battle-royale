@@ -3023,6 +3023,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">06</span><div><b>HEALS SHAKEN UP</b> — medkits are out. Bandages are back for quick chip healing, and Slurp Juice is in, restoring health and shield in one drink.</div></li>
       <li><span class="wnTag">07</span><div><b>FRAG GRENADES</b> — a damage grenade at last: it explodes for up to 72 damage in a 7.5 m radius, with a smaller shove than a shockwave.</div></li>
       <li><span class="wnTag">08</span><div><b>GUN GAME REFRESHED</b> — the ten-gun ladder is rebuilt around the new pool, from pistol up to the Bolt Sniper.</div></li>
+      <li><span class="wnTag">09</span><div><b>LITTER CLEANS ITSELF UP</b> — floor loot now fades out and despawns about a minute after it lands, and every item is cleared when a match ends. No more piles of old guns slowing down late-game Ranked Reload.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4046,6 +4047,7 @@ function clearWorld() {
   bubbles.length = 0;
   mists.length = 0;
   rebootVans.length = 0;
+  clearLoot();
   clearDamageNumbers();
 }
 
@@ -4532,6 +4534,8 @@ function animateRig(rig, speed, t) {
    LOOT
    ========================================================================= */
 const loot = [];
+const LOOT_LIFE = 60;      // seconds a floor item sits before it despawns
+const LOOT_MAX = 150;      // hard cap so a long match can never pile up models
 
 /* Real 3D models for floor loot instead of plain cubes. */
 function buildLootModel(item) {
@@ -4607,7 +4611,13 @@ function spawnLoot(x, y, z, item) {
 
   g.position.set(x, y, z);
   dynGroup.add(g);
-  loot.push({ x, y, z, item, mesh: g, box: model, ring, t: rand(0, 6), dead: false });
+  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, t: rand(0, 6), age: 0, life: LOOT_LIFE + rand(0, 8), dead: false });
+  while (loot.length > LOOT_MAX) {
+    const old = loot.shift();
+    if (!old) break;
+    old.dead = true;
+    if (old.mesh.parent) old.mesh.parent.remove(old.mesh);
+  }
 }
 
 function clearLoot() {
@@ -8901,8 +8911,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 9, patch: 0 };
-const VERSION_PREV = '4.8.0';
+const VERSION = { major: 4, minor: 9, patch: 1 };
+const VERSION_PREV = '4.9.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10161,12 +10171,28 @@ function updateRenderDistance(dt) {
 }
 
 function updateLootVisuals(dt) {
-  for (const l of loot) {
-    if (l.dead) continue;
+  for (let i = loot.length - 1; i >= 0; i--) {
+    const l = loot[i];
+    if (l.dead) { loot.splice(i, 1); continue; }
     l.t += dt;
+    l.age += dt;
+    const left = l.life - l.age;
+    if (left <= 0) {
+      l.dead = true;
+      if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+      disposeTree(l.mesh);
+      loot.splice(i, 1);
+      continue;
+    }
     l.box.rotation.y += dt * 1.4;
     l.box.position.y = 0.45 + Math.sin(l.t * 2.4) * 0.12;
-    if (l.ring) l.ring.material.opacity = 0.32 + Math.sin(l.t * 2.4) * 0.18;
+    const fade = left < 6 ? Math.max(0, left / 6) : 1;
+    if (fade < 1) {
+      l.mesh.scale.setScalar(0.6 + fade * 0.4);
+      l.mesh.position.y = l.y - (1 - fade) * 0.6;
+    }
+    if (l.ring) l.ring.material.opacity = (0.32 + Math.sin(l.t * 2.4) * 0.18) * fade;
+    if (l.beam) l.beam.material.opacity = 0.2 * fade;
   }
 }
 
