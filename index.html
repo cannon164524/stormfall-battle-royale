@@ -498,15 +498,15 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
   box-shadow:0 14px 34px rgba(20,120,220,.5), inset 0 -5px 0 rgba(0,20,50,.35);
 }
 #againBtn:active { transform:translateY(2px); }
-#reviveBtn {
+#playAgainBtn {
   margin-left:10px; padding:14px 34px;
   font-family:var(--display); font-style:italic; font-size:20px; letter-spacing:.06em; color:#2a1a00;
   background:linear-gradient(180deg,#ffd76a,#e08a12);
   clip-path:polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
   box-shadow:0 12px 30px rgba(220,150,20,.4);
 }
-#reviveBtn:disabled { opacity:.45; cursor:default; }
-#reviveBtn:active { transform:translateY(2px); }
+#playAgainBtn:disabled { opacity:.45; cursor:default; }
+#playAgainBtn:active { transform:translateY(2px); }
 
 /* ============================== TOUCH ============================== */
 #touch { position:fixed; inset:0; z-index:25; pointer-events:none; }
@@ -1622,7 +1622,7 @@ kbd { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.12); colo
 .endTitle { font-style:normal; letter-spacing:-1px; background:linear-gradient(180deg,#fff6dd,#ffc244 60%,#ff8a1e); }
 .endPlace { color:var(--accent2); }
 #againBtn { background:linear-gradient(180deg,#ffc861,#ff8a1e); color:#14100a; clip-path:none; border-radius:4px; }
-#reviveBtn { background:linear-gradient(180deg,#7ff5e2,#12b7a3); color:#03201c; clip-path:none; border-radius:4px; }
+#playAgainBtn { background:linear-gradient(180deg,#7ff5e2,#12b7a3); color:#03201c; clip-path:none; border-radius:4px; }
 .respBox { background:linear-gradient(180deg, rgba(12,14,20,.94), rgba(5,6,10,.96)); border-color:rgba(255,90,110,.32); clip-path:none; border-radius:4px; }
 .respTitle { color:var(--danger); font-style:normal; }
 .respSub { color:var(--accent2); }
@@ -1982,7 +1982,7 @@ kbd { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.16); colo
 .endTitle { background:linear-gradient(180deg,#fff8dd,#ffc93c 60%,#f08b1f); -webkit-background-clip:text; background-clip:text; }
 .endPlace { color:var(--accent); }
 #againBtn { background:linear-gradient(180deg,#63d6ff,#1466dd); color:#fff; box-shadow:0 14px 34px rgba(20,120,220,.5), inset 0 -5px 0 rgba(0,20,50,.35); }
-#reviveBtn { background:linear-gradient(180deg,#ffd76a,#e08a12); color:#2a1a00; box-shadow:0 12px 30px rgba(220,150,20,.4); }
+#playAgainBtn { background:linear-gradient(180deg,#ffd76a,#e08a12); color:#2a1a00; box-shadow:0 12px 30px rgba(220,150,20,.4); }
 .respBox { background:linear-gradient(180deg, rgba(10,18,32,.9), rgba(4,8,16,.94)); border-color:rgba(255,90,110,.32); }
 .respTitle { color:var(--danger); }
 .respSub { color:var(--accent); }
@@ -3016,8 +3016,8 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <div><b id="statDmg">0</b><span>DAMAGE</span></div>
       <div><b id="statTime">0:00</b><span>SURVIVED</span></div>
     </div>
-    <button id="againBtn">PLAY AGAIN</button>
-    <button id="reviveBtn" class="hide">REVIVE · 50 V-BUCKS</button>
+    <button id="againBtn">MAIN MENU</button>
+    <button id="playAgainBtn">PLAY AGAIN</button>
   </div>
 </div>
 
@@ -3150,6 +3150,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">08</span><div><b>MORE MYTHICS AND EXOTICS</b> — the special pool doubled to twenty: ten mythics including the Mythic Pistol, Double Barrel, Combat Shotgun, Heavy AR and Hunting Rifle, plus five new exotics — Bottomless Drum Gun, Freezing Bolt Sniper, Chaining Holo Rifle, Siphoning Hunting Rifle and Blasting Thermal Sniper. They drop about twice as often too, and the jackpot card is now a slim banner at the top of the screen instead of a big box.</div></li>
       <li><span class="wnTag">09</span><div><b>BOTS CARRY MYTHICS</b> — bots now spawn holding mythic and exotic weapons, more often the higher the lobby tier, so the good guns are out in the world instead of waiting until the last chest. Kill one and the ELIMINATION card is replaced by a gold or cyan JACKPOT banner naming what they were carrying.</div></li>
       <li><span class="wnTag">10</span><div><b>BIGGER VICTORY ROYALE</b> — winning now lands with a brass fanfare, a gold flash that blooms out of the centre, faster sweeping rays, a pulsing crown, a shine that runs across the title, 80 pieces of confetti and your elimination and damage stats counting up under the crown.</div></li>
+      <li><span class="wnTag">11</span><div><b>END SCREEN BUTTONS</b> — the gold button is now <b>PLAY AGAIN</b> and drops you straight into another match of the same mode, while the blue one takes you back to the <b>MAIN MENU</b>. The old 50 V-Buck revive is gone.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9152,61 +9153,13 @@ function endMatch(win, killerName) {
     victoryFanfare();
   }
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
-  const reviveBtn = document.getElementById('reviveBtn');
-  if (reviveBtn) {
-    const canRevive = !win && !state.teamMode && profile.vbucks >= 50;
-    reviveBtn.classList.toggle('hide', !canRevive);
-    reviveBtn.disabled = !canRevive;
+  const againPlay = document.getElementById('playAgainBtn');
+  if (againPlay) {
+    againPlay.disabled = false;
+    againPlay.classList.toggle('hide', !!state.netGuest);
   }
   if (rankRecap) setTimeout(() => showRankedRecap(rankRecap), 750);
   else setTimeout(processRevealQueue, 900);
-}
-
-function revivePlayer() {
-  if (profile.vbucks < 50) { toast('NEED 50 V-BUCKS', 'sub'); return; }
-  profile.vbucks -= 50;
-  saveProfile();
-  refreshWallet();
-
-  const sp = storm.active ? safeSpawnPoint() : { x: player.pos.x, z: player.pos.z };
-  const g = Math.max(terrainHeight(sp.x, sp.z), TERRAIN_FLOOR);
-  player.pos.set(sp.x, g + 26, sp.z);
-  player.vel.set(0, -8, 0);
-  player.hp = player.maxHp;
-  player.shield = 0;
-  player.overshield = player.maxOvershield;
-  player.lastDamage = -99;
-  player.alive = true;
-  player.knocked = false;
-  player.bleed = 0;
-  player.reviveT = 0;
-  player.out = false;
-  player.channel = null;
-  player.dropping = true;
-  player.onGround = false;
-  player.inv = [makeWeapon('pistol', 0), null, null, null, null];
-  player.ammo = { light: 24, medium: 0, heavy: 0, shells: 0 };
-  player.slot = 0;
-  player.wood = 50;
-  player.reloading = false;
-  player.using = null;
-  player.lastHitBy = '';
-  if (player.rig) {
-    player.rig.group.visible = true;
-    dynGroup.add(player.rig.group);
-    player.rig.group.position.copy(player.pos);
-  }
-  camRig.ready = false;
-  state.ended = false;
-  state.phase = 'play';
-  document.getElementById('end').classList.add('hide');
-  document.getElementById('hud').classList.add('on');
-  document.getElementById('touch').classList.toggle('hide', !COARSE);
-  toggleInventory(false);
-  refreshHotbar();
-  toast('REVIVED — GREY PISTOL ONLY', 'sub');
-  sfx('respawn');
-  if (!COARSE) lockPointer();
 }
 
 function backToMenu() {
@@ -9294,8 +9247,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 2, patch: 2 };
-const VERSION_PREV = '5.2.1';
+const VERSION = { major: 5, minor: 2, patch: 3 };
+const VERSION_PREV = '5.2.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10082,6 +10035,7 @@ function rrCount(fromPct, toPct, ms, token) {
 function showRankedRecap(d) {
   const el = document.getElementById('rankRecap');
   if (!el) return;
+  if (state.phase === 'play' || state.phase === 'drop') return;
   rrToken++;
   const token = rrToken;
 
@@ -10550,6 +10504,13 @@ document.getElementById('playBtn').addEventListener('click', () => {
   startMatch();
 });
 document.getElementById('againBtn').addEventListener('click', () => backToMenu());
+document.getElementById('playAgainBtn').addEventListener('click', () => {
+  audioInit();
+  hideRankedRecap();
+  hideRareFind();
+  closeReport();
+  startMatch();
+});
 document.getElementById('quitBtn').addEventListener('click', () => {
   if (state.phase === 'play' || state.phase === 'drop') backToMenu();
 });
@@ -11263,8 +11224,6 @@ if (mpCopyAnswerEl) {
   });
 }
 mpSetTab('host');
-const reviveEl = document.getElementById('reviveBtn');
-if (reviveEl) reviveEl.addEventListener('click', revivePlayer);
 
 /* =========================================================================
    ASSET PRELOAD
