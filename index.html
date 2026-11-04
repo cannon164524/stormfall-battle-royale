@@ -3106,6 +3106,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">04</span><div><b>WHERE TO FIND THEM</b> — about one floor drop in forty is a special, and chests now have a 7% chance to spit one out on top of their usual loot.</div></li>
       <li><span class="wnTag">05</span><div><b>RARITY TIERS</b> — Mythic and Exotic are now real rarity tiers above Legendary, with their own colours through the nameplate, inventory and kill feed.</div></li>
       <li><span class="wnTag">06</span><div><b>JACKPOT CHESTS</b> — every chest has a small chance to cough up something special. When it happens the whole screen lights up: rotating rays, gold or cyan spark bursts and a huge card naming the find for a few seconds.</div></li>
+      <li><span class="wnTag">07</span><div><b>EASIER EARLY RANKS</b> — Bronze now costs 100 RP a tier instead of 220, and Silver, Gold and Platinum step up gently from there. Bronze and Silver also never lose RP on a bad game, and the loss penalty only grows once you reach Gold.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -3301,22 +3302,39 @@ const RANKS = [
   { name: 'CHAMPION', color: '#ff7fd0' },
   { name: 'UNREAL', color: '#ff4d5e' },
 ];
+/* Early ranks are cheap: each tier costs less RP low down and more as you climb. */
+const RANK_STEPS = [100, 130, 160, 190, 220, 250, 280, 310];
 const RP_PER_RANK = 220;
+const RANK_TOTAL = RANK_STEPS.reduce((a, b) => a + b, 0);
 const ROMAN = ['I', 'II', 'III'];
 
 function rankInfo(rp) {
   rp = Math.max(0, rp || 0);
-  const tier = Math.min(RANKS.length - 1, Math.floor(rp / RP_PER_RANK));
-  const within = rp - tier * RP_PER_RANK;
-  const div = 1 + Math.min(2, Math.floor(within / (RP_PER_RANK / 3)));
+  let tier = 0, rem = rp;
+  while (tier < RANK_STEPS.length - 1 && rem >= RANK_STEPS[tier]) {
+    rem -= RANK_STEPS[tier];
+    tier += 1;
+  }
+  const need = RANK_STEPS[tier];
+  const within = Math.min(rem, need);
   return {
     tier,
-    div,
-    name: RANKS[tier].name + ' ' + ROMAN[div - 1],
+    name: RANKS[tier].name + ' ' + ROMAN[Math.min(2, Math.floor(within / (need / 3)))],
     color: RANKS[tier].color,
     within,
-    progress: clamp(within / RP_PER_RANK, 0, 1),
+    need,
+    div: 1 + Math.min(2, Math.floor(within / (need / 3))),
+    progress: clamp(within / need, 0, 1),
   };
+}
+
+/* Bronze and Silver never lose RP; the penalty climbs with the ladder. */
+function rankLossFor(tier, reload) {
+  if (tier <= 1) return 0;
+  if (tier === 2) return reload ? -4 : -6;
+  if (tier === 3) return reload ? -6 : -10;
+  if (tier === 4) return reload ? -8 : -14;
+  return reload ? -12 : -18;
 }
 /* Ranked Reload runs its own ladder; the BR pool is only touched by BR queues. */
 function rankedRp() { return isRankedReload() ? (profile.reloadRp || 0) : (profile.rankRp || 0); }
@@ -3325,7 +3343,7 @@ function setRankedRp(v) {
   if (isRankedReload()) profile.reloadRp = n;
   else profile.rankRp = n;
 }
-function rankBotTier() { return clamp((rankedRp() || 0) / (RP_PER_RANK * 7), 0, 1); }
+function rankBotTier() { return clamp((rankedRp() || 0) / RANK_TOTAL, 0, 1); }
 
 /* =========================================================================
    SMALL UTILITIES
@@ -8907,9 +8925,9 @@ function endMatch(win, killerName) {
     syncRankPlacement(placement);
     const reload = isRankedReload();
     const perKill = reload ? 10 : 12;
-    const cutoff = reload ? 8 : 5;
-    const lossRp = reload ? -12 : -18;
     const beforeRp = rankedRp();
+    const cutoff = reload ? 8 : 5;
+    const lossRp = rankLossFor(rankInfo(beforeRp).tier, reload);
     const killRp = player.kills * perKill;
     const rawGain = state.rpPoints + (state.rpPlaceAwarded === 0 && placement > cutoff ? lossRp : 0);
     setRankedRp(beforeRp + rawGain);
@@ -9097,8 +9115,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 0, patch: 1 };
-const VERSION_PREV = '5.0.0';
+const VERSION = { major: 5, minor: 1, patch: 0 };
+const VERSION_PREV = '5.0.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
