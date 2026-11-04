@@ -3357,8 +3357,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO MORE SLIDING ACROSS THE ISLAND</b> — the grapple briefly disabled normal movement damping, and a shockwave used during that window left you gliding at full blast until you hit the sea. Movement damping now always applies outside an active grapple, so blast momentum fades like it should.</div></li>
-      <li><span class="wnTag">02</span><div><b>NO MORE FREEZING</b> — arriving at a grapple point could leave you unable to move for a second or so, because the grapple window stayed open after the pull ended. Reaching the anchor now closes it immediately, and the state is cleared on respawn and at the start of every match.</div></li>
+      <li><span class="wnTag">01</span><div><b>HONEST BLOOM</b> — the crosshair now measures the real bullet cone. Its gap is the actual spread angle projected through the camera's field of view, so the ring sits exactly where pellets can land — no more fixed +4 px padding and no more movement/air gap that bullets ignored.</li></li>
+      <li><span class="wnTag">02</span><div><b>SPRAY BLOOMS</b> — every shot widens the cone itself, not just the picture. Sustained fire spreads your bullets wider, decaying back to base when you stop, and reloads reset it.</li></li>
+      <li><span class="wnTag">03</span><div><b>MORE RESPONSIVE</b> — the crosshair expands about three times faster than it used to and settles back smoothly, so spraying and strafing read instantly.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -5553,10 +5554,10 @@ function playerFire() {
   // Admin aimbot: snap the shot onto the closest enemy your crosshair is near.
   const aimDir = adminOn('aimbot') ? adminAim(origin, base, w.range) : null;
   const scopedAds = aimDown && !!w.scoped;
-  // First shot after a second of not firing is pinpoint — everything but shotguns.
-  const firstShot = w.pellets <= 1 && (state.time - (player.lastShotAt || -99)) >= 1;
-  const spread = aimDir ? 0 : firstShot ? 0.0002 : scopedAds ? 0.0002 : (aimDown ? w.ads : w.spread);
+  // The crosshair and the bullets now read from this same number.
+  const spread = aimDir ? 0 : currentSpread(w);
   player.lastShotAt = state.time;
+  player.bloom = Math.min(w.spread * 1.6, (player.bloom || 0) + w.spread * 0.8);
   const muzzle = player.pos.clone();
   muzzle.y += 1.35;
   flashMuzzle(player.rig);
@@ -5588,7 +5589,6 @@ function playerFire() {
 
   const kick = wt === 'shotgun' ? 0.055 : wt === 'sniper' ? 0.085 : wt === 'smg' ? 0.013 : 0.021;
   camRig.recoil += scopedAds ? kick * 0.15 : kick;
-  bloomKick = Math.min(30, bloomKick + (wt === 'shotgun' ? 16 : wt === 'sniper' ? 24 : 7));
   sfx(w.sfx);
   if (!w.noAmmo && it.mag <= 0) startReload();
   refreshHotbar();
@@ -5621,6 +5621,7 @@ function startReload() {
   if (player.reloading || it.mag >= w.mag) return;
   if (player.ammo[w.ammo] <= 0) { dryWeapon(); return; }
   player.reloading = true;
+  player.bloom = 0;
   player.reloadEnd = state.time + w.reload;
   sfx('reload');
   refreshHotbar();
@@ -6578,6 +6579,21 @@ function spawnShockwaveGrenade(origin, dir, power, def) {
   mesh.castShadow = true;
   fxGroup.add(mesh);
   grenades.push({ pos: origin.clone(), vel, mesh, fuse: 1.25, bounces: 0, def: g });
+}
+
+/* One source of truth for accuracy: the crosshair gap and the actual pellet
+   cone are both derived from this. */
+function currentSpread(w) {
+  const scopedAds = aimDown && !!w.scoped;
+  const firstReady = w.pellets <= 1 && (state.time - (player.lastShotAt || -99)) >= 1;
+  let s = (firstReady || scopedAds) ? 0.0002 : (aimDown ? w.ads : w.spread);
+  s += player.bloom || 0;
+  if (!aimDown) {
+    const spd = Math.hypot(player.vel.x, player.vel.z);
+    if (spd > 2) s += w.spread * clamp((spd - 2) / 6, 0, 1) * 0.4;
+    if (!player.onGround && !player.dropping) s += w.spread * 0.7;
+  }
+  return s;
 }
 
 /* Grappler: fire a hook at whatever you're aiming at and get yanked toward it. */
@@ -8456,7 +8472,6 @@ const crosshairEl = document.getElementById('crosshair');
 const scopeEl = document.getElementById('scope');
 const scopeLabelEl = document.getElementById('scopeLabel');
 let crosshairGap = 8;
-let bloomKick = 0;
 
 function updateCrosshair(dt) {
   if (!crosshairEl) return;
@@ -8471,18 +8486,19 @@ function updateCrosshair(dt) {
   crosshairEl.style.opacity = (player.alive && scopeAmount < 0.5) ? '0.95' : '0';
 
   const it = currentItem();
-  let base = 7;
+  let gapPx = 6;
   if (it && it.kind === 'weapon') {
     const w = WEAPONS[it.type];
-    const ready = w.pellets <= 1 && (state.time - (player.lastShotAt || -99)) >= 1;
-    base = (ready ? 0.004 : (aimDown ? w.ads : w.spread)) * 190 + 4;
+    player.bloom = Math.max(0, (player.bloom || 0) - w.spread * 3.4 * dt);
+    const spr = currentSpread(w);
+    const fovRad = (camera.fov || 76) * Math.PI / 180;
+    gapPx = (spr / Math.tan(fovRad / 2)) * (window.innerHeight / 2);
+  } else {
+    player.bloom = 0;
   }
-  const spd = Math.hypot(player.vel.x, player.vel.z);
-  base += clamp(spd / 8.8, 0, 1) * 5;
-  if (!player.onGround && !player.dropping) base += 6;
-
-  bloomKick = Math.max(0, bloomKick - dt * 62);
-  crosshairGap = lerp(crosshairGap, base + bloomKick, 1 - Math.exp(-16 * dt));
+  const targetGap = clamp(gapPx, 1.5, 74);
+  const rate = targetGap > crosshairGap ? 46 : 14;
+  crosshairGap = lerp(crosshairGap, targetGap, 1 - Math.exp(-rate * dt));
   const g = clamp(crosshairGap, 1.5, 46);
   crosshairEl.style.setProperty('--gap', g.toFixed(1) + 'px');
   crosshairEl.style.setProperty('--dot', (g > 15 ? 0 : 1).toFixed(2));
@@ -9300,7 +9316,7 @@ function resetPlayerForMatch() {
   camRig.ready = false;
   camRig.recoil = 0;
   camRig.landDip = 0;
-  bloomKick = 0;
+  player.bloom = 0;
   crosshairGap = 8;
   buildState.active = false;
   buildState.piece = 'wall';
@@ -9813,8 +9829,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 6, patch: 2 };
-const VERSION_PREV = '5.6.1';
+const VERSION = { major: 5, minor: 6, patch: 3 };
+const VERSION_PREV = '5.6.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
