@@ -3015,15 +3015,11 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>LOOT POOL REBUILT</b> — the floor drop table is completely different. Seven guns are gone (Scoped AR, Red-Eye, Tactical Scoped, Marksman, Scoped Revolver, Red Dot Rifle and Railgun) and four have moved in.</div></li>
-      <li><span class="wnTag">02</span><div><b>BURST RIFLE</b> — a new medium-ammo rifle that throws a three-round burst with tight spread and no full-auto spray. Tap it and the whole burst lands together.</div></li>
-      <li><span class="wnTag">03</span><div><b>DRUM GUN</b> — light ammo, fifty rounds, 780 rpm. The spray weapon of the season, at the cost of reach and accuracy.</div></li>
-      <li><span class="wnTag">04</span><div><b>COMBAT SHOTGUN</b> — an automatic shotgun with an eight-shell mag. Far more forgiving than the pump, much less forgiving at range.</div></li>
-      <li><span class="wnTag">05</span><div><b>HUNTING RIFLE</b> — a 4x bolt rifle on medium ammo: 78 damage, five rounds, fast handling. The scout's answer to the heavy snipers.</div></li>
-      <li><span class="wnTag">06</span><div><b>HEALS SHAKEN UP</b> — medkits are out. Bandages are back for quick chip healing, and Slurp Juice is in, restoring health and shield in one drink.</div></li>
-      <li><span class="wnTag">07</span><div><b>FRAG GRENADES</b> — a damage grenade at last: it explodes for up to 72 damage in a 7.5 m radius, with a smaller shove than a shockwave.</div></li>
-      <li><span class="wnTag">08</span><div><b>GUN GAME REFRESHED</b> — the ten-gun ladder is rebuilt around the new pool, from pistol up to the Bolt Sniper.</div></li>
-      <li><span class="wnTag">09</span><div><b>LITTER CLEANS ITSELF UP</b> — floor loot now fades out and despawns about a minute after it lands, and every item is cleared when a match ends. No more piles of old guns slowing down late-game Ranked Reload.</div></li>
+      <li><span class="wnTag">01</span><div><b>MYTHIC WEAPONS</b> — five gold-tier guns, each a straight upgrade of something you already know: Mythic Assault Rifle, Mythic Pump Shotgun, Mythic SMG, Mythic Bolt Sniper and Mythic Drum Gun. More damage, bigger mags, faster handling.</div></li>
+      <li><span class="wnTag">02</span><div><b>EXOTIC WEAPONS</b> — five cyan guns that keep their normal stats but bring a twist: the Holo Rifle siphons health back on every hit, the Combat Shotgun shoves targets across the room, the Hunting Rifle fires explosive rounds, the Pistol never runs dry, and the Burst Rifle shoots straight through one enemy into the next.</div></li>
+      <li><span class="wnTag">03</span><div><b>THEY GLOW</b> — mythics and exotics don't lie on the floor like ordinary loot. They sit in a pulsing halo with a tall beam: yellow for mythic, cyan for exotic, so you can spot one across a POI.</div></li>
+      <li><span class="wnTag">04</span><div><b>WHERE TO FIND THEM</b> — about one floor drop in forty is a special, and chests now have a 7% chance to spit one out on top of their usual loot.</div></li>
+      <li><span class="wnTag">05</span><div><b>RARITY TIERS</b> — Mythic and Exotic are now real rarity tiers above Legendary, with their own colours through the hotbar, pickup toast and damage feed.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4091,6 +4087,8 @@ const RARITY = [
   { name: 'Rare', color: '#3fa9f5', mult: 1.10 },
   { name: 'Epic', color: '#b45cf0', mult: 1.17 },
   { name: 'Legendary', color: '#f2a72b', mult: 1.25 },
+  { name: 'Mythic', color: '#ffd23f', mult: 1.32 },
+  { name: 'Exotic', color: '#3ff5ff', mult: 1.20 },
 ];
 
 const WEAPONS = {
@@ -4107,6 +4105,25 @@ const WEAPONS = {
   hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 78, rpm: 55, mag: 5, reload: 2.9, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
   sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x' },
   thermal: { name: 'Thermal Sniper', ammo: 'heavy', dmg: 118, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal' },
+  // Mythic — stronger versions of guns already in the pool.
+  mythic_ar: { name: 'Mythic Assault Rifle', ammo: 'medium', dmg: 46, rpm: 400, mag: 35, reload: 2.0, spread: 0.030, ads: 0.010, pellets: 1, hs: 1.8, range: 280, auto: true, sfx: 'ar' },
+  mythic_shotgun: { name: 'Mythic Pump Shotgun', ammo: 'shells', dmg: 18, rpm: 95, mag: 6, reload: 2.5, spread: 0.055, ads: 0.045, pellets: 12, hs: 1.9, range: 70, auto: false, sfx: 'shotgun' },
+  mythic_smg: { name: 'Mythic SMG', ammo: 'light', dmg: 24, rpm: 820, mag: 36, reload: 1.8, spread: 0.050, ads: 0.026, pellets: 1, hs: 1.6, range: 155, auto: true, sfx: 'smg' },
+  mythic_sniper: { name: 'Mythic Bolt Sniper', ammo: 'heavy', dmg: 145, rpm: 46, mag: 1, reload: 2.4, spread: 0.040, ads: 0.0001, pellets: 1, hs: 2.8, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 21, scope: '8x' },
+  mythic_drum: { name: 'Mythic Drum Gun', ammo: 'light', dmg: 24, rpm: 810, mag: 60, reload: 3.0, spread: 0.056, ads: 0.030, pellets: 1, hs: 1.5, range: 155, auto: true, sfx: 'smg' },
+  // Exotic — ordinary guns with a twist.
+  exotic_holo: { name: 'Leeching Holo Rifle', ammo: 'medium', dmg: 33, rpm: 330, mag: 26, reload: 2.2, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.75, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'siphon', siphon: 6 },
+  exotic_combat: { name: 'Shoving Combat Shotgun', ammo: 'shells', dmg: 12, rpm: 170, mag: 8, reload: 2.7, spread: 0.062, ads: 0.048, pellets: 9, hs: 1.7, range: 58, auto: true, sfx: 'shotgun', onHit: 'knock', knockForce: 18 },
+  exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 3.4, blastDmg: 38 },
+  exotic_pistol: { name: 'Endless Pistol', ammo: 'light', dmg: 24, rpm: 320, mag: 18, reload: 1.2, spread: 0.014, ads: 0.006, pellets: 1, burst: 2, hs: 2.0, range: 170, auto: true, sfx: 'pistol', noAmmo: true },
+  exotic_burst: { name: 'Piercing Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', pierce: true },
+};
+
+const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_sniper', 'mythic_drum'];
+const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_combat', 'exotic_hunting', 'exotic_pistol', 'exotic_burst'];
+const SPECIAL_BASE = {
+  mythic_ar: 'ar', mythic_shotgun: 'shotgun', mythic_smg: 'smg', mythic_sniper: 'sniper', mythic_drum: 'drum',
+  exotic_holo: 'holo', exotic_combat: 'combat', exotic_hunting: 'hunting', exotic_pistol: 'pistol', exotic_burst: 'burst',
 };
 
 /* Weighted loot pool — shotguns and spray guns carry the early game, optics
@@ -4160,6 +4177,16 @@ GUN_ICONS.combat = GUN_ICONS.shotgun;
 GUN_ICONS.holo = GUN_ICONS.tactical;
 GUN_ICONS.thermal = GUN_ICONS.sniper;
 GUN_ICONS.hunting = GUN_ICONS.sniper;
+GUN_ICONS.mythic_ar = GUN_ICONS.ar;
+GUN_ICONS.mythic_shotgun = GUN_ICONS.shotgun;
+GUN_ICONS.mythic_smg = GUN_ICONS.smg;
+GUN_ICONS.mythic_sniper = GUN_ICONS.sniper;
+GUN_ICONS.mythic_drum = GUN_ICONS.smg;
+GUN_ICONS.exotic_holo = GUN_ICONS.tactical;
+GUN_ICONS.exotic_combat = GUN_ICONS.shotgun;
+GUN_ICONS.exotic_hunting = GUN_ICONS.sniper;
+GUN_ICONS.exotic_pistol = GUN_ICONS.pistol;
+GUN_ICONS.exotic_burst = GUN_ICONS.ar;
 GUN_ICONS.frag = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="13"/><rect x="27" y="16" width="10" height="8" rx="2"/><rect x="30" y="10" width="4" height="7" rx="2"/><rect x="26" y="26" width="12" height="3" opacity=".35"/><circle cx="26" cy="36" r="2.4" fill="#0b1a2b"/><circle cx="38" cy="36" r="2.4" fill="#0b1a2b"/></svg>';
 
 const HEALS = {
@@ -4353,6 +4380,7 @@ function makeRig(shirt, pants, skin, accent) {
 
 /* --- blocky 3D weapon models, all built from primitives --- */
 function buildWeaponModel(type) {
+  if (SPECIAL_BASE[type]) type = SPECIAL_BASE[type];
   const g = new THREE.Group();
   const metal = mat(0x2b3038, true);
   const dark = mat(0x161c22, true);
@@ -4594,24 +4622,37 @@ function spawnLoot(x, y, z, item) {
   model.position.y = 0.45;
   g.add(model);
 
+  const special = item.kind === 'weapon' && item.rarity >= 5;
+  let halo = null;
+
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(0.3, 0.46, 20),
-    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false })
+    new THREE.RingGeometry(special ? 0.45 : 0.3, special ? 0.72 : 0.46, special ? 28 : 20),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: special ? 0.75 : 0.5, side: THREE.DoubleSide, depthWrite: false })
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.06;
   g.add(ring);
 
   const beam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16, 0.3, 3.4, 6, 1, true),
-    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide })
+    new THREE.CylinderGeometry(special ? 0.3 : 0.16, special ? 0.5 : 0.3, special ? 6.4 : 3.4, special ? 10 : 6, 1, true),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: special ? 0.4 : 0.2, depthWrite: false, side: THREE.DoubleSide })
   );
-  beam.position.y = 2.2;
+  beam.position.y = special ? 3.2 : 2.2;
   g.add(beam);
+
+  if (special) {
+    halo = new THREE.Mesh(
+      new THREE.CircleGeometry(0.95, 24),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.18, depthWrite: false })
+    );
+    halo.rotation.x = -Math.PI / 2;
+    halo.position.y = 0.04;
+    g.add(halo);
+  }
 
   g.position.set(x, y, z);
   dynGroup.add(g);
-  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, t: rand(0, 6), age: 0, life: LOOT_LIFE + rand(0, 8), dead: false });
+  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: LOOT_LIFE + rand(0, 8), dead: false });
   while (loot.length > LOOT_MAX) {
     const old = loot.shift();
     if (!old) break;
@@ -4650,6 +4691,8 @@ function ammoTypeForPlayer() {
 
 function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
+  if (Math.random() < 0.025) return makeWeapon(pick(MYTHIC_WEAPONS), 5);
+  if (Math.random() < 0.025) return makeWeapon(pick(EXOTIC_WEAPONS), 6);
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -4744,6 +4787,11 @@ function openChest(c) {
     spawnLoot(c.x + Math.cos(ang) * r, c.y + 0.6, c.z + Math.sin(ang) * r, it);
   }
   spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
+  if (Math.random() < 0.07) {
+    const id = Math.random() < 0.5 ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
+    const ang = Math.random() * TAU;
+    spawnLoot(c.x + Math.cos(ang) * 1.4, c.y + 0.6, c.z + Math.sin(ang) * 1.4, makeWeapon(id, MYTHIC_WEAPONS.indexOf(id) >= 0 ? 5 : 6));
+  }
   player.wood = Math.min(999, player.wood + randInt(30, 60));
   sfx('chest');
   toast('CHEST OPENED', 'sub');
@@ -4840,6 +4888,53 @@ function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
   }
 }
 
+function blastDamage(pos, r, dmg, skip) {
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.alive || b === skip) continue;
+    const d = Math.hypot(b.pos.x - pos.x, b.pos.z - pos.z);
+    if (d > r) continue;
+    damageBot(b, dmg * (1 - d / r), 'You', false, b.pos.clone());
+  }
+  if (player.alive) {
+    const d = Math.hypot(player.pos.x - pos.x, player.pos.z - pos.z);
+    if (d > 0.6 && d < r) hurtPlayer(dmg * 0.3 * (1 - d / r), 'Explosion', false, pos.clone());
+  }
+  shockwaveFX(pos, r);
+  impactFX(pos);
+}
+
+/* Mythic and exotic on-hit quirks. */
+function weaponSpecial(w, hit, dir, dmg) {
+  if (!w || !hit) return;
+  if (w.onHit === 'siphon') {
+    if (hit.kind === 'bot') {
+      const heal = w.siphon || 6;
+      player.hp = Math.min(player.maxHp, player.hp + heal);
+      player.shield = Math.min(player.maxShield, player.shield + heal * 0.5);
+      sfx('heal');
+    }
+  } else if (w.onHit === 'knock') {
+    if (hit.kind === 'bot' && hit.bot) {
+      const b = hit.bot;
+      if (!b.knock) b.knock = new THREE.Vector3();
+      b.knock.x += dir.x * (w.knockForce || 16);
+      b.knock.z += dir.z * (w.knockForce || 16);
+      b.hop = Math.max(b.hop || 0, 3);
+    }
+  } else if (w.onHit === 'explode' && hit.point) {
+    blastDamage(hit.point, w.blastR || 3.2, w.blastDmg || 34, hit.bot);
+  }
+  if (w.pierce && hit.kind === 'bot' && hit.point) {
+    const start = hit.point.clone().addScaledVector(dir, 0.6);
+    const h2 = hitTest(start, dir, Math.max(20, (w.range || 200) - hit.dist), hit.bot, player.team);
+    if (h2.kind === 'bot' && h2.bot) {
+      applyShotDamage(h2, dmg * 0.6, w.hs, 'You', h2.dist, false);
+      tracerFX(start, h2.point, 0x8ff6ff);
+    }
+  }
+}
+
 function playerFire() {
   if (!player.alive || player.dropping || player.knocked) return;
   if (player.using) return;
@@ -4847,9 +4942,10 @@ function playerFire() {
   if (!it || it.kind !== 'weapon') return;
   if (state.time < player.nextFire) return;
   const w = WEAPONS[it.type];
-  if (it.mag <= 0) { startReload(); return; }
+  const wt = SPECIAL_BASE[it.type] || it.type;
+  if (!w.noAmmo && it.mag <= 0) { startReload(); return; }
 
-  if (!adminOn('infAmmo')) it.mag = Math.max(0, it.mag - (w.burst || 1));
+  if (!adminOn('infAmmo') && !w.noAmmo) it.mag = Math.max(0, it.mag - (w.burst || 1));
   player.nextFire = state.time + 60 / w.rpm;
 
   const origin = camera.position.clone();
@@ -4886,15 +4982,16 @@ function playerFire() {
       });
       if (hit.kind === 'bot' && hit.bot) hitmarker(false, true);
     } else {
-      applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, it.type === 'shotgun');
+      applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, wt === 'shotgun');
+      weaponSpecial(w, hit, dir, dmg);
     }
   }
 
-  const kick = it.type === 'shotgun' ? 0.055 : it.type === 'sniper' ? 0.085 : it.type === 'smg' ? 0.013 : 0.021;
+  const kick = wt === 'shotgun' ? 0.055 : wt === 'sniper' ? 0.085 : wt === 'smg' ? 0.013 : 0.021;
   camRig.recoil += scopedAds ? kick * 0.15 : kick;
-  bloomKick = Math.min(30, bloomKick + (it.type === 'shotgun' ? 16 : it.type === 'sniper' ? 24 : 7));
+  bloomKick = Math.min(30, bloomKick + (wt === 'shotgun' ? 16 : wt === 'sniper' ? 24 : 7));
   sfx(w.sfx);
-  if (it.mag <= 0) startReload();
+  if (!w.noAmmo && it.mag <= 0) startReload();
   refreshHotbar();
 }
 
@@ -8911,8 +9008,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 4, minor: 9, patch: 1 };
-const VERSION_PREV = '4.9.0';
+const VERSION = { major: 5, minor: 0, patch: 0 };
+const VERSION_PREV = '4.9.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10191,8 +10288,15 @@ function updateLootVisuals(dt) {
       l.mesh.scale.setScalar(0.6 + fade * 0.4);
       l.mesh.position.y = l.y - (1 - fade) * 0.6;
     }
-    if (l.ring) l.ring.material.opacity = (0.32 + Math.sin(l.t * 2.4) * 0.18) * fade;
-    if (l.beam) l.beam.material.opacity = 0.2 * fade;
+    if (l.special) {
+      const pulse = 0.5 + Math.sin(l.t * 3.2) * 0.5;
+      if (l.ring) l.ring.material.opacity = (0.45 + pulse * 0.35) * fade;
+      if (l.beam) l.beam.material.opacity = (0.22 + pulse * 0.24) * fade;
+      if (l.halo) l.halo.material.opacity = (0.08 + pulse * 0.2) * fade;
+    } else {
+      if (l.ring) l.ring.material.opacity = (0.32 + Math.sin(l.t * 2.4) * 0.18) * fade;
+      if (l.beam) l.beam.material.opacity = 0.2 * fade;
+    }
   }
 }
 
