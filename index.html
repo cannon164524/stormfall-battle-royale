@@ -3319,7 +3319,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NOTHING NEW</b> — no patch notes this time. Quality-of-life fixes only; the next update brings the real changes.</div></li>
+      <li><span class="wnTag">01</span><div><b>CHEST JACKPOTS FIXED</b> — every mythic and exotic that comes out of a chest now announces itself. Before, only the bonus chest drop fired the banner, so specials that rolled as ordinary chest loot could slip out silently.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -5124,6 +5124,9 @@ function openChest(c) {
     const ang = Math.random() * TAU;
     const r = 0.8 + Math.random() * 1.2;
     spawnLoot(c.x + Math.cos(ang) * r, c.y + 0.6, c.z + Math.sin(ang) * r, it);
+    if (it && it.kind === 'weapon' && it.rarity >= 5) {
+      showRareFind(it, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
+    }
   }
   spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
   if (Math.random() < 0.12) {
@@ -9489,8 +9492,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 4, patch: 1 };
-const VERSION_PREV = '5.4.0';
+const VERSION = { major: 5, minor: 4, patch: 2 };
+const VERSION_PREV = '5.4.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
