@@ -2940,7 +2940,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
           <li><kbd>W A S D</kbd> Move</li>
           <li><kbd>SHIFT</kbd> Sprint</li>
           <li><kbd>SPACE</kbd> Jump</li>
-          <li><kbd>LMB</kbd> Fire</li>
+          <li><kbd>LMB</kbd> Fire / Grapple</li>
           <li><kbd>RMB</kbd> Aim</li>
           <li><kbd>R</kbd> Reload</li>
           <li><kbd>E</kbd> Interact</li>
@@ -3319,9 +3319,9 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BUILDINGS CAN'T OVERLAP</b> — houses now reserve their real footprint (their diagonal, not a guessed circle) plus a 2.5 m gap before they're placed, so two buildings can no longer spawn half inside each other. That overlap was also what created "invisible walls": you were walking into the walls of a second house buried in the first one.</div></li>
-      <li><span class="wnTag">02</span><div><b>REBOOT VANS KEEP CLEAR</b> — vans now check the map before they park and shuffle to a nearby open spot if a building is already there.</div></li>
-      <li><span class="wnTag">03</span><div><b>WIDER POIs</b> — with proper spacing the clusters needed more room, so buildings spread across a wider area at each point of interest. Density feels similar, overlaps don't happen.</div></li>
+      <li><span class="wnTag">01</span><div><b>GRAPPLER</b> — a new utility item in every mode. Aim at anything within 62 m and pull the trigger: a hook fires out and yanks you toward the point, up walls, across gaps or straight over a roof. 15 uses, then it's spent. Found on the floor and in chests.</div></li>
+      <li><span class="wnTag">02</span><div><b>ROOMIER APARTMENTS</b> — the blocks are now 13×12 m with a 6 m stair well instead of 11×10 with a cramped 4.4 m one, so you've got clearance walking up and around the landing instead of scraping the walls.</div></li>
+      <li><span class="wnTag">03</span><div><b>WALLS FIXED</b> — building pieces now rotate with their colliders, so rotated houses and apartments are the shape they look like and the invisible walls indoors are gone.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4043,15 +4043,16 @@ function makeRock(x, z, rng) {
 }
 
 function localBox(g, x, z, baseY, rot, lx, ly, lz, hx, hy, hz, material, opts) {
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const wx = x + lx * cs + lz * sn;
+  const wz = z - lx * sn + lz * cs;
   const m = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, hy * 2, hz * 2), material);
-  m.position.set(lx, ly, lz);
+  // the group sits unrotated at (x, 0, z), so the offset has to be rotated here
+  m.position.set(wx - x, ly, wz - z);
   m.rotation.y = rot;
   m.castShadow = true;
   m.receiveShadow = true;
   g.add(m);
-  const cs = Math.cos(rot), sn = Math.sin(rot);
-  const wx = x + lx * cs + lz * sn;
-  const wz = z - lx * sn + lz * cs;
   const sw = Math.abs(sn) > 0.5;
   addBox(wx, baseY + ly, wz, sw ? hz : hx, hy, sw ? hx : hz, opts && opts.noMesh ? null : m, opts);
   return m;
@@ -4112,8 +4113,9 @@ function makeHouse(x, z, rot, rng, dims) {
   // roof slab (walkable)
   localBox(g, x, z, 0, rot, 0, top + 0.22, 0, hw + 0.4, 0.22, hd + 0.4, roofMat, { hp: 400, kind: 'wall' });
 
-  // pyramid roof cap (visual only)
-  const cap = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.74, 2.6, 4), roofMat);
+  // pyramid roof cap (visual only) — inscribed so it can't overhang the walls
+  const capR = Math.max(1.5, (Math.min(w, d) / 2 + 0.3) / Math.SQRT1_2);
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(capR, 2.6, 4), roofMat);
   cap.position.y = top + 0.44 + 1.3;
   cap.rotation.y = Math.PI / 4;
   cap.castShadow = true;
@@ -4132,7 +4134,7 @@ function makeHouse(x, z, rot, rng, dims) {
 /* Two- or three-storey building with an interior stair well in one corner. */
 function makeApartment(x, z, rot, rng, floors) {
   floors = clamp(floors || 2, 2, 3);
-  const w = 11, d = 10, floorH = 3.4, t = 0.16;
+  const w = 13, d = 12, floorH = 3.4, t = 0.16;
   const cs = Math.cos(rot), sn = Math.sin(rot);
   const hw = w / 2, hd = d / 2;
 
@@ -4180,7 +4182,7 @@ function makeApartment(x, z, rot, rng, floors) {
   }
 
   // interior floors with a stair-well corner cut out
-  const hole = 4.4;
+  const hole = 6.0;
   const mainLx = hole / 2;
   const mainHx = hw - hole / 2;
   const stripLx = -hw + hole / 2;
@@ -4198,7 +4200,7 @@ function makeApartment(x, z, rot, rng, floors) {
   const alongX = Math.abs(dirX) > 0.5;
   const stSx = alongX ? Math.sign(dirX) : 0;
   const stSz = alongX ? 0 : Math.sign(dirZ);
-  const stLx = -hw + 2.2, stLz = -hd + 2.2;
+  const stLx = -hw + hole / 2, stLz = -hd + hole / 2;
   const stWx = x + stLx * cs + stLz * sn;
   const stWz = z - stLx * sn + stLz * cs;
   const run = 4;
@@ -4206,12 +4208,15 @@ function makeApartment(x, z, rot, rng, floors) {
   const slopeLen = Math.hypot(run, floorH);
   for (let f = 0; f < floors - 1; f++) {
     const yLow = base + floorH * f;
+    const holder = new THREE.Group();
+    holder.position.set(stWx, yLow + floorH / 2, stWz);
+    holder.rotation.y = rot;
+    propsGroup.add(holder);
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.22, 4), slabMat);
-    mesh.position.set(stLx, yLow + floorH / 2, stLz);
     mesh.rotation.z = slope;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    g.add(mesh);
+    holder.add(mesh);
     ramps.push({ cx: stWx, cz: stWz, axis: alongX ? 'x' : 'z', sx: stSx, sz: stSz, yLow, yHigh: yLow + floorH, mesh, dead: false });
   }
 
@@ -4310,13 +4315,13 @@ function siteFreeAt(x, z, r) {
   }
   return true;
 }
-function claimSite(x, z, r) { worldSites.push({ x, z, r }); }
+function claimSite(x, z, r, hx, hz) { worldSites.push({ x, z, r, hx: hx || r, hz: hz || r }); }
 
 function rollHouseDims(rng) {
   return { w: 9 + Math.floor(rng() * 4) * 2, d: 8 + Math.floor(rng() * 3) * 2 };
 }
 function houseRadius(dims) { return Math.hypot(dims.w / 2, dims.d / 2) + 0.6; }
-const APARTMENT_R = Math.hypot(11 / 2, 10 / 2) + 0.7;
+const APARTMENT_R = Math.hypot(13 / 2, 12 / 2) + 0.7;
 const CONTAINER_R = Math.hypot(6.2 / 2, 2.7 / 2) + 0.4;
 
 function populateWorld() {
@@ -4343,9 +4348,10 @@ function populateWorld() {
       }
       if (!ok) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+      const swap = Math.abs(Math.sin(rot)) > 0.5;
       if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.4 ? 3 : 2);
       else makeHouse(ox, oz, rot, rng, dims);
-      claimSite(ox, oz, rad2);
+      claimSite(ox, oz, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
     }
     for (let j = 0; j < 3; j++) {
       let ox = 0, oz = 0, ok = false;
@@ -4374,9 +4380,10 @@ function populateWorld() {
     }
     if (!ok) continue;
     const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+    const swap = Math.abs(Math.sin(rot)) > 0.5;
     if (apt) makeApartment(x, z, rot, rng, rng() < 0.5 ? 3 : 2);
     else makeHouse(x, z, rot, rng, dims);
-    claimSite(x, z, rad2);
+    claimSite(x, z, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
   }
 
   // trees (kept out of buildings)
@@ -4694,6 +4701,7 @@ GUN_ICONS.exotic_chain = GUN_ICONS.tactical;
 GUN_ICONS.exotic_siphonhunt = GUN_ICONS.sniper;
 GUN_ICONS.exotic_thermal = GUN_ICONS.sniper;
 GUN_ICONS.frag = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="13"/><rect x="27" y="16" width="10" height="8" rx="2"/><rect x="30" y="10" width="4" height="7" rx="2"/><rect x="26" y="26" width="12" height="3" opacity=".35"/><circle cx="26" cy="36" r="2.4" fill="#0b1a2b"/><circle cx="38" cy="36" r="2.4" fill="#0b1a2b"/></svg>';
+GUN_ICONS.grappler = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="26" height="10" rx="2"/><rect x="30" y="29" width="12" height="4" rx="1"/><path d="M42 31h8l4-8h6l-6 10 6 10h-6l-4-8h-8z" opacity=".9"/><rect x="14" y="36" width="10" height="14" rx="2"/><rect x="10" y="20" width="14" height="6" rx="2"/></svg>';
 
 const HEALS = {
   bandage: { name: 'Bandage', icon: 'bandage', time: 0.9, hp: 15, color: '#e8e0d0' },
@@ -4740,12 +4748,17 @@ function makeAmmo(ammoType, count) {
 function makeGrenade(type, count) {
   return { kind: 'grenade', type, count: count || 1, name: GRENADES[type].name };
 }
+const GRAPPLER_USES = 15;
+function makeGrappler() {
+  return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
+}
 
 function itemIconHTML(item) {
   if (!item) return GUN_ICONS.pistol;
   if (item.kind === 'weapon') return GUN_ICONS[item.type] || GUN_ICONS.pistol;
   if (item.kind === 'heal') return GUN_ICONS[HEALS[item.type].icon];
   if (item.kind === 'grenade') return GUN_ICONS[GRENADES[item.type].icon];
+  if (item.kind === 'grappler') return GUN_ICONS.grappler;
   return GUN_ICONS.ammo;
 }
 function itemColor(item) {
@@ -4753,6 +4766,7 @@ function itemColor(item) {
   if (item.kind === 'weapon') return RARITY[item.rarity].color;
   if (item.kind === 'heal') return HEALS[item.type].color;
   if (item.kind === 'grenade') return GRENADES[item.type].color;
+  if (item.kind === 'grappler') return '#7dffb0';
   return '#c9c9c9';
 }
 function itemLabel(item) {
@@ -4760,12 +4774,13 @@ function itemLabel(item) {
   if (item.kind === 'weapon') return item.name;
   if (item.kind === 'heal') return HEALS[item.type].name;
   if (item.kind === 'grenade') return GRENADES[item.type].name;
+  if (item.kind === 'grappler') return 'Grappler';
   return 'Item';
 }
 function itemMeta(item) {
   if (!item) return '';
   if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ' + item.mag + ' rnds';
-  if (item.kind === 'heal' || item.kind === 'grenade') return 'x' + item.count;
+  if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   return '';
 }
 function itemColorHex(item) {
@@ -4988,6 +5003,12 @@ function buildWeaponModel(type) {
     box(0.03, 0.05, 0.02, accent, 0, 0.1, 0);
     box(0.05, 0.02, 0.02, accent, 0.03, 0.11, 0);
     tip = 0.02;
+  } else if (type === 'grappler') {
+    box(0.14, 0.1, 0.34, metal, 0, 0, 0.05);
+    box(0.06, 0.16, 0.1, dark, 0, -0.12, -0.02, 0.15, 0, 0);
+    cyl(0.05, 0.05, 0.2, accent, 0, 0.02, 0.3, 'z');
+    box(0.03, 0.03, 0.16, new THREE.MeshBasicMaterial({ color: 0x7dffb0 }), 0, 0.02, 0.34);
+    tip = 0.4;
   } else if (type === 'revolver') {
     box(0.09, 0.12, 0.36, metal, 0, 0, 0.02);
     box(0.08, 0.22, 0.1, dark, 0, -0.15, -0.08, 0.16, 0, 0);
@@ -5082,6 +5103,10 @@ function buildLootModel(item) {
   } else if (item.kind === 'grenade') {
     const built = buildWeaponModel('grenade');
     built.group.scale.setScalar(2.1);
+    g.add(built.group);
+  } else if (item.kind === 'grappler') {
+    const built = buildWeaponModel('grappler');
+    built.group.scale.setScalar(2.0);
     g.add(built.group);
   } else if (item.kind === 'heal') {
     if (item.type === 'medkit') {
@@ -5199,6 +5224,7 @@ function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
   if (Math.random() < 0.04) return makeWeapon(pick(MYTHIC_WEAPONS), 5);
   if (Math.random() < 0.04) return makeWeapon(pick(EXOTIC_WEAPONS), 6);
+  if (Math.random() < 0.06) return makeGrappler();
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -5302,6 +5328,10 @@ function openChest(c) {
     const ang = Math.random() * TAU;
     spawnLoot(c.x + Math.cos(ang) * 1.5, c.y + 0.7, c.z + Math.sin(ang) * 1.5, rareItem);
     showRareFind(rareItem);
+  }
+  if (Math.random() < 0.1) {
+    const ang = Math.random() * TAU;
+    spawnLoot(c.x + Math.cos(ang) * 1.2, c.y + 0.6, c.z + Math.sin(ang) * 1.2, makeGrappler());
   }
   player.wood = Math.min(999, player.wood + randInt(30, 60));
   sfx('chest');
@@ -6509,6 +6539,44 @@ function spawnShockwaveGrenade(origin, dir, power, def) {
   mesh.castShadow = true;
   fxGroup.add(mesh);
   grenades.push({ pos: origin.clone(), vel, mesh, fuse: 1.25, bounces: 0, def: g });
+}
+
+/* Grappler: fire a hook at whatever you're aiming at and get yanked toward it. */
+function grappleFire() {
+  const it = currentItem();
+  if (!it || it.kind !== 'grappler') return;
+  if (!player.alive || player.dropping || player.knocked) return;
+  if (state.time < (player.nextGrapple || 0)) return;
+  player.nextGrapple = state.time + 0.7;
+
+  const origin = camera.position.clone();
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  const hit = hitTest(origin, dir, 62, null, player.team);
+  if (hit.kind === 'none') { sfx('reload'); return; }
+
+  const target = hit.point.clone();
+  const from = new THREE.Vector3(player.pos.x, player.pos.y + 1.2, player.pos.z);
+  const to = target.clone().sub(from);
+  const dist = Math.max(2, to.length());
+  to.divideScalar(dist);
+
+  const pull = clamp(34 - dist * 0.18, 16, 34);
+  player.vel.x = to.x * pull;
+  player.vel.z = to.z * pull;
+  player.vel.y = Math.max(8.5, to.y * pull * 0.8 + 8);
+  player.grappleUntil = state.time + 0.38;
+  player.onGround = false;
+  camRig.landDip = Math.max(camRig.landDip, 0.22);
+  shake(0.1);
+  tracerFX(new THREE.Vector3(player.pos.x, player.pos.y + 1.35, player.pos.z), target, 0x7dffb0);
+  impactFX(target);
+  sfx('throw');
+
+  it.count -= 1;
+  if (it.count <= 0) player.inv[player.slot] = null;
+  refreshHotbar();
+  toast('GRAPPLER · ' + Math.max(0, it.count) + ' LEFT', 'sub');
 }
 
 function throwGrenade() {
@@ -8075,8 +8143,12 @@ function updatePlayer(dt) {
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
   const k = 1 - Math.exp(-accel * dt);
-  player.vel.x += (mx * speed - player.vel.x) * k;
-  player.vel.z += (mz * speed - player.vel.z) * k;
+  if (player.grappleUntil && state.time < player.grappleUntil) {
+    // riding the grapple — don't damp the pull away
+  } else {
+    player.vel.x += (mx * speed - player.vel.x) * k;
+    player.vel.z += (mz * speed - player.vel.z) * k;
+  }
 
   player.pos.x += player.vel.x * dt;
   player.pos.z += player.vel.z * dt;
@@ -8678,7 +8750,7 @@ function updateHUD() {
         if (l) {
           interactTarget = { type: 'loot', obj: l };
           const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
-            : l.item.kind === 'heal' ? HEALS[l.item.type].name : 'AMMO';
+            : itemLabel(l.item);
           promptText = '<b>E</b> PICK UP ' + nm.toUpperCase();
         }
       }
@@ -9659,8 +9731,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 5, patch: 1 };
-const VERSION_PREV = '5.5.0';
+const VERSION = { major: 5, minor: 6, patch: 0 };
+const VERSION_PREV = '5.5.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11039,6 +11111,8 @@ function handleCombatInput() {
       if (input.fireJust) startUse();
     } else if (it && it.kind === 'grenade') {
       if (input.fireJust) throwGrenade();
+    } else if (it && it.kind === 'grappler') {
+      if (input.fireJust) grappleFire();
     }
   }
   input.fireJust = false;
