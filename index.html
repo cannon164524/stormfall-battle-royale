@@ -2442,6 +2442,41 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 .banSub { font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.28em; color:var(--danger); }
 .banSecs { font-family:var(--display); font-size:52px; line-height:1; color:#ffb0b6; letter-spacing:.02em; }
 .banNote { font-family:var(--label); font-size:9.5px; line-height:1.6; letter-spacing:.05em; color:rgba(234,243,255,.45); }
+
+/* ============================== VICTORY ROYALE ============================== */
+#end.win {
+  background:radial-gradient(72% 62% at 50% 38%, rgba(72,44,6,.88), rgba(3,5,10,.97));
+}
+.endFlash {
+  position:absolute; inset:0; opacity:0;
+  background:radial-gradient(50% 44% at 50% 42%, rgba(255,248,210,.95) 0%, rgba(255,200,70,.45) 45%, transparent 72%);
+  mix-blend-mode:screen;
+}
+#end.win .endFlash { animation:endFlash 1.1s ease-out forwards; }
+@keyframes endFlash {
+  0% { opacity:0; transform:scale(.55); }
+  16% { opacity:1; transform:scale(1); }
+  100% { opacity:0; transform:scale(1.7); }
+}
+#end.win .endRays { animation-duration:13s; opacity:1; }
+#end.win .endCrest {
+  animation:endRise .5s cubic-bezier(.2,.9,.25,1) backwards, crownPop 2.2s .5s ease-in-out infinite alternate;
+}
+@keyframes crownPop {
+  from { transform:scale(1) rotate(-3deg); filter:drop-shadow(0 0 10px rgba(255,200,70,.4)); }
+  to { transform:scale(1.14) rotate(3deg); filter:drop-shadow(0 0 26px rgba(255,220,110,.85)); }
+}
+#end.win .endTitle {
+  background-size:220% 100%;
+  animation:endRise .5s cubic-bezier(.2,.9,.25,1) backwards, titleSweep 2.6s .45s ease-in-out both;
+}
+@keyframes titleSweep {
+  0% { background-position:0% 0; transform:scale(1); }
+  45% { background-position:100% 0; transform:scale(1.05); }
+  100% { background-position:0% 0; transform:scale(1); }
+}
+#end.win .endConfetti i { box-shadow:0 0 8px rgba(255,220,120,.55); }
+#end.win .endStats b { color:#ffe9a8; }
 </style>
 </head>
 <body>
@@ -2970,7 +3005,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
 <!-- ============================== END ============================== -->
 <div id="end" class="hide">
   <div class="endInner">
-    <div class="endFx"><div class="endRays"></div><div class="endConfetti" id="endConfetti"></div></div>
+    <div class="endFx"><div class="endRays"></div><div class="endFlash" id="endFlash"></div><div class="endConfetti" id="endConfetti"></div></div>
     <div class="endCrest" id="endCrest"></div>
     <div class="endPlace" id="endPlace">#1</div>
     <div class="endTitle" id="endTitle">VICTORY ROYALE</div>
@@ -3114,6 +3149,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
       <li><span class="wnTag">07</span><div><b>EASIER EARLY RANKS</b> — Bronze now costs 100 RP a tier instead of 220, and Silver, Gold and Platinum step up gently from there. Bronze and Silver also never lose RP on a bad game, and the loss penalty only grows once you reach Gold.</div></li>
       <li><span class="wnTag">08</span><div><b>MORE MYTHICS AND EXOTICS</b> — the special pool doubled to twenty: ten mythics including the Mythic Pistol, Double Barrel, Combat Shotgun, Heavy AR and Hunting Rifle, plus five new exotics — Bottomless Drum Gun, Freezing Bolt Sniper, Chaining Holo Rifle, Siphoning Hunting Rifle and Blasting Thermal Sniper. They drop about twice as often too, and the jackpot card is now a slim banner at the top of the screen instead of a big box.</div></li>
       <li><span class="wnTag">09</span><div><b>BOTS CARRY MYTHICS</b> — bots now spawn holding mythic and exotic weapons, more often the higher the lobby tier, so the good guns are out in the world instead of waiting until the last chest. Kill one and the ELIMINATION card is replaced by a gold or cyan JACKPOT banner naming what they were carrying.</div></li>
+      <li><span class="wnTag">10</span><div><b>BIGGER VICTORY ROYALE</b> — winning now lands with a brass fanfare, a gold flash that blooms out of the centre, faster sweeping rays, a pulsing crown, a shine that runs across the title, 80 pieces of confetti and your elimination and damage stats counting up under the crown.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7288,6 +7324,60 @@ function playSound(kind, vol) {
   }
 }
 
+/* Victory fanfare: a rising triangle-wave arpeggio over a swelling bass and a
+   shimmer of noise — played once when the crown lands. */
+function victoryFanfare() {
+  if (!actx) return;
+  if (actx.state === 'suspended') actx.resume();
+  const t0 = actx.currentTime + 0.02;
+  const master = actx.createGain();
+  master.gain.value = 0.24;
+  master.connect(actx.destination);
+
+  const notes = [
+    [0.00, 523.25, 0.32], [0.14, 659.25, 0.32], [0.28, 783.99, 0.34], [0.42, 1046.50, 0.42],
+    [0.72, 783.99, 0.28], [0.86, 1046.50, 0.32], [1.00, 1318.51, 0.40],
+    [1.34, 1046.50, 0.50], [1.34, 1567.98, 0.22],
+  ];
+  for (let i = 0; i < notes.length; i++) {
+    const t = notes[i][0], f = notes[i][1], g = notes[i][2];
+    const o = actx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(f, t0 + t);
+    const gn = actx.createGain();
+    gn.gain.setValueAtTime(0.0001, t0 + t);
+    gn.gain.exponentialRampToValueAtTime(g, t0 + t + 0.02);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t0 + t + 0.6);
+    o.connect(gn); gn.connect(master);
+    o.start(t0 + t); o.stop(t0 + t + 0.65);
+  }
+
+  const b = actx.createOscillator();
+  b.type = 'sine';
+  b.frequency.setValueAtTime(65.41, t0);
+  b.frequency.exponentialRampToValueAtTime(130.81, t0 + 1.8);
+  const bg = actx.createGain();
+  bg.gain.setValueAtTime(0.0001, t0);
+  bg.gain.exponentialRampToValueAtTime(0.24, t0 + 0.3);
+  bg.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.2);
+  b.connect(bg); bg.connect(master);
+  b.start(t0); b.stop(t0 + 2.3);
+
+  if (noiseBuf) {
+    const src = actx.createBufferSource();
+    src.buffer = noiseBuf;
+    const flt = actx.createBiquadFilter();
+    flt.type = 'highpass';
+    flt.frequency.value = 3200;
+    const ng = actx.createGain();
+    ng.gain.setValueAtTime(0.0001, t0);
+    ng.gain.exponentialRampToValueAtTime(0.12, t0 + 0.5);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.2);
+    src.connect(flt); flt.connect(ng); ng.connect(master);
+    src.start(t0); src.stop(t0 + 2.3);
+  }
+}
+
 /* =========================================================================
    EFFECTS
    ========================================================================= */
@@ -8937,19 +9027,42 @@ function showEndScreen(win) {
   if (cf) {
     cf.innerHTML = '';
     if (win) {
-      for (let i = 0; i < 26; i++) {
+      const colors = ['#ffd166', '#ff8a1e', '#ffe9a8', '#7fe3ff', '#ffffff', '#ffb347'];
+      for (let i = 0; i < 80; i++) {
         const c = document.createElement('i');
-        c.style.left = rand(2, 98).toFixed(1) + '%';
-        c.style.background = pick(['#ffd166', '#ff8a1e', '#7fe3ff', '#ffffff']);
-        c.style.animationDuration = (2.2 + Math.random() * 2.4).toFixed(2) + 's';
-        c.style.animationDelay = (Math.random() * 1.8).toFixed(2) + 's';
+        c.style.left = rand(1, 99).toFixed(1) + '%';
+        c.style.background = pick(colors);
+        c.style.width = (5 + Math.random() * 6).toFixed(1) + 'px';
+        c.style.height = (8 + Math.random() * 10).toFixed(1) + 'px';
+        c.style.animationDuration = (2.2 + Math.random() * 3.4).toFixed(2) + 's';
+        c.style.animationDelay = (Math.random() * 2.6).toFixed(2) + 's';
         cf.appendChild(c);
       }
     }
   }
-  endEl.classList.toggle('lose', !win);
-  endEl.classList.toggle('win', !!win);
+  endEl.classList.remove('lose', 'win');
+  void endEl.offsetWidth;
+  endEl.classList.add(win ? 'win' : 'lose');
   endEl.classList.remove('hide');
+
+  if (win) {
+    // stats count up under the crown
+    const kEl = document.getElementById('statKills');
+    const dEl = document.getElementById('statDmg');
+    const kTo = parseInt(kEl ? kEl.textContent : '0', 10) || 0;
+    const dTo = parseInt(dEl ? dEl.textContent : '0', 10) || 0;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / 900);
+      const e = 1 - Math.pow(1 - t, 3);
+      if (kEl) kEl.textContent = String(Math.round(kTo * e));
+      if (dEl) dEl.textContent = String(Math.round(dTo * e));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    if (kEl) kEl.textContent = '0';
+    if (dEl) dEl.textContent = '0';
+    requestAnimationFrame(tick);
+  }
 }
 
 function endMatch(win, killerName) {
@@ -9036,7 +9149,7 @@ function endMatch(win, killerName) {
   if (win) {
     awardVbucks(state.teamMode ? 400 : 300);
     awardBpXp(500);
-    sfx('win');
+    victoryFanfare();
   }
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
   const reviveBtn = document.getElementById('reviveBtn');
@@ -9181,8 +9294,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 2, patch: 1 };
-const VERSION_PREV = '5.2.0';
+const VERSION = { major: 5, minor: 2, patch: 2 };
+const VERSION_PREV = '5.2.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
