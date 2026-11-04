@@ -892,6 +892,13 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
   background:radial-gradient(80% 46% at 50% 10%, rgba(40,230,255,.2), rgba(2,4,10,.5) 55%, rgba(2,4,10,.78));
 }
 #rareFind.on .rfBackdrop { animation:rfFadeIn .35s ease-out forwards; }
+#rareFind.noDim .rfBackdrop {
+  background:radial-gradient(80% 46% at 50% 8%, rgba(255,190,40,.16), rgba(2,4,10,0) 62%);
+}
+#rareFind.noDim[data-tier="exotic"] .rfBackdrop {
+  background:radial-gradient(80% 46% at 50% 8%, rgba(40,230,255,.16), rgba(2,4,10,0) 62%);
+}
+#rareFind.noDim .rfRays { opacity:.26; }
 .rfInner { position:relative; display:flex; justify-content:center; opacity:0; }
 #rareFind.on .rfInner { animation:rfFadeIn .35s ease-out forwards; }
 @keyframes rfFadeIn { to { opacity:1; } }
@@ -3312,19 +3319,7 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MYTHIC WEAPONS</b> — five gold-tier guns, each a straight upgrade of something you already know: Mythic Assault Rifle, Mythic Pump Shotgun, Mythic SMG, Mythic Bolt Sniper and Mythic Drum Gun. More damage, bigger mags, faster handling.</div></li>
-      <li><span class="wnTag">02</span><div><b>EXOTIC WEAPONS</b> — five cyan guns that keep their normal stats but bring a twist: the Holo Rifle siphons health back on every hit, the Combat Shotgun shoves targets across the room, the Hunting Rifle fires explosive rounds, the Pistol never runs dry, and the Burst Rifle shoots straight through one enemy into the next.</div></li>
-      <li><span class="wnTag">03</span><div><b>THEY GLOW</b> — mythics and exotics don't lie on the floor like ordinary loot. They sit in a pulsing halo with a tall beam: yellow for mythic, cyan for exotic, so you can spot one across a POI.</div></li>
-      <li><span class="wnTag">04</span><div><b>WHERE TO FIND THEM</b> — about one floor drop in forty is a special, and chests now have a 7% chance to spit one out on top of their usual loot.</div></li>
-      <li><span class="wnTag">05</span><div><b>RARITY TIERS</b> — Mythic and Exotic are now real rarity tiers above Legendary, with their own colours through the nameplate, inventory and kill feed.</div></li>
-      <li><span class="wnTag">06</span><div><b>JACKPOT CHESTS</b> — every chest has a small chance to cough up something special. When it happens the whole screen lights up: rotating rays, gold or cyan spark bursts and a huge card naming the find for a few seconds.</div></li>
-      <li><span class="wnTag">07</span><div><b>EASIER EARLY RANKS</b> — Bronze now costs 100 RP a tier instead of 220, and Silver, Gold and Platinum step up gently from there. Bronze and Silver also never lose RP on a bad game, and the loss penalty only grows once you reach Gold.</div></li>
-      <li><span class="wnTag">08</span><div><b>MORE MYTHICS AND EXOTICS</b> — the special pool doubled to twenty: ten mythics including the Mythic Pistol, Double Barrel, Combat Shotgun, Heavy AR and Hunting Rifle, plus five new exotics — Bottomless Drum Gun, Freezing Bolt Sniper, Chaining Holo Rifle, Siphoning Hunting Rifle and Blasting Thermal Sniper. They drop about twice as often too, and the jackpot card is now a slim banner at the top of the screen instead of a big box.</div></li>
-      <li><span class="wnTag">09</span><div><b>BOTS CARRY MYTHICS</b> — bots now spawn holding mythic and exotic weapons, more often the higher the lobby tier, so the good guns are out in the world instead of waiting until the last chest. Kill one and the ELIMINATION card is replaced by a gold or cyan JACKPOT banner naming what they were carrying.</div></li>
-      <li><span class="wnTag">10</span><div><b>BIGGER VICTORY ROYALE</b> — winning now lands with a brass fanfare, a gold flash that blooms out of the centre, faster sweeping rays, a pulsing crown, a shine that runs across the title, 80 pieces of confetti and your elimination and damage stats counting up under the crown.</div></li>
-      <li><span class="wnTag">11</span><div><b>END SCREEN BUTTONS</b> — the gold button is now <b>PLAY AGAIN</b> and drops you straight into another match of the same mode, while the blue one takes you back to the <b>MAIN MENU</b>. The old 50 V-Buck revive is gone.</div></li>
-      <li><span class="wnTag">12</span><div><b>NEW MODE PICKER</b> — the lobby's mode list is now a responsive grid of cards instead of one long column: numbered, grouped under BATTLE ROYALE / RANKED / ARCADE headings, laid out in two or three columns depending on your screen, and it scrolls inside its own panel so it can never run off the bottom of the page. Phones get a single-column layout with a full-width PLAY button.</div></li>
-      <li><span class="wnTag">13</span><div><b>BLITZ LEVELS</b> — Blitz now has its own levelling track: kills and surviving storm circles fill the bar shown beside BLITZ at the top of the screen, and every level hands you a random mythic or exotic. If your five slots are full it drops at your feet instead — either way the jackpot banner names it.</div></li>
+      <li><span class="wnTag">01</span><div><b>NOTHING NEW</b> — no patch notes this time. Quality-of-life fixes only; the next update brings the real changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9494,8 +9489,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 4, patch: 0 };
-const VERSION_PREV = '5.3.0';
+const VERSION = { major: 5, minor: 4, patch: 1 };
+const VERSION_PREV = '5.4.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10198,6 +10193,7 @@ function showRareFind(item, kicker, subLine) {
   if (!el) return;
   const mythic = item.rarity === 5;
   el.dataset.tier = mythic ? 'mythic' : 'exotic';
+  el.classList.toggle('noDim', isBlitz());
 
   const kick = document.getElementById('rfKicker');
   const title = document.getElementById('rfTitle');
