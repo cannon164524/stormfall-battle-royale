@@ -3357,9 +3357,8 @@ body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>HONEST BLOOM</b> — the crosshair now measures the real bullet cone. Its gap is the actual spread angle projected through the camera's field of view, so the ring sits exactly where pellets can land — no more fixed +4 px padding and no more movement/air gap that bullets ignored.</li></li>
-      <li><span class="wnTag">02</span><div><b>SPRAY BLOOMS</b> — every shot widens the cone itself, not just the picture. Sustained fire spreads your bullets wider, decaying back to base when you stop, and reloads reset it.</li></li>
-      <li><span class="wnTag">03</span><div><b>MORE RESPONSIVE</b> — the crosshair expands about three times faster than it used to and settles back smoothly, so spraying and strafing read instantly.</div></li>
+      <li><span class="wnTag">01</span><div><b>BULLETS STAY INSIDE THE RETICLE</b> — the spread test jitters each shot on X and Z at once, so the corner of the cone reached about 1.41× the number the ring was drawn from, and the odd pellet slipped outside. Shots are now scaled to 0.62 of that figure, which keeps the whole cone — diagonals included — inside the bloom.</div></li>
+      <li><span class="wnTag">02</span><div><b>SLIGHTLY TIGHTER GUNS</b> — the practical effect is a touch less than a third off the real spread cone on every automatic weapon, with the reticle unchanged, so what you see is a guarantee rather than an average.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4787,6 +4786,7 @@ function makeGrenade(type, count) {
   return { kind: 'grenade', type, count: count || 1, name: GRENADES[type].name };
 }
 const GRAPPLER_USES = 15;
+const GRAPPLER_RANGE = 70;
 function makeGrappler() {
   return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
 }
@@ -5563,11 +5563,15 @@ function playerFire() {
   flashMuzzle(player.rig);
 
   const shots = Math.max(1, w.pellets * (w.burst || 1));
+  // The pellet cone is jittered on both screen axes at once, so its diagonal
+  // reaches up to sqrt(2) x the nominal spread. Scale shots down a touch so the
+  // worst-case bullet still lands inside the ring the crosshair draws.
+  const shotSpread = spread * 0.62;
   for (let p = 0; p < shots; p++) {
     const dir = (aimDir || base).clone();
-    dir.x += rand(-1, 1) * spread;
-    dir.y += rand(-1, 1) * spread;
-    dir.z += rand(-1, 1) * spread;
+    dir.x += rand(-1, 1) * shotSpread;
+    dir.y += rand(-1, 1) * shotSpread;
+    dir.z += rand(-1, 1) * shotSpread;
     dir.normalize();
     const hit = hitTest(origin, dir, w.range, null, player.team);
     tracerFX(muzzle, hit.point, 0xfff2a8);
@@ -6038,6 +6042,7 @@ function respawnPlayer() {
   player.pocketCd = 0;
   player.grappleTo = null;
   player.grappleUntil = 0;
+  player.nextGrapple = 0;
   player.alive = true;
   player.dropping = true;
   player.onGround = false;
@@ -6602,13 +6607,17 @@ function grappleFire() {
   if (!it || it.kind !== 'grappler') return;
   if (!player.alive || player.dropping || player.knocked) return;
   if (state.time < (player.nextGrapple || 0)) return;
-  player.nextGrapple = state.time + 0.7;
+  player.nextGrapple = state.time + 0.55;
 
   const origin = camera.position.clone();
   const dir = new THREE.Vector3();
   camera.getWorldDirection(dir);
-  const hit = hitTest(origin, dir, 62, null, player.team);
-  if (hit.kind === 'none') { sfx('reload'); return; }
+  const hit = hitTest(origin, dir, GRAPPLER_RANGE, null, player.team);
+  if (hit.kind === 'none') {
+    toast('GRAPPLER · OUT OF RANGE', 'sub');
+    sfx('reload');
+    return;
+  }
 
   const target = hit.point.clone();
   const from = new THREE.Vector3(player.pos.x, player.pos.y + 1.2, player.pos.z);
@@ -8515,7 +8524,7 @@ function updateCrosshair(dt) {
     const o = camera.position.clone();
     const d = new THREE.Vector3();
     camera.getWorldDirection(d);
-    const gh = hitTest(o, d, 62, null, player.team);
+    const gh = hitTest(o, d, GRAPPLER_RANGE, null, player.team);
     grapIn = gh.kind !== 'none';
   }
   crosshairEl.classList.toggle('grapIn', grapIn);
@@ -9307,6 +9316,7 @@ function resetPlayerForMatch() {
   player.rig = null;
   player.grappleTo = null;
   player.grappleUntil = 0;
+  player.nextGrapple = 0;
   player.coyote = 0;
   player.respawnsLeft = (isReload() || isReloadDuos()) ? RELOAD_LIVES - 1 : 0;
   player.respawnAt = 0;
@@ -9829,8 +9839,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 5, minor: 6, patch: 3 };
-const VERSION_PREV = '5.6.2';
+const VERSION = { major: 5, minor: 6, patch: 5 };
+const VERSION_PREV = '5.6.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
