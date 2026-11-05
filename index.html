@@ -4290,8 +4290,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ELIMINATION CARDS STOP SELLING V-BUCKS</b> — the big kill card used to carry a second line reading "+50 V-BUCKS · +100 XP". That line is gone; the card shows the elimination and nothing else.</div></li>
-      <li><span class="wnTag">02</span><div><b>NO V-BUCKS FROM MATCHES</b> — eliminations no longer pay 50 and wins no longer pay 300 (400 in team modes). V-Bucks now only come from tournament payouts and your battle pass tiers.</div></li>
+      <li><span class="wnTag">01</span><div><b>EVERY ACCOUNT STARTS AT ZERO</b> — everyone's V-Bucks balance has been wiped on this build. Buying stays exactly as it was, but nothing carries in from before.</div></li>
+      <li><span class="wnTag">02</span><div><b>WHERE THEY COME FROM NOW</b> — with match payouts gone, the only V-Bucks left to earn are tournament prizes (converted from your cash) and the V-Bucks tiers on the battle pass.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11005,8 +11005,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 5, patch: 2 };
-const VERSION_PREV = '6.5.1';
+const VERSION = { major: 6, minor: 5, patch: 3 };
+const VERSION_PREV = '6.5.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11121,9 +11121,12 @@ function tourneyPrizeFor(def, mode) {
   return Math.round(def.prize * (TOURNEY_MODE_MULT[mode] || 1));
 }
 
+/* Bump this id to wipe every account's V-Bucks once, on next load. */
+const VB_RESET_ID = 'wipe-6.5.3';
+
 function defaultProfile() {
   return {
-    vbucks: 0, owned: ['default'], equipped: 'default',
+    vbucks: 0, vbReset: VB_RESET_ID, owned: ['default'], equipped: 'default',
     battlePass: false, bpXp: 0, claimed: [],
     pocket: 'shock',
     rankRp: 0,
@@ -11156,6 +11159,7 @@ function loadProfile() {
         base.tourneyModes = (p.tourneyModes && typeof p.tourneyModes === 'object') ? p.tourneyModes : {};
         base.mods = (p.mods && typeof p.mods === 'object') ? p.mods : {};
         base.banUntil = Math.max(0, Math.floor(p.banUntil || 0));
+        base.vbReset = p.vbReset || '';
         base.settings = Object.assign({ sens: 1, fps: false, dmg: true, autoSprint: false }, p.settings || {});
         if (p.season === SEASON) {
           base.battlePass = !!p.battlePass;
@@ -11173,6 +11177,13 @@ function loadProfile() {
 }
 
 let profile = loadProfile();
+
+/* One-time wipe: every account starts this build with an empty V-Bucks balance. */
+if (profile.vbReset !== VB_RESET_ID) {
+  profile.vbucks = 0;
+  profile.vbReset = VB_RESET_ID;
+  saveProfile();
+}
 
 function saveProfile() {
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) { /* ignore */ }
