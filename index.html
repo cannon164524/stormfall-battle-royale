@@ -2232,23 +2232,6 @@ kbd { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.16); colo
 }
 
 /* =========================================================================
-   SIMPLE UI — low-end / no-animation mode
-   ========================================================================= */
-body.perf #menu::before,
-body.perf .endRays,
-body.perf .endConfetti,
-body.perf #killFlash { display:none !important; }
-body.perf *, body.perf *::before, body.perf *::after {
-  animation:none !important;
-  transition:none !important;
-}
-body.perf .ann, body.perf .toast, body.perf #menu {
-  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-}
-body.perf .modeBtn, body.perf .card, body.perf .seatPanel, body.perf .endInner,
-body.perf .ann, body.perf #playBtn { box-shadow:none !important; }
-
-/* =========================================================================
    END SCREENS
    ========================================================================= */
 #end {
@@ -3431,11 +3414,6 @@ body { font-family:var(--body); letter-spacing:-.005em; }
   .verTag { display:none; }
 }
 
-/* simple UI mode also drops the blur, which is the expensive part */
-body.perf *, body.perf *::before, body.perf *::after {
-  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-}
-
 /* last details: overshield, skin previews, menu banners */
 #overFill {
   background:repeating-linear-gradient(115deg, #dceeff 0 6px, #adcfff 6px 12px);
@@ -3933,12 +3911,11 @@ body.perf *, body.perf *::before, body.perf *::after {
             </div>
             <button class="setSwitch" id="perfSwitch" role="switch" aria-checked="false" aria-label="Performance mode"><i></i></button>
           </div>
-          <p class="setNote">Drops the sun shadows, renders at 0.8× resolution, and pulls the draw distance and fog in to 140 m. UI animation and blur stop too. Aim, hit detection, loot, bots and building are untouched — it only costs you looks, not an edge.</p>
+          <p class="setNote">Drops the sun shadows, renders at 0.8× resolution, and pulls the draw distance and fog in to 140 m. The interface is left exactly as it is — every menu animation, toast and blur stays. Aim, hit detection, loot, bots and building are untouched too.</p>
           <div class="setChips">
             <span>NO SHADOWS</span>
             <span>0.8× RESOLUTION</span>
             <span>140 M DRAW DISTANCE</span>
-            <span>NO UI MOTION</span>
           </div>
         </div>
 
@@ -4199,9 +4176,8 @@ body.perf *, body.perf *::before, body.perf *::after {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>PERFORMANCE MODE</b> — one switch in Settings turns off the sun's shadow map, renders at 0.8× resolution, pulls the draw distance and fog in to 140 m, and stops UI animation and blur. Aim, hit detection, loot, bots and building are untouched: it costs you looks, not an edge.</div></li>
-      <li><span class="wnTag">02</span><div><b>A SETTINGS TAB</b> — performance mode and auto sprint now have their own tab instead of a chip row squeezed into the lobby. Each one is a switch, saves the moment you flick it, and shows what it is doing in the header.</div></li>
-      <li><span class="wnTag">03</span><div><b>MULTIPLAYER RESPECTS IT</b> — joining a friend already dropped shadows for you. That drop and this switch now go through the same path, so turning one off never quietly puts the other back on.</div></li>
+      <li><span class="wnTag">01</span><div><b>PERFORMANCE MODE, GRAPHICS ONLY</b> — the switch in Settings still drops the sun's shadow map, renders at 0.8× resolution and pulls the draw distance and fog in to 140 m, but it no longer freezes the interface. Menu transitions, mode cards, toasts, announcements, achievement reveals and the soft blur behind panels all keep their motion.</div></li>
+      <li><span class="wnTag">02</span><div><b>NOTHING ELSE MOVED</b> — same gameplay, same loot, same buttons. If performance mode is already on, nothing needs flipping: it simply looks like a game again between fights.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10753,8 +10729,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 1, patch: 1 };
-const VERSION_PREV = '6.1.0';
+const VERSION = { major: 6, minor: 1, patch: 2 };
+const VERSION_PREV = '6.1.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11034,7 +11010,6 @@ function renderOpts() {
 }
 
 function applyOpts() {
-  document.body.classList.toggle('perf', settingOn('perf'));
   applyGraphics();
 }
 
