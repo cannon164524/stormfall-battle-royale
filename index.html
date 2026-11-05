@@ -4290,9 +4290,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>GUNS SOUND LIKE GUNS</b> — the old shot was a noise blip over a square wave. It is now built from layers: a muzzle crack, a blast, a push of low air, a moving thump, a mechanical action click and a room tail. Each shot is pitched slightly differently so a spray does not sound like a metronome, and every gun has its own shape — the SMG is tight and bright, the pump is a wide boom, the sniper has the longest tail.</div></li>
-      <li><span class="wnTag">02</span><div><b>EVERY OTHER SOUND TOO</b> — impacts, shield hits and breaks, builds, footsteps, storm, deaths, reloads, pickups, chests, unlocks and the menu all moved off square and sawtooth beeps onto filtered noise and tuned bodies, so nothing in the game sounds 8-bit any more.</div></li>
-      <li><span class="wnTag">03</span><div><b>STILL NO AUDIO FILES</b> — it is all generated in the browser, impulse response included, so there is nothing extra to download and it works offline.</div></li>
+      <li><span class="wnTag">01</span><div><b>EVERY GUN HAS ITS OWN VOICE</b> — the weapon families no longer share one shot. The SMG is a short bright slap, the Tactical SMG sits higher and drier, the Drum Gun is slower and heavier, the LMG and Heavy AR chug with long tails, the Minigun is a fast flat buzz, the pump is a wide boom, the Tactical Shotgun is tighter, the Double Barrel is the biggest of them all, and the Hunting Rifle, Lever Action and Bolt Sniper each hang in the room for a different length.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE SUPPRESSED PISTOL IS ACTUALLY QUIET</b> — no muzzle crack, no room tail, just a soft low thump and a small mechanical tick. It is the only gun in the game you can fire without giving away half the map.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -5629,6 +5628,20 @@ const WEAPONS = {
   exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'siphon', siphon: 12 },
   exotic_lever: { name: 'Piercing Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x', pierce: true },
 };
+
+/* Every family gets its own report: a tactical SMG should not share a voice
+   with the drum gun, and a suppressed pistol should barely crack at all. */
+const WEAPON_SFX = {
+  tacsmg: 'tacsmg', drum: 'drum', minigun: 'minigun',
+  silenced: 'suppressed',
+  lmg: 'lmg', heavyar: 'heavyar',
+  lever: 'lever', tacshot: 'tacshot', doublebarrel: 'doublebarrel', hunting: 'hunting',
+  mythic_smg: 'tacsmg', mythic_tacsmg: 'tacsmg', mythic_lmg: 'lmg',
+  mythic_heavyar: 'heavyar', mythic_lever: 'lever', mythic_hunting: 'hunting',
+  exotic_tacshot: 'tacshot', exotic_lever: 'lever', exotic_siphonhunt: 'hunting',
+  exotic_minigun: 'minigun', exotic_hunting: 'hunting',
+};
+for (const k in WEAPON_SFX) if (WEAPONS[k]) WEAPONS[k].sfx = WEAPON_SFX[k];
 
 const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_heavyar', 'mythic_lmg', 'mythic_lever', 'mythic_hunting'];
 const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_minigun', 'exotic_lever'];
@@ -8971,19 +8984,34 @@ function playSound(kind, vol) {
   /* A gunshot is a crack, a blast and a push of air at once, then the room. */
   function shot(c) {
     const k = rand(0.94, 1.06);
-    noiseLayer({ type: 'highpass', f1: c.crack * k, f2: c.crack * k * 0.5, dur: c.crackDur || 0.055, gain: c.crackGain || 0.5, rev: 0.2 });
-    noiseLayer({ type: 'bandpass', f1: c.body * k, f2: c.body * k * 0.3, q: 0.8, dur: c.bodyDur || 0.15, gain: c.bodyGain || 0.5, rev: 0.35 });
-    noiseLayer({ type: 'lowpass', f1: c.low * k, f2: c.low * k * 0.35, q: 0.7, dur: c.lowDur || 0.2, gain: c.lowGain || 0.45, rev: 0.3 });
-    thump({ f1: c.thump * k, f2: c.thump * k * 0.4, dur: c.thumpDur || 0.12, gain: c.thumpGain || 0.28, rev: 0.12 });
-    if (c.click) noiseLayer({ type: 'bandpass', f1: 2600 * k, q: 2.5, dur: 0.016, gain: 0.14, at: 0.04 });
+    const revK = c.dry ? 0 : (c.rev == null ? 1 : c.rev);
+    const tailF = (c.tail || 640) * k;
+    noiseLayer({ type: 'highpass', f1: c.crack * k, f2: c.crack * k * 0.5, dur: c.crackDur || 0.055, gain: c.crackGain || 0.5, rev: 0.2 * revK });
+    noiseLayer({ type: 'bandpass', f1: c.body * k, f2: c.body * k * 0.3, q: 0.8, dur: c.bodyDur || 0.15, gain: c.bodyGain || 0.5, rev: 0.35 * revK });
+    noiseLayer({ type: 'lowpass', f1: c.low * k, f2: c.low * k * 0.35, q: 0.7, dur: c.lowDur || 0.2, gain: c.lowGain || 0.45, rev: 0.3 * revK });
+    thump({ f1: c.thump * k, f2: c.thump * k * 0.4, dur: c.thumpDur || 0.12, gain: c.thumpGain || 0.28, rev: 0.12 * revK });
+    if (c.tailDur) {
+      noiseLayer({ type: 'bandpass', f1: tailF, f2: tailF * 0.4, q: 0.45, dur: c.tailDur, gain: (c.tailGain || 0.22) * (c.dry ? 0.3 : 1), rev: 0.6 * revK, at: 0.05, attack: 0.012 });
+    }
+    if (c.click) noiseLayer({ type: 'bandpass', f1: 2600 * k, q: 2.5, dur: 0.016, gain: c.clickGain || 0.14, at: c.clickAt || 0.04 });
   }
 
   switch (kind) {
     case 'ar': shot({ crack: 3600, body: 1250, low: 420, thump: 118, click: true }); break;
-    case 'smg': shot({ crack: 4400, crackDur: 0.042, crackGain: 0.42, body: 1650, bodyDur: 0.085, bodyGain: 0.45, low: 540, lowDur: 0.12, lowGain: 0.38, thump: 145, thumpDur: 0.075, thumpGain: 0.2, click: true }); break;
+    case 'lmg': shot({ crack: 3100, body: 1050, bodyDur: 0.19, low: 380, lowDur: 0.26, lowGain: 0.5, thump: 104, thumpDur: 0.16, thumpGain: 0.3, click: true }); break;
+    case 'heavyar': shot({ crack: 2700, body: 820, bodyDur: 0.26, bodyGain: 0.56, low: 250, lowDur: 0.36, lowGain: 0.58, thump: 80, thumpDur: 0.24, thumpGain: 0.34, click: true }); break;
+    case 'smg': shot({ crack: 4600, crackDur: 0.038, crackGain: 0.44, body: 1750, bodyDur: 0.075, bodyGain: 0.4, low: 560, lowDur: 0.1, lowGain: 0.32, thump: 150, thumpDur: 0.06, thumpGain: 0.16, click: true }); break;
+    case 'tacsmg': shot({ crack: 5600, crackDur: 0.03, crackGain: 0.36, body: 2100, bodyDur: 0.06, bodyGain: 0.34, low: 640, lowDur: 0.085, lowGain: 0.26, thump: 190, thumpDur: 0.05, thumpGain: 0.12, click: true }); break;
+    case 'drum': shot({ crack: 3300, body: 1050, bodyDur: 0.14, bodyGain: 0.5, low: 380, lowDur: 0.2, lowGain: 0.46, thump: 96, thumpDur: 0.12, thumpGain: 0.28 }); break;
+    case 'minigun': shot({ crack: 2800, crackDur: 0.028, crackGain: 0.3, body: 880, bodyDur: 0.06, bodyGain: 0.4, low: 300, lowDur: 0.09, lowGain: 0.4, thump: 72, thumpDur: 0.07, thumpGain: 0.3 }); break;
     case 'pistol': shot({ crack: 3000, body: 950, low: 330, thump: 100, click: true }); break;
-    case 'shotgun': shot({ crack: 2400, crackDur: 0.09, crackGain: 0.5, body: 760, bodyDur: 0.28, bodyGain: 0.62, low: 220, lowDur: 0.4, lowGain: 0.62, thump: 82, thumpDur: 0.26, thumpGain: 0.34 }); break;
-    case 'sniper': shot({ crack: 5000, crackDur: 0.07, crackGain: 0.62, body: 700, bodyDur: 0.32, bodyGain: 0.55, low: 165, lowDur: 0.55, lowGain: 0.58, thump: 60, thumpDur: 0.4, thumpGain: 0.42 }); break;
+    case 'suppressed': shot({ dry: true, crack: 950, crackDur: 0.05, crackGain: 0.16, body: 560, bodyDur: 0.1, bodyGain: 0.3, low: 260, lowDur: 0.14, lowGain: 0.3, thump: 130, thumpDur: 0.07, thumpGain: 0.18, click: true, clickGain: 0.06 }); break;
+    case 'shotgun': shot({ crack: 2400, crackDur: 0.09, crackGain: 0.5, body: 760, bodyDur: 0.28, bodyGain: 0.62, low: 220, lowDur: 0.4, lowGain: 0.62, thump: 82, thumpDur: 0.26, thumpGain: 0.34, tail: 420, tailDur: 0.4 }); break;
+    case 'tacshot': shot({ crack: 2600, crackDur: 0.07, crackGain: 0.45, body: 900, bodyDur: 0.2, bodyGain: 0.55, low: 265, lowDur: 0.3, lowGain: 0.55, thump: 96, thumpDur: 0.18, thumpGain: 0.3 }); break;
+    case 'doublebarrel': shot({ crack: 2100, crackDur: 0.11, crackGain: 0.5, body: 640, bodyDur: 0.36, bodyGain: 0.66, low: 190, lowDur: 0.52, lowGain: 0.7, thump: 68, thumpDur: 0.34, thumpGain: 0.4, tail: 360, tailDur: 0.5 }); break;
+    case 'hunting': shot({ crack: 4300, crackDur: 0.05, crackGain: 0.5, body: 800, bodyDur: 0.2, bodyGain: 0.5, low: 220, lowDur: 0.3, lowGain: 0.5, thump: 80, thumpDur: 0.2, thumpGain: 0.34, tail: 700, tailDur: 0.45, rev: 0.5 }); break;
+    case 'lever': shot({ crack: 3700, crackDur: 0.06, crackGain: 0.5, body: 840, bodyDur: 0.22, bodyGain: 0.5, low: 235, lowDur: 0.3, lowGain: 0.5, thump: 88, thumpDur: 0.2, thumpGain: 0.32, click: true, clickAt: 0.12, clickGain: 0.2, tail: 660, tailDur: 0.4 }); break;
+    case 'sniper': shot({ crack: 5200, crackDur: 0.07, crackGain: 0.66, body: 700, bodyDur: 0.32, bodyGain: 0.55, low: 165, lowDur: 0.55, lowGain: 0.58, thump: 60, thumpDur: 0.4, thumpGain: 0.42, tail: 600, tailDur: 0.75, rev: 0.7 }); break;
     case 'hit': noiseLayer({ type: 'lowpass', f1: 1100, f2: 420, dur: 0.06, gain: 0.32 }); thump({ f1: 200, f2: 90, dur: 0.05, gain: 0.22 }); break;
     case 'hurt': noiseLayer({ type: 'bandpass', f1: 520, q: 0.9, dur: 0.2, gain: 0.55 }); thump({ f1: 165, f2: 52, dur: 0.22, gain: 0.4 }); break;
     case 'shieldHit': noiseLayer({ type: 'bandpass', f1: 2700, q: 7, dur: 0.13, gain: 0.35, rev: 0.3 }); noiseLayer({ type: 'highpass', f1: 5200, dur: 0.05, gain: 0.16 }); break;
@@ -11076,8 +11104,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 6, patch: 0 };
-const VERSION_PREV = '6.5.3';
+const VERSION = { major: 6, minor: 6, patch: 1 };
+const VERSION_PREV = '6.6.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
