@@ -3453,6 +3453,39 @@ body.perf *, body.perf *::before, body.perf *::after {
 #suspBanner b { font-family:var(--body); font-weight:700; letter-spacing:.1em; font-size:10px; }
 #suspBanner span { font-family:var(--display); font-weight:800; font-size:15px; }
 .adminWarn { border-radius:10px; border-left:1px solid rgba(255,90,109,.35); background:rgba(255,90,109,.07); font-family:var(--body); font-size:10.5px; }
+
+/* settings */
+.setGrid { display:flex; flex-direction:column; gap:10px; }
+.setCard {
+  background:rgba(255,255,255,.028); border:1px solid var(--line);
+  border-radius:var(--r-md); padding:15px 16px;
+}
+.setHead { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.setTitle { font-family:var(--display); font-weight:700; font-size:14px; letter-spacing:-.01em; color:#fff; }
+.setSub { font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.14em; color:rgba(255,255,255,.34); margin-top:3px; }
+.setNote {
+  font-family:var(--body); font-size:11.5px; line-height:1.65;
+  color:rgba(255,255,255,.45); margin:8px 0 0; max-width:62ch;
+}
+.setChips { display:flex; flex-wrap:wrap; gap:6px; margin-top:11px; }
+.setChips span {
+  font-family:var(--body); font-weight:600; font-size:8px; letter-spacing:.08em;
+  color:rgba(255,255,255,.5); border:1px solid var(--line); border-radius:6px;
+  padding:3px 7px; background:rgba(255,255,255,.03);
+}
+.setSwitch {
+  position:relative; flex:none; width:46px; height:26px; padding:0;
+  border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.07);
+  transition:background .16s ease, border-color .16s ease;
+}
+.setSwitch i {
+  position:absolute; top:50%; left:3px; width:18px; height:18px; margin-top:-9px;
+  border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.45);
+  transition:transform .18s cubic-bezier(.2,.9,.3,1);
+}
+.setSwitch[aria-checked="true"] { background:var(--accent); border-color:transparent; }
+.setSwitch[aria-checked="true"] i { transform:translateX(20px); }
+.setSwitch:hover { border-color:rgba(255,255,255,.2); }
 </style>
 </head>
 <body>
@@ -3595,6 +3628,7 @@ body.perf *, body.perf *::before, body.perf *::after {
       <button class="tab" data-tab="pass">BATTLE PASS</button>
       <button class="tab" data-tab="comp">COMPETITIVE</button>
       <button class="tab" data-tab="mp">MULTIPLAYER</button>
+      <button class="tab" data-tab="settings">SETTINGS</button>
     </nav>
     <div class="topRight">
       <div class="cashTag"><i class="cashCoin">$</i><b id="cashAmount">0</b></div>
@@ -3723,14 +3757,6 @@ body.perf *, body.perf *::before, body.perf *::after {
           <button class="modChip" data-mod="faststorm">FAST STORM</button>
           <button class="modChip" data-mod="nobuild">NO BUILD</button>
           <button class="modChip" data-mod="glass">GLASS CANNON</button>
-        </div>
-      </div>
-
-      <div class="seatPanel" id="qolPanel">
-        <div class="seatLabel">OPTIONS</div>
-        <div class="optRow">
-          <button class="optChip" data-opt="autoSprint">AUTO SPRINT</button>
-          <button class="optChip" data-opt="perf">SIMPLE UI</button>
         </div>
       </div>
 
@@ -3887,6 +3913,48 @@ body.perf *, body.perf *::before, body.perf *::after {
       <button class="mpBack" data-back>BACK</button>
       <button class="mpBack" id="mpLeave">DISCONNECT</button>
     </div>
+  </section>
+
+  <section id="panelSettings" class="menuPanel hide">
+    <div class="mpHead">
+      <div>
+        <div class="mpKicker">SYSTEM</div>
+        <div class="mpTitle">SETTINGS</div>
+      </div>
+      <div class="mpMeta" id="settingsState">GRAPHICS: STANDARD</div>
+    </div>
+    <div class="mpScroll">
+      <div class="setGrid">
+        <div class="setCard">
+          <div class="setHead">
+            <div>
+              <div class="setTitle">PERFORMANCE MODE</div>
+              <div class="setSub">LOW-END DEVICES</div>
+            </div>
+            <button class="setSwitch" id="perfSwitch" role="switch" aria-checked="false" aria-label="Performance mode"><i></i></button>
+          </div>
+          <p class="setNote">Drops the sun shadows, renders at 0.8× resolution, and pulls the draw distance and fog in to 140 m. UI animation and blur stop too. Aim, hit detection, loot, bots and building are untouched — it only costs you looks, not an edge.</p>
+          <div class="setChips">
+            <span>NO SHADOWS</span>
+            <span>0.8× RESOLUTION</span>
+            <span>140 M DRAW DISTANCE</span>
+            <span>NO UI MOTION</span>
+          </div>
+        </div>
+
+        <div class="setCard">
+          <div class="setHead">
+            <div>
+              <div class="setTitle">AUTO SPRINT</div>
+              <div class="setSub">MOVEMENT</div>
+            </div>
+            <button class="setSwitch" id="sprintSwitch" role="switch" aria-checked="false" aria-label="Auto sprint"><i></i></button>
+          </div>
+          <p class="setNote">Push the stick all the way and you are already running. No sprint button to hold, no speed lost while you shoot.</p>
+        </div>
+      </div>
+    </div>
+    <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
   </section>
 
   <section id="panelComp" class="menuPanel hide">
@@ -4131,11 +4199,9 @@ body.perf *, body.perf *::before, body.perf *::after {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>A NEW FACE</b> — Archivo and Inter replace the italic condensed display type. Headings are tighter and quieter, labels are real labels again, and every currency and counter uses tabular figures so numbers stop jumping around.</div></li>
-      <li><span class="wnTag">02</span><div><b>SOFTER SURFACES</b> — every panel, card, chip and HUD widget now sits on one surface: rounded corners, a hairline edge, a soft shadow and a little blur. The scanlines, corner cuts, pulsing glows, skewed banners and neon gradient buttons are gone.</div></li>
-      <li><span class="wnTag">03</span><div><b>A CALMER HUD</b> — the storm panel, minimap, alive/elim counters, kill feed, vitals, hotbar, ammo readout and prompts are rebuilt on that same surface with one blue accent. The crosshair, hitmarker and damage numbers keep their in-game sizes; only their type changed.</div></li>
-      <li><span class="wnTag">04</span><div><b>THE MENU, RE-ORGANISED</b> — a segmented tab bar, a quieter mode list, cleaner currency pills and one solid PLAY button. Nothing moved that did not need to move.</div></li>
-      <li><span class="wnTag">05</span><div><b>SAME GAME UNDERNEATH</b> — no balance, loot or mode changes in this one. It is purely the interface: what used to be decoration is now space, edges and type.</div></li>
+      <li><span class="wnTag">01</span><div><b>PERFORMANCE MODE</b> — one switch in Settings turns off the sun's shadow map, renders at 0.8× resolution, pulls the draw distance and fog in to 140 m, and stops UI animation and blur. Aim, hit detection, loot, bots and building are untouched: it costs you looks, not an edge.</div></li>
+      <li><span class="wnTag">02</span><div><b>A SETTINGS TAB</b> — performance mode and auto sprint now have their own tab instead of a chip row squeezed into the lobby. Each one is a switch, saves the moment you flick it, and shows what it is doing in the header.</div></li>
+      <li><span class="wnTag">03</span><div><b>MULTIPLAYER RESPECTS IT</b> — joining a friend already dropped shadows for you. That drop and this switch now go through the same path, so turning one off never quietly puts the other back on.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4431,8 +4497,11 @@ function terrainHeight(x, z) {
 const canvas = document.getElementById('game');
 const COARSE = window.matchMedia('(pointer: coarse)').matches;
 
+const BASE_PIXEL_RATIO = Math.min(window.devicePixelRatio || 1, COARSE ? 1.25 : 1.75);
+let netLow = false;
+
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !COARSE, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, COARSE ? 1.25 : 1.75));
+renderer.setPixelRatio(BASE_PIXEL_RATIO);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = !COARSE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -10684,8 +10753,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 1, patch: 0 };
-const VERSION_PREV = '6.0.0';
+const VERSION = { major: 6, minor: 1, patch: 1 };
+const VERSION_PREV = '6.1.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -10929,31 +10998,63 @@ document.querySelectorAll('.modChip').forEach((c) => {
   });
 });
 
+/* ---------------- settings · graphics ---------------- */
+const PERF_PIXEL_RATIO = 0.8;
+
+/* One switch pulls the two things that cost the most on a phone: the shadow
+   map and the number of pixels being shaded. Draw distance reads the same
+   setting inside updateRenderDistance. Bots, loot, building and hit detection
+   are untouched — it only looks cheaper. */
+function applyGraphics() {
+  const low = settingOn('perf');
+  const shadows = !low && !COARSE && !netLow;
+  try {
+    renderer.shadowMap.enabled = shadows;
+    sun.castShadow = shadows;
+    renderer.setPixelRatio(low ? PERF_PIXEL_RATIO : (netLow ? 1 : BASE_PIXEL_RATIO));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+  } catch (e) { /* renderer not ready yet */ }
+}
+
+function settingOn(key) {
+  return !!(profile.settings && profile.settings[key]);
+}
+
 function renderOpts() {
   document.querySelectorAll('.optChip').forEach((c) => {
-    c.classList.toggle('on', !!(profile.settings && profile.settings[c.dataset.opt]));
+    c.classList.toggle('on', settingOn(c.dataset.opt));
   });
+  const switches = { perfSwitch: 'perf', sprintSwitch: 'autoSprint' };
+  Object.keys(switches).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('aria-checked', settingOn(switches[id]) ? 'true' : 'false');
+  });
+  const stateEl = document.getElementById('settingsState');
+  if (stateEl) stateEl.textContent = settingOn('perf') ? 'GRAPHICS: PERFORMANCE' : 'GRAPHICS: STANDARD';
 }
 
 function applyOpts() {
-  const perf = !!(profile.settings && profile.settings.perf);
-  document.body.classList.toggle('perf', perf);
-  try {
-    renderer.setPixelRatio(perf ? 1 : Math.min(window.devicePixelRatio || 1, COARSE ? 1.25 : 1.75));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-  } catch (e) { /* ignore */ }
+  document.body.classList.toggle('perf', settingOn('perf'));
+  applyGraphics();
 }
+
+function setSetting(key, on) {
+  profile.settings = profile.settings || {};
+  profile.settings[key] = !!on;
+  saveProfile();
+  renderOpts();
+  applyOpts();
+  audioInit();
+  sfx('switch');
+}
+
 document.querySelectorAll('.optChip').forEach((c) => {
-  c.addEventListener('click', () => {
-    profile.settings = profile.settings || {};
-    profile.settings[c.dataset.opt] = !profile.settings[c.dataset.opt];
-    saveProfile();
-    renderOpts();
-    applyOpts();
-    audioInit();
-    sfx('switch');
-  });
+  c.addEventListener('click', () => setSetting(c.dataset.opt, !settingOn(c.dataset.opt)));
 });
+const perfSwitchEl = document.getElementById('perfSwitch');
+if (perfSwitchEl) perfSwitchEl.addEventListener('click', () => setSetting('perf', !settingOn('perf')));
+const sprintSwitchEl = document.getElementById('sprintSwitch');
+if (sprintSwitchEl) sprintSwitchEl.addEventListener('click', () => setSetting('autoSprint', !settingOn('autoSprint')));
 
 /* =========================================================================
    COMPETITIVE · TOURNAMENTS · CASH
@@ -11794,7 +11895,7 @@ function switchTab(tab) {
   const playRowEl = document.getElementById('playRowEl');
   if (lobbyEl) lobbyEl.classList.toggle('hide', !play);
   if (playRowEl) playRowEl.classList.toggle('hide', !play);
-  const panels = { locker: 'panelLocker', shop: 'panelShop', pass: 'panelPass', comp: 'panelComp', mp: 'panelMp', admin: 'panelAdmin' };
+  const panels = { locker: 'panelLocker', shop: 'panelShop', pass: 'panelPass', comp: 'panelComp', mp: 'panelMp', settings: 'panelSettings', admin: 'panelAdmin' };
   Object.keys(panels).forEach((k) => {
     const el = document.getElementById(panels[k]);
     if (el) el.classList.toggle('hide', k !== tab);
@@ -11803,6 +11904,7 @@ function switchTab(tab) {
   if (tab === 'locker') renderLocker();
   if (tab === 'pass') renderPass();
   if (tab === 'comp') renderCompetitive();
+  if (tab === 'settings') renderOpts();
   if (tab === 'admin') renderAdmin();
   refreshWallet();
   if (tab !== 'play') sfx('switch');
@@ -11978,12 +12080,13 @@ let hudAcc = 0;
    RENDER DISTANCE
    ========================================================================= */
 const RENDER_DIST = COARSE ? 175 : 250;
+const RENDER_DIST_LOW = 140;
 let rdAccum = 0;
 
 function updateRenderDistance(dt) {
   const menu = state.phase === 'menu';
   const center = menu ? camera.position : player.pos;
-  const R = menu ? 520 : RENDER_DIST;
+  const R = menu ? 520 : (settingOn('perf') ? RENDER_DIST_LOW : RENDER_DIST);
 
   scene.fog.near = menu ? 300 : R * 0.62;
   scene.fog.far = menu ? 950 : R * 1.12;
@@ -12230,11 +12333,8 @@ function netWireChannel(channel, mode) {
 }
 
 function applyNetQuality(on) {
-  try {
-    renderer.shadowMap.enabled = on ? false : !COARSE;
-    renderer.setPixelRatio(on ? 1 : Math.min(window.devicePixelRatio || 1, COARSE ? 1.25 : 1.75));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-  } catch (e) { /* ignore */ }
+  netLow = !!on;
+  applyGraphics();
 }
 
 function netOnOpen() {
