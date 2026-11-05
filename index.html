@@ -4199,9 +4199,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE LOW GRAPHICS PROFILE IS THE ONE</b> — the game now always draws the way performance mode used to: the sun casts no shadows, the render target sits at 0.8× resolution, and the world stops at a 140 m draw distance with the fog to match. There is no higher setting to fall back to, so every phone gets the same frame budget.</div></li>
-      <li><span class="wnTag">02</span><div><b>PERFORMANCE MODE IS NOW JUST THE UI</b> — with it on, the interface goes plain: no animation, no blur, no glow and none of the confetti, rays or sparks. Off, you keep the full designed interface on top of those graphics. Everything else — aim, hit detection, loot, bots, building — is untouched.</div></li>
-      <li><span class="wnTag">03</span><div><b>INVENTORY WITHOUT THE FROST</b> — the pause-screen inventory no longer blurs the world behind it, in either mode. It sits on a darker plain scrim instead, so you can still see what is happening around you while you swap slots.</div></li>
+      <li><span class="wnTag">01</span><div><b>UTILITY ITEMS</b> — six passives that work simply by sitting in your bag: Rift Radar, Regen Cell, Swift Boots, Guardian Plate, Scavenger and Ammo Synth. Nothing to fire, nothing to use up — pick one up and the effect is live, drop it and it is gone. Carrying two of the same does nothing extra.</div></li>
+      <li><span class="wnTag">02</span><div><b>RIFT RADAR</b> — with it in your inventory every enemy is drawn on the minimap as a red dot with a ring, no matter how far away they are. Without it the map still only shows players within 95 m, so it is worth a slot.</div></li>
+      <li><span class="wnTag">03</span><div><b>HOW THEY DROP</b> — utilities show up on the floor and in chests, sit in your hotbar and inventory with a passive description, and refuse a duplicate instead of filling another slot. Gun Game skips them, since that mode has no loot.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -5610,6 +5610,12 @@ GUN_ICONS.exotic_chain = GUN_ICONS.tactical;
 GUN_ICONS.exotic_siphonhunt = GUN_ICONS.sniper;
 GUN_ICONS.exotic_minigun = GUN_ICONS.ar;
 GUN_ICONS.exotic_lever = GUN_ICONS.marksman;
+GUN_ICONS.radar = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><circle cx="32" cy="34" r="21" stroke-width="4"/><circle cx="32" cy="34" r="11" stroke-width="2.5" opacity=".55"/><path d="M32 34L47 21" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="34" r="4" fill="currentColor" stroke="none"/><circle cx="45" cy="27" r="2.4" fill="currentColor" stroke="none"/></svg>';
+GUN_ICONS.regen = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="16" y="16" width="32" height="40" rx="7"/><rect x="25" y="9" width="14" height="8" rx="3"/><rect x="29" y="26" width="6" height="22" fill="#0b1a2b"/><rect x="21" y="34" width="22" height="6" fill="#0b1a2b"/><rect x="20" y="22" width="24" height="3" opacity=".35"/></svg>';
+GUN_ICONS.boots = '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M22 8h14v24h9c8 0 13 6 13 14v10H22z"/><rect x="16" y="50" width="40" height="6" rx="3" opacity=".6"/><rect x="26" y="14" width="6" height="3" rx="1.5" fill="#0b1a2b" opacity=".5"/></svg>';
+GUN_ICONS.plate = '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l21 9v17c0 12-9 21-21 26-12-5-21-14-21-26V15z"/><rect x="28" y="21" width="8" height="24" fill="#0b1a2b"/><rect x="20" y="29" width="24" height="8" fill="#0b1a2b"/></svg>';
+GUN_ICONS.scav = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="16" width="48" height="38" rx="4"/><rect x="8" y="27" width="48" height="6" fill="#0b1a2b"/><rect x="28" y="16" width="8" height="38" fill="#0b1a2b"/><rect x="24" y="11" width="16" height="5" rx="2" opacity=".7"/></svg>';
+GUN_ICONS.synth = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="24" width="10" height="20" rx="3"/><rect x="22" y="24" width="10" height="20" rx="3"/><rect x="36" y="24" width="10" height="20" rx="3"/><path d="M52 14l8 16h-9l7 16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 GUN_ICONS.frag = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="13"/><rect x="27" y="16" width="10" height="8" rx="2"/><rect x="30" y="10" width="4" height="7" rx="2"/><rect x="26" y="26" width="12" height="3" opacity=".35"/><circle cx="26" cy="36" r="2.4" fill="#0b1a2b"/><circle cx="38" cy="36" r="2.4" fill="#0b1a2b"/></svg>';
 GUN_ICONS.grappler = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="26" height="10" rx="2"/><rect x="30" y="29" width="12" height="4" rx="1"/><path d="M42 31h8l4-8h6l-6 10 6 10h-6l-4-8h-8z" opacity=".9"/><rect x="14" y="36" width="10" height="14" rx="2"/><rect x="10" y="20" width="14" height="6" rx="2"/></svg>';
 
@@ -5664,12 +5670,43 @@ function makeGrappler() {
   return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
 }
 
+/* -------------------------------------------------------------------------
+   UTILITIES
+   Passives that work simply by sitting in your inventory. Nothing to fire,
+   nothing to use up: the effect is live the moment it is picked up and dies
+   the moment it is dropped.
+   ------------------------------------------------------------------------- */
+const UTILITIES = {
+  radar: { name: 'Rift Radar', color: '#7dffb0', icon: 'radar', desc: 'EVERY ENEMY ON THE MINIMAP' },
+  regen: { name: 'Regen Cell', color: '#9be7ff', icon: 'regen', desc: 'SHIELD REGENERATES OUT OF COMBAT' },
+  boots: { name: 'Swift Boots', color: '#ffd451', icon: 'boots', desc: '+12% MOVE SPEED' },
+  plate: { name: 'Guardian Plate', color: '#c8a2ff', icon: 'plate', desc: '-15% DAMAGE TAKEN' },
+  scav: { name: 'Scavenger', color: '#d8a86a', icon: 'scav', desc: '+50% WOOD FROM CHESTS' },
+  synth: { name: 'Ammo Synth', color: '#8fd6ff', icon: 'synth', desc: 'RESERVE AMMO REFILLS' },
+};
+const UTILITY_TYPES = Object.keys(UTILITIES);
+
+function makeUtility(type) {
+  const key = UTILITIES[type] ? type : 'radar';
+  return { kind: 'utility', type: key, name: UTILITIES[key].name };
+}
+
+/* Utilities never stack — you either carry one or you do not. */
+function hasUtility(type) {
+  for (let i = 0; i < player.inv.length; i++) {
+    const it = player.inv[i];
+    if (it && it.kind === 'utility' && it.type === type) return true;
+  }
+  return false;
+}
+
 function itemIconHTML(item) {
   if (!item) return GUN_ICONS.pistol;
   if (item.kind === 'weapon') return GUN_ICONS[item.type] || GUN_ICONS.pistol;
   if (item.kind === 'heal') return GUN_ICONS[HEALS[item.type].icon];
   if (item.kind === 'grenade') return GUN_ICONS[GRENADES[item.type].icon];
   if (item.kind === 'grappler') return GUN_ICONS.grappler;
+  if (item.kind === 'utility') return GUN_ICONS[UTILITIES[item.type].icon] || GUN_ICONS.ammo;
   return GUN_ICONS.ammo;
 }
 function itemColor(item) {
@@ -5678,6 +5715,7 @@ function itemColor(item) {
   if (item.kind === 'heal') return HEALS[item.type].color;
   if (item.kind === 'grenade') return GRENADES[item.type].color;
   if (item.kind === 'grappler') return '#7dffb0';
+  if (item.kind === 'utility') return UTILITIES[item.type].color;
   return '#c9c9c9';
 }
 function itemLabel(item) {
@@ -5686,12 +5724,14 @@ function itemLabel(item) {
   if (item.kind === 'heal') return HEALS[item.type].name;
   if (item.kind === 'grenade') return GRENADES[item.type].name;
   if (item.kind === 'grappler') return 'Grappler';
+  if (item.kind === 'utility') return UTILITIES[item.type].name;
   return 'Item';
 }
 function itemMeta(item) {
   if (!item) return '';
   if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ' + item.mag + ' rnds';
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
+  if (item.kind === 'utility') return 'PASSIVE · ' + UTILITIES[item.type].desc;
   return '';
 }
 function itemColorHex(item) {
@@ -6047,6 +6087,13 @@ function buildLootModel(item) {
     const built = buildWeaponModel('grappler');
     built.group.scale.setScalar(2.0);
     g.add(built.group);
+  } else if (item.kind === 'utility') {
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.4), mat(itemColorHex(item), true));
+    g.add(shell);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.035, 8, 22), mat(0xeaf3ff, true));
+    band.rotation.x = Math.PI / 2;
+    band.position.y = 0.2;
+    g.add(band);
   } else if (item.kind === 'heal') {
     if (item.type === 'medkit') {
       const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.36), mat(0xd8dde4, true));
@@ -6166,6 +6213,7 @@ function rollLootItem(rng, bonus) {
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
+  if (Math.random() < 0.07) return makeUtility(pick(UTILITY_TYPES));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -6233,12 +6281,19 @@ function nearestLoot(radius) {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
+  if (l.item.kind === 'utility' && hasUtility(l.item.type)) {
+    toast('ALREADY HOLDING ' + UTILITIES[l.item.type].name.toUpperCase(), 'sub');
+    sfx('reload');
+    return;
+  }
   l.dead = true;
   if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
   const res = giveItem(l.item);
   sfx('pickup');
   if (res !== -2 && l.item.kind === 'weapon') {
     toast(RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name, 'sub');
+  } else if (res !== -2 && l.item.kind === 'utility') {
+    toast(UTILITIES[l.item.type].name.toUpperCase(), 'sub');
   }
   refreshHotbar();
 }
@@ -6274,7 +6329,12 @@ function openChest(c) {
     const ang = Math.random() * TAU;
     spawnLoot(c.x + Math.cos(ang) * 1.2, c.y + 0.6, c.z + Math.sin(ang) * 1.2, makeGrappler());
   }
-  player.wood = Math.min(999, player.wood + randInt(30, 60));
+  if (Math.random() < 0.16) {
+    const ang = Math.random() * TAU;
+    spawnLoot(c.x + Math.cos(ang) * 1.3, c.y + 0.6, c.z + Math.sin(ang) * 1.3, makeUtility(pick(UTILITY_TYPES)));
+  }
+  const woodMul = hasUtility('scav') ? 1.5 : 1;
+  player.wood = Math.min(999, player.wood + Math.round(randInt(30, 60) * woodMul));
   sfx('chest');
   toast('CHEST OPENED', 'sub');
   refreshHotbar();
@@ -6616,6 +6676,7 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (!player.alive) return;
   if (adminOn('god')) return;
   let d = dmg;
+  if (!fromStorm && hasUtility('plate')) d *= 0.85;
   let shieldPart = 0;
   let healthPart = 0;
   player.lastDamage = state.time;
@@ -9090,6 +9151,19 @@ function updatePlayer(dt) {
 
   if (player.knocked) { updateCrawl(dt); return; }
 
+  // utilities are passives, so they tick before anything else this frame
+  if (hasUtility('regen') && player.shield < player.maxShield && state.time >= (player.lastDamage || 0) + 4) {
+    player.shield = Math.min(player.maxShield, player.shield + 3 * dt);
+  }
+  if (hasUtility('synth')) {
+    player.synthAcc = (player.synthAcc || 0) + dt;
+    if (player.synthAcc >= 1) {
+      const gain = Math.floor(player.synthAcc) * 2;
+      player.synthAcc -= Math.floor(player.synthAcc);
+      for (const k in player.ammo) player.ammo[k] = Math.min(300, player.ammo[k] + gain);
+    }
+  }
+
   if (player.channel) {
     const c = player.channel;
     const away = c.van ? Math.hypot(player.pos.x - c.van.x, player.pos.z - c.van.z) : 0;
@@ -9119,6 +9193,7 @@ function updatePlayer(dt) {
   if (aimDown) speed = 3.6;
   if (player.using) speed = 2.2;
   if (adminOn('speed')) speed *= 2.4;
+  if (hasUtility('boots')) speed *= 1.12;
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -9897,16 +9972,25 @@ function drawMinimap() {
     ctx.setLineDash([]);
   }
 
-  // nearby bots
+  // bots — a Rift Radar in your bag puts every one of them on the map
+  const radar = hasUtility('radar');
   for (const b of bots) {
     if (!b.alive || b.dropping) continue;
     const d = Math.hypot(b.pos.x - player.pos.x, b.pos.z - player.pos.z);
-    if (d > 95) continue;
+    if (!radar && d > 95) continue;
     const [bx, by] = w2m(b.pos.x, b.pos.z);
+    const mate = state.teamMode && b.team === player.team;
     ctx.beginPath();
-    ctx.arc(bx, by, 3.2, 0, TAU);
-    ctx.fillStyle = (state.teamMode && b.team === player.team) ? '#5fd0ff' : '#ff4d5e';
+    ctx.arc(bx, by, radar ? 3.6 : 3.2, 0, TAU);
+    ctx.fillStyle = mate ? '#5fd0ff' : '#ff4d5e';
     ctx.fill();
+    if (radar) {
+      ctx.beginPath();
+      ctx.arc(bx, by, 6.4, 0, TAU);
+      ctx.strokeStyle = mate ? 'rgba(95,208,255,.45)' : 'rgba(255,77,94,.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   }
 
   // reboot vans
@@ -10754,8 +10838,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 2, patch: 1 };
-const VERSION_PREV = '6.2.0';
+const VERSION = { major: 6, minor: 3, patch: 0 };
+const VERSION_PREV = '6.2.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
