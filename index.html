@@ -3464,6 +3464,33 @@ body { font-family:var(--body); letter-spacing:-.005em; }
 .setSwitch[aria-checked="true"] { background:var(--accent); border-color:transparent; }
 .setSwitch[aria-checked="true"] i { transform:translateX(20px); }
 .setSwitch:hover { border-color:rgba(255,255,255,.2); }
+.setReset {
+  font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.08em;
+  border:1px solid var(--line); border-radius:999px; padding:5px 11px;
+  background:rgba(255,255,255,.04); color:rgba(255,255,255,.6);
+}
+.setReset:hover { color:#fff; background:rgba(255,255,255,.09); }
+.setAction {
+  width:100%; margin-top:11px; padding:11px;
+  font-family:var(--body); font-weight:600; font-size:10.5px; letter-spacing:.08em;
+  border:1px solid rgba(61,139,255,.45); border-radius:10px;
+  background:rgba(61,139,255,.16); color:#fff;
+}
+.setAction:hover { background:rgba(61,139,255,.26); }
+.bindGrid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:11px; }
+.bindRow {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  border:1px solid var(--line); border-radius:9px;
+  background:rgba(255,255,255,.03); padding:7px 9px;
+}
+.bindLabel { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.05em; color:rgba(255,255,255,.5); }
+.bindKey {
+  min-width:54px; text-align:center;
+  font-family:var(--body); font-weight:700; font-size:10px; letter-spacing:.02em;
+  border:1px solid rgba(61,139,255,.4); border-radius:7px; padding:4px 8px;
+  background:rgba(61,139,255,.14); color:#fff;
+}
+.bindKey.wait { background:var(--accent); border-color:var(--accent); color:#fff; }
 
 /* =========================================================================
    PERFORMANCE MODE — the interface goes plain: no motion, no blur, no glow
@@ -3863,19 +3890,19 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <div class="sidePanel">
         <div class="seatLabel">CONTROLS</div>
         <ul class="keyList">
-          <li><kbd>W A S D</kbd> Move</li>
-          <li><kbd>SHIFT</kbd> Sprint</li>
-          <li><kbd>SPACE</kbd> Jump</li>
-          <li><kbd>LMB</kbd> Fire / Grapple</li>
-          <li><kbd>RMB</kbd> Aim</li>
-          <li><kbd>R</kbd> Reload</li>
-          <li><kbd>E</kbd> Interact</li>
-          <li><kbd>Q</kbd> Build</li>
-          <li><kbd>F</kbd> Pocket Shockwave</li>
-          <li><kbd>H</kbd> Quick Heal</li>
-          <li><kbd>G</kbd> Drop Item</li>
+          <li><kbd data-bind="forward,left,back,right"></kbd> Move</li>
+          <li><kbd data-bind="sprint"></kbd> Sprint</li>
+          <li><kbd data-bind="jump"></kbd> Jump</li>
+          <li><kbd data-bind="fire"></kbd> Fire / Grapple</li>
+          <li><kbd data-bind="aim"></kbd> Aim</li>
+          <li><kbd data-bind="reload"></kbd> Reload</li>
+          <li><kbd data-bind="interact"></kbd> Interact</li>
+          <li><kbd data-bind="build"></kbd> Build</li>
+          <li><kbd data-bind="pocket"></kbd> Pocket Item</li>
+          <li><kbd data-bind="heal"></kbd> Quick Heal</li>
+          <li><kbd data-bind="drop"></kbd> Drop Item</li>
           <li><kbd>1-5</kbd> Slots</li>
-          <li><kbd>I</kbd> Inventory</li>
+          <li><kbd data-bind="inventory"></kbd> Inventory</li>
         </ul>
       </div>
     </div>
@@ -4038,6 +4065,29 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
             <button class="setSwitch" id="sprintSwitch" role="switch" aria-checked="false" aria-label="Auto sprint"><i></i></button>
           </div>
           <p class="setNote">Push the stick all the way and you are already running. No sprint button to hold, no speed lost while you shoot.</p>
+        </div>
+
+        <div class="setCard">
+          <div class="setHead">
+            <div>
+              <div class="setTitle">KEYBINDS</div>
+              <div class="setSub">KEYBOARD + MOUSE</div>
+            </div>
+            <button class="setReset" id="bindReset">RESET</button>
+          </div>
+          <p class="setNote">Click a bind, then press the key or mouse button you want it on. Aim and fire can be rebound to anything — even a key instead of a mouse button. Binds are saved and used in every match.</p>
+          <div class="bindGrid" id="bindList"></div>
+        </div>
+
+        <div class="setCard">
+          <div class="setHead">
+            <div>
+              <div class="setTitle">FULLSCREEN</div>
+              <div class="setSub">NEW TAB</div>
+            </div>
+          </div>
+          <p class="setNote">Opens the game in a clean, empty browser tab with nothing around it, then asks for fullscreen so the match owns the whole screen.</p>
+          <button class="setAction" id="fsLaunch">OPEN FULLSCREEN GAME</button>
         </div>
       </div>
     </div>
@@ -4290,8 +4340,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>EVERY GUN HAS ITS OWN VOICE</b> — the weapon families no longer share one shot. The SMG is a short bright slap, the Tactical SMG sits higher and drier, the Drum Gun is slower and heavier, the LMG and Heavy AR chug with long tails, the Minigun is a fast flat buzz, the pump is a wide boom, the Tactical Shotgun is tighter, the Double Barrel is the biggest of them all, and the Hunting Rifle, Lever Action and Bolt Sniper each hang in the room for a different length.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE SUPPRESSED PISTOL IS ACTUALLY QUIET</b> — no muzzle crack, no room tail, just a soft low thump and a small mechanical tick. It is the only gun in the game you can fire without giving away half the map.</div></li>
+      <li><span class="wnTag">01</span><div><b>REBIND EVERYTHING</b> — Settings has a KEYBINDS panel covering movement, sprint, jump, reload, interact, build, pocket, heal, drop, inventory and, yes, fire and aim. Click a bind, press the key or mouse button you want, and it saves instantly. Fire and aim can go on a keyboard key just as easily as a mouse button, and the controls list in the lobby follows whatever you set.</div></li>
+      <li><span class="wnTag">02</span><div><b>FULLSCREEN IN A CLEAN TAB</b> — a new button in Settings opens the game in a blank browser tab with nothing around it, writes the game into that tab and asks for fullscreen so the match owns the whole screen. If pop-ups are blocked it tells you instead of doing nothing.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -10296,12 +10346,73 @@ function drawMinimap() {
    ========================================================================= */
 const keys = {};
 
+/* Rebindable actions. Mouse buttons are stored as Mouse0 / Mouse1 / Mouse2. */
+const KEY_ACTIONS = [
+  { id: 'forward', label: 'MOVE FORWARD', def: 'KeyW' },
+  { id: 'back', label: 'MOVE BACK', def: 'KeyS' },
+  { id: 'left', label: 'MOVE LEFT', def: 'KeyA' },
+  { id: 'right', label: 'MOVE RIGHT', def: 'KeyD' },
+  { id: 'sprint', label: 'SPRINT', def: 'ShiftLeft' },
+  { id: 'jump', label: 'JUMP', def: 'Space' },
+  { id: 'fire', label: 'FIRE / GRAPPLE', def: 'Mouse0' },
+  { id: 'aim', label: 'AIM DOWN SIGHTS', def: 'Mouse2' },
+  { id: 'reload', label: 'RELOAD', def: 'KeyR' },
+  { id: 'interact', label: 'INTERACT', def: 'KeyE' },
+  { id: 'build', label: 'BUILD MODE', def: 'KeyQ' },
+  { id: 'pocket', label: 'POCKET ITEM', def: 'KeyF' },
+  { id: 'heal', label: 'QUICK HEAL', def: 'KeyH' },
+  { id: 'drop', label: 'DROP ITEM', def: 'KeyG' },
+  { id: 'inventory', label: 'INVENTORY', def: 'KeyI' },
+];
+let keyCapture = null;
+
+function bindOf(action) {
+  let custom = null;
+  try { custom = profile.keys ? profile.keys[action] : null; } catch (e) { custom = null; }
+  if (custom) return custom;
+  for (let i = 0; i < KEY_ACTIONS.length; i++) {
+    if (KEY_ACTIONS[i].id === action) return KEY_ACTIONS[i].def;
+  }
+  return '';
+}
+
+function actionForCode(code) {
+  for (let i = 0; i < KEY_ACTIONS.length; i++) {
+    if (bindOf(KEY_ACTIONS[i].id) === code) return KEY_ACTIONS[i].id;
+  }
+  return '';
+}
+
+function codeLabel(code) {
+  if (!code) return '—';
+  if (code.indexOf('Mouse') === 0) {
+    const n = parseInt(code.slice(5), 10);
+    return n === 0 ? 'LMB' : n === 2 ? 'RMB' : 'M' + n;
+  }
+  const map = {
+    Space: 'SPACE', ShiftLeft: 'L SHIFT', ShiftRight: 'R SHIFT',
+    ControlLeft: 'L CTRL', ControlRight: 'R CTRL', AltLeft: 'L ALT', AltRight: 'R ALT',
+    ArrowUp: 'UP', ArrowDown: 'DOWN', ArrowLeft: 'LEFT', ArrowRight: 'RIGHT',
+    Tab: 'TAB', Enter: 'ENTER', Backspace: 'BACKSPACE', CapsLock: 'CAPS',
+  };
+  if (map[code]) return map[code];
+  if (code.indexOf('Key') === 0) return code.slice(3);
+  if (code.indexOf('Digit') === 0) return code.slice(5);
+  if (code.indexOf('Numpad') === 0) return 'NUM ' + code.slice(6);
+  return code.toUpperCase();
+}
+
+function keyHeld(action) {
+  const code = bindOf(action);
+  return code ? !!keys[code] : false;
+}
+
 function updateMoveFromKeys() {
-  const f = ((keys['KeyW'] || keys['ArrowUp']) ? 1 : 0) - ((keys['KeyS'] || keys['ArrowDown']) ? 1 : 0);
-  const r = (keys['KeyD'] || keys['ArrowRight'] ? 1 : 0) - (keys['KeyA'] || keys['ArrowLeft'] ? 1 : 0);
+  const f = (keyHeld('forward') ? 1 : 0) - (keyHeld('back') ? 1 : 0);
+  const r = (keyHeld('right') ? 1 : 0) - (keyHeld('left') ? 1 : 0);
   input.fwd = f;
   input.right = r;
-  input.sprint = !!(keys['ShiftLeft'] || keys['ShiftRight']);
+  input.sprint = keyHeld('sprint');
 }
 
 function interact() {
@@ -10358,33 +10469,30 @@ function quickHeal() {
 }
 
 window.addEventListener('keydown', (e) => {
-  if (state.phase === 'menu' || state.phase === 'over') return;
-  if (e.code === 'KeyH') quickHeal();
-});
-
-window.addEventListener('keydown', (e) => {
+  if (keyCapture) return;
   if (e.code !== 'Escape') return;
   const el = document.getElementById('rankRecap');
   if (el && !el.classList.contains('hide')) closeRankedRecap();
 });
 
 window.addEventListener('keydown', (e) => {
-  if (e.code !== 'KeyG' || state.phase === 'menu' || state.phase === 'over') return;
-  if (player.knocked) { e.preventDefault(); giveUpKnocked(); }
-});
-
-window.addEventListener('keydown', (e) => {
+  if (keyCapture) return;
+  const act = actionForCode(e.code);
   if (e.repeat) {
-    if (e.code === 'Space') e.preventDefault();
+    if (act === 'jump') e.preventDefault();
     return;
   }
   keys[e.code] = true;
   updateMoveFromKeys();
-  if (e.code === 'Space') e.preventDefault();
+  if (act === 'jump') e.preventDefault();
 
   if (state.phase === 'menu' || state.phase === 'over') return;
 
-  if (e.code === 'KeyI' || e.code === 'Tab') {
+  if (act === 'fire') { input.fire = true; input.fireJust = true; }
+  if (act === 'aim') aimDown = true;
+  if (act === 'heal') quickHeal();
+
+  if (act === 'inventory' || e.code === 'Tab') {
     e.preventDefault();
     toggleInventory();
     return;
@@ -10394,13 +10502,16 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (invOpen) return;
-  if (e.code === 'KeyG') { if (!player.knocked) dropCurrentItem(); return; }
+  if (act === 'drop') {
+    if (player.knocked) { e.preventDefault(); giveUpKnocked(); } else dropCurrentItem();
+    return;
+  }
 
-  if (e.code === 'Space') input.jump = true;
-  if (e.code === 'KeyF') usePocket();
-  if (e.code === 'KeyR') startReload();
-  if (e.code === 'KeyE') interact();
-  if (e.code === 'KeyQ') toggleBuild();
+  if (act === 'jump') input.jump = true;
+  if (act === 'pocket') usePocket();
+  if (act === 'reload') startReload();
+  if (act === 'interact') interact();
+  if (act === 'build') toggleBuild();
 
   const digit = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'].indexOf(e.code);
   if (digit >= 0) {
@@ -10416,7 +10527,10 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
   updateMoveFromKeys();
-  if (e.code === 'Space') input.jump = false;
+  const act = actionForCode(e.code);
+  if (act === 'jump') input.jump = false;
+  if (act === 'fire') input.fire = false;
+  if (act === 'aim') aimDown = false;
 });
 
 function lockPointer() {
@@ -10446,15 +10560,19 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('mousedown', (e) => {
+  if (keyCapture) return;
   if (state.phase === 'menu' || state.phase === 'over') return;
   if (invOpen) return;
-  if (e.button === 0) { input.fire = true; input.fireJust = true; }
-  if (e.button === 2) aimDown = true;
+  const act = actionForCode('Mouse' + e.button);
+  if (act === 'fire') { input.fire = true; input.fireJust = true; }
+  if (act === 'aim') aimDown = true;
 });
 
 document.addEventListener('mouseup', (e) => {
-  if (e.button === 0) input.fire = false;
-  if (e.button === 2) aimDown = false;
+  if (keyCapture) return;
+  const act = actionForCode('Mouse' + e.button);
+  if (act === 'fire') input.fire = false;
+  if (act === 'aim') aimDown = false;
 });
 
 document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -11104,8 +11222,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 6, patch: 1 };
-const VERSION_PREV = '6.6.0';
+const VERSION = { major: 6, minor: 7, patch: 0 };
+const VERSION_PREV = '6.6.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11236,6 +11354,7 @@ function defaultProfile() {
     mods: {},
     season: SEASON,
     banUntil: 0,
+    keys: {},
     settings: { sens: 1, fps: false, dmg: true, autoSprint: false, perf: false },
   };
 }
@@ -11260,6 +11379,7 @@ function loadProfile() {
         base.banUntil = Math.max(0, Math.floor(p.banUntil || 0));
         base.vbReset = p.vbReset || '';
         base.settings = Object.assign({ sens: 1, fps: false, dmg: true, autoSprint: false }, p.settings || {});
+        base.keys = (p.keys && typeof p.keys === 'object') ? p.keys : {};
         if (p.season === SEASON) {
           base.battlePass = !!p.battlePass;
           base.bpXp = Math.max(0, p.bpXp || 0);
@@ -11412,6 +11532,121 @@ const perfSwitchEl = document.getElementById('perfSwitch');
 if (perfSwitchEl) perfSwitchEl.addEventListener('click', () => setSetting('perf', !settingOn('perf')));
 const sprintSwitchEl = document.getElementById('sprintSwitch');
 if (sprintSwitchEl) sprintSwitchEl.addEventListener('click', () => setSetting('autoSprint', !settingOn('autoSprint')));
+
+/* ---------------- keybinds + fullscreen ---------------- */
+function renderControlHints() {
+  document.querySelectorAll('[data-bind]').forEach((el) => {
+    const ids = String(el.dataset.bind).split(',');
+    el.textContent = ids.map((id) => codeLabel(bindOf(id))).join(' ');
+  });
+}
+
+function renderKeybinds() {
+  const el = document.getElementById('bindList');
+  if (!el) return;
+  el.innerHTML = KEY_ACTIONS.map((a) =>
+    '<div class="bindRow"><span class="bindLabel">' + a.label + '</span>' +
+    '<button class="bindKey' + (keyCapture === a.id ? ' wait' : '') + '" data-bindkey="' + a.id + '">' +
+    (keyCapture === a.id ? 'PRESS…' : codeLabel(bindOf(a.id))) + '</button></div>'
+  ).join('');
+  el.querySelectorAll('.bindKey').forEach((b) => {
+    b.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      beginKeyCapture(b.dataset.bindkey);
+    });
+  });
+}
+
+function setBind(action, code) {
+  profile.keys = profile.keys || {};
+  for (let i = 0; i < KEY_ACTIONS.length; i++) {
+    const id = KEY_ACTIONS[i].id;
+    if (id !== action && bindOf(id) === code) delete profile.keys[id];
+  }
+  profile.keys[action] = code;
+  saveProfile();
+  for (const k in keys) keys[k] = false;
+  updateMoveFromKeys();
+  renderControlHints();
+  sfx('switch');
+}
+
+function beginKeyCapture(action) {
+  keyCapture = action;
+  renderKeybinds();
+  const finish = () => {
+    window.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('mousedown', onMouse, true);
+    keyCapture = null;
+    renderKeybinds();
+  };
+  function onKey(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.code !== 'Escape') setBind(action, e.code);
+    finish();
+  }
+  function onMouse(e) {
+    if (e.button === 1) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setBind(action, 'Mouse' + e.button);
+    finish();
+  }
+  window.addEventListener('keydown', onKey, true);
+  window.addEventListener('mousedown', onMouse, true);
+}
+
+const bindResetEl = document.getElementById('bindReset');
+if (bindResetEl) {
+  bindResetEl.addEventListener('click', () => {
+    profile.keys = {};
+    saveProfile();
+    for (const k in keys) keys[k] = false;
+    updateMoveFromKeys();
+    renderKeybinds();
+    renderControlHints();
+    sfx('switch');
+  });
+}
+
+/* Opens a clean about:blank tab, writes the game into it and asks for
+   fullscreen there. Falls back to a normal new tab if the page cannot be
+   read back. */
+async function openFullscreenGame() {
+  const w = window.open('about:blank', '_blank');
+  if (!w) { toast('ALLOW POP-UPS TO LAUNCH', 'sub'); return; }
+  const boot = '<scr' + 'ipt>' +
+    '(function(){function go(){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)' +
+    'document.documentElement.requestFullscreen().catch(function(){});}catch(e){}}' +
+    'window.addEventListener("load",go);' +
+    'window.addEventListener("pointerdown",go,{once:true});' +
+    'window.addEventListener("keydown",go,{once:true});})();' +
+    '</scr' + 'ipt>';
+  let html = '';
+  try {
+    const res = await fetch(location.href, { cache: 'no-store' });
+    if (res && res.ok) html = await res.text();
+  } catch (e) { html = ''; }
+  if (!html) {
+    try { w.location.href = location.href; } catch (e) { try { w.close(); } catch (e2) { /* ignore */ } }
+    return;
+  }
+  try {
+    w.document.open();
+    w.document.write(html.replace('</body>', boot + '</body>'));
+    w.document.close();
+  } catch (e) {
+    try { w.location.href = location.href; } catch (e2) { /* ignore */ }
+  }
+}
+
+const fsLaunchEl = document.getElementById('fsLaunch');
+if (fsLaunchEl) fsLaunchEl.addEventListener('click', openFullscreenGame);
+
+renderKeybinds();
+renderControlHints();
 
 /* =========================================================================
    COMPETITIVE · TOURNAMENTS · CASH
@@ -12291,7 +12526,7 @@ function switchTab(tab) {
   if (tab === 'locker') renderLocker();
   if (tab === 'pass') renderPass();
   if (tab === 'comp') renderCompetitive();
-  if (tab === 'settings') renderOpts();
+  if (tab === 'settings') { renderOpts(); renderKeybinds(); renderControlHints(); }
   if (tab === 'admin') renderAdmin();
   refreshWallet();
   if (tab !== 'play') sfx('switch');
@@ -13688,6 +13923,8 @@ function boot() {
   renderMods();
   renderOpts();
   applyOpts();
+  renderKeybinds();
+  renderControlHints();
   renderAdmin();
   renderCompetitive();
   state.mods = Object.assign({}, profile.mods || {});
