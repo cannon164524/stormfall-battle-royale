@@ -733,7 +733,7 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 /* ============================== INVENTORY ============================== */
 #inv {
   position:fixed; inset:0; z-index:34; display:flex; align-items:center; justify-content:center; padding:16px;
-  background:rgba(3,7,14,.74);
+  background:rgba(3,7,14,.62); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
 }
 .invPanel {
   width:min(600px,100%); padding:18px 20px 20px;
@@ -3466,7 +3466,7 @@ body { font-family:var(--body); letter-spacing:-.005em; }
 .setSwitch:hover { border-color:rgba(255,255,255,.2); }
 
 /* =========================================================================
-   PERFORMANCE MODE — the interface stops moving and stops compositing
+   PERFORMANCE MODE — the interface goes plain: no motion, no blur, no glow
    ========================================================================= */
 body.perf *, body.perf *::before, body.perf *::after {
   animation:none !important;
@@ -3930,16 +3930,15 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
           <div class="setHead">
             <div>
               <div class="setTitle">PERFORMANCE MODE</div>
-              <div class="setSub">LOW-END DEVICES</div>
+              <div class="setSub">INTERFACE</div>
             </div>
             <button class="setSwitch" id="perfSwitch" role="switch" aria-checked="false" aria-label="Performance mode"><i></i></button>
           </div>
-          <p class="setNote">Drops the sun shadows, renders at 0.8× resolution, pulls the draw distance and fog in to 140 m, and strips the interface back — no animation, no blur, no glow. Layout and controls are identical, so nothing moves around. Aim, hit detection, loot, bots and building are untouched.</p>
+          <p class="setNote">Takes the interface down to plain: no animation, no blur, no glow shadows and no decorative particles. The world is already drawn without shadows at 0.8× resolution with a 140 m draw distance, so this only changes what is on top of it. Layout and controls stay identical.</p>
           <div class="setChips">
-            <span>NO SHADOWS</span>
-            <span>0.8× RESOLUTION</span>
-            <span>140 M DRAW DISTANCE</span>
             <span>NO UI MOTION</span>
+            <span>NO BLUR</span>
+            <span>NO GLOW</span>
           </div>
         </div>
 
@@ -4200,8 +4199,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>PERFORMANCE MODE STRIPS THE UI</b> — with it on, the interface stops animating: no card transitions, no panel fade-ins, no reveal spins, no glow, no blur behind anything. The layout and every control stay exactly where they were, so the game reads the same, only still.</div></li>
-      <li><span class="wnTag">02</span><div><b>INVENTORY WITHOUT THE FROST</b> — the pause-screen inventory no longer blurs the world behind it. It is a darker scrim in both modes now, so you can still see what is happening around you while you swap slots.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE LOW GRAPHICS PROFILE IS THE ONE</b> — the game now always draws the way performance mode used to: the sun casts no shadows, the render target sits at 0.8× resolution, and the world stops at a 140 m draw distance with the fog to match. There is no higher setting to fall back to, so every phone gets the same frame budget.</div></li>
+      <li><span class="wnTag">02</span><div><b>PERFORMANCE MODE IS NOW JUST THE UI</b> — with it on, the interface goes plain: no animation, no blur, no glow and none of the confetti, rays or sparks. Off, you keep the full designed interface on top of those graphics. Everything else — aim, hit detection, loot, bots, building — is untouched.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4497,13 +4496,14 @@ function terrainHeight(x, z) {
 const canvas = document.getElementById('game');
 const COARSE = window.matchMedia('(pointer: coarse)').matches;
 
-const BASE_PIXEL_RATIO = Math.min(window.devicePixelRatio || 1, COARSE ? 1.25 : 1.75);
-let netLow = false;
+/* The world is always drawn at the performance profile: no shadow map and a
+   0.8x render target. Performance mode only takes the interface further. */
+const PERF_PIXEL_RATIO = 0.8;
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !COARSE, powerPreference: 'high-performance' });
-renderer.setPixelRatio(BASE_PIXEL_RATIO);
+renderer.setPixelRatio(PERF_PIXEL_RATIO);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
-renderer.shadowMap.enabled = !COARSE;
+renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -4519,7 +4519,7 @@ scene.add(hemi);
 const SUN_OFFSET = new THREE.Vector3(70, 130, 50);
 const sun = new THREE.DirectionalLight(0xfff2d8, 2.0);
 sun.position.copy(SUN_OFFSET);
-sun.castShadow = true;
+sun.castShadow = false;
 sun.shadow.mapSize.set(1024, 1024);
 sun.shadow.camera.left = -85;
 sun.shadow.camera.right = 85;
@@ -10753,7 +10753,7 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 1, patch: 3 };
+const VERSION = { major: 6, minor: 2, patch: 0 };
 const VERSION_PREV = '6.1.2';
 
 function versionString() {
@@ -10999,19 +10999,14 @@ document.querySelectorAll('.modChip').forEach((c) => {
 });
 
 /* ---------------- settings · graphics ---------------- */
-const PERF_PIXEL_RATIO = 0.8;
 
-/* One switch pulls the two things that cost the most on a phone: the shadow
-   map and the number of pixels being shaded. Draw distance reads the same
-   setting inside updateRenderDistance. Bots, loot, building and hit detection
-   are untouched — it only looks cheaper. */
+/* Shadows are off and the render target is 0.8x on every device now, so the
+   graphics ladder has one rung. Performance mode only touches the interface. */
 function applyGraphics() {
-  const low = settingOn('perf');
-  const shadows = !low && !COARSE && !netLow;
   try {
-    renderer.shadowMap.enabled = shadows;
-    sun.castShadow = shadows;
-    renderer.setPixelRatio(low ? PERF_PIXEL_RATIO : (netLow ? 1 : BASE_PIXEL_RATIO));
+    renderer.shadowMap.enabled = false;
+    sun.castShadow = false;
+    renderer.setPixelRatio(PERF_PIXEL_RATIO);
     renderer.setSize(window.innerWidth, window.innerHeight, false);
   } catch (e) { /* renderer not ready yet */ }
 }
@@ -12079,14 +12074,13 @@ let hudAcc = 0;
 /* =========================================================================
    RENDER DISTANCE
    ========================================================================= */
-const RENDER_DIST = COARSE ? 175 : 250;
-const RENDER_DIST_LOW = 140;
+const RENDER_DIST = 140;
 let rdAccum = 0;
 
 function updateRenderDistance(dt) {
   const menu = state.phase === 'menu';
   const center = menu ? camera.position : player.pos;
-  const R = menu ? 520 : (settingOn('perf') ? RENDER_DIST_LOW : RENDER_DIST);
+  const R = menu ? 520 : RENDER_DIST;
 
   scene.fog.near = menu ? 300 : R * 0.62;
   scene.fog.far = menu ? 950 : R * 1.12;
@@ -12332,8 +12326,7 @@ function netWireChannel(channel, mode) {
   }
 }
 
-function applyNetQuality(on) {
-  netLow = !!on;
+function applyNetQuality() {
   applyGraphics();
 }
 
