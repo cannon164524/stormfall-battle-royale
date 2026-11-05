@@ -4086,7 +4086,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
               <div class="setSub">NEW TAB</div>
             </div>
           </div>
-          <p class="setNote">Opens the game in its own browser tab and takes the screen full on your first tap or key there, so the match owns the whole display.</p>
+          <p class="setNote">Opens an empty about:blank tab and runs the whole game fullbleed inside it. The first tap or key there takes the screen full, so the match owns the display.</p>
           <button class="setAction" id="fsLaunch">OPEN FULLSCREEN GAME</button>
         </div>
       </div>
@@ -4340,7 +4340,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>FULLSCREEN ACTUALLY LOADS THE GAME</b> — the launch button was writing the page into an about:blank tab, and a blank document has no usable base address, so the 3D engine import failed and you got the "engine couldn't be loaded" screen. The tab now opens the real game and asks for fullscreen on your first tap or key, which is the moment browsers allow it.</div></li>
+      <li><span class="wnTag">01</span><div><b>BLANK TAB, REAL GAME</b> — the fullscreen button opens an actual about:blank tab again, but the game now runs inside it from the real page instead of being written into the blank document. That keeps the 3D engine loading properly while the tab itself stays empty, and if the frame is ever blocked the tab falls back to the game on its own.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11221,8 +11221,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 1 };
-const VERSION_PREV = '6.7.0';
+const VERSION = { major: 6, minor: 7, patch: 2 };
+const VERSION_PREV = '6.7.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11610,14 +11610,43 @@ if (bindResetEl) {
   });
 }
 
-/* Opens the game in its own tab and asks for fullscreen there on the first
-   tap or key. It has to be the real page: an about:blank document has no
-   usable base URL, so the module import of the 3D engine fails inside one —
-   which is exactly what the old blank-tab launch was doing. */
+/* Opens a genuinely blank tab — about:blank — and puts the real game in a
+   full-viewport frame inside it. The frame is what loads the 3D engine, so the
+   blank document never has to resolve the module import itself, which is the
+   part that used to fail and throw the "engine couldn't be loaded" screen. */
 function openFullscreenGame() {
   const base = location.href.split('#')[0];
-  const w = window.open(base + '#fullscreen', '_blank');
-  if (!w) toast('ALLOW POP-UPS TO PLAY FULLSCREEN', 'sub');
+  const w = window.open('about:blank', '_blank');
+  if (!w) { toast('ALLOW POP-UPS TO PLAY FULLSCREEN', 'sub'); return; }
+  const safe = base.replace(/"/g, '&quot;');
+  const shell = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">' +
+    '<title>Stormfall</title>' +
+    '<style>html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#05070a}' +
+    'iframe{display:block;width:100%;height:100%;border:0}</style></head><body>' +
+    '<iframe id="gameFrame" src="' + safe + '#fullscreen" allow="fullscreen; autoplay; pointer-lock" allowfullscreen></iframe>' +
+    '</body></html>';
+  try {
+    w.document.open();
+    w.document.write(shell);
+    w.document.close();
+  } catch (e) {
+    try { w.location.href = base + '#fullscreen'; } catch (e2) { try { w.close(); } catch (e3) { /* ignore */ } }
+    return;
+  }
+  // If the frame never navigated away from about:blank it was blocked, so send
+  // the tab straight at the game instead of leaving a black rectangle.
+  setTimeout(() => {
+    let blocked = false;
+    try {
+      const f = w.document.getElementById('gameFrame');
+      const href = (f && f.contentWindow) ? String(f.contentWindow.location.href) : '';
+      blocked = !href || href.indexOf('about:blank') === 0;
+    } catch (e) { blocked = false; }
+    if (blocked) {
+      try { w.location.href = base + '#fullscreen'; } catch (e) { /* tab closed */ }
+    }
+  }, 4000);
 }
 
 /* A tab opened by that button asks for the screen once the player actually
