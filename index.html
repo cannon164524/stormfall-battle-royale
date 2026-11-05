@@ -3605,6 +3605,34 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 }
 .rrMeta span:last-child { color:rgba(255,255,255,.62); }
 .rrRow { padding-bottom:6px; }
+
+/* =========================================================================
+   NO FROSTED GLASS — blur is gone in every mode, animations are not.
+   The HUD surfaces that used to lean on blur are made a little more opaque
+   so text stays legible over the world.
+   ========================================================================= */
+*, *::before, *::after {
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+#modeBadge, #quitBtn { background:rgba(10,12,17,.86); }
+#stormInfo { background:rgba(13,11,20,.9); }
+#spectate { background:rgba(13,16,22,.9); }
+.mapFrame { background:rgba(11,13,19,.9); }
+.metaCell { background:rgba(11,13,19,.88); }
+.feedRow { background:rgba(9,11,16,.86); }
+.ann { background:rgba(13,16,22,.95); }
+.bar { background:rgba(8,10,14,.86); }
+#mats .mat { background:rgba(11,13,19,.88); }
+.slot { background:rgba(11,13,19,.88); }
+#pocketSlot { background:rgba(11,13,19,.9); }
+#prompt { background:rgba(11,13,19,.92); }
+.buildPiece { background:rgba(11,13,19,.9); }
+.tpRow, #teamPanel .tpRow { background:rgba(11,13,19,.88); }
+.ptsRow { background:rgba(11,13,19,.9); }
+#tourneyHud { background:rgba(11,13,19,.9); }
+#stick { background:rgba(10,12,17,.36); }
+.tbtn { background:rgba(11,13,19,.74); }
 </style>
 </head>
 <body>
@@ -4347,7 +4375,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>TWO WAYS TO GO FULLSCREEN</b> — the Settings card now has BLANK WINDOW, which opens an empty about:blank tab with the game running inside it and an empty address bar, and NORMAL TAB, which opens the site itself in a new tab with the address bar visible. Both ask for fullscreen on the first tap or key there.</div></li>
+      <li><span class="wnTag">01</span><div><b>NO FROSTED GLASS</b> — the soft blur behind the HUD, the menu panels and the overlays is gone in both modes. Motion is untouched: performance mode off still animates everything exactly as before, but nothing smears the world behind it. The panels that leaned on the blur are a touch more opaque so their text stays readable over the map.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11228,8 +11256,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 3 };
-const VERSION_PREV = '6.7.2';
+const VERSION = { major: 6, minor: 7, patch: 4 };
+const VERSION_PREV = '6.7.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
