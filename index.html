@@ -4086,7 +4086,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
               <div class="setSub">NEW TAB</div>
             </div>
           </div>
-          <p class="setNote">Opens the game in a clean, empty browser tab with nothing around it, then asks for fullscreen so the match owns the whole screen.</p>
+          <p class="setNote">Opens the game in its own browser tab and takes the screen full on your first tap or key there, so the match owns the whole display.</p>
           <button class="setAction" id="fsLaunch">OPEN FULLSCREEN GAME</button>
         </div>
       </div>
@@ -4340,8 +4340,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>REBIND EVERYTHING</b> — Settings has a KEYBINDS panel covering movement, sprint, jump, reload, interact, build, pocket, heal, drop, inventory and, yes, fire and aim. Click a bind, press the key or mouse button you want, and it saves instantly. Fire and aim can go on a keyboard key just as easily as a mouse button, and the controls list in the lobby follows whatever you set.</div></li>
-      <li><span class="wnTag">02</span><div><b>FULLSCREEN IN A CLEAN TAB</b> — a new button in Settings opens the game in a blank browser tab with nothing around it, writes the game into that tab and asks for fullscreen so the match owns the whole screen. If pop-ups are blocked it tells you instead of doing nothing.</div></li>
+      <li><span class="wnTag">01</span><div><b>FULLSCREEN ACTUALLY LOADS THE GAME</b> — the launch button was writing the page into an about:blank tab, and a blank document has no usable base address, so the 3D engine import failed and you got the "engine couldn't be loaded" screen. The tab now opens the real game and asks for fullscreen on your first tap or key, which is the moment browsers allow it.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11222,8 +11221,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 0 };
-const VERSION_PREV = '6.6.1';
+const VERSION = { major: 6, minor: 7, patch: 1 };
+const VERSION_PREV = '6.7.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11611,36 +11610,33 @@ if (bindResetEl) {
   });
 }
 
-/* Opens a clean about:blank tab, writes the game into it and asks for
-   fullscreen there. Falls back to a normal new tab if the page cannot be
-   read back. */
-async function openFullscreenGame() {
-  const w = window.open('about:blank', '_blank');
-  if (!w) { toast('ALLOW POP-UPS TO LAUNCH', 'sub'); return; }
-  const boot = '<scr' + 'ipt>' +
-    '(function(){function go(){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)' +
-    'document.documentElement.requestFullscreen().catch(function(){});}catch(e){}}' +
-    'window.addEventListener("load",go);' +
-    'window.addEventListener("pointerdown",go,{once:true});' +
-    'window.addEventListener("keydown",go,{once:true});})();' +
-    '</scr' + 'ipt>';
-  let html = '';
-  try {
-    const res = await fetch(location.href, { cache: 'no-store' });
-    if (res && res.ok) html = await res.text();
-  } catch (e) { html = ''; }
-  if (!html) {
-    try { w.location.href = location.href; } catch (e) { try { w.close(); } catch (e2) { /* ignore */ } }
-    return;
-  }
-  try {
-    w.document.open();
-    w.document.write(html.replace('</body>', boot + '</body>'));
-    w.document.close();
-  } catch (e) {
-    try { w.location.href = location.href; } catch (e2) { /* ignore */ }
-  }
+/* Opens the game in its own tab and asks for fullscreen there on the first
+   tap or key. It has to be the real page: an about:blank document has no
+   usable base URL, so the module import of the 3D engine fails inside one —
+   which is exactly what the old blank-tab launch was doing. */
+function openFullscreenGame() {
+  const base = location.href.split('#')[0];
+  const w = window.open(base + '#fullscreen', '_blank');
+  if (!w) toast('ALLOW POP-UPS TO PLAY FULLSCREEN', 'sub');
 }
+
+/* A tab opened by that button asks for the screen once the player actually
+   touches it, which is when browsers allow the request. */
+function maybeGoFullscreen() {
+  if (location.hash !== '#fullscreen') return;
+  const go = () => {
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        const p = document.documentElement.requestFullscreen();
+        if (p && p.catch) p.catch(() => {});
+      }
+    } catch (e) { /* the tab still plays without fullscreen */ }
+  };
+  window.addEventListener('pointerdown', go, { once: true });
+  window.addEventListener('keydown', go, { once: true });
+  setTimeout(go, 800);
+}
+maybeGoFullscreen();
 
 const fsLaunchEl = document.getElementById('fsLaunch');
 if (fsLaunchEl) fsLaunchEl.addEventListener('click', openFullscreenGame);
