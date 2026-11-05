@@ -733,7 +733,7 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 /* ============================== INVENTORY ============================== */
 #inv {
   position:fixed; inset:0; z-index:34; display:flex; align-items:center; justify-content:center; padding:16px;
-  background:rgba(3,7,14,.62); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+  background:rgba(3,7,14,.74);
 }
 .invPanel {
   width:min(600px,100%); padding:18px 20px 20px;
@@ -4201,6 +4201,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <ul class="wnList">
       <li><span class="wnTag">01</span><div><b>THE LOW GRAPHICS PROFILE IS THE ONE</b> — the game now always draws the way performance mode used to: the sun casts no shadows, the render target sits at 0.8× resolution, and the world stops at a 140 m draw distance with the fog to match. There is no higher setting to fall back to, so every phone gets the same frame budget.</div></li>
       <li><span class="wnTag">02</span><div><b>PERFORMANCE MODE IS NOW JUST THE UI</b> — with it on, the interface goes plain: no animation, no blur, no glow and none of the confetti, rays or sparks. Off, you keep the full designed interface on top of those graphics. Everything else — aim, hit detection, loot, bots, building — is untouched.</div></li>
+      <li><span class="wnTag">03</span><div><b>INVENTORY WITHOUT THE FROST</b> — the pause-screen inventory no longer blurs the world behind it, in either mode. It sits on a darker plain scrim instead, so you can still see what is happening around you while you swap slots.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10753,8 +10754,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 2, patch: 0 };
-const VERSION_PREV = '6.1.2';
+const VERSION = { major: 6, minor: 2, patch: 1 };
+const VERSION_PREV = '6.2.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
