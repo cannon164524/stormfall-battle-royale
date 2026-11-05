@@ -4290,8 +4290,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>EVERY ACCOUNT STARTS AT ZERO</b> — everyone's V-Bucks balance has been wiped on this build. Buying stays exactly as it was, but nothing carries in from before.</div></li>
-      <li><span class="wnTag">02</span><div><b>WHERE THEY COME FROM NOW</b> — with match payouts gone, the only V-Bucks left to earn are tournament prizes (converted from your cash) and the V-Bucks tiers on the battle pass.</div></li>
+      <li><span class="wnTag">01</span><div><b>GUNS SOUND LIKE GUNS</b> — the old shot was a noise blip over a square wave. It is now built from layers: a muzzle crack, a blast, a push of low air, a moving thump, a mechanical action click and a room tail. Each shot is pitched slightly differently so a spray does not sound like a metronome, and every gun has its own shape — the SMG is tight and bright, the pump is a wide boom, the sniper has the longest tail.</div></li>
+      <li><span class="wnTag">02</span><div><b>EVERY OTHER SOUND TOO</b> — impacts, shield hits and breaks, builds, footsteps, storm, deaths, reloads, pickups, chests, unlocks and the menu all moved off square and sawtooth beeps onto filtered noise and tuned bodies, so nothing in the game sounds 8-bit any more.</div></li>
+      <li><span class="wnTag">03</span><div><b>STILL NO AUDIO FILES</b> — it is all generated in the browser, impulse response included, so there is nothing extra to download and it works offline.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -8847,6 +8848,24 @@ function updateStorm(dt) {
    ========================================================================= */
 let actx = null;
 let noiseBuf = null;
+let revIn = null;
+let masterBus = null;
+
+/* A short synthetic room. It is the difference between a click in a vacuum
+   and something that happened outdoors. */
+function makeImpulse(seconds, decay) {
+  const rate = actx.sampleRate;
+  const len = Math.max(1, Math.floor(rate * seconds));
+  const buf = actx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
+    }
+  }
+  return buf;
+}
 
 function audioInit() {
   if (actx) return;
@@ -8854,11 +8873,31 @@ function audioInit() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     actx = new AC();
-    const len = Math.floor(actx.sampleRate * 0.3);
+    // A limiter so a full-auto fight cannot clip the speaker.
+    masterBus = actx.createDynamicsCompressor();
+    masterBus.threshold.value = -12;
+    masterBus.knee.value = 18;
+    masterBus.ratio.value = 10;
+    masterBus.attack.value = 0.003;
+    masterBus.release.value = 0.25;
+    masterBus.connect(actx.destination);
+    // Just over a second of slightly pinked noise — white noise alone hisses.
+    const len = Math.floor(actx.sampleRate * 1.2);
     noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
     const data = noiseBuf.getChannelData(0);
-    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  } catch (e) { actx = null; }
+    let low = 0;
+    for (let i = 0; i < len; i++) {
+      const w = Math.random() * 2 - 1;
+      low = (low + 0.02 * w) / 1.02;
+      data[i] = Math.max(-1, Math.min(1, w * 0.7 + low * 3.2));
+    }
+    const conv = actx.createConvolver();
+    conv.buffer = makeImpulse(1.8, 2.8);
+    revIn = actx.createGain();
+    revIn.gain.value = 0.85;
+    revIn.connect(conv);
+    conv.connect(masterBus || actx.destination);
+  } catch (e) { actx = null; revIn = null; }
 }
 
 function sfx(kind) { playSound(kind, 1); }
@@ -8874,68 +8913,100 @@ function playSound(kind, vol) {
   if (!actx || !noiseBuf) return;
   if (actx.state === 'suspended') actx.resume();
   const t0 = actx.currentTime;
-  const outVol = clamp(vol, 0, 1) * 0.32;
+  const outVol = clamp(vol, 0, 1) * 0.42;
   if (outVol <= 0.002) return;
 
   const master = actx.createGain();
   master.gain.value = outVol;
-  master.connect(actx.destination);
+  master.connect(masterBus || actx.destination);
 
-  function noise(dur, freq, q, gain, type) {
+  function sendTo(node, amount) {
+    if (!revIn || !amount) return;
+    const s = actx.createGain();
+    s.gain.value = amount;
+    node.connect(s);
+    s.connect(revIn);
+  }
+
+  /* A band of noise that sweeps and dies. Everything percussive is built from
+     these instead of oscillators, which is what stops it sounding 8-bit. */
+  function noiseLayer(o) {
+    const at = o.at || 0;
+    const dur = o.dur || 0.1;
     const src = actx.createBufferSource();
     src.buffer = noiseBuf;
+    src.playbackRate.value = o.rate || 1;
     const flt = actx.createBiquadFilter();
-    flt.type = type || 'bandpass';
-    flt.frequency.value = freq;
-    flt.Q.value = q;
+    flt.type = o.type || 'bandpass';
+    flt.frequency.setValueAtTime(Math.max(40, o.f1 || 1000), t0 + at);
+    if (o.f2) flt.frequency.exponentialRampToValueAtTime(Math.max(40, o.f2), t0 + at + dur);
+    flt.Q.value = o.q == null ? 1 : o.q;
     const g = actx.createGain();
-    g.gain.setValueAtTime(gain, t0);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0 + at);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.gain == null ? 0.4 : o.gain), t0 + at + (o.attack || 0.002));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
     src.connect(flt); flt.connect(g); g.connect(master);
-    src.start(t0); src.stop(t0 + dur);
+    sendTo(g, o.rev);
+    src.start(t0 + at, Math.random() * 0.35);
+    src.stop(t0 + at + dur + 0.03);
   }
-  function tone(dur, f1, f2, gain, type) {
-    const o = actx.createOscillator();
-    o.type = type || 'sine';
-    o.frequency.setValueAtTime(f1, t0);
-    o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t0 + dur);
+
+  /* The moving air under the noise: a low sine that drops away. */
+  function thump(o) {
+    const at = o.at || 0;
+    const dur = o.dur || 0.12;
+    const osc = actx.createOscillator();
+    osc.type = o.type || 'sine';
+    osc.frequency.setValueAtTime(Math.max(20, o.f1 || 120), t0 + at);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(16, o.f2 || 44), t0 + at + dur);
     const g = actx.createGain();
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(master);
-    o.start(t0); o.stop(t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0 + at);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.gain == null ? 0.3 : o.gain), t0 + at + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+    osc.connect(g); g.connect(master);
+    sendTo(g, o.rev);
+    osc.start(t0 + at); osc.stop(t0 + at + dur + 0.03);
+  }
+
+  /* A gunshot is a crack, a blast and a push of air at once, then the room. */
+  function shot(c) {
+    const k = rand(0.94, 1.06);
+    noiseLayer({ type: 'highpass', f1: c.crack * k, f2: c.crack * k * 0.5, dur: c.crackDur || 0.055, gain: c.crackGain || 0.5, rev: 0.2 });
+    noiseLayer({ type: 'bandpass', f1: c.body * k, f2: c.body * k * 0.3, q: 0.8, dur: c.bodyDur || 0.15, gain: c.bodyGain || 0.5, rev: 0.35 });
+    noiseLayer({ type: 'lowpass', f1: c.low * k, f2: c.low * k * 0.35, q: 0.7, dur: c.lowDur || 0.2, gain: c.lowGain || 0.45, rev: 0.3 });
+    thump({ f1: c.thump * k, f2: c.thump * k * 0.4, dur: c.thumpDur || 0.12, gain: c.thumpGain || 0.28, rev: 0.12 });
+    if (c.click) noiseLayer({ type: 'bandpass', f1: 2600 * k, q: 2.5, dur: 0.016, gain: 0.14, at: 0.04 });
   }
 
   switch (kind) {
-    case 'ar': noise(0.09, 1500, 1.2, 0.55, 'highpass'); tone(0.08, 220, 90, 0.3, 'square'); break;
-    case 'smg': noise(0.07, 1900, 1.4, 0.45, 'highpass'); tone(0.06, 260, 120, 0.22, 'square'); break;
-    case 'pistol': noise(0.08, 1200, 1.1, 0.5, 'highpass'); tone(0.07, 180, 80, 0.25, 'square'); break;
-    case 'shotgun': noise(0.22, 800, 0.8, 0.7, 'lowpass'); tone(0.18, 140, 50, 0.4, 'square'); break;
-    case 'sniper': noise(0.3, 600, 0.7, 0.7, 'lowpass'); tone(0.28, 120, 40, 0.45, 'sawtooth'); break;
-    case 'hit': tone(0.07, 1500, 900, 0.3, 'sine'); break;
-    case 'hurt': noise(0.17, 420, 0.9, 0.6, 'lowpass'); tone(0.14, 210, 72, 0.34, 'sawtooth'); noise(0.06, 2200, 1.6, 0.16, 'bandpass'); break;
-    case 'shieldHit': tone(0.1, 1900, 2500, 0.28, 'triangle'); noise(0.05, 4200, 2.4, 0.22, 'bandpass'); break;
-    case 'shieldBreak': tone(0.28, 2200, 700, 0.3, 'triangle'); noise(0.26, 3200, 1.1, 0.28, 'highpass'); break;
-    case 'wipe': tone(0.22, 170, 90, 0.36, 'sawtooth'); tone(0.5, 300, 620, 0.26, 'triangle'); tone(0.65, 210, 460, 0.2, 'sine'); break;
-    case 'shock': noise(0.35, 420, 0.7, 0.7, 'lowpass'); tone(0.42, 320, 55, 0.45, 'sawtooth'); break;
-    case 'throw': noise(0.12, 1200, 1.4, 0.2, 'bandpass'); break;
-    case 'respawn': tone(0.18, 380, 820, 0.22, 'triangle'); tone(0.3, 700, 1250, 0.18, 'sine'); break;
-    case 'elim': tone(0.12, 700, 1200, 0.32, 'triangle'); tone(0.28, 1200, 1800, 0.22, 'sine'); break;
-    case 'pickup': tone(0.1, 600, 900, 0.2, 'sine'); break;
-    case 'chest': tone(0.16, 420, 900, 0.25, 'triangle'); tone(0.32, 900, 1500, 0.18, 'sine'); break;
-    case 'build': noise(0.1, 400, 0.8, 0.45, 'lowpass'); tone(0.08, 160, 90, 0.22, 'triangle'); break;
-    case 'reload': noise(0.06, 900, 1.5, 0.3, 'bandpass'); break;
-    case 'heal': tone(0.22, 500, 820, 0.16, 'sine'); break;
-    case 'storm': tone(0.6, 200, 90, 0.2, 'sawtooth'); break;
-    case 'death': tone(0.6, 400, 60, 0.32, 'sawtooth'); break;
-    case 'bodyfall': noise(0.18, 220, 0.6, 0.5, 'lowpass'); tone(0.14, 120, 60, 0.3, 'triangle'); break;
-    case 'switch': noise(0.05, 1600, 2.2, 0.2, 'bandpass'); tone(0.05, 900, 1400, 0.12, 'sine'); break;
-    case 'purchase': tone(0.1, 700, 1100, 0.24, 'triangle'); tone(0.22, 1100, 1600, 0.2, 'sine'); break;
-    case 'bpBuy': tone(0.3, 240, 480, 0.3, 'sawtooth'); tone(0.55, 480, 960, 0.24, 'triangle'); tone(0.85, 720, 1440, 0.2, 'sine'); break;
-    case 'unlock': noise(0.2, 900, 0.9, 0.25, 'bandpass'); tone(0.35, 500, 1200, 0.26, 'triangle'); tone(0.6, 900, 1800, 0.18, 'sine'); break;
-    case 'land': noise(0.14, 260, 0.7, 0.4, 'lowpass'); break;
-    case 'win': tone(0.22, 523, 523, 0.26, 'triangle'); tone(0.3, 659, 659, 0.24, 'triangle'); tone(0.45, 784, 784, 0.26, 'triangle'); break;
+    case 'ar': shot({ crack: 3600, body: 1250, low: 420, thump: 118, click: true }); break;
+    case 'smg': shot({ crack: 4400, crackDur: 0.042, crackGain: 0.42, body: 1650, bodyDur: 0.085, bodyGain: 0.45, low: 540, lowDur: 0.12, lowGain: 0.38, thump: 145, thumpDur: 0.075, thumpGain: 0.2, click: true }); break;
+    case 'pistol': shot({ crack: 3000, body: 950, low: 330, thump: 100, click: true }); break;
+    case 'shotgun': shot({ crack: 2400, crackDur: 0.09, crackGain: 0.5, body: 760, bodyDur: 0.28, bodyGain: 0.62, low: 220, lowDur: 0.4, lowGain: 0.62, thump: 82, thumpDur: 0.26, thumpGain: 0.34 }); break;
+    case 'sniper': shot({ crack: 5000, crackDur: 0.07, crackGain: 0.62, body: 700, bodyDur: 0.32, bodyGain: 0.55, low: 165, lowDur: 0.55, lowGain: 0.58, thump: 60, thumpDur: 0.4, thumpGain: 0.42 }); break;
+    case 'hit': noiseLayer({ type: 'lowpass', f1: 1100, f2: 420, dur: 0.06, gain: 0.32 }); thump({ f1: 200, f2: 90, dur: 0.05, gain: 0.22 }); break;
+    case 'hurt': noiseLayer({ type: 'bandpass', f1: 520, q: 0.9, dur: 0.2, gain: 0.55 }); thump({ f1: 165, f2: 52, dur: 0.22, gain: 0.4 }); break;
+    case 'shieldHit': noiseLayer({ type: 'bandpass', f1: 2700, q: 7, dur: 0.13, gain: 0.35, rev: 0.3 }); noiseLayer({ type: 'highpass', f1: 5200, dur: 0.05, gain: 0.16 }); break;
+    case 'shieldBreak': noiseLayer({ type: 'bandpass', f1: 2200, q: 4, dur: 0.34, gain: 0.45, rev: 0.4 }); noiseLayer({ type: 'highpass', f1: 6200, dur: 0.2, gain: 0.2 }); thump({ f1: 400, f2: 110, dur: 0.3, gain: 0.26 }); break;
+    case 'wipe': thump({ f1: 150, f2: 60, dur: 0.5, gain: 0.4, rev: 0.4 }); noiseLayer({ type: 'lowpass', f1: 900, f2: 300, dur: 0.7, gain: 0.3, rev: 0.5 }); thump({ f1: 320, f2: 640, dur: 0.6, gain: 0.16, at: 0.1 }); break;
+    case 'shock': noiseLayer({ type: 'lowpass', f1: 620, f2: 110, dur: 0.5, gain: 0.6, rev: 0.4 }); thump({ f1: 280, f2: 40, dur: 0.45, gain: 0.45 }); noiseLayer({ type: 'highpass', f1: 2600, dur: 0.14, gain: 0.25 }); break;
+    case 'throw': noiseLayer({ type: 'bandpass', f1: 1500, f2: 700, q: 1.4, dur: 0.14, gain: 0.18 }); break;
+    case 'respawn': thump({ f1: 320, f2: 820, dur: 0.4, gain: 0.22, rev: 0.3 }); noiseLayer({ type: 'highpass', f1: 3000, dur: 0.3, gain: 0.12, rev: 0.3 }); break;
+    case 'elim': noiseLayer({ type: 'bandpass', f1: 3200, q: 2, dur: 0.06, gain: 0.32, rev: 0.25 }); thump({ f1: 680, f2: 1300, dur: 0.14, gain: 0.24 }); thump({ f1: 520, f2: 880, dur: 0.22, gain: 0.16, at: 0.06 }); break;
+    case 'pickup': noiseLayer({ type: 'bandpass', f1: 2400, q: 2, dur: 0.03, gain: 0.2 }); thump({ f1: 780, f2: 1180, dur: 0.07, gain: 0.13 }); break;
+    case 'chest': noiseLayer({ type: 'bandpass', f1: 1600, q: 1.6, dur: 0.06, gain: 0.3 }); thump({ f1: 380, f2: 780, dur: 0.16, gain: 0.2, rev: 0.3 }); break;
+    case 'build': noiseLayer({ type: 'lowpass', f1: 800, f2: 260, dur: 0.13, gain: 0.5 }); thump({ f1: 150, f2: 70, dur: 0.1, gain: 0.26 }); break;
+    case 'reload': noiseLayer({ type: 'bandpass', f1: 1900, q: 3, dur: 0.022, gain: 0.26 }); noiseLayer({ type: 'bandpass', f1: 850, q: 2, dur: 0.032, gain: 0.22, at: 0.1 }); break;
+    case 'heal': noiseLayer({ type: 'bandpass', f1: 600, f2: 1200, q: 1.2, dur: 0.26, gain: 0.14, rev: 0.3 }); break;
+    case 'storm': noiseLayer({ type: 'bandpass', f1: 380, f2: 220, q: 0.6, dur: 0.9, gain: 0.2, rev: 0.4 }); thump({ f1: 92, f2: 58, dur: 0.9, gain: 0.18 }); break;
+    case 'death': noiseLayer({ type: 'lowpass', f1: 520, f2: 90, dur: 0.7, gain: 0.4, rev: 0.4 }); thump({ f1: 230, f2: 38, dur: 0.65, gain: 0.34 }); break;
+    case 'bodyfall': noiseLayer({ type: 'lowpass', f1: 320, f2: 110, dur: 0.2, gain: 0.5 }); thump({ f1: 95, f2: 45, dur: 0.16, gain: 0.34 }); break;
+    case 'land': noiseLayer({ type: 'lowpass', f1: 300, f2: 110, dur: 0.16, gain: 0.42 }); thump({ f1: 90, f2: 45, dur: 0.12, gain: 0.28 }); break;
+    case 'switch': noiseLayer({ type: 'bandpass', f1: 3000, q: 4, dur: 0.016, gain: 0.2 }); noiseLayer({ type: 'bandpass', f1: 1400, q: 3, dur: 0.02, gain: 0.14, at: 0.04 }); break;
+    case 'purchase': thump({ f1: 620, f2: 980, dur: 0.12, gain: 0.2, rev: 0.3 }); noiseLayer({ type: 'highpass', f1: 4200, dur: 0.06, gain: 0.1 }); break;
+    case 'bpBuy': thump({ f1: 280, f2: 1120, dur: 0.9, gain: 0.26, rev: 0.5 }); noiseLayer({ type: 'highpass', f1: 3000, dur: 0.7, gain: 0.12, rev: 0.5 }); break;
+    case 'unlock': thump({ f1: 520, f2: 524, dur: 0.4, gain: 0.16, rev: 0.5 }); thump({ f1: 780, f2: 786, dur: 0.5, gain: 0.14, rev: 0.5, at: 0.05 }); noiseLayer({ type: 'highpass', f1: 5000, dur: 0.45, gain: 0.1, rev: 0.5 }); break;
+    case 'win': thump({ f1: 523, f2: 523, dur: 0.5, gain: 0.2, rev: 0.5 }); thump({ f1: 659, f2: 659, dur: 0.55, gain: 0.18, rev: 0.5, at: 0.06 }); thump({ f1: 784, f2: 784, dur: 0.7, gain: 0.2, rev: 0.5, at: 0.12 }); break;
     default: break;
   }
 }
@@ -11005,8 +11076,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 5, patch: 3 };
-const VERSION_PREV = '6.5.2';
+const VERSION = { major: 6, minor: 6, patch: 0 };
+const VERSION_PREV = '6.5.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
