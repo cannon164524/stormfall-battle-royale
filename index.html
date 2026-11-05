@@ -4290,8 +4290,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOONS ARE EVERYWHERE</b> — floor boons are roughly two and a half times as common, and a chest that is not empty now carries one almost half the time. Rift Radar, Regen Cell, Swift Boots, Guardian Plate, Scavenger and Ammo Synth should turn up within the first few minutes of a match.</div></li>
-      <li><span class="wnTag">02</span><div><b>CHESTS ALWAYS PAY OUT</b> — a chest could come up empty about a quarter of the time. It now always drops at least one item plus the usual ammo, and the bonus rolls on top — a rare weapon, a boon, a grappler — still land as often as before.</div></li>
+      <li><span class="wnTag">01</span><div><b>ELIMINATION CARDS STOP SELLING V-BUCKS</b> — the big kill card used to carry a second line reading "+50 V-BUCKS · +100 XP". That line is gone; the card shows the elimination and nothing else.</div></li>
+      <li><span class="wnTag">02</span><div><b>NO V-BUCKS FROM MATCHES</b> — eliminations no longer pay 50 and wins no longer pay 300 (400 in team modes). V-Bucks now only come from tournament payouts and your battle pass tiers.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -7003,12 +7003,11 @@ function killBot(b, killerName) {
     } else {
       announce({
         kind: 'kill', kicker: 'ELIMINATION', title: b.name.toUpperCase(),
-        sub: '+50 V-BUCKS · +100 XP', icon: ANN_ICONS.skull, dur: 2400,
+        icon: ANN_ICONS.skull, dur: 2400,
       });
     }
     killPulse();
     sfx('elim');
-    awardVbucks(50);
     awardBpXp(100);
     awardTourPoints(3, 'ELIMINATION', b.name);
     awardRankPoints(isRankedReload() ? 10 : 12, 'ELIMINATION', b.name);
@@ -10906,7 +10905,6 @@ function endMatch(win, killerName) {
   document.getElementById('touch').classList.add('hide');
   if (document.pointerLockElement) document.exitPointerLock();
   if (win) {
-    awardVbucks(state.teamMode ? 400 : 300);
     awardBpXp(500);
     victoryFanfare();
   }
@@ -11007,8 +11005,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 5, patch: 1 };
-const VERSION_PREV = '6.5.0';
+const VERSION = { major: 6, minor: 5, patch: 2 };
+const VERSION_PREV = '6.5.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11677,14 +11675,6 @@ function renderCompetitive() {
         : 'TOP ' + def.qualify + ' PAID · ' + left + ' GAME' + (left === 1 ? '' : 'S') + ' LEFT';
     }
   }
-}
-
-function awardVbucks(n) {
-  if (!n) return;
-  profile.vbucks = Math.max(0, profile.vbucks + n);
-  saveProfile();
-  refreshWallet();
-  if (n > 0) toast('+' + n + ' V-BUCKS', 'sub');
 }
 
 function awardBpXp(n) {
