@@ -3012,7 +3012,7 @@ body { font-family:var(--body); letter-spacing:-.005em; }
 #wnClose:disabled { background:rgba(255,255,255,.06); color:rgba(255,255,255,.32); box-shadow:none; }
 
 /* inventory */
-.invPanel { border-radius:var(--r-lg); clip-path:none; border:1px solid var(--line); background:rgba(13,16,22,.97); box-shadow:var(--shadow); }
+.invPanel { border-radius:var(--r-lg); clip-path:none; border:1px solid var(--line); background:rgba(13,16,22,.97); box-shadow:var(--shadow); max-height:calc(100vh - 48px); overflow:auto; }
 .invHead { font-family:var(--display); font-weight:800; font-size:20px; letter-spacing:-.02em; }
 .invHead span { font-family:var(--body); font-weight:600; font-size:9.5px; letter-spacing:.14em; }
 .invSlot { background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:11px; }
@@ -3487,6 +3487,42 @@ body.perf .mpBack, body.perf .mpAction, body.perf .buyBig, body.perf #wnClose,
 body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .revBtn {
   box-shadow:none !important;
 }
+
+/* boons: the HUD rail beside the ammo readout, and the list in the inventory */
+#boons {
+  position:absolute; right:100%; top:50%; transform:translateY(-50%); margin-right:10px;
+  display:flex; gap:5px; align-items:center;
+}
+.boon {
+  width:26px; height:26px; border-radius:8px;
+  border:1px solid currentColor;
+  background:rgba(11,13,19,.72);
+  display:flex; align-items:center; justify-content:center;
+}
+.boon svg { width:16px; height:16px; display:block; }
+.boonHead {
+  margin:14px 0 7px;
+  font-family:var(--body); font-weight:600; font-size:9px;
+  letter-spacing:.16em; color:rgba(255,255,255,.36);
+}
+.boonList { display:flex; flex-direction:column; gap:6px; }
+.boonRow {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px;
+  border:1px solid var(--line); border-radius:10px;
+  background:rgba(255,255,255,.03);
+}
+.boonRow .bi { width:26px; height:26px; flex:none; display:flex; align-items:center; justify-content:center; }
+.boonRow .bi svg { width:20px; height:20px; display:block; }
+.boonRow .bt { min-width:0; }
+.boonRow .bn { font-family:var(--body); font-size:11.5px; font-weight:700; color:#fff; }
+.boonRow .bd { font-family:var(--body); font-size:10px; color:rgba(255,255,255,.45); margin-top:1px; }
+.boonEmpty { font-family:var(--body); font-size:10.5px; color:rgba(255,255,255,.35); padding:2px 0; }
+@media (max-width: 1000px), (max-height: 620px) {
+  #boons { gap:4px; margin-right:8px; }
+  .boon { width:22px; height:22px; border-radius:7px; }
+  .boon svg { width:14px; height:14px; }
+}
 </style>
 </head>
 <body>
@@ -3601,7 +3637,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <div class="mat"><span class="ic"></span><b id="matWood">400</b></div>
   </div>
 
-  <div id="ammoBox"><b id="ammoMag">0</b><span id="ammoRes">/ 0</span><i id="weaponName">—</i></div>
+  <div id="ammoBox"><b id="ammoMag">0</b><span id="ammoRes">/ 0</span><i id="weaponName">—</i><div id="boons"></div></div>
   <div id="pocketSlot" class="ready">
     <span class="pkey">F</span>
     <span class="picon" id="pocketIcon"></span>
@@ -4199,9 +4235,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>UTILITY ITEMS</b> — six passives that work simply by sitting in your bag: Rift Radar, Regen Cell, Swift Boots, Guardian Plate, Scavenger and Ammo Synth. Nothing to fire, nothing to use up — pick one up and the effect is live, drop it and it is gone. Carrying two of the same does nothing extra.</div></li>
-      <li><span class="wnTag">02</span><div><b>RIFT RADAR</b> — with it in your inventory every enemy is drawn on the minimap as a red dot with a ring, no matter how far away they are. Without it the map still only shows players within 95 m, so it is worth a slot.</div></li>
-      <li><span class="wnTag">03</span><div><b>HOW THEY DROP</b> — utilities show up on the floor and in chests, sit in your hotbar and inventory with a passive description, and refuse a duplicate instead of filling another slot. Gun Game skips them, since that mode has no loot.</div></li>
+      <li><span class="wnTag">01</span><div><b>UTILITY ITEMS BECAME BOONS</b> — the six passives no longer take one of your five slots. Pick one up and it is yours: permanent for the match, impossible to drop or lose, and it keeps working through knocks and respawns.</div></li>
+      <li><span class="wnTag">02</span><div><b>ICONS BY THE HOTBAR</b> — every boon you hold shows as a small coloured icon beside the ammo readout, so you can see at a glance whether your radar, regen or plate is running.</div></li>
+      <li><span class="wnTag">03</span><div><b>OPEN THE INVENTORY</b> — the pause screen now has a BOONS section under your slots that names each one and spells out exactly what it does, so you never have to guess.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4212,6 +4248,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div class="invPanel">
     <div class="invHead">INVENTORY <span>PRESS I TO CLOSE</span></div>
     <div class="invGrid" id="invGrid"></div>
+    <div class="boonHead">BOONS</div>
+    <div class="boonList" id="boonList"></div>
     <div class="invDrop" id="invDrop">DROP ZONE — click to drop the held item</div>
     <div class="invHint" id="invHint">Click a slot to pick it up, click another to swap it</div>
   </div>
@@ -5671,12 +5709,13 @@ function makeGrappler() {
 }
 
 /* -------------------------------------------------------------------------
-   UTILITIES
-   Passives that work simply by sitting in your inventory. Nothing to fire,
-   nothing to use up: the effect is live the moment it is picked up and dies
-   the moment it is dropped.
+   BOONS
+   Passives that live outside your five slots. Nothing to fire, nothing to
+   use up: pick one up and it is yours for the match, drop nothing, lose
+   nothing. Each one shows as an icon beside the hotbar, and the inventory
+   screen spells out what it does.
    ------------------------------------------------------------------------- */
-const UTILITIES = {
+const BOONS = {
   radar: { name: 'Rift Radar', color: '#7dffb0', icon: 'radar', desc: 'EVERY ENEMY ON THE MINIMAP' },
   regen: { name: 'Regen Cell', color: '#9be7ff', icon: 'regen', desc: 'SHIELD REGENERATES OUT OF COMBAT' },
   boots: { name: 'Swift Boots', color: '#ffd451', icon: 'boots', desc: '+12% MOVE SPEED' },
@@ -5684,20 +5723,65 @@ const UTILITIES = {
   scav: { name: 'Scavenger', color: '#d8a86a', icon: 'scav', desc: '+50% WOOD FROM CHESTS' },
   synth: { name: 'Ammo Synth', color: '#8fd6ff', icon: 'synth', desc: 'RESERVE AMMO REFILLS' },
 };
-const UTILITY_TYPES = Object.keys(UTILITIES);
+const BOON_TYPES = Object.keys(BOONS);
 
-function makeUtility(type) {
-  const key = UTILITIES[type] ? type : 'radar';
-  return { kind: 'utility', type: key, name: UTILITIES[key].name };
+function makeBoon(type) {
+  const key = BOONS[type] ? type : 'radar';
+  return { kind: 'boon', type: key, name: BOONS[key].name };
 }
 
-/* Utilities never stack — you either carry one or you do not. */
-function hasUtility(type) {
-  for (let i = 0; i < player.inv.length; i++) {
-    const it = player.inv[i];
-    if (it && it.kind === 'utility' && it.type === type) return true;
+/* Once picked up a boon cannot be dropped or taken away. */
+function addBoon(type) {
+  const key = BOONS[type] ? type : 'radar';
+  if (!player.boons) player.boons = [];
+  if (player.boons.indexOf(key) >= 0) return false;
+  player.boons.push(key);
+  renderBoons();
+  renderBoonList();
+  return true;
+}
+
+function hasBoon(type) {
+  return !!(player.boons && player.boons.indexOf(type) >= 0);
+}
+
+/* The icons that sit beside the hotbar. */
+function renderBoons() {
+  const el = document.getElementById('boons');
+  if (!el) return;
+  el.innerHTML = '';
+  const list = player.boons || [];
+  for (let i = 0; i < list.length; i++) {
+    const b = BOONS[list[i]];
+    if (!b) continue;
+    const d = document.createElement('div');
+    d.className = 'boon';
+    d.style.color = b.color;
+    d.title = b.name;
+    d.innerHTML = GUN_ICONS[b.icon] || '';
+    el.appendChild(d);
   }
-  return false;
+}
+
+/* The list inside the inventory panel, where each one explains itself. */
+function renderBoonList() {
+  const el = document.getElementById('boonList');
+  if (!el) return;
+  el.innerHTML = '';
+  const list = player.boons || [];
+  if (!list.length) {
+    el.innerHTML = '<div class="boonEmpty">No boons yet — they drop on the floor and in chests.</div>';
+    return;
+  }
+  for (let i = 0; i < list.length; i++) {
+    const b = BOONS[list[i]];
+    if (!b) continue;
+    const d = document.createElement('div');
+    d.className = 'boonRow';
+    d.innerHTML = '<div class="bi" style="color:' + b.color + '">' + (GUN_ICONS[b.icon] || '') + '</div>' +
+      '<div class="bt"><div class="bn">' + b.name + '</div><div class="bd">' + b.desc + '</div></div>';
+    el.appendChild(d);
+  }
 }
 
 function itemIconHTML(item) {
@@ -5706,7 +5790,7 @@ function itemIconHTML(item) {
   if (item.kind === 'heal') return GUN_ICONS[HEALS[item.type].icon];
   if (item.kind === 'grenade') return GUN_ICONS[GRENADES[item.type].icon];
   if (item.kind === 'grappler') return GUN_ICONS.grappler;
-  if (item.kind === 'utility') return GUN_ICONS[UTILITIES[item.type].icon] || GUN_ICONS.ammo;
+  if (item.kind === 'boon') return GUN_ICONS[BOONS[item.type].icon] || GUN_ICONS.ammo;
   return GUN_ICONS.ammo;
 }
 function itemColor(item) {
@@ -5715,7 +5799,7 @@ function itemColor(item) {
   if (item.kind === 'heal') return HEALS[item.type].color;
   if (item.kind === 'grenade') return GRENADES[item.type].color;
   if (item.kind === 'grappler') return '#7dffb0';
-  if (item.kind === 'utility') return UTILITIES[item.type].color;
+  if (item.kind === 'boon') return BOONS[item.type].color;
   return '#c9c9c9';
 }
 function itemLabel(item) {
@@ -5724,14 +5808,14 @@ function itemLabel(item) {
   if (item.kind === 'heal') return HEALS[item.type].name;
   if (item.kind === 'grenade') return GRENADES[item.type].name;
   if (item.kind === 'grappler') return 'Grappler';
-  if (item.kind === 'utility') return UTILITIES[item.type].name;
+  if (item.kind === 'boon') return BOONS[item.type].name;
   return 'Item';
 }
 function itemMeta(item) {
   if (!item) return '';
   if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ' + item.mag + ' rnds';
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
-  if (item.kind === 'utility') return 'PASSIVE · ' + UTILITIES[item.type].desc;
+  if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
   return '';
 }
 function itemColorHex(item) {
@@ -5762,6 +5846,7 @@ const player = {
   channel: null,
   gunLevel: 0,
   inv: [null, null, null, null, null],
+  boons: [],
   slot: 0,
   ammo: { light: 0, medium: 0, heavy: 0, shells: 0 },
   wood: 400,
@@ -6087,7 +6172,7 @@ function buildLootModel(item) {
     const built = buildWeaponModel('grappler');
     built.group.scale.setScalar(2.0);
     g.add(built.group);
-  } else if (item.kind === 'utility') {
+  } else if (item.kind === 'boon') {
     const shell = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.4), mat(itemColorHex(item), true));
     g.add(shell);
     const band = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.035, 8, 22), mat(0xeaf3ff, true));
@@ -6213,7 +6298,7 @@ function rollLootItem(rng, bonus) {
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
-  if (Math.random() < 0.07) return makeUtility(pick(UTILITY_TYPES));
+  if (Math.random() < 0.07) return makeBoon(pick(BOON_TYPES));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -6239,6 +6324,7 @@ function scatterLoot(rng) {
 
 function giveItem(item) {
   if (!item) return -1;
+  if (item.kind === 'boon') return -3;
   if (item.kind === 'ammo') {
     player.ammo[item.ammoType] = Math.min(999, player.ammo[item.ammoType] + item.count);
     return -2;
@@ -6281,9 +6367,16 @@ function nearestLoot(radius) {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
-  if (l.item.kind === 'utility' && hasUtility(l.item.type)) {
-    toast('ALREADY HOLDING ' + UTILITIES[l.item.type].name.toUpperCase(), 'sub');
-    sfx('reload');
+  if (l.item.kind === 'boon') {
+    if (!addBoon(l.item.type)) {
+      toast('ALREADY HAVE ' + BOONS[l.item.type].name.toUpperCase(), 'sub');
+      sfx('reload');
+      return;
+    }
+    l.dead = true;
+    if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+    sfx('unlock');
+    toast('BOON · ' + BOONS[l.item.type].name.toUpperCase(), 'sub');
     return;
   }
   l.dead = true;
@@ -6292,8 +6385,6 @@ function pickupLoot(l) {
   sfx('pickup');
   if (res !== -2 && l.item.kind === 'weapon') {
     toast(RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name, 'sub');
-  } else if (res !== -2 && l.item.kind === 'utility') {
-    toast(UTILITIES[l.item.type].name.toUpperCase(), 'sub');
   }
   refreshHotbar();
 }
@@ -6331,9 +6422,9 @@ function openChest(c) {
   }
   if (Math.random() < 0.16) {
     const ang = Math.random() * TAU;
-    spawnLoot(c.x + Math.cos(ang) * 1.3, c.y + 0.6, c.z + Math.sin(ang) * 1.3, makeUtility(pick(UTILITY_TYPES)));
+    spawnLoot(c.x + Math.cos(ang) * 1.3, c.y + 0.6, c.z + Math.sin(ang) * 1.3, makeBoon(pick(BOON_TYPES)));
   }
-  const woodMul = hasUtility('scav') ? 1.5 : 1;
+  const woodMul = hasBoon('scav') ? 1.5 : 1;
   player.wood = Math.min(999, player.wood + Math.round(randInt(30, 60) * woodMul));
   sfx('chest');
   toast('CHEST OPENED', 'sub');
@@ -6676,7 +6767,7 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (!player.alive) return;
   if (adminOn('god')) return;
   let d = dmg;
-  if (!fromStorm && hasUtility('plate')) d *= 0.85;
+  if (!fromStorm && hasBoon('plate')) d *= 0.85;
   let shieldPart = 0;
   let healthPart = 0;
   player.lastDamage = state.time;
@@ -9152,10 +9243,10 @@ function updatePlayer(dt) {
   if (player.knocked) { updateCrawl(dt); return; }
 
   // utilities are passives, so they tick before anything else this frame
-  if (hasUtility('regen') && player.shield < player.maxShield && state.time >= (player.lastDamage || 0) + 4) {
+  if (hasBoon('regen') && player.shield < player.maxShield && state.time >= (player.lastDamage || 0) + 4) {
     player.shield = Math.min(player.maxShield, player.shield + 3 * dt);
   }
-  if (hasUtility('synth')) {
+  if (hasBoon('synth')) {
     player.synthAcc = (player.synthAcc || 0) + dt;
     if (player.synthAcc >= 1) {
       const gain = Math.floor(player.synthAcc) * 2;
@@ -9193,7 +9284,7 @@ function updatePlayer(dt) {
   if (aimDown) speed = 3.6;
   if (player.using) speed = 2.2;
   if (adminOn('speed')) speed *= 2.4;
-  if (hasUtility('boots')) speed *= 1.12;
+  if (hasBoon('boots')) speed *= 1.12;
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -9973,7 +10064,7 @@ function drawMinimap() {
   }
 
   // bots — a Rift Radar in your bag puts every one of them on the map
-  const radar = hasUtility('radar');
+  const radar = hasBoon('radar');
   for (const b of bots) {
     if (!b.alive || b.dropping) continue;
     const d = Math.hypot(b.pos.x - player.pos.x, b.pos.z - player.pos.z);
@@ -10303,6 +10394,9 @@ function resetPlayerForMatch() {
   player.gunLevel = 0;
   const sw = startWeaponType();
   player.inv = [makeWeapon(sw, 0), null, null, null, null];
+  player.boons = [];
+  renderBoons();
+  renderBoonList();
   player.ammo = ammoKit(sw);
   player.ammo[WEAPONS[sw].ammo] = isGunGame() ? 240 : 90;
   player.wood = isSandbox() ? 9999 : 400;
@@ -10838,8 +10932,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 3, patch: 0 };
-const VERSION_PREV = '6.2.1';
+const VERSION = { major: 6, minor: 4, patch: 0 };
+const VERSION_PREV = '6.3.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -12030,6 +12124,7 @@ function renderInventory() {
     d.addEventListener('click', () => onInvSlotClick(i));
     grid.appendChild(d);
   }
+  renderBoonList();
 }
 
 function onInvSlotClick(i) {
