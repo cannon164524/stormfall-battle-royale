@@ -3477,6 +3477,10 @@ body { font-family:var(--body); letter-spacing:-.005em; }
   background:rgba(61,139,255,.16); color:#fff;
 }
 .setAction:hover { background:rgba(61,139,255,.26); }
+.setActions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:11px; }
+.setActions .setAction { margin-top:0; }
+.setAction.ghost { background:rgba(255,255,255,.04); border-color:var(--line); color:rgba(255,255,255,.78); }
+.setAction.ghost:hover { background:rgba(255,255,255,.09); }
 .bindGrid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:11px; }
 .bindRow {
   display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -4086,8 +4090,11 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
               <div class="setSub">NEW TAB</div>
             </div>
           </div>
-          <p class="setNote">Opens an empty about:blank tab and runs the whole game fullbleed inside it. The first tap or key there takes the screen full, so the match owns the display.</p>
-          <button class="setAction" id="fsLaunch">OPEN FULLSCREEN GAME</button>
+          <p class="setNote">Pick how the fullscreen tab should open. Blank window keeps the address bar empty and runs the game inside it; normal tab is the plain site in a new tab, address bar and all. Either way the first tap or key there takes the screen full.</p>
+          <div class="setActions">
+            <button class="setAction" id="fsLaunchBlank">BLANK WINDOW</button>
+            <button class="setAction ghost" id="fsLaunchTab">NORMAL TAB</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4340,7 +4347,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BLANK TAB, REAL GAME</b> — the fullscreen button opens an actual about:blank tab again, but the game now runs inside it from the real page instead of being written into the blank document. That keeps the 3D engine loading properly while the tab itself stays empty, and if the frame is ever blocked the tab falls back to the game on its own.</div></li>
+      <li><span class="wnTag">01</span><div><b>TWO WAYS TO GO FULLSCREEN</b> — the Settings card now has BLANK WINDOW, which opens an empty about:blank tab with the game running inside it and an empty address bar, and NORMAL TAB, which opens the site itself in a new tab with the address bar visible. Both ask for fullscreen on the first tap or key there.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11221,8 +11228,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 2 };
-const VERSION_PREV = '6.7.1';
+const VERSION = { major: 6, minor: 7, patch: 3 };
+const VERSION_PREV = '6.7.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11610,11 +11617,18 @@ if (bindResetEl) {
   });
 }
 
+/* The plain one: the site itself in a new tab, address bar and all. */
+function openFullscreenTab() {
+  const base = location.href.split('#')[0];
+  const w = window.open(base + '#fullscreen', '_blank');
+  if (!w) toast('ALLOW POP-UPS TO PLAY FULLSCREEN', 'sub');
+}
+
 /* Opens a genuinely blank tab — about:blank — and puts the real game in a
    full-viewport frame inside it. The frame is what loads the 3D engine, so the
    blank document never has to resolve the module import itself, which is the
    part that used to fail and throw the "engine couldn't be loaded" screen. */
-function openFullscreenGame() {
+function openFullscreenBlank() {
   const base = location.href.split('#')[0];
   const w = window.open('about:blank', '_blank');
   if (!w) { toast('ALLOW POP-UPS TO PLAY FULLSCREEN', 'sub'); return; }
@@ -11667,8 +11681,10 @@ function maybeGoFullscreen() {
 }
 maybeGoFullscreen();
 
-const fsLaunchEl = document.getElementById('fsLaunch');
-if (fsLaunchEl) fsLaunchEl.addEventListener('click', openFullscreenGame);
+const fsBlankEl = document.getElementById('fsLaunchBlank');
+if (fsBlankEl) fsBlankEl.addEventListener('click', openFullscreenBlank);
+const fsTabEl = document.getElementById('fsLaunchTab');
+if (fsTabEl) fsTabEl.addEventListener('click', openFullscreenTab);
 
 renderKeybinds();
 renderControlHints();
