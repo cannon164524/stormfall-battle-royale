@@ -3523,6 +3523,57 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .boon { width:22px; height:22px; border-radius:7px; }
   .boon svg { width:14px; height:14px; }
 }
+
+/* rank emblems */
+.rankCrest svg, .rrCrest svg { width:56%; height:56%; display:block; }
+.rrCrest { width:54px; height:54px; }
+.rrCrest.pop { animation:rrCrestPop .55s cubic-bezier(.2,1.3,.4,1); }
+@keyframes rrCrestPop {
+  0% { transform:scale(.84); }
+  55% { transform:scale(1.14); }
+  100% { transform:scale(1); }
+}
+
+/* ranked recap: staged entrance and clearer readouts */
+.rrHead { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.rrLadder { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.14em; color:rgba(255,255,255,.3); }
+.rrCard > *:not(.rrBanner) { animation:rrStage .55s cubic-bezier(.2,.9,.3,1) backwards; }
+.rrCard > *:nth-child(2) { animation-delay:.04s; }
+.rrCard > *:nth-child(3) { animation-delay:.09s; }
+.rrCard > *:nth-child(4) { animation-delay:.15s; }
+.rrCard > *:nth-child(5) { animation-delay:.21s; }
+.rrCard > *:nth-child(6) { animation-delay:.26s; }
+.rrCard > *:nth-child(7) { animation-delay:.31s; }
+.rrCard > *:nth-child(8) { animation-delay:.36s; }
+.rrCard > *:nth-child(9) { animation-delay:.41s; }
+.rrCard > *:nth-child(10) { animation-delay:.46s; }
+@keyframes rrStage {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:none; }
+}
+.rrDelta { font-size:clamp(40px,10vw,62px); }
+.rrBar { position:relative; border-radius:4px; overflow:hidden; }
+.rrBar > i { position:relative; overflow:hidden; }
+.rrBar > i::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  transform:translateX(-100%); animation:rrSheen 2.6s ease-in-out infinite;
+}
+@keyframes rrSheen {
+  0% { transform:translateX(-100%); }
+  55%, 100% { transform:translateX(220%); }
+}
+.rrTicks { position:absolute; inset:0; z-index:2; pointer-events:none; }
+.rrTicks i { position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.26); }
+.rrTicks i:nth-child(1) { left:33.33%; }
+.rrTicks i:nth-child(2) { left:66.66%; }
+.rrMeta {
+  display:flex; justify-content:space-between; gap:10px; margin-top:7px;
+  font-family:var(--body); font-weight:600; font-size:9.5px; letter-spacing:.05em;
+  color:rgba(255,255,255,.4);
+}
+.rrMeta span:last-child { color:rgba(255,255,255,.62); }
+.rrRow { padding-bottom:6px; }
 </style>
 </head>
 <body>
@@ -4202,7 +4253,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 <div id="rankRecap" class="hide">
   <div class="rrCard">
     <div class="rrBanner" id="rrBanner">RANK UP</div>
-    <div class="rrKicker">RANKED RECAP</div>
+    <div class="rrHead">
+      <div class="rrKicker">RANKED RECAP</div>
+      <div class="rrLadder" id="rrLadder">BATTLE ROYALE LADDER</div>
+    </div>
     <div class="rrDelta" id="rrDelta">+0 RP</div>
     <div class="rrRank">
       <div class="rrCrest" id="rrCrest">I</div>
@@ -4212,7 +4266,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <span class="rrPct" id="rrPct">0%</span>
       <span class="rrPctDelta" id="rrPctDelta"></span>
     </div>
-    <div class="rrBar"><i id="rrFill"></i></div>
+    <div class="rrBar"><i id="rrFill"></i><div class="rrTicks"><i></i><i></i></div></div>
+    <div class="rrMeta"><span id="rrWithin">0 / 0 RP</span><span id="rrTarget">NEXT: SILVER I</span></div>
     <div class="rrBreak" id="rrBreak"></div>
     <div class="rrNote" id="rrNote"></div>
     <button id="rrClose">CONTINUE</button>
@@ -4235,9 +4290,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>UTILITY ITEMS BECAME BOONS</b> — the six passives no longer take one of your five slots. Pick one up and it is yours: permanent for the match, impossible to drop or lose, and it keeps working through knocks and respawns.</div></li>
-      <li><span class="wnTag">02</span><div><b>ICONS BY THE HOTBAR</b> — every boon you hold shows as a small coloured icon beside the ammo readout, so you can see at a glance whether your radar, regen or plate is running.</div></li>
-      <li><span class="wnTag">03</span><div><b>OPEN THE INVENTORY</b> — the pause screen now has a BOONS section under your slots that names each one and spells out exactly what it does, so you never have to guess.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOONS ARE EVERYWHERE</b> — floor boons are roughly two and a half times as common, and a chest that is not empty now carries one almost half the time. Rift Radar, Regen Cell, Swift Boots, Guardian Plate, Scavenger and Ammo Synth should turn up within the first few minutes of a match.</div></li>
+      <li><span class="wnTag">02</span><div><b>ONE CHEST IN FOUR IS EMPTY</b> — a quarter of all chests now open on nothing at all. No ammo, no wood, no consolation: the gamble is the point.</div></li>
+      <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -4440,6 +4495,26 @@ const RANK_STEPS = [100, 130, 160, 190, 220, 250, 280, 310];
 const RP_PER_RANK = 220;
 const RANK_TOTAL = RANK_STEPS.reduce((a, b) => a + b, 0);
 const ROMAN = ['I', 'II', 'III'];
+
+/* One emblem per rank, drawn in the crest and on the ranked recap. */
+const RANK_ICONS = [
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-2.6 2.6L12 10.2 7.6 14.6 5 12z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l7 6-2.3 2.3L12 6.7 7.3 10.9 5 8.6z"/><path d="M12 12.2l7 6-2.3 2.3-4.7-4.2-4.7 4.2L5 18.2z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 19h18l-1.5-10-4.6 3.3L12 4.5 9.1 12.3 4.5 9z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.4l8.2 3.5v6.9c0 5.3-3.4 8.4-8.2 9.6-4.8-1.2-8.2-4.3-8.2-9.6V5.9z"/><path d="M12 6.6l4.6 2v4.4c0 3.1-1.9 5.1-4.6 5.9-2.7-.8-4.6-2.8-4.6-5.9V8.6z" fill="#0a0d12"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l8.6 9.4-8.6 9.4L3.4 12z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.4l2.7 6.1 6.6.7-4.9 4.5 1.4 6.5-5.8-3.3-5.8 3.3 1.4-6.5L2.7 9.2l6.6-.7z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.6 19.4l1.6-11 5 3.4L12 5l2.8 6.8 5-3.4 1.6 11z"/><circle cx="12" cy="16.4" r="1.5" fill="#0a0d12"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M12 1.8c3.4 3.2 6.8 5.6 6.8 10.1a6.8 6.8 0 01-13.6 0c0-4.5 3.4-6.9 6.8-10.1zm0 5.4c-1.8 1.9-3.3 3.3-3.3 5.4a3.3 3.3 0 006.6 0c0-2.1-1.5-3.5-3.3-5.4z"/></svg>',
+];
+
+function paintCrest(node, info) {
+  if (!node) return;
+  node.innerHTML = RANK_ICONS[info.tier] || RANK_ICONS[0];
+  const col = RANKS[info.tier].color;
+  node.style.background = 'linear-gradient(160deg,' + col + ',' + col + 'b8)';
+  node.style.color = '#0a0d12';
+}
 
 function rankInfo(rp) {
   rp = Math.max(0, rp || 0);
@@ -6298,7 +6373,7 @@ function rollLootItem(rng, bonus) {
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
-  if (Math.random() < 0.07) return makeBoon(pick(BOON_TYPES));
+  if (Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -6398,6 +6473,13 @@ function openChest(c) {
   c.glow.material.opacity = 0.12;
   c.beam.material.opacity = 0.03;
 
+  // One chest in four is empty — opening them is a gamble, not a guarantee.
+  if (Math.random() < 0.25) {
+    sfx('chest');
+    toast('EMPTY CHEST', 'sub');
+    return;
+  }
+
   const rolls = 1 + (Math.random() < 0.45 ? 1 : 0);
   for (let i = 0; i < rolls; i++) {
     const it = rollLootItem(Math.random, 0.18);
@@ -6420,7 +6502,7 @@ function openChest(c) {
     const ang = Math.random() * TAU;
     spawnLoot(c.x + Math.cos(ang) * 1.2, c.y + 0.6, c.z + Math.sin(ang) * 1.2, makeGrappler());
   }
-  if (Math.random() < 0.16) {
+  if (Math.random() < 0.45) {
     const ang = Math.random() * TAU;
     spawnLoot(c.x + Math.cos(ang) * 1.3, c.y + 0.6, c.z + Math.sin(ang) * 1.3, makeBoon(pick(BOON_TYPES)));
   }
@@ -10932,8 +11014,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 4, patch: 0 };
-const VERSION_PREV = '6.3.0';
+const VERSION = { major: 6, minor: 5, patch: 0 };
+const VERSION_PREV = '6.4.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11152,7 +11234,7 @@ function refreshRank() {
   const name = document.getElementById('rankName');
   const rp = document.getElementById('rankRp');
   const fill = document.getElementById('rankFill');
-  if (crest) crest.textContent = ROMAN[info.div - 1];
+  if (crest) paintCrest(crest, info);
   if (name) name.textContent = info.name;
   if (rp) rp.textContent = rpv + ' RP';
   if (fill) fill.style.width = (info.progress * 100).toFixed(1) + '%';
@@ -11760,6 +11842,36 @@ function rrCount(fromPct, toPct, ms, token) {
   requestAnimationFrame(step);
 }
 
+/* RP the player still needs for the next tier, and what that tier is called. */
+function rrMeta(info) {
+  const withinEl = document.getElementById('rrWithin');
+  const targetEl = document.getElementById('rrTarget');
+  if (withinEl) withinEl.textContent = info.within + ' / ' + info.need + ' RP';
+  if (targetEl) {
+    targetEl.textContent = info.tier >= RANKS.length - 1
+      ? 'TOP OF THE LADDER'
+      : 'NEXT: ' + RANKS[Math.min(RANKS.length - 1, info.tier + 1)].name + ' I';
+  }
+}
+
+/* The big RP number counts up instead of appearing fully formed. */
+function rrCountDelta(gain) {
+  const el = document.getElementById('rrDelta');
+  if (!el) return;
+  const token = rrToken;
+  const t0 = performance.now();
+  const step = (now) => {
+    if (token !== rrToken) return;
+    const t = clamp((now - t0) / 720, 0, 1);
+    const e = 1 - Math.pow(1 - t, 3);
+    const v = Math.round(gain * e);
+    el.textContent = (v >= 0 ? '+' : '') + v + ' RP';
+    if (t < 1) requestAnimationFrame(step);
+  };
+  el.textContent = (gain >= 0 ? '+' : '') + '0 RP';
+  requestAnimationFrame(step);
+}
+
 function showRankedRecap(d) {
   const el = document.getElementById('rankRecap');
   if (!el) return;
@@ -11773,13 +11885,18 @@ function showRankedRecap(d) {
   const down = after.tier < before.tier;
 
   const deltaEl = document.getElementById('rrDelta');
-  deltaEl.textContent = (d.gain >= 0 ? '+' : '') + d.gain + ' RP';
   deltaEl.className = 'rrDelta' + (d.gain < 0 ? ' down' : '') + ' pop';
+  rrCountDelta(d.gain);
+
+  const ladderEl = document.getElementById('rrLadder');
+  if (ladderEl) ladderEl.textContent = d.ladder === 'RELOAD' ? 'RELOAD LADDER' : 'BATTLE ROYALE LADDER';
+  rrMeta(before);
 
   const crest = document.getElementById('rrCrest');
   const nameText = document.getElementById('rrNameText');
   const rankSub = document.getElementById('rrRankSub');
-  crest.textContent = ROMAN[before.div - 1];
+  paintCrest(crest, before);
+  crest.classList.remove('pop');
   nameText.textContent = before.name;
   rankSub.textContent = d.ladder === 'RELOAD' ? 'RELOAD RANK' : 'YOUR RANK';
 
@@ -11812,8 +11929,10 @@ function showRankedRecap(d) {
 
   const finish = () => {
     if (token !== rrToken) return;
+    rrMeta(after);
     if (before.name !== after.name) {
-      crest.textContent = ROMAN[after.div - 1];
+      paintCrest(crest, after);
+      crest.classList.add('pop');
       nameText.textContent = after.name;
       rankSub.textContent = 'FROM ' + before.name;
     }
@@ -11844,7 +11963,8 @@ function showRankedRecap(d) {
 
   setTimeout(() => {
     if (token !== rrToken) return;
-    crest.textContent = ROMAN[after.div - 1];
+    paintCrest(crest, after);
+    crest.classList.add('pop');
     nameText.textContent = after.name;
     rankSub.textContent = 'FROM ' + before.name;
     banner.textContent = up ? 'RANK UP' : 'RANK DOWN';
