@@ -3163,6 +3163,23 @@ body { font-family:var(--body); letter-spacing:-.005em; }
 #spectate .specName { font-family:var(--display); font-weight:700; font-size:16px; letter-spacing:-.01em; }
 #spectate .specHint { font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.1em; color:rgba(255,255,255,.5); }
 
+/* Reload Duos: the countdown while your partner is waiting on you. */
+#mateTimer {
+  position:absolute; top:84px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:10px; padding:8px 14px;
+  border-radius:999px; background:rgba(13,16,22,.9);
+  border:1px solid rgba(61,139,255,.35);
+}
+.mtLabel { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.16em; color:rgba(255,255,255,.5); }
+#mateTimer b { font-family:var(--display); font-weight:800; font-size:15px; color:#fff; letter-spacing:-.01em; }
+.mtBar { width:70px; height:3px; border-radius:2px; background:rgba(255,255,255,.14); overflow:hidden; }
+.mtBar > i { display:block; height:100%; width:0%; background:linear-gradient(90deg,#3d8bff,#7fd8ff); }
+@media (max-width: 1000px), (max-height: 620px) {
+  #mateTimer { top:64px; padding:6px 11px; gap:8px; }
+  .mtBar { width:52px; }
+  #mateTimer b { font-size:13px; }
+}
+
 /* minimap + counters */
 #mapWrap { width:168px; }
 .mapFrame {
@@ -3746,6 +3763,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div id="killFlash"></div>
 
   <div id="stormWarn" class="hide">OUTSIDE THE STORM · <b id="stormDps">1</b> DPS</div>
+
+  <div id="mateTimer" class="hide">
+    <span class="mtLabel">MATE REVIVES IN</span>
+    <b id="mateSeconds">20s</b>
+    <div class="mtBar"><i id="mateFill"></i></div>
+  </div>
 
   <div id="spectate" class="hide">
     <div class="specLabel">SPECTATING</div>
@@ -4469,7 +4492,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MATCHMAKING</b> — pressing PLAY no longer drops you straight into a world build. A search screen comes up first: the mode name, a player counter ticking up toward a full lobby, a filling bar and the ring pulse. A couple of seconds later it flips to MATCH FOUND with a green flash and a burst of sparks, holds for a beat, then hands over to the match itself. There is a cancel button if you change your mind. Entering a tournament game goes through the same search, so the beat before a match is the same everywhere.</div></li>
+      <li><span class="wnTag">01</span><div><b>RELOAD DUOS WORKS BOTH WAYS</b> — the 20 second wait used to exist only for you: your bot partner could be waiting on you and it had nobody to count as a team-mate, so it was marked out of the match on its first death and never came back. It now counts you as its partner, so staying alive for 20 seconds brings it back, and a small countdown sits at the top of your screen telling you how long is left. Every bot pair on the map follows the same rule now — the survivor has to live 20 seconds, and if they go down the other one is out.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -7244,8 +7267,16 @@ function killBot(b, killerName) {
     return;
   }
   if (isReloadDuos()) {
-    const bm = bots.filter((o) => o.team === b.team && o !== b)[0];
-    if (b.respawnsLeft > 0 && bm && bm.alive && !bm.out) {
+    // The player counts as a mate for the bot on their team — that partner has
+    // no bot team-mate, so without this it would never be brought back.
+    let mateOk;
+    if (b.team === player.team) {
+      mateOk = player.alive && !player.out;
+    } else {
+      const bm = bots.filter((o) => o.team === b.team && o !== b)[0];
+      mateOk = !!(bm && bm.alive && !bm.out);
+    }
+    if (b.respawnsLeft > 0 && mateOk) {
       b.respawnsLeft--;
       b.respawnAt = state.time + SURVIVE_TIME;
     } else {
@@ -7486,8 +7517,16 @@ function updateRespawns() {
     const b = bots[i];
     if (b.alive || b.respawnAt <= 0) continue;
     if (isReloadDuos()) {
-      const mateB = bots.find((o) => o !== b && o.team === b.team);
-      if (!mateB || !mateB.alive || mateB.out) { b.out = true; b.respawnAt = 0; continue; }
+      // Same rule everywhere: the downed one only comes back if their partner
+      // is still standing. For the player's team that partner is the player.
+      let mateOk;
+      if (b.team === player.team) {
+        mateOk = player.alive && !player.out;
+      } else {
+        const mateB = bots.find((o) => o !== b && o.team === b.team);
+        mateOk = !!(mateB && mateB.alive && !mateB.out);
+      }
+      if (!mateOk) { b.out = true; b.respawnAt = 0; continue; }
     }
     if (state.time >= b.respawnAt) respawnBot(b);
   }
@@ -10046,6 +10085,9 @@ const teamPanelEl = document.getElementById('teamPanel');
 const spectateEl = document.getElementById('spectate');
 const specNameEl = document.getElementById('specName');
 const specHintEl = document.getElementById('specHint');
+const mateTimerEl = document.getElementById('mateTimer');
+const mateSecsEl = document.getElementById('mateSeconds');
+const mateFillEl = document.getElementById('mateFill');
 let teamPanelKey = '';
 
 let lastHotbarSlot = -1;
@@ -10380,6 +10422,18 @@ function updateHUD() {
   }
 
   renderTeamPanel();
+
+  if (mateTimerEl) {
+    const mateBot = mateOf();
+    const waiting = isReloadDuos() && player.alive && !player.out &&
+      !!mateBot && !mateBot.alive && !mateBot.out && mateBot.respawnAt > 0;
+    mateTimerEl.classList.toggle('hide', !waiting);
+    if (waiting) {
+      const left = Math.max(0, mateBot.respawnAt - state.time);
+      if (mateSecsEl) mateSecsEl.textContent = Math.ceil(left) + 's';
+      if (mateFillEl) mateFillEl.style.width = (100 - clamp(left / SURVIVE_TIME, 0, 1) * 100).toFixed(1) + '%';
+    }
+  }
 
   if (spectateEl) {
     const spec = (!player.alive && player.out && isDuos() && state.phase !== 'menu');
@@ -11419,8 +11473,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 8, patch: 1 };
-const VERSION_PREV = '6.8.0';
+const VERSION = { major: 6, minor: 8, patch: 2 };
+const VERSION_PREV = '6.8.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
