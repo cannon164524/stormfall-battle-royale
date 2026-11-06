@@ -4469,7 +4469,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MATCHMAKING</b> — pressing PLAY no longer drops you straight into a world build. A search screen comes up first: the mode name, a player counter ticking up toward a full lobby, a filling bar and the ring pulse. A couple of seconds later it flips to MATCH FOUND with a green flash and a burst of sparks, holds for a beat, then hands over to the match itself. There is a cancel button if you change your mind.</div></li>
+      <li><span class="wnTag">01</span><div><b>MATCHMAKING</b> — pressing PLAY no longer drops you straight into a world build. A search screen comes up first: the mode name, a player counter ticking up toward a full lobby, a filling bar and the ring pulse. A couple of seconds later it flips to MATCH FOUND with a green flash and a burst of sparks, holds for a beat, then hands over to the match itself. There is a cancel button if you change your mind. Entering a tournament game goes through the same search, so the beat before a match is the same everywhere.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11419,8 +11419,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 8, patch: 0 };
-const VERSION_PREV = '6.7.9';
+const VERSION = { major: 6, minor: 8, patch: 1 };
+const VERSION_PREV = '6.8.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -12063,8 +12063,10 @@ function playTournamentGame() {
   state.tourneyId = def.id;
   setMode(t.mode || def.mode || def.modes[0]);
   audioInit();
-  if (!assets.ready) { pendingStart = true; showLoading(); return; }
-  startMatch();
+  showMatchfinder(() => {
+    if (!assets.ready) { pendingStart = true; showLoading(); return; }
+    startMatch();
+  });
 }
 
 function recordTourneyGame(win, placement, livePoints) {
