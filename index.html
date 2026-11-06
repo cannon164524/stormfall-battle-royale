@@ -3194,6 +3194,10 @@ body { font-family:var(--body); letter-spacing:-.005em; }
   .mtSub { font-size:8px; }
 }
 
+/* The rank banner only appears when a rank actually changes. */
+.rrBanner { opacity:0; animation:none; top:50%; z-index:4; }
+.rrBanner.on { animation:rrBannerIn4 .6s cubic-bezier(.2,1.25,.4,1) forwards; }
+
 /* minimap + counters */
 #mapWrap { width:168px; }
 .mapFrame {
@@ -3672,7 +3676,68 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   100% { transform:scale(1); }
 }
 
-/* ranked recap: staged entrance and clearer readouts */
+/* ranked recap: the rank dial */
+.rrWheel {
+  position:relative; width:172px; height:172px; margin:12px auto 0;
+  display:flex; align-items:center; justify-content:center;
+}
+.rrWheel > svg { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+.rwTrack { fill:none; stroke:rgba(255,255,255,.1); stroke-width:7; }
+.rwArc {
+  fill:none; stroke:#4f9dff; stroke-width:7; stroke-linecap:round;
+  stroke-dasharray:251.33; stroke-dashoffset:251.33;
+  transition:stroke-dashoffset .95s cubic-bezier(.2,.8,.2,1), stroke .3s ease;
+}
+.rwInner { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.rrWheel .rrCrest { width:74px; height:82px; font-size:26px; }
+#rrPct { font-family:var(--display); font-weight:800; font-size:15px; color:rgba(255,255,255,.72); letter-spacing:-.02em; }
+.rwFlash { position:absolute; inset:-12%; border-radius:50%; opacity:0; background:radial-gradient(circle, rgba(255,214,120,.5), transparent 65%); pointer-events:none; }
+.rrSparks { position:absolute; inset:0; pointer-events:none; }
+.rrSparks i {
+  position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px;
+  border-radius:50%; background:#ffd76a; box-shadow:0 0 10px rgba(255,206,90,.9);
+  animation:rrSparkFly .95s ease-out forwards;
+}
+@keyframes rrSparkFly {
+  from { opacity:1; transform:translate(0,0) scale(1); }
+  to { opacity:0; transform:translate(var(--dx), var(--dy)) scale(.3); }
+}
+.rrWheel.rankup .rwFlash { animation:rwFlash .95s ease-out; }
+@keyframes rwFlash { 0% { opacity:0; transform:scale(.5); } 25% { opacity:1; } 100% { opacity:0; transform:scale(1.55); } }
+.rrWheel.rankup { animation:rrWheelPop .85s cubic-bezier(.2,1.4,.4,1); }
+@keyframes rrWheelPop { 0% { transform:scale(.9); } 50% { transform:scale(1.07); } 100% { transform:scale(1); } }
+.rrWheel.rankup .rwArc { stroke:#ffd15c; }
+.rrWheel.rankup .rwCrest { animation:rwCrestSpin .95s cubic-bezier(.2,1.2,.3,1); }
+@keyframes rwCrestSpin {
+  0% { transform:rotate(-16deg) scale(.8); }
+  60% { transform:rotate(7deg) scale(1.14); }
+  100% { transform:rotate(0) scale(1); }
+}
+.rrWheel.rankdown .rwArc { stroke:#ff8a9a; }
+.rrWheel.rankdown { animation:rrWheelDrop .7s ease-out; }
+@keyframes rrWheelDrop { 0% { transform:scale(1); } 40% { transform:translateY(4px) scale(.96); } 100% { transform:none; } }
+.rrBanner { opacity:0; animation:none; top:50%; z-index:4; }
+.rrBanner.on { animation:rrBannerIn4 .6s cubic-bezier(.2,1.25,.4,1) forwards; }
+.rrRankName { text-align:center; margin-top:10px; }
+.rrRankName span { font-family:var(--display); font-weight:700; font-size:19px; letter-spacing:-.01em; color:#fff; }
+.rrRankName small { display:block; margin-top:3px; font-family:var(--label); font-weight:700; font-size:9px; letter-spacing:.18em; color:rgba(255,255,255,.45); }
+.rrPctDelta { display:block; text-align:center; margin-top:6px; }
+@media (max-width: 1000px), (max-height: 620px) {
+  .rrWheel { width:146px; height:146px; margin-top:8px; }
+  .rrWheel .rrCrest { width:62px; height:70px; font-size:22px; }
+  #rrPct { font-size:13px; }
+  .rrRankName span { font-size:17px; }
+}
+
+/* settings: the deep reset */
+.setDanger {
+  width:100%; margin-top:11px; padding:11px;
+  font-family:var(--body); font-weight:600; font-size:10.5px; letter-spacing:.06em;
+  border:1px solid rgba(255,90,109,.45); border-radius:10px;
+  background:rgba(255,90,109,.1); color:#ffb3bd;
+}
+.setDanger:hover { background:rgba(255,90,109,.2); color:#fff; }
+.setDanger.armed { background:rgba(255,90,109,.3); border-color:rgba(255,90,109,.9); color:#fff; }
 .rrHead { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .rrLadder { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.14em; color:rgba(255,255,255,.3); }
 .rrCard > *:not(.rrBanner) { animation:rrStage .55s cubic-bezier(.2,.9,.3,1) backwards; }
@@ -4240,6 +4305,17 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
             <button class="setAction ghost" id="fsLaunchTab">NORMAL TAB</button>
           </div>
         </div>
+
+        <div class="setCard">
+          <div class="setHead">
+            <div>
+              <div class="setTitle">RESET ALL RANKS</div>
+              <div class="setSub">DANGER ZONE</div>
+            </div>
+          </div>
+          <p class="setNote">Puts both ladders — Battle Royale and Reload — back to Bronze I with zero RP. Cosmetic unlocks, V-Bucks and your battle pass are untouched. There is no undo.</p>
+          <button class="setDanger" id="rankResetBtn">RESET MY RANKS</button>
+        </div>
       </div>
     </div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -4471,21 +4547,26 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 <!-- ============================== RANKED RECAP ============================== -->
 <div id="rankRecap" class="hide">
   <div class="rrCard">
-    <div class="rrBanner" id="rrBanner">RANK UP</div>
     <div class="rrHead">
       <div class="rrKicker">RANKED RECAP</div>
       <div class="rrLadder" id="rrLadder">BATTLE ROYALE LADDER</div>
     </div>
     <div class="rrDelta" id="rrDelta">+0 RP</div>
-    <div class="rrRank">
-      <div class="rrCrest" id="rrCrest">I</div>
-      <div class="rrName"><span id="rrNameText">BRONZE I</span><small id="rrRankSub">YOUR RANK</small></div>
+    <div class="rrWheel" id="rrWheel">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="rwTrack" cx="50" cy="50" r="40"></circle>
+        <circle class="rwArc" id="rrArc" cx="50" cy="50" r="40"></circle>
+      </svg>
+      <div class="rwFlash"></div>
+      <div class="rwInner">
+        <div class="rwCrest" id="rrCrest">I</div>
+        <div class="rwPct" id="rrPct">0%</div>
+      </div>
+      <div class="rrSparks" id="rrSparks"></div>
+      <div class="rrBanner" id="rrBanner">RANK UP</div>
     </div>
-    <div class="rrBarHead">
-      <span class="rrPct" id="rrPct">0%</span>
-      <span class="rrPctDelta" id="rrPctDelta"></span>
-    </div>
-    <div class="rrBar"><i id="rrFill"></i><div class="rrTicks"><i></i><i></i></div></div>
+    <div class="rrRankName"><span id="rrNameText">BRONZE I</span><small id="rrRankSub">YOUR RANK</small></div>
+    <div class="rrPctDelta" id="rrPctDelta"></div>
     <div class="rrMeta"><span id="rrWithin">0 / 0 RP</span><span id="rrTarget">NEXT: SILVER I</span></div>
     <div class="rrBreak" id="rrBreak"></div>
     <div class="rrNote" id="rrNote"></div>
@@ -11949,6 +12030,34 @@ if (fsBlankEl) fsBlankEl.addEventListener('click', openFullscreenBlank);
 const fsTabEl = document.getElementById('fsLaunchTab');
 if (fsTabEl) fsTabEl.addEventListener('click', openFullscreenTab);
 
+/* Deep in settings: wipe both ranked ladders back to Bronze I. */
+const rankResetBtn = document.getElementById('rankResetBtn');
+if (rankResetBtn) {
+  let rankArmTimer = 0;
+  const disarm = () => {
+    rankResetBtn.classList.remove('armed');
+    rankResetBtn.textContent = 'RESET MY RANKS';
+  };
+  rankResetBtn.addEventListener('click', () => {
+    if (!rankResetBtn.classList.contains('armed')) {
+      rankResetBtn.classList.add('armed');
+      rankResetBtn.textContent = 'CLICK AGAIN TO WIPE YOUR RANKS';
+      clearTimeout(rankArmTimer);
+      rankArmTimer = setTimeout(disarm, 3500);
+      return;
+    }
+    clearTimeout(rankArmTimer);
+    disarm();
+    profile.rankRp = 0;
+    profile.reloadRp = 0;
+    saveProfile();
+    refreshRank();
+    renderCompetitive();
+    sfx('switch');
+    toast('RANKS RESET · BRONZE I', 'sub');
+  });
+}
+
 renderKeybinds();
 renderControlHints();
 
@@ -12447,17 +12556,34 @@ function hideRareFind() {
    ========================================================================= */
 let rrToken = 0;
 
+const RR_ARC_LEN = 251.33;
+
 function rrSetFill(pct, animated) {
-  const fill = document.getElementById('rrFill');
-  if (!fill) return;
-  const w = clamp(pct, 0, 100) + '%';
+  const arc = document.getElementById('rrArc');
+  if (!arc) return;
+  const off = RR_ARC_LEN * (1 - clamp(pct, 0, 100) / 100);
   if (!animated) {
-    fill.style.transition = 'none';
-    fill.style.width = w;
-    void fill.offsetWidth;
-    fill.style.transition = '';
+    arc.style.transition = 'none';
+    arc.style.strokeDashoffset = off;
+    void arc.getBoundingClientRect();
+    arc.style.transition = '';
   } else {
-    fill.style.width = w;
+    arc.style.strokeDashoffset = off;
+  }
+}
+
+function rrSparks() {
+  const box = document.getElementById('rrSparks');
+  if (!box) return;
+  box.innerHTML = '';
+  for (let i = 0; i < 26; i++) {
+    const s = document.createElement('i');
+    const a = Math.random() * Math.PI * 2;
+    const d = 60 + Math.random() * 110;
+    s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(0) + 'px');
+    s.style.setProperty('--dy', (Math.sin(a) * d).toFixed(0) + 'px');
+    s.style.animationDelay = (Math.random() * 0.25).toFixed(2) + 's';
+    box.appendChild(s);
   }
 }
 
@@ -12534,8 +12660,12 @@ function showRankedRecap(d) {
   nameText.textContent = before.name;
   rankSub.textContent = d.ladder === 'RELOAD' ? 'RELOAD RANK' : 'YOUR RANK';
 
-  const fill = document.getElementById('rrFill');
-  fill.className = d.gain < 0 ? 'down' : '';
+  const arcEl = document.getElementById('rrArc');
+  if (arcEl) arcEl.style.stroke = d.gain < 0 ? '#ff8a9a' : '#4f9dff';
+  const wheelEl = document.getElementById('rrWheel');
+  if (wheelEl) wheelEl.classList.remove('rankup', 'rankdown');
+  const sparksEl = document.getElementById('rrSparks');
+  if (sparksEl) sparksEl.innerHTML = '';
 
   document.getElementById('rrBreak').innerHTML =
     '<div class="rrRow"><span>ELIMINATIONS</span><em>' + d.kills + ' × ' + (d.perKill || 12) + '</em><b>' +
@@ -12603,6 +12733,10 @@ function showRankedRecap(d) {
     rankSub.textContent = 'FROM ' + before.name;
     banner.textContent = up ? 'RANK UP' : 'RANK DOWN';
     banner.className = 'rrBanner ' + (up ? 'up' : 'down') + ' on';
+    if (wheelEl) {
+      wheelEl.classList.add(up ? 'rankup' : 'rankdown');
+      rrSparks();
+    }
     const opposite = up ? 0 : 100;
     rrSetFill(opposite, false);
     rrCount(opposite, opposite, 1, token);
