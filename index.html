@@ -3163,21 +3163,35 @@ body { font-family:var(--body); letter-spacing:-.005em; }
 #spectate .specName { font-family:var(--display); font-weight:700; font-size:16px; letter-spacing:-.01em; }
 #spectate .specHint { font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.1em; color:rgba(255,255,255,.5); }
 
-/* Reload Duos: the countdown while your partner is waiting on you. */
+/* Reload Duos: the countdown while your partner is waiting on you. It lives
+   under the minimap so it cannot fight the storm clock or the kill toasts. */
 #mateTimer {
-  position:absolute; top:84px; left:50%; transform:translateX(-50%);
-  display:flex; align-items:center; gap:10px; padding:8px 14px;
-  border-radius:999px; background:rgba(13,16,22,.9);
-  border:1px solid rgba(61,139,255,.35);
+  position:absolute; top:210px; right:18px; width:168px;
+  display:flex; flex-direction:column; gap:6px;
+  padding:10px 12px 12px; border-radius:var(--r-md);
+  background:rgba(13,16,22,.94); border:1px solid rgba(61,139,255,.5);
+  box-shadow:0 14px 30px -16px rgba(0,0,0,.9);
+  animation:matePulse 1.6s ease-in-out infinite;
 }
-.mtLabel { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.16em; color:rgba(255,255,255,.5); }
-#mateTimer b { font-family:var(--display); font-weight:800; font-size:15px; color:#fff; letter-spacing:-.01em; }
-.mtBar { width:70px; height:3px; border-radius:2px; background:rgba(255,255,255,.14); overflow:hidden; }
-.mtBar > i { display:block; height:100%; width:0%; background:linear-gradient(90deg,#3d8bff,#7fd8ff); }
+@keyframes matePulse {
+  0%,100% { border-color:rgba(61,139,255,.45); box-shadow:0 14px 30px -16px rgba(0,0,0,.9); }
+  50% { border-color:rgba(126,200,255,.95); box-shadow:0 14px 30px -16px rgba(0,0,0,.9), 0 0 18px rgba(61,139,255,.35); }
+}
+.mtTop { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.mtLabel { font-family:var(--body); font-weight:700; font-size:8.5px; letter-spacing:.14em; color:#9cc4ff; }
+#mateTimer b { font-family:var(--display); font-weight:800; font-size:22px; line-height:1; color:#fff; }
+.mtSub { font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.04em; color:rgba(255,255,255,.5); }
+.mtBar { height:4px; border-radius:2px; background:rgba(255,255,255,.14); overflow:hidden; }
+.mtBar > i { display:block; height:100%; width:0%; background:linear-gradient(90deg,#3d8bff,#7fd8ff); transition:width .2s linear; }
+#mateTimer.urgent { border-color:rgba(255,196,60,.85); animation-duration:.7s; }
+#mateTimer.urgent .mtLabel { color:#ffd166; }
+#mateTimer.urgent b { color:#ffe9a8; }
+#mateTimer.urgent .mtBar > i { background:linear-gradient(90deg,#ffb03a,#ff7a1f); }
 @media (max-width: 1000px), (max-height: 620px) {
-  #mateTimer { top:64px; padding:6px 11px; gap:8px; }
-  .mtBar { width:52px; }
-  #mateTimer b { font-size:13px; }
+  #mateTimer { top:148px; right:12px; width:156px; padding:8px 10px 10px; gap:5px; }
+  #mateTimer b { font-size:19px; }
+  .mtLabel { font-size:8px; letter-spacing:.1em; }
+  .mtSub { font-size:8px; }
 }
 
 /* minimap + counters */
@@ -3765,8 +3779,11 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div id="stormWarn" class="hide">OUTSIDE THE STORM · <b id="stormDps">1</b> DPS</div>
 
   <div id="mateTimer" class="hide">
-    <span class="mtLabel">MATE REVIVES IN</span>
-    <b id="mateSeconds">20s</b>
+    <div class="mtTop">
+      <span class="mtLabel">MATE REVIVES IN</span>
+      <b id="mateSeconds">20s</b>
+    </div>
+    <div class="mtSub">STAY ALIVE UNTIL IT ENDS</div>
     <div class="mtBar"><i id="mateFill"></i></div>
   </div>
 
@@ -4492,7 +4509,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>RELOAD DUOS WORKS BOTH WAYS</b> — the 20 second wait used to exist only for you: your bot partner could be waiting on you and it had nobody to count as a team-mate, so it was marked out of the match on its first death and never came back. It now counts you as its partner, so staying alive for 20 seconds brings it back, and a small countdown sits at the top of your screen telling you how long is left. Every bot pair on the map follows the same rule now — the survivor has to live 20 seconds, and if they go down the other one is out.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE MATE COUNTDOWN HAS ITS OWN CORNER</b> — it used to sit under the storm clock and cover it. It now lives beneath the minimap as a proper card: "MATE REVIVES IN" with a big seconds readout, a "stay alive until it ends" line and a filling bar, with a slow blue pulse so it catches your eye. In the last six seconds it turns amber and pulses faster, because that is when staying alive matters most.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -10432,6 +10449,7 @@ function updateHUD() {
       const left = Math.max(0, mateBot.respawnAt - state.time);
       if (mateSecsEl) mateSecsEl.textContent = Math.ceil(left) + 's';
       if (mateFillEl) mateFillEl.style.width = (100 - clamp(left / SURVIVE_TIME, 0, 1) * 100).toFixed(1) + '%';
+      mateTimerEl.classList.toggle('urgent', left <= 6);
     }
   }
 
@@ -11473,8 +11491,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 8, patch: 2 };
-const VERSION_PREV = '6.8.1';
+const VERSION = { major: 6, minor: 8, patch: 3 };
+const VERSION_PREV = '6.8.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
