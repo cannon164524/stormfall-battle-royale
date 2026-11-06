@@ -4375,7 +4375,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO FROSTED GLASS</b> — the soft blur behind the HUD, the menu panels and the overlays is gone in both modes. Motion is untouched: performance mode off still animates everything exactly as before, but nothing smears the world behind it. The panels that leaned on the blur are a touch more opaque so their text stays readable over the map.</div></li>
+      <li><span class="wnTag">01</span><div><b>STEADIER FRAMES</b> — the renderer now watches its own frame time and, if a match runs under about 46 fps for a couple of seconds, renders fewer pixels until it recovers, then hands the resolution back. It also stays put in the menu so nothing gets blurry while you are reading it.</div></li>
+      <li><span class="wnTag">02</span><div><b>CHEAPER AUDIO</b> — the gunshot room was a convolution reverb, which is genuinely expensive on a phone and ran on every single shot. It is now a short feedback delay, which sounds almost the same for a fraction of the cost, and overlapping gunfire is capped so a squad firing at once cannot flood the audio thread.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -4697,6 +4698,10 @@ const COARSE = window.matchMedia('(pointer: coarse)').matches;
 /* The world is always drawn at the performance profile: no shadow map and a
    0.8x render target. Performance mode only takes the interface further. */
 const PERF_PIXEL_RATIO = 0.8;
+/* Adaptive resolution: this multiplies the base ratio when frames get long. */
+let pixelScale = 1;
+let qualityAcc = 0;
+let qualityFrames = 0;
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !COARSE, powerPreference: 'high-performance' });
 renderer.setPixelRatio(PERF_PIXEL_RATIO);
@@ -8948,22 +8953,8 @@ let noiseBuf = null;
 let revIn = null;
 let masterBus = null;
 
-/* A short synthetic room. It is the difference between a click in a vacuum
-   and something that happened outdoors. */
-function makeImpulse(seconds, decay) {
-  const rate = actx.sampleRate;
-  const len = Math.max(1, Math.floor(rate * seconds));
-  const buf = actx.createBuffer(2, len, rate);
-  for (let ch = 0; ch < 2; ch++) {
-    const d = buf.getChannelData(ch);
-    for (let i = 0; i < len; i++) {
-      const t = i / len;
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay);
-    }
-  }
-  return buf;
-}
-
+/* A short synthetic room, done with a feedback delay rather than a
+   convolution reverb: same sense of space for a fraction of the cost. */
 function audioInit() {
   if (actx) return;
   try {
@@ -8988,28 +8979,47 @@ function audioInit() {
       low = (low + 0.02 * w) / 1.02;
       data[i] = Math.max(-1, Math.min(1, w * 0.7 + low * 3.2));
     }
-    const conv = actx.createConvolver();
-    conv.buffer = makeImpulse(1.8, 2.8);
+    // The room: a short feedback delay, damped so it decays instead of ringing.
     revIn = actx.createGain();
-    revIn.gain.value = 0.85;
-    revIn.connect(conv);
-    conv.connect(masterBus || actx.destination);
+    revIn.gain.value = 0.9;
+    const dly = actx.createDelay(0.5);
+    dly.delayTime.value = 0.11;
+    const fb = actx.createGain();
+    fb.gain.value = 0.26;
+    const damp = actx.createBiquadFilter();
+    damp.type = 'lowpass';
+    damp.frequency.value = 2200;
+    revIn.connect(dly);
+    dly.connect(damp);
+    damp.connect(fb);
+    fb.connect(dly);
+    dly.connect(masterBus || actx.destination);
   } catch (e) { actx = null; revIn = null; }
 }
 
 function sfx(kind) { playSound(kind, 1); }
 
+let lastPanned = 0;
+
 function sfxPanned(kind, pos) {
   if (!actx) return;
   const d = player.pos.distanceTo(pos);
   if (d > 95) return;
+  // A squad firing at once should not stack fifty voices on one frame.
+  if (actx.currentTime - lastPanned < 0.045) return;
+  lastPanned = actx.currentTime;
   playSound(kind, 0.55 * (1 - d / 95));
 }
+
+const lastSoundAt = {};
 
 function playSound(kind, vol) {
   if (!actx || !noiseBuf) return;
   if (actx.state === 'suspended') actx.resume();
   const t0 = actx.currentTime;
+  // Rapid fire of one weapon does not need every shot to spawn its own stack.
+  if (lastSoundAt[kind] != null && t0 - lastSoundAt[kind] < 0.02) return;
+  lastSoundAt[kind] = t0;
   const outVol = clamp(vol, 0, 1) * 0.42;
   if (outVol <= 0.002) return;
 
@@ -11256,8 +11266,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 4 };
-const VERSION_PREV = '6.7.3';
+const VERSION = { major: 6, minor: 7, patch: 5 };
+const VERSION_PREV = '6.7.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11522,7 +11532,7 @@ function applyGraphics() {
   try {
     renderer.shadowMap.enabled = false;
     sun.castShadow = false;
-    renderer.setPixelRatio(PERF_PIXEL_RATIO);
+    renderer.setPixelRatio(PERF_PIXEL_RATIO * pixelScale);
     renderer.setSize(window.innerWidth, window.innerHeight, false);
   } catch (e) { /* renderer not ready yet */ }
 }
@@ -12911,6 +12921,26 @@ function animate(now) {
   const dtBase = clamp(isFinite(dtRaw) ? dtRaw : 0.016, 0, 0.05);
   const dt = dtBase * (state.timeScale || 1);
   if (state.timeScale < 1) state.timeScale = Math.min(1, state.timeScale + dtBase * 0.5);
+
+  // Adaptive resolution: when the frame budget is blown for a couple of
+  // seconds, render fewer pixels rather than stutter, and give them back when
+  // things calm down.
+  qualityAcc += dtBase;
+  qualityFrames++;
+  if (qualityAcc >= 2) {
+    const fps = qualityFrames / qualityAcc;
+    qualityAcc = 0;
+    qualityFrames = 0;
+    if (!document.hidden && state.phase !== 'menu') {
+      if (fps < 46 && pixelScale > 0.55) {
+        pixelScale = Math.max(0.55, pixelScale - 0.12);
+        applyGraphics();
+      } else if (fps > 57 && pixelScale < 1) {
+        pixelScale = Math.min(1, pixelScale + 0.08);
+        applyGraphics();
+      }
+    }
+  }
 
   if (state.phase === 'menu') {
     updateMenuCamera(dt);
