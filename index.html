@@ -4375,7 +4375,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE CAMERA STOPS JUMPING</b> — a single mouse event can report an enormous movement value: when pointer lock engages, when the window regains focus, or when the cursor wraps on some systems. Those spikes used to be fed straight into the view, which is what made the camera snap around. Spikes are now dropped, movement is capped per event and per frame, the first 180 ms after a pointer-lock change is ignored, and touch drags are clamped the same way.</div></li>
+      <li><span class="wnTag">01</span><div><b>LESS FRAME WORK</b> — bots now think at half rate, staggered across frames, so their AI and rig animation cost roughly half of what it did while behaving the same. The reticle only refreshes 30 times a second instead of every frame, which takes a per-frame style recalculation out of the loop.</div></li>
+      <li><span class="wnTag">02</span><div><b>NO MORE RESOLUTION PING-PONG</b> — the adaptive resolution used to drop and raise itself every couple of seconds, and reallocating the drawing buffer is not free, so it could cause the very hitches it was meant to fix. It now only ever steps down — three times at most, never in the first seconds of a match — and the base render scale is slightly lower to start with.</div></li>
+      <li><span class="wnTag">03</span><div><b>MOUSE FEELS LIKE A MOUSE AGAIN</b> — the anti-snap fix was throwing away entire mouse events that went past its limit, which ate real movement and made aiming feel dead. Big deltas are now clamped instead of discarded, the post-pointer-lock ignore window is down to 80 ms, and the per-frame cap is high enough that a fast flick still lands where you meant it.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -4696,11 +4698,12 @@ const COARSE = window.matchMedia('(pointer: coarse)').matches;
 
 /* The world is always drawn at the performance profile: no shadow map and a
    0.8x render target. Performance mode only takes the interface further. */
-const PERF_PIXEL_RATIO = 0.8;
+const PERF_PIXEL_RATIO = 0.75;
 /* Adaptive resolution: this multiplies the base ratio when frames get long. */
 let pixelScale = 1;
 let qualityAcc = 0;
 let qualityFrames = 0;
+let qualityDrops = 0;
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !COARSE, powerPreference: 'high-performance' });
 renderer.setPixelRatio(PERF_PIXEL_RATIO);
@@ -6042,7 +6045,7 @@ const LOOK_SENS = 0.0026;
    when the window regains focus, or when the cursor wraps on some systems.
    Anything past these limits is noise, not a flick of the wrist. */
 const LOOK_STEP_MAX = 120;
-const LOOK_FRAME_MAX = 160;
+const LOOK_FRAME_MAX = 400;
 let lookGuardUntil = 0;
 
 const input = {
@@ -8180,6 +8183,7 @@ const BOT_NAMES = [
 
 const bots = [];
 let botNamePool = [];
+let botPhase = 0;
 
 function botWeaponType(level) {
   if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
@@ -10586,7 +10590,7 @@ window.addEventListener('keyup', (e) => {
 
 function lockPointer() {
   if (COARSE) return;
-  lookGuardUntil = performance.now() + 180;
+  lookGuardUntil = performance.now() + 80;
   input.lookDX = 0;
   input.lookDY = 0;
   try {
@@ -10596,7 +10600,7 @@ function lockPointer() {
 }
 
 document.addEventListener('pointerlockchange', () => {
-  lookGuardUntil = performance.now() + 180;
+  lookGuardUntil = performance.now() + 80;
   input.lookDX = 0;
   input.lookDY = 0;
 });
@@ -10610,18 +10614,19 @@ canvas.addEventListener('click', () => {
 
 document.addEventListener('mousemove', (e) => {
   if (performance.now() < lookGuardUntil) return;
-  let mx = e.movementX || 0;
-  let my = e.movementY || 0;
-  if (Math.abs(mx) > LOOK_STEP_MAX || Math.abs(my) > LOOK_STEP_MAX) return;
+  if (invOpen) return;
+  if (state.phase !== 'play' && state.phase !== 'drop') return;
+  // Clamp rather than drop: a spike should not throw the view, but the rest of
+  // the movement in that event is still genuine and must not be lost.
+  let mx = clamp(e.movementX || 0, -LOOK_STEP_MAX, LOOK_STEP_MAX);
+  let my = clamp(e.movementY || 0, -LOOK_STEP_MAX, LOOK_STEP_MAX);
   if (document.pointerLockElement === canvas) {
     input.lookDX += mx;
     input.lookDY += my;
-  } else if (e.target === canvas && (state.phase === 'play' || state.phase === 'drop')) {
+  } else if (state.phase === 'play' || state.phase === 'drop') {
     // Fallback for environments where pointer lock is unavailable
-    mx *= 0.8;
-    my *= 0.8;
-    input.lookDX += mx;
-    input.lookDY += my;
+    input.lookDX += mx * 0.8;
+    input.lookDY += my * 0.8;
   }
 });
 
@@ -10754,6 +10759,11 @@ function resetPlayerForMatch() {
   const sw = startWeaponType();
   player.inv = [makeWeapon(sw, 0), null, null, null, null];
   player.boons = [];
+  pixelScale = 1;
+  qualityDrops = 0;
+  qualityAcc = 0;
+  qualityFrames = 0;
+  applyGraphics();
   renderBoons();
   renderBoonList();
   player.ammo = ammoKit(sw);
@@ -11290,8 +11300,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 6 };
-const VERSION_PREV = '6.7.5';
+const VERSION = { major: 6, minor: 7, patch: 7 };
+const VERSION_PREV = '6.7.6';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -12801,6 +12811,7 @@ document.getElementById('quitBtn').addEventListener('click', () => {
    ========================================================================= */
 let lastT = 0;
 let hudAcc = 0;
+let chAcc = 0;
 
 /* =========================================================================
    RENDER DISTANCE
@@ -12939,30 +12950,27 @@ function updateMenuCamera(dt) {
 }
 
 function animate(now) {
-  requestAnimationFrame(animate);
-  const dtRaw = (now - lastT) / 1000;
+  requestAnimationFrame(animate);  const dtRaw = (now - lastT) / 1000;
   lastT = now;
   const dtBase = clamp(isFinite(dtRaw) ? dtRaw : 0.016, 0, 0.05);
   const dt = dtBase * (state.timeScale || 1);
   if (state.timeScale < 1) state.timeScale = Math.min(1, state.timeScale + dtBase * 0.5);
 
-  // Adaptive resolution: when the frame budget is blown for a couple of
-  // seconds, render fewer pixels rather than stutter, and give them back when
-  // things calm down.
+  // Adaptive resolution: only ever drops, at most three times per match, and
+  // never during the first seconds while the world is still settling. Re- sizing
+  // the drawing buffer is expensive, so doing it both ways made the frame time
+  // worse, not better.
   qualityAcc += dtBase;
   qualityFrames++;
-  if (qualityAcc >= 2) {
+  if (qualityAcc >= 3) {
     const fps = qualityFrames / qualityAcc;
     qualityAcc = 0;
     qualityFrames = 0;
-    if (!document.hidden && state.phase !== 'menu') {
-      if (fps < 46 && pixelScale > 0.55) {
-        pixelScale = Math.max(0.55, pixelScale - 0.12);
-        applyGraphics();
-      } else if (fps > 57 && pixelScale < 1) {
-        pixelScale = Math.min(1, pixelScale + 0.08);
-        applyGraphics();
-      }
+    if (!document.hidden && state.phase !== 'menu' && state.time > 6 &&
+        fps < 50 && pixelScale > 0.6 && qualityDrops < 3) {
+      pixelScale = Math.max(0.6, pixelScale - 0.15);
+      qualityDrops++;
+      applyGraphics();
     }
   }
 
@@ -12985,11 +12993,20 @@ function animate(now) {
   updateCamera(dt);
   updateNameplates();
   updateRenderDistance(dt);
-  updateCrosshair(dt);
+  // The reticle writes CSS every update, which forces a style pass; 30 Hz is
+  // plenty and leaves the frame to the world.
+  chAcc += dt;
+  if (chAcc >= 0.033) {
+    updateCrosshair(chAcc);
+    chAcc = 0;
+  }
   if (state.netGuest) {
     updateGuestBots(dt);
   } else {
-    for (let i = 0; i < bots.length; i++) updateBot(bots[i], dt);
+    // Bots think at half rate, staggered across frames: the same behaviour for
+    // roughly half the CPU, and dt is doubled so their timers stay honest.
+    botPhase = botPhase ? 0 : 1;
+    for (let i = botPhase; i < bots.length; i += 2) updateBot(bots[i], dt * 2);
   }
   updateShieldRegen(dt);
   updateNet(dt);
