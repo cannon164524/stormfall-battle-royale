@@ -4375,9 +4375,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>LESS FRAME WORK</b> — bots now think at half rate, staggered across frames, so their AI and rig animation cost roughly half of what it did while behaving the same. The reticle only refreshes 30 times a second instead of every frame, which takes a per-frame style recalculation out of the loop.</div></li>
-      <li><span class="wnTag">02</span><div><b>NO MORE RESOLUTION PING-PONG</b> — the adaptive resolution used to drop and raise itself every couple of seconds, and reallocating the drawing buffer is not free, so it could cause the very hitches it was meant to fix. It now only ever steps down — three times at most, never in the first seconds of a match — and the base render scale is slightly lower to start with.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE MOUSE IS BACK TO HOW IT WAS</b> — every aim limiter from the last build is gone: raw pointer deltas go straight into the view again, with no per-event cap, no per-frame cap, no ignore window after pointer lock and no clamp on touch drags. The frame-rate work below that is still in place.</div></li>
+      <li><span class="wnTag">01</span><div><b>FIRING DOES NOT STUTTER ANY MORE</b> — every shot used to rebuild the hotbar (five slots of DOM), build a fresh line geometry and material for its tracer, and spin up a reverb send for every layer of the gunshot. All three are gone: the ammo numbers update on their own, tracers come from a fixed pool that is reused, and the fast automatics fire dry with no reverb send and no action click. The guns still sound different, they just cost far less to fire.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -6838,7 +6836,7 @@ function playerFire() {
   camRig.recoil += scopedAds ? kick * 0.15 : kick;
   sfx(w.sfx);
   if (!w.noAmmo && it.mag <= 0) startReload();
-  refreshHotbar();
+  updateAmmoReadout();
 }
 
 /* Out of reserve ammo: say so and hop to a gun that can still shoot. */
@@ -9094,13 +9092,13 @@ function playSound(kind, vol) {
   }
 
   switch (kind) {
-    case 'ar': shot({ crack: 3600, body: 1250, low: 420, thump: 118, click: true }); break;
-    case 'lmg': shot({ crack: 3100, body: 1050, bodyDur: 0.19, low: 380, lowDur: 0.26, lowGain: 0.5, thump: 104, thumpDur: 0.16, thumpGain: 0.3, click: true }); break;
+    case 'ar': shot({ crack: 3600, body: 1250, low: 420, thump: 118, dry: true }); break;
+    case 'lmg': shot({ crack: 3100, body: 1050, bodyDur: 0.19, low: 380, lowDur: 0.26, lowGain: 0.5, thump: 104, thumpDur: 0.16, thumpGain: 0.3, dry: true }); break;
     case 'heavyar': shot({ crack: 2700, body: 820, bodyDur: 0.26, bodyGain: 0.56, low: 250, lowDur: 0.36, lowGain: 0.58, thump: 80, thumpDur: 0.24, thumpGain: 0.34, click: true }); break;
-    case 'smg': shot({ crack: 4600, crackDur: 0.038, crackGain: 0.44, body: 1750, bodyDur: 0.075, bodyGain: 0.4, low: 560, lowDur: 0.1, lowGain: 0.32, thump: 150, thumpDur: 0.06, thumpGain: 0.16, click: true }); break;
-    case 'tacsmg': shot({ crack: 5600, crackDur: 0.03, crackGain: 0.36, body: 2100, bodyDur: 0.06, bodyGain: 0.34, low: 640, lowDur: 0.085, lowGain: 0.26, thump: 190, thumpDur: 0.05, thumpGain: 0.12, click: true }); break;
-    case 'drum': shot({ crack: 3300, body: 1050, bodyDur: 0.14, bodyGain: 0.5, low: 380, lowDur: 0.2, lowGain: 0.46, thump: 96, thumpDur: 0.12, thumpGain: 0.28 }); break;
-    case 'minigun': shot({ crack: 2800, crackDur: 0.028, crackGain: 0.3, body: 880, bodyDur: 0.06, bodyGain: 0.4, low: 300, lowDur: 0.09, lowGain: 0.4, thump: 72, thumpDur: 0.07, thumpGain: 0.3 }); break;
+    case 'smg': shot({ crack: 4600, crackDur: 0.038, crackGain: 0.44, body: 1750, bodyDur: 0.075, bodyGain: 0.4, low: 560, lowDur: 0.1, lowGain: 0.32, thump: 150, thumpDur: 0.06, thumpGain: 0.16, dry: true }); break;
+    case 'tacsmg': shot({ crack: 5600, crackDur: 0.03, crackGain: 0.36, body: 2100, bodyDur: 0.06, bodyGain: 0.34, low: 640, lowDur: 0.085, lowGain: 0.26, thump: 190, thumpDur: 0.05, thumpGain: 0.12, dry: true }); break;
+    case 'drum': shot({ crack: 3300, body: 1050, bodyDur: 0.14, bodyGain: 0.5, low: 380, lowDur: 0.2, lowGain: 0.46, thump: 96, thumpDur: 0.12, thumpGain: 0.28, dry: true }); break;
+    case 'minigun': shot({ crack: 2800, crackDur: 0.028, crackGain: 0.3, body: 880, bodyDur: 0.06, bodyGain: 0.4, low: 300, lowDur: 0.09, lowGain: 0.4, thump: 72, thumpDur: 0.07, thumpGain: 0.3, dry: true }); break;
     case 'pistol': shot({ crack: 3000, body: 950, low: 330, thump: 100, click: true }); break;
     case 'suppressed': shot({ dry: true, crack: 950, crackDur: 0.05, crackGain: 0.16, body: 560, bodyDur: 0.1, bodyGain: 0.3, low: 260, lowDur: 0.14, lowGain: 0.3, thump: 130, thumpDur: 0.07, thumpGain: 0.18, click: true, clickGain: 0.06 }); break;
     case 'shotgun': shot({ crack: 2400, crackDur: 0.09, crackGain: 0.5, body: 760, bodyDur: 0.28, bodyGain: 0.62, low: 220, lowDur: 0.4, lowGain: 0.62, thump: 82, thumpDur: 0.26, thumpGain: 0.34, tail: 420, tailDur: 0.4 }); break;
@@ -9194,15 +9192,35 @@ function victoryFanfare() {
    EFFECTS
    ========================================================================= */
 const fx = [];
+/* Tracers are pooled: building a geometry and a material per shot is what made
+   automatic weapons hitch. */
+const tracerPool = [];
 function tracerFX(from, to, color) {
-  if (fx.length > 60) return;
-  const geo = new THREE.BufferGeometry().setFromPoints([from.clone(), to.clone()]);
-  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
-    color: color || 0xfff2a8, transparent: true, opacity: 0.85, depthWrite: false,
-  }));
-  line.frustumCulled = false;
-  fxGroup.add(line);
-  fx.push({ mesh: line, life: 0.06, max: 0.06 });
+  let line = null;
+  for (let i = 0; i < tracerPool.length; i++) {
+    if (!tracerPool[i].active) { line = tracerPool[i]; break; }
+  }
+  if (!line) {
+    if (tracerPool.length >= 36) return;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    const m = new THREE.LineBasicMaterial({ color: color || 0xfff2a8, transparent: true, opacity: 0.85, depthWrite: false });
+    line = new THREE.Line(geo, m);
+    line.frustumCulled = false;
+    line.active = false;
+    line.life = 0;
+    fxGroup.add(line);
+    tracerPool.push(line);
+  }
+  const arr = line.geometry.attributes.position.array;
+  arr[0] = from.x; arr[1] = from.y; arr[2] = from.z;
+  arr[3] = to.x; arr[4] = to.y; arr[5] = to.z;
+  line.geometry.attributes.position.needsUpdate = true;
+  line.material.color.set(color || 0xfff2a8);
+  line.material.opacity = 0.85;
+  line.visible = true;
+  line.active = true;
+  line.life = 0.06;
 }
 
 function impactFX(p) {
@@ -9217,6 +9235,17 @@ function impactFX(p) {
 }
 
 function updateFX(dt) {
+  for (let i = 0; i < tracerPool.length; i++) {
+    const t = tracerPool[i];
+    if (!t.active) continue;
+    t.life -= dt;
+    if (t.life <= 0) {
+      t.active = false;
+      t.visible = false;
+    } else {
+      t.material.opacity = clamp(t.life / 0.06, 0, 1) * 0.85;
+    }
+  }
   for (let i = fx.length - 1; i >= 0; i--) {
     const f = fx[i];
     f.life -= dt;
@@ -9991,6 +10020,28 @@ function refreshHotbar() {
     ammoMagEl.textContent = '—';
     ammoResEl.textContent = '';
     weaponNameEl.textContent = 'EMPTY';
+  }
+}
+
+/* Per-shot ammo refresh: only the numbers that change, because a 750 rpm
+   weapon calls this twelve times a second and the full bar is DOM work. */
+function updateAmmoReadout() {
+  const it = currentItem();
+  if (it && it.kind === 'weapon') {
+    const w = WEAPONS[it.type];
+    if (ammoMagEl) ammoMagEl.textContent = player.reloading ? '—' : it.mag;
+    if (ammoResEl) ammoResEl.textContent = '/ ' + player.ammo[w.ammo];
+  } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
+    if (ammoMagEl) ammoMagEl.textContent = 'x' + it.count;
+    if (ammoResEl) ammoResEl.textContent = '';
+  } else {
+    if (ammoMagEl) ammoMagEl.textContent = '—';
+    if (ammoResEl) ammoResEl.textContent = '';
+  }
+  const el = elHotbar ? elHotbar.children[player.slot] : null;
+  if (el) {
+    const cnt = el.querySelector('.cnt');
+    if (cnt) cnt.textContent = (it && it.kind === 'weapon') ? it.mag : '';
   }
 }
 
@@ -11274,8 +11325,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 8 };
-const VERSION_PREV = '6.7.7';
+const VERSION = { major: 6, minor: 7, patch: 9 };
+const VERSION_PREV = '6.7.8';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
