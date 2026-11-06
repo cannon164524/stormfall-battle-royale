@@ -3555,6 +3555,82 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .boon svg { width:14px; height:14px; }
 }
 
+/* match finder */
+#matchfinder {
+  position:fixed; inset:0; z-index:68; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(70% 60% at 50% 45%, rgba(14,32,64,.94), rgba(3,5,10,.985));
+}
+.mfGlow {
+  position:absolute; width:70vmin; height:70vmin; border-radius:50%;
+  background:radial-gradient(circle, rgba(61,139,255,.22), transparent 65%);
+  animation:mfGlow 2.4s ease-in-out infinite;
+}
+@keyframes mfGlow { 0%,100% { transform:scale(.92); opacity:.7; } 50% { transform:scale(1.08); opacity:1; } }
+.mfFlash {
+  position:absolute; width:40vmin; height:40vmin; border-radius:50%;
+  border:2px solid rgba(125,255,176,.85); opacity:0;
+}
+#matchfinder[data-state="found"] .mfFlash { animation:mfFlashPulse .95s ease-out; }
+@keyframes mfFlashPulse { 0% { opacity:.9; transform:scale(.25); } 100% { opacity:0; transform:scale(2.1); } }
+.mfRings { position:absolute; width:0; height:0; }
+.mfRings i {
+  position:absolute; left:0; top:0; width:26vmin; height:26vmin; margin:-13vmin 0 0 -13vmin;
+  border-radius:50%; border:1px solid rgba(120,190,255,.5);
+  animation:mfRing 2.4s ease-out infinite;
+}
+.mfRings i:nth-child(2) { animation-delay:.8s; }
+.mfRings i:nth-child(3) { animation-delay:1.6s; }
+@keyframes mfRing { 0% { transform:scale(.22); opacity:.9; } 100% { transform:scale(2.4); opacity:0; } }
+#matchfinder[data-state="found"] .mfRings { display:none; }
+.mfBurst { position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none; }
+.mfBurst i {
+  position:absolute; left:0; top:0; width:5px; height:5px; border-radius:50%;
+  background:#8fd6ff; box-shadow:0 0 8px rgba(120,220,255,.9);
+  animation:mfSpark .95s ease-out forwards;
+}
+@keyframes mfSpark {
+  from { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  to { opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3); }
+}
+.mfInner { position:relative; z-index:2; text-align:center; padding:0 24px; }
+.mfKicker {
+  font-family:var(--body); font-weight:600; font-size:9.5px; letter-spacing:.24em;
+  color:rgba(255,255,255,.45);
+}
+.mfTitle {
+  margin-top:8px; font-family:var(--display); font-weight:800; letter-spacing:-.03em;
+  font-size:clamp(28px,7vw,46px); color:#fff;
+}
+#matchfinder[data-state="found"] .mfKicker { color:#7dffb0; }
+#matchfinder[data-state="found"] .mfTitle {
+  color:#c8ffdd; animation:mfFound .6s cubic-bezier(.2,1.3,.4,1) both;
+}
+@keyframes mfFound {
+  0% { transform:scale(.82); opacity:0; }
+  55% { transform:scale(1.07); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+.mfBar {
+  width:min(320px,70vw); height:4px; margin:18px auto 10px; border-radius:2px;
+  background:rgba(255,255,255,.12); overflow:hidden;
+}
+.mfBar > i {
+  display:block; height:100%; width:0%; border-radius:2px;
+  background:linear-gradient(90deg,#3d8bff,#7fd8ff); transition:width .3s linear;
+}
+.mfMeta {
+  display:flex; justify-content:space-between; gap:14px; width:min(320px,70vw); margin:0 auto;
+  font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.08em;
+  color:rgba(255,255,255,.4);
+}
+.mfMeta span:last-child { color:rgba(255,255,255,.62); }
+.mfCancel {
+  margin-top:22px; padding:9px 22px; border-radius:999px; border:1px solid var(--line);
+  background:rgba(255,255,255,.05); color:rgba(255,255,255,.7);
+  font-family:var(--body); font-weight:600; font-size:10px; letter-spacing:.1em;
+}
+.mfCancel:hover { background:rgba(255,255,255,.1); color:#fff; }
+
 /* rank emblems */
 .rankCrest svg, .rrCrest svg { width:56%; height:56%; display:block; }
 .rrCrest { width:54px; height:54px; }
@@ -4289,6 +4365,24 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </div>
 </div>
 
+<!-- ============================== MATCH FINDER ============================== -->
+<div id="matchfinder" class="hide">
+  <div class="mfGlow"></div>
+  <div class="mfFlash"></div>
+  <div class="mfRings"><i></i><i></i><i></i></div>
+  <div class="mfBurst" id="mfBurst"></div>
+  <div class="mfInner">
+    <div class="mfKicker" id="mfKicker">SEARCHING FOR MATCH</div>
+    <div class="mfTitle" id="mfTitle">FINDING PLAYERS</div>
+    <div class="mfBar"><i id="mfBarFill"></i></div>
+    <div class="mfMeta">
+      <span id="mfMode">BATTLE ROYALE</span>
+      <span id="mfPlayers">0 / 24 PLAYERS</span>
+    </div>
+    <button class="mfCancel" id="mfCancel">CANCEL</button>
+  </div>
+</div>
+
 <!-- ============================== LOADING ============================== -->
 <div id="loading">
   <div class="loadInner">
@@ -4375,7 +4469,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>FIRING DOES NOT STUTTER ANY MORE</b> — every shot used to rebuild the hotbar (five slots of DOM), build a fresh line geometry and material for its tracer, and spin up a reverb send for every layer of the gunshot. All three are gone: the ammo numbers update on their own, tracers come from a fixed pool that is reused, and the fast automatics fire dry with no reverb send and no action click. The guns still sound different, they just cost far less to fire.</div></li>
+      <li><span class="wnTag">01</span><div><b>MATCHMAKING</b> — pressing PLAY no longer drops you straight into a world build. A search screen comes up first: the mode name, a player counter ticking up toward a full lobby, a filling bar and the ring pulse. A couple of seconds later it flips to MATCH FOUND with a green flash and a burst of sparks, holds for a beat, then hands over to the match itself. There is a cancel button if you change your mind.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11325,8 +11419,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 9 };
-const VERSION_PREV = '6.7.8';
+const VERSION = { major: 6, minor: 8, patch: 0 };
+const VERSION_PREV = '6.7.9';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -12805,6 +12899,81 @@ function showWhatsNew() {
   });
 }
 
+/* A short matchmaking beat before the world builds: searching for a couple of
+   seconds, then a found flourish, then the match itself. */
+let mfToken = 0;
+
+function showMatchfinder(done) {
+  const el = document.getElementById('matchfinder');
+  if (!el) { done(); return; }
+  mfToken++;
+  const token = mfToken;
+  el.classList.remove('hide');
+  el.dataset.state = 'searching';
+
+  const kicker = document.getElementById('mfKicker');
+  const title = document.getElementById('mfTitle');
+  const bar = document.getElementById('mfBarFill');
+  const modeEl = document.getElementById('mfMode');
+  const playersEl = document.getElementById('mfPlayers');
+  const burst = document.getElementById('mfBurst');
+  const def = modeDef();
+  const want = Math.max(2, (state.botsWanted || 23) + 1);
+
+  if (kicker) kicker.textContent = 'SEARCHING FOR MATCH';
+  if (title) title.textContent = 'FINDING PLAYERS';
+  if (bar) bar.style.width = '6%';
+  if (modeEl) modeEl.textContent = (def && def.name ? def.name : 'BATTLE ROYALE').toUpperCase();
+  if (playersEl) playersEl.textContent = '0 / ' + want + ' PLAYERS';
+  if (burst) burst.innerHTML = '';
+
+  let count = 0;
+  const step = setInterval(() => {
+    if (token !== mfToken) return;
+    count = Math.min(want, count + Math.max(1, Math.round(want / 6)));
+    if (playersEl) playersEl.textContent = count + ' / ' + want + ' PLAYERS';
+    if (bar) bar.style.width = Math.min(92, 6 + (count / want) * 84) + '%';
+  }, 220);
+
+  const findTimer = setTimeout(() => {
+    if (token !== mfToken) return;
+    clearInterval(step);
+    el.dataset.state = 'found';
+    if (kicker) kicker.textContent = 'MATCH FOUND';
+    if (title) title.textContent = 'GET READY';
+    if (bar) bar.style.width = '100%';
+    if (playersEl) playersEl.textContent = want + ' / ' + want + ' PLAYERS';
+    if (burst) {
+      let h = '';
+      for (let i = 0; i < 28; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = 60 + Math.random() * 260;
+        h += '<i style="--dx:' + (Math.cos(a) * d).toFixed(0) + 'px;--dy:' +
+          (Math.sin(a) * d).toFixed(0) + 'px;animation-delay:' +
+          (Math.random() * 0.25).toFixed(2) + 's"></i>';
+      }
+      burst.innerHTML = h;
+    }
+    sfx('unlock');
+    setTimeout(() => {
+      if (token !== mfToken) return;
+      el.classList.add('hide');
+      done();
+    }, 1250);
+  }, 1800 + Math.random() * 1400);
+
+  const cancel = document.getElementById('mfCancel');
+  if (cancel) {
+    cancel.onclick = () => {
+      mfToken++;
+      clearInterval(step);
+      clearTimeout(findTimer);
+      el.classList.add('hide');
+      sfx('reload');
+    };
+  }
+}
+
 document.getElementById('playBtn').addEventListener('click', () => {
   audioInit();
   if (banLeft() > 0) {
@@ -12812,12 +12981,14 @@ document.getElementById('playBtn').addEventListener('click', () => {
     sfx('reload');
     return;
   }
-  if (!assets.ready) {
-    pendingStart = true;
-    showLoading();
-    return;
-  }
-  startMatch();
+  showMatchfinder(() => {
+    if (!assets.ready) {
+      pendingStart = true;
+      showLoading();
+      return;
+    }
+    startMatch();
+  });
 });
 document.getElementById('againBtn').addEventListener('click', () => backToMenu());
 document.getElementById('playAgainBtn').addEventListener('click', () => {
