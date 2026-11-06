@@ -4375,8 +4375,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>STEADIER FRAMES</b> — the renderer now watches its own frame time and, if a match runs under about 46 fps for a couple of seconds, renders fewer pixels until it recovers, then hands the resolution back. It also stays put in the menu so nothing gets blurry while you are reading it.</div></li>
-      <li><span class="wnTag">02</span><div><b>CHEAPER AUDIO</b> — the gunshot room was a convolution reverb, which is genuinely expensive on a phone and ran on every single shot. It is now a short feedback delay, which sounds almost the same for a fraction of the cost, and overlapping gunfire is capped so a squad firing at once cannot flood the audio thread.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE CAMERA STOPS JUMPING</b> — a single mouse event can report an enormous movement value: when pointer lock engages, when the window regains focus, or when the cursor wraps on some systems. Those spikes used to be fed straight into the view, which is what made the camera snap around. Spikes are now dropped, movement is capped per event and per frame, the first 180 ms after a pointer-lock change is ignored, and touch drags are clamped the same way.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -6039,6 +6038,12 @@ const player = {
 let aimDown = false;
 let rigYaw = 0;
 const LOOK_SENS = 0.0026;
+/* One mouse event can report an enormous delta — when pointer lock engages,
+   when the window regains focus, or when the cursor wraps on some systems.
+   Anything past these limits is noise, not a flick of the wrist. */
+const LOOK_STEP_MAX = 120;
+const LOOK_FRAME_MAX = 160;
+let lookGuardUntil = 0;
 
 const input = {
   fwd: 0, right: 0,
@@ -9499,8 +9504,10 @@ function updatePlayer(dt) {
   if (!player.alive) return;
 
   if (input.lookDX || input.lookDY) {
-    player.yaw -= input.lookDX * LOOK_SENS;
-    player.pitch = clamp(player.pitch - input.lookDY * LOOK_SENS, -1.15, 0.95);
+    const dx = clamp(input.lookDX, -LOOK_FRAME_MAX, LOOK_FRAME_MAX);
+    const dy = clamp(input.lookDY, -LOOK_FRAME_MAX, LOOK_FRAME_MAX);
+    player.yaw -= dx * LOOK_SENS;
+    player.pitch = clamp(player.pitch - dy * LOOK_SENS, -1.15, 0.95);
     input.lookDX = 0;
     input.lookDY = 0;
   }
@@ -10579,11 +10586,20 @@ window.addEventListener('keyup', (e) => {
 
 function lockPointer() {
   if (COARSE) return;
+  lookGuardUntil = performance.now() + 180;
+  input.lookDX = 0;
+  input.lookDY = 0;
   try {
     const p = canvas.requestPointerLock && canvas.requestPointerLock();
     if (p && typeof p.catch === 'function') p.catch(function () {});
   } catch (e) { /* ignore */ }
 }
+
+document.addEventListener('pointerlockchange', () => {
+  lookGuardUntil = performance.now() + 180;
+  input.lookDX = 0;
+  input.lookDY = 0;
+});
 
 canvas.addEventListener('click', () => {
   if (invOpen) return;
@@ -10593,13 +10609,19 @@ canvas.addEventListener('click', () => {
 });
 
 document.addEventListener('mousemove', (e) => {
+  if (performance.now() < lookGuardUntil) return;
+  let mx = e.movementX || 0;
+  let my = e.movementY || 0;
+  if (Math.abs(mx) > LOOK_STEP_MAX || Math.abs(my) > LOOK_STEP_MAX) return;
   if (document.pointerLockElement === canvas) {
-    input.lookDX += e.movementX || 0;
-    input.lookDY += e.movementY || 0;
+    input.lookDX += mx;
+    input.lookDY += my;
   } else if (e.target === canvas && (state.phase === 'play' || state.phase === 'drop')) {
     // Fallback for environments where pointer lock is unavailable
-    input.lookDX += (e.movementX || 0) * 0.8;
-    input.lookDY += (e.movementY || 0) * 0.8;
+    mx *= 0.8;
+    my *= 0.8;
+    input.lookDX += mx;
+    input.lookDY += my;
   }
 });
 
@@ -10671,8 +10693,10 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (!COARSE || e.pointerId !== lookId) return;
-  input.lookDX += (e.clientX - lookX) * 1.5;
-  input.lookDY += (e.clientY - lookY) * 1.5;
+  const dx = clamp(e.clientX - lookX, -70, 70);
+  const dy = clamp(e.clientY - lookY, -70, 70);
+  input.lookDX += dx * 1.5;
+  input.lookDY += dy * 1.5;
   lookX = e.clientX;
   lookY = e.clientY;
 });
@@ -11266,8 +11290,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 7, patch: 5 };
-const VERSION_PREV = '6.7.4';
+const VERSION = { major: 6, minor: 7, patch: 6 };
+const VERSION_PREV = '6.7.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
