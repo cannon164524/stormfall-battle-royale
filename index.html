@@ -3867,6 +3867,393 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #tourneyHud { background:rgba(11,13,19,.9); }
 #stick { background:rgba(10,12,17,.36); }
 .tbtn { background:rgba(11,13,19,.74); }
+
+/* =========================================================================
+   IN-GAME HUD — reference layout
+   Flat plates, hairline borders, tight radii, no blur and no glow. Compass on
+   top, stats column beside a square map top right, bare kill feed mid-left,
+   mate rows bottom left, own vitals left of centre, weapon and slots bottom
+   right. Everything over the world sits at 35-50% black.
+   ========================================================================= */
+#hud::after { background:radial-gradient(135% 115% at 50% 50%, transparent 68%, rgba(0,0,0,.28) 100%); }
+
+/* ---- top left: mode, leave ---- */
+#modeBadge {
+  left:14px; top:12px; padding:4px 8px; border-radius:0;
+  border:1px solid rgba(255,255,255,.22); background:rgba(0,0,0,.4);
+  font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:rgba(255,255,255,.78);
+}
+#modeBadge::before { width:4px; height:4px; background:#fff; }
+#modeBadge b { color:#fff; }
+#quitBtn {
+  left:14px; top:38px; padding:4px 8px; border-radius:0;
+  font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.14em;
+  color:rgba(255,255,255,.6); background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.18);
+}
+
+/* ---- top left, under the badge: the one objective line ---- */
+#questLine {
+  position:absolute; left:14px; top:62px; display:flex; align-items:center; gap:7px;
+  max-width:min(48vw, 340px);
+}
+#questLine .qGlyph {
+  width:13px; height:13px; flex:0 0 13px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--body); font-weight:700; font-size:8px; line-height:1; color:#fff;
+  border:1px solid rgba(255,255,255,.6);
+}
+#questLine .qText {
+  font-family:var(--body); font-weight:500; font-size:10.5px; letter-spacing:.01em;
+  color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.95);
+}
+#questLine .qText b { font-weight:700; }
+
+/* ---- top centre: compass strip ---- */
+#compass {
+  position:absolute; top:6px; left:50%; transform:translateX(-50%);
+  width:clamp(160px, 22vw, 272px); height:26px; pointer-events:none;
+  background:linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.42) 26%, rgba(0,0,0,.42) 74%, rgba(0,0,0,0) 100%);
+}
+#compass .cWin {
+  position:relative; width:100%; height:100%; overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+  mask-image:linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+}
+#compass .cStrip { position:absolute; top:0; left:0; height:100%; will-change:transform; }
+#compass .cTick { position:absolute; top:4px; width:1px; height:5px; background:rgba(255,255,255,.42); }
+#compass .cTick.major { top:2px; height:9px; background:rgba(255,255,255,.78); }
+#compass .cLbl {
+  position:absolute; top:11px; transform:translateX(-50%);
+  font-family:var(--body); font-weight:600; font-size:8px; letter-spacing:.06em;
+  color:rgba(255,255,255,.7); text-shadow:0 1px 3px rgba(0,0,0,.9);
+}
+#compass .cLbl.card { font-weight:700; font-size:9.5px; color:#fff; }
+#compass .cMark {
+  position:absolute; left:50%; bottom:0; width:0; height:0; transform:translateX(-50%);
+  border-left:4px solid transparent; border-right:4px solid transparent;
+  border-bottom:5px solid #fff;
+}
+
+/* ---- top centre: storm clock, tucked under the compass ---- */
+#stormInfo {
+  top:34px; width:clamp(150px, 20vw, 210px); padding:5px 10px 6px; border-radius:4px;
+  background:rgba(0,0,0,.44); border:1px solid rgba(255,255,255,.14); box-shadow:none;
+  animation:none;
+}
+#stormLabel { font-family:var(--body); font-size:8px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.68); }
+#stormBar { height:2px; margin:4px 0; border-radius:0; background:rgba(255,255,255,.16); }
+#stormBarFill { border-radius:0; background:#fff; }
+#stormTime { font-family:var(--display); font-size:15px; font-weight:800; letter-spacing:0; }
+#stormTag {
+  margin-top:3px; padding:0; border:0; background:none; border-radius:0;
+  font-family:var(--body); font-size:7.5px; font-weight:600; letter-spacing:.1em;
+  color:rgba(255,255,255,.55);
+}
+#stormTag::before { width:4px; height:4px; background:rgba(255,255,255,.7); box-shadow:none; animation:none; }
+#stormTag b { color:#fff; font-size:8.5px; }
+#stormWarn { top:84px; border-radius:0; font-size:9px; letter-spacing:.14em; padding:4px 10px; }
+
+/* ---- top right: stats column + square map ---- */
+#mapWrap { top:10px; right:12px; width:clamp(96px, 12vw, 168px); }
+.mapFrame {
+  padding:0; border-radius:0; background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.34); box-shadow:none;
+}
+#minimap { border-radius:0; }
+.mapCmp { display:none; }
+.mapName {
+  position:absolute; left:5px; bottom:3px; right:5px;
+  font-family:var(--display); font-weight:800; font-size:clamp(10px, 1.5vw, 16px);
+  letter-spacing:0; line-height:1; text-transform:uppercase; color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.95), 0 0 12px rgba(0,0,0,.7);
+  pointer-events:none;
+}
+.mapReport {
+  right:3px; top:3px; width:16px; height:15px; border-radius:0;
+  font-family:var(--body); font-size:9px; font-weight:700;
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.25);
+  color:rgba(255,255,255,.7);
+}
+#mapMeta {
+  right:calc(clamp(96px, 12vw, 168px) + 8px); top:0; gap:4px;
+  display:flex; flex-direction:column; align-items:flex-end;
+}
+.metaCell {
+  display:flex; align-items:baseline; justify-content:flex-end; gap:5px;
+  padding:0; min-width:0; border:0; border-radius:0; background:none; text-align:right;
+}
+.metaCell b { font-family:var(--display); font-weight:800; font-size:14px; letter-spacing:0; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.9); }
+.metaCell span { font-family:var(--body); font-size:7px; font-weight:600; letter-spacing:.14em; color:rgba(255,255,255,.55); text-shadow:0 1px 3px rgba(0,0,0,.9); }
+
+/* ---- mid left: elimination feed, nothing but text ---- */
+#feed { left:14px; top:42%; gap:1px; max-width:46vw; }
+.feedRow {
+  padding:1px 0; border:0; border-radius:0; background:none;
+  font-family:var(--body); font-weight:500; font-size:11px; letter-spacing:0;
+  color:rgba(255,255,255,.9); text-shadow:0 1px 4px rgba(0,0,0,.95);
+}
+.feedRow b { font-weight:700; color:#fff; }
+
+/* ---- right of centre: alerts ---- */
+#toasts { left:56%; right:auto; top:22%; transform:none; align-items:flex-start; gap:2px; }
+.toast {
+  padding:0; border:0; background:none;
+  font-family:var(--display); font-weight:800; font-size:clamp(16px, 2.4vw, 24px);
+  letter-spacing:0; text-transform:uppercase; text-shadow:0 2px 10px rgba(0,0,0,.95);
+}
+.toast.sub { font-family:var(--body); font-weight:700; font-size:9px; letter-spacing:.16em; color:rgba(255,255,255,.72); }
+
+/* ---- knock / elimination card, lower centre ---- */
+#resultCard {
+  position:absolute; left:50%; top:64%; width:min(300px, 62vw);
+  transform:translate(-50%, 0); display:flex; flex-direction:column;
+  opacity:0; pointer-events:none;
+}
+#resultCard.hide { display:none; }
+#resultCard.on {
+  animation:rcPop .4s cubic-bezier(.2,1.5,.4,1) forwards, rcShake .34s ease-out .4s 1;
+}
+#resultCard.out { animation:rcOut .36s ease-in forwards; }
+
+#resultCard .rcHead {
+  position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:7px 16px 8px; overflow:hidden;
+  background:linear-gradient(180deg, rgba(18,15,9,.96), rgba(6,6,8,.97));
+  border:1px solid rgba(255,212,81,.5); border-bottom:0;
+  box-shadow:0 10px 26px -14px rgba(0,0,0,.95);
+}
+#resultCard .rcIcon { width:16px; height:16px; display:flex; flex:0 0 16px; color:#ffd451; }
+#resultCard .rcIcon svg { width:100%; height:100%; }
+#resultCard .rcHead b {
+  font-family:var(--display); font-weight:800; font-size:clamp(17px, 2.4vw, 24px);
+  letter-spacing:.02em; line-height:1; color:#ffd451;
+  text-shadow:0 2px 0 rgba(0,0,0,.9), 0 0 20px rgba(255,190,60,.4);
+}
+#resultCard .rcName {
+  padding:5px 16px 6px; text-align:center; text-transform:uppercase;
+  background:rgba(20,22,26,.94); border:1px solid rgba(255,255,255,.14); border-top:0;
+  font-family:var(--body); font-weight:600; font-size:11px; letter-spacing:.08em;
+  color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.9);
+  box-shadow:0 18px 30px -18px rgba(0,0,0,.95);
+}
+#resultCard .rcSweep {
+  position:absolute; top:-60%; left:0; width:34%; height:220%; opacity:.5;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  transform:translateX(-140%) skewX(-18deg);
+  animation:rcSweep .62s ease-out .08s 1 forwards; pointer-events:none;
+}
+#resultCard .rcRing {
+  position:absolute; left:50%; top:19px; width:110px; height:110px; margin:-55px 0 0 -55px;
+  border:2px solid rgba(255,212,81,.55); border-radius:50%; opacity:0;
+  animation:rcRing .62s ease-out .1s 1 forwards; pointer-events:none;
+}
+
+#resultCard.kill .rcHead {
+  border-color:rgba(255,77,94,.55);
+  background:linear-gradient(180deg, rgba(30,8,12,.96), rgba(8,4,6,.97));
+}
+#resultCard.kill .rcHead b { color:#ff5a6e; text-shadow:0 2px 0 rgba(0,0,0,.9), 0 0 24px rgba(255,60,90,.5); }
+#resultCard.kill .rcIcon { color:#ff4d5e; }
+#resultCard.kill .rcName { background:rgba(26,14,18,.95); border-color:rgba(255,77,94,.28); }
+#resultCard.kill .rcRing { border-color:rgba(255,77,94,.55); }
+
+@keyframes rcPop {
+  0% { opacity:0; transform:translate(-50%, 12px) scale(.86); }
+  45% { opacity:1; transform:translate(-50%, -3px) scale(1.06); }
+  72% { transform:translate(-50%, 0) scale(.99); }
+  100% { opacity:1; transform:translate(-50%, 0) scale(1); }
+}
+@keyframes rcShake {
+  0%, 100% { margin-left:0; }
+  20% { margin-left:-4px; }
+  40% { margin-left:3px; }
+  60% { margin-left:-2px; }
+  80% { margin-left:1px; }
+}
+@keyframes rcOut {
+  to { opacity:0; transform:translate(-50%, -12px) scale(.96); }
+}
+@keyframes rcSweep {
+  to { transform:translateX(320%) skewX(-18deg); }
+}
+@keyframes rcRing {
+  0% { opacity:.85; transform:scale(.35); }
+  100% { opacity:0; transform:scale(1.7); }
+}
+
+/* ---- bottom left: mates, then materials ---- */
+#teamPanel { left:14px; top:auto; bottom:92px; transform:none; width:186px; gap:2px; }
+#teamPanel .tpHead { display:none; }
+#teamPanel .tpRows { gap:2px; }
+.tpRow, #teamPanel .tpRow {
+  padding:2px 7px; border:0; border-left:2px solid rgba(255,255,255,.22);
+  border-radius:0; background:none;
+}
+.tpRow.knocked, #teamPanel .tpRow.knocked { border-left-color:var(--danger); }
+.tpName { font-family:var(--body); font-size:10px; font-weight:600; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.95); }
+.tpState { font-family:var(--body); font-size:7.5px; font-weight:600; color:rgba(255,255,255,.6); text-shadow:0 1px 3px rgba(0,0,0,.9); }
+.tpBars { gap:2px; margin-top:2px; }
+.tpBar { height:2px; border-radius:0; background:rgba(0,0,0,.55); }
+.tpBar > i { border-radius:0; }
+
+#mats { display:none; }
+#mats .mat {
+  padding:3px 7px; border-radius:3px; background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.16);
+  font-family:var(--body); font-weight:700; font-size:10px; letter-spacing:.04em;
+}
+.mat .ic { width:8px; height:8px; border-radius:1px; }
+
+/* ---- own vitals, left of centre ---- */
+#vitals {
+  left:calc(50% - 228px); right:auto; transform:none;
+  bottom:14px; width:224px; gap:3px;
+}
+.bar {
+  height:11px; border-radius:3px; background:rgba(0,0,0,.5);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+}
+.bar > i { border-radius:3px; }
+.bar::after { display:none; }
+.bar > b {
+  left:7px; right:auto; font-family:var(--display); font-weight:800;
+  font-size:9px; line-height:10px; letter-spacing:0;
+}
+.bar.shield > i { background:linear-gradient(90deg,#4fd3f0,#1f8fd8); }
+.bar.shield::before { display:none; }
+.bar.health > i { background:linear-gradient(90deg,#7ee06a,#35a83f); }
+#pvName {
+  font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:rgba(255,255,255,.8);
+  margin-top:1px; text-shadow:0 1px 4px rgba(0,0,0,.9);
+}
+
+/* ---- bottom right: one cluster — ammo, slots, materials ---- */
+#weaponCluster {
+  position:absolute; right:12px; bottom:26px;
+  display:flex; align-items:flex-end; gap:16px;
+}
+#weaponCluster #ammoBox { position:relative; right:auto; bottom:auto; left:auto; top:auto; display:flex; flex-direction:column; align-items:flex-end; gap:0; }
+#weaponCluster #boons { right:auto; left:0; transform:translate(-100%, -50%); margin-right:0; padding-right:10px; }
+#slotRow { display:flex; align-items:flex-end; gap:7px; }
+#weaponCluster #hotbar { position:static; right:auto; bottom:auto; display:flex; gap:5px; align-items:flex-end; }
+#weaponCluster #pocketSlot { position:relative; right:auto; bottom:auto; left:auto; top:auto; }
+#matsBig {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  min-width:36px; padding-bottom:2px;
+}
+#matsBig .bigIc {
+  width:13px; height:13px; border-radius:2px;
+  background:linear-gradient(135deg,#e0b478,#8b5a2b);
+  box-shadow:0 0 10px rgba(216,168,106,.35);
+}
+#matsBig b {
+  font-family:var(--display); font-weight:800; font-size:26px; line-height:1;
+  letter-spacing:0; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+
+.slot {
+  width:clamp(34px, 9.5vw, 46px); height:clamp(44px, 12.5vw, 58px);
+  border-radius:3px; border:1px solid rgba(255,255,255,.22); background:rgba(0,0,0,.42);
+}
+.slot svg { width:80%; height:80%; }
+.slot::before {
+  content:''; position:absolute; inset:0; z-index:0; opacity:0;
+  background:linear-gradient(180deg, rgba(240,245,255,.35), rgba(240,245,255,0) 70%);
+  pointer-events:none;
+}
+.slot.active::before { opacity:1; }
+.slot.active {
+  transform:translateY(-3px); border-color:#fff; background:rgba(255,255,255,.12);
+  box-shadow:0 0 0 1px rgba(255,255,255,.45), 0 0 14px rgba(255,255,255,.18);
+}
+.slot .key { top:2px; left:4px; font-family:var(--body); font-size:7px; font-weight:600; color:rgba(255,255,255,.45); }
+.slot .cnt { bottom:3px; right:4px; font-family:var(--body); font-size:8.5px; font-weight:700; }
+.slot .rar { left:0; right:0; bottom:0; height:2px; border-radius:0; }
+.slot .ic { position:relative; z-index:1; }
+
+#ammoBox b { font-family:var(--display); font-weight:800; font-size:30px; letter-spacing:0; line-height:.95; }
+#ammoBox span { font-family:var(--display); font-weight:600; font-size:16px; color:rgba(255,255,255,.5); margin-left:3px; }
+#ammoBox i {
+  font-family:var(--body); font-weight:700; font-size:8.5px; letter-spacing:.14em;
+  color:rgba(255,255,255,.75); margin-top:1px; text-transform:uppercase; white-space:nowrap;
+}
+
+#pocketSlot {
+  width:clamp(34px, 9.5vw, 46px); height:clamp(44px, 12.5vw, 58px);
+  border-radius:3px; border:1px solid rgba(255,255,255,.22); background:rgba(0,0,0,.42);
+}
+#pocketSlot.ready { border-color:rgba(255,255,255,.4); box-shadow:none; }
+#pocketSlot .plabel { font-family:var(--body); font-size:6.5px; font-weight:600; letter-spacing:.06em; color:rgba(255,255,255,.5); }
+
+#padHints {
+  position:absolute; right:12px; bottom:6px;
+  display:flex; align-items:center; gap:5px; pointer-events:none;
+}
+#padHints .pgKey {
+  font-family:var(--body); font-weight:700; font-size:8px; letter-spacing:.04em;
+  color:rgba(255,255,255,.6); border:1px solid rgba(255,255,255,.22);
+  border-radius:2px; padding:1px 4px;
+}
+#padHints .pgDot { width:9px; height:9px; border:1.5px solid rgba(255,255,255,.6); border-radius:50%; }
+#padHints .pgDot.sq { border-radius:2px; }
+
+/* ---- prompts, build hud, misc ---- */
+#prompt {
+  bottom:128px; border-radius:3px; padding:5px 11px;
+  font-family:var(--body); font-weight:600; font-size:10px; letter-spacing:.04em;
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.18);
+}
+#useBar { bottom:114px; height:3px; border-radius:0; }
+#useBar i { border-radius:0; }
+#buildHud { left:14px; bottom:56px; gap:4px; }
+.buildPiece {
+  border-radius:3px; padding:4px 9px; font-family:var(--body); font-weight:600;
+  font-size:8.5px; letter-spacing:.1em; background:rgba(0,0,0,.45);
+  border:1px solid rgba(255,255,255,.16); color:rgba(255,255,255,.55);
+}
+.buildPiece.sel { border-color:#fff; background:rgba(255,255,255,.12); color:#fff; }
+#spectate { top:76px; border-radius:3px; }
+#mateTimer { top:176px; right:12px; border-radius:4px; }
+#ptsFeed { right:12px; bottom:200px; }
+#tourneyHud { border-radius:4px; }
+
+@media (max-width: 640px), (max-height: 520px) {
+  #modeBadge { font-size:8px; padding:3px 7px; }
+  #quitBtn { top:32px; font-size:8px; }
+  #compass { width:148px; height:22px; }
+  #compass .cLbl { font-size:7px; top:9px; }
+  #compass .cLbl.card { font-size:8px; }
+  #compass .cTick { top:3px; height:4px; }
+  #compass .cTick.major { top:1px; height:7px; }
+  #stormInfo { top:30px; width:132px; padding:4px 7px 5px; }
+  #stormTime { font-size:13px; }
+  #stormLabel { font-size:7px; }
+  #mapWrap { width:92px; top:8px; right:8px; }
+  #mapMeta { right:104px; }
+  .mapName { font-size:9px; }
+  #feed { left:10px; top:36%; max-width:58vw; }
+  .feedRow { font-size:10px; }
+  #toasts { left:52%; top:30%; }
+  #vitals { left:10px; width:128px; bottom:44px; }
+  .bar { height:9px; }
+  .bar > b { font-size:8px; line-height:8px; }
+  #weaponCluster { right:8px; bottom:24px; gap:4px; flex-direction:column; align-items:flex-end; }
+  #slotRow { gap:6px; }
+  #weaponCluster #hotbar { gap:4px; }
+  #matsBig { flex-direction:row; align-items:center; gap:4px; min-width:0; padding-bottom:0; }
+  #matsBig b { font-size:19px; }
+  #matsBig .bigIc { width:10px; height:10px; }
+  #padHints { right:8px; bottom:4px; }
+  #ammoBox b { font-size:22px; }
+  #ammoBox span { font-size:12px; }
+  #ammoBox i { max-width:60vw; }
+  #teamPanel { left:auto; right:8px; top:104px; bottom:auto; width:140px; }
+  #mateTimer { top:auto; bottom:214px; right:8px; width:132px; }
+  #prompt { bottom:96px; }
+  #useBar { bottom:82px; }
+  #buildHud { bottom:52px; left:10px; }
+}
 </style>
 </head>
 <body>
@@ -3875,7 +4262,15 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 
 <!-- ============================== HUD ============================== -->
 <div id="hud">
+  <div id="compass">
+    <div class="cWin"><div class="cStrip" id="cStrip"></div></div>
+    <div class="cMark"></div>
+  </div>
   <div id="modeBadge">SOLO</div>
+  <div id="questLine">
+    <span class="qGlyph">!</span>
+    <span class="qText"><b id="questCount">0/1</b> <span id="questText">Find a Sprite Pod</span></span>
+  </div>
   <button id="quitBtn" class="hide">LEAVE MATCH</button>
 
   <div id="blitzWheel" class="hide">
@@ -3903,6 +4298,16 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 
   <div id="killFlash"></div>
 
+  <div id="resultCard" class="hide">
+    <div class="rcRing"></div>
+    <div class="rcHead">
+      <span class="rcIcon" id="rcIcon"></span>
+      <b id="rcTitle">KNOCKED!</b>
+      <span class="rcSweep"></span>
+    </div>
+    <div class="rcName" id="rcName">PLAYER</div>
+  </div>
+
   <div id="stormWarn" class="hide">OUTSIDE THE STORM · <b id="stormDps">1</b> DPS</div>
 
   <div id="mateTimer" class="hide">
@@ -3927,6 +4332,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <span class="mapCmp e">E</span>
       <span class="mapCmp s">S</span>
       <span class="mapCmp w">W</span>
+      <span class="mapName" id="mapName">STORMFALL</span>
       <button class="mapReport" id="reportBtn" title="Report a player">!</button>
     </div>
     <div id="mapMeta">
@@ -3978,6 +4384,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <div id="livesRow" class="hide"><i></i><i></i><i></i></div>
     <div class="bar shield"><i id="shieldFill"></i><i id="overFill"></i><b id="shieldNum">0</b></div>
     <div class="bar health"><i id="hpFill"></i><b id="hpNum">100</b></div>
+    <div id="pvName">YOU</div>
   </div>
 
   <div id="tourneyHud" class="hide">
@@ -3990,15 +4397,26 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <div class="mat"><span class="ic"></span><b id="matWood">400</b></div>
   </div>
 
-  <div id="ammoBox"><b id="ammoMag">0</b><span id="ammoRes">/ 0</span><i id="weaponName">—</i><div id="boons"></div></div>
-  <div id="pocketSlot" class="ready">
-    <span class="pkey">F</span>
-    <span class="picon" id="pocketIcon"></span>
-    <div class="pfill" id="pocketFill"></div>
-    <span class="pcd" id="pocketCd"></span>
-    <span class="plabel">SHOCK</span>
+  <div id="weaponCluster">
+    <div id="ammoBox"><b id="ammoMag">0</b><span id="ammoRes">/ 0</span><i id="weaponName">—</i><div id="boons"></div></div>
+    <div id="slotRow">
+      <div id="pocketSlot" class="ready">
+        <span class="pkey">F</span>
+        <span class="picon" id="pocketIcon"></span>
+        <div class="pfill" id="pocketFill"></div>
+        <span class="pcd" id="pocketCd"></span>
+        <span class="plabel">SHOCK</span>
+      </div>
+      <div id="hotbar"></div>
+    </div>
+    <div id="matsBig"><span class="bigIc"></span><b id="matWoodBig">400</b></div>
   </div>
-  <div id="hotbar"></div>
+  <div id="padHints">
+    <span class="pgKey">LB</span>
+    <span class="pgDot sq"></span>
+    <span class="pgDot ci"></span>
+    <span class="pgKey">RB</span>
+  </div>
 
   <div id="prompt"></div>
   <div id="useBar"><i></i></div>
@@ -4676,9 +5094,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>YOU CAN SEE YOUR ARMS NOW</b> — the arms used to be single boxes turning on their own centres, which buried them inside the torso. They are two-segment limbs hanging from the shoulders now, so every motion actually shows on screen: aiming opens them out, sprinting folds the gun across the chest, firing kicks, and the body bobs and rolls out of the walk.</div></li>
-      <li><span class="wnTag">02</span><div><b>A GUN IN YOUR HAND</b> — the weapon mount hangs off the hand instead of floating beside the chest, so the model travels with the arm, the barrel points where your shots go, and the muzzle flash sits at the end of it.</div></li>
-      <li><span class="wnTag">03</span><div><b>EVERY GUN, ITS OWN MODEL</b> — no more shared silhouettes. Twenty guns got their own build: the drum gun's round magazine, the LMG's side ammo box and bipod, the sniper's big optic and bolt, the thermal's blocky heat scope, the double barrel's twin tubes and break hinge, the minigun's barrel cluster, plus rails, sights, choke tubes and wood furniture across the rest. Mythics wear gold trim, exotics wear teal.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE BUNDLE</b> — the in-game HUD has been rebuilt to a cleaner layout. A compass strip now runs across the top with the bearing marked, the storm clock tucks underneath it, and the map is a plain square with a hairline border and the name of the sector you are standing in across its bottom edge.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE INVENTORY BAR</b> — the slot row is the reference one: five upright dark boxes with a hairline outline, each item drawn in its own rarity colour, the count in the bottom-right corner and the keybind in the top-left. The held slot lifts, turns silver-white behind the weapon and takes a white outline. To its right sits the material count under a wood chip, with the button hints along the bottom edge, and the ammo line and rarity-coloured weapon name sit to its left.</div></li>
+      <li><span class="wnTag">03</span><div><b>NOTHING IN THE WAY</b> — every HUD plate lost its rounding, blur and glow: the kill feed is bare text over the world, teammate rows are a line of name and bars, alerts sit right of centre, and the whole thing stays out of the middle of the screen.</div></li>
+      <li><span class="wnTag">04</span><div><b>KNOCKED</b> — knocking someone now drops the reference banner at the bottom of the screen: the word KNOCKED! in gold on a dark plate, their name in a darker strip under it, punched in with a highlight sweep and a hard shake. Finish them and the same card comes back red with a skull reading ELIMINATED!.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7887,15 +8306,10 @@ function killBot(b, killerName) {
   if (killerName === 'You') {
     player.kills++;
     hitmarker(true);
-    toast('ELIMINATED ' + b.name.toUpperCase(), 'sub');
+    showResultCard('kill', b.name.toUpperCase());
     const rareGun = b.weapon && b.weapon.kind === 'weapon' && b.weapon.rarity >= R_ASCENDANT;
     if (rareGun) {
       showRareFind(b.weapon, 'ELIMINATION JACKPOT', 'TAKE IT OFF ' + b.name.toUpperCase() + ' · DROPPED WHERE THEY FELL');
-    } else {
-      announce({
-        kind: 'kill', kicker: 'ELIMINATION', title: b.name.toUpperCase(),
-        icon: ANN_ICONS.skull, dur: 2400,
-      });
     }
     killPulse();
     sfx('elim');
@@ -8292,11 +8706,7 @@ function knockBot(b, attackerName) {
   if (attackerName === 'You') {
     player.kills++;
     hitmarker(true);
-    toast('KNOCKED ' + b.name.toUpperCase(), 'sub');
-    announce({
-      kind: 'knock', kicker: 'KNOCKED DOWN', title: b.name.toUpperCase(),
-      sub: 'FINISH THEM OR THEY GET REVIVED', icon: ANN_ICONS.knock, dur: 2100,
-    });
+    showResultCard('knock', b.name.toUpperCase());
     killPulse();
     sfx('elim');
     awardBpXp(40);
@@ -10274,6 +10684,38 @@ function announce(opts) {
   setTimeout(() => { if (el.parentNode) el.remove(); }, dur + 430);
 }
 
+/* The knock / elimination banner: one card, gold for a knock, red with a
+   skull for a kill. It punches in, sweeps a highlight across, shakes once and
+   lifts away. */
+const resultCardEl = document.getElementById('resultCard');
+const rcTitleEl = document.getElementById('rcTitle');
+const rcNameEl = document.getElementById('rcName');
+const rcIconEl = document.getElementById('rcIcon');
+let rcInTimer = 0;
+let rcOutTimer = 0;
+
+function showResultCard(kind, name) {
+  if (!resultCardEl) return;
+  const kill = kind === 'kill';
+  clearTimeout(rcInTimer);
+  clearTimeout(rcOutTimer);
+  resultCardEl.classList.remove('on', 'out', 'hide', 'kill', 'knock');
+  void resultCardEl.offsetWidth;
+  resultCardEl.classList.add(kill ? 'kill' : 'knock');
+  if (rcTitleEl) rcTitleEl.textContent = kill ? 'ELIMINATED!' : 'KNOCKED!';
+  if (rcNameEl) rcNameEl.textContent = name || '';
+  if (rcIconEl) rcIconEl.innerHTML = kill ? SKULL_SVG : ANN_ICONS.knock;
+  resultCardEl.classList.add('on');
+  rcInTimer = setTimeout(() => {
+    resultCardEl.classList.remove('on');
+    resultCardEl.classList.add('out');
+    rcOutTimer = setTimeout(() => {
+      resultCardEl.classList.remove('out');
+      resultCardEl.classList.add('hide');
+    }, 380);
+  }, 2100);
+}
+
 /* hard-hit feedback for a kill or knock */
 function killPulse() {
   shake(0.2);
@@ -10751,12 +11193,17 @@ const pocketFillEl = document.getElementById('pocketFill');
 const pocketCdEl = document.getElementById('pocketCd');
 const pocketIconEl = document.getElementById('pocketIcon');
 const elMatWood = document.getElementById('matWood');
+const matWoodBigEl = document.getElementById('matWoodBig');
+const questCountEl = document.getElementById('questCount');
+const questTextEl = document.getElementById('questText');
 const ammoBoxEl = document.getElementById('ammoBox');
 const ammoMagEl = document.getElementById('ammoMag');
 const ammoResEl = document.getElementById('ammoRes');
 const weaponNameEl = document.getElementById('weaponName');
 const aliveEl = document.getElementById('aliveCount');
 const elimEl = document.getElementById('elimCount');
+const compassStripEl = document.getElementById('cStrip');
+const mapNameEl = document.getElementById('mapName');
 const stormLabelEl = document.getElementById('stormLabel');
 const stormBarEl = document.getElementById('stormBarFill');
 const stormTimeEl = document.getElementById('stormTime');
@@ -10837,16 +11284,19 @@ function refreshHotbar() {
   if (it && it.kind === 'weapon') {
     const w = WEAPONS[it.type];
     ammoMagEl.textContent = player.reloading ? '—' : it.mag;
-    ammoResEl.textContent = '/ ' + player.ammo[w.ammo];
+    ammoResEl.textContent = ' | ' + player.ammo[w.ammo];
     weaponNameEl.textContent = RARITY[it.rarity].name + ' ' + w.name;
+    weaponNameEl.style.color = RARITY[it.rarity].color;
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
     ammoMagEl.textContent = 'x' + it.count;
     ammoResEl.textContent = '';
     weaponNameEl.textContent = itemLabel(it);
+    weaponNameEl.style.color = '';
   } else {
     ammoMagEl.textContent = '—';
     ammoResEl.textContent = '';
     weaponNameEl.textContent = 'EMPTY';
+    weaponNameEl.style.color = '';
   }
 }
 
@@ -10857,7 +11307,7 @@ function updateAmmoReadout() {
   if (it && it.kind === 'weapon') {
     const w = WEAPONS[it.type];
     if (ammoMagEl) ammoMagEl.textContent = player.reloading ? '—' : it.mag;
-    if (ammoResEl) ammoResEl.textContent = '/ ' + player.ammo[w.ammo];
+    if (ammoResEl) ammoResEl.textContent = ' | ' + player.ammo[w.ammo];
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
     if (ammoMagEl) ammoMagEl.textContent = 'x' + it.count;
     if (ammoResEl) ammoResEl.textContent = '';
@@ -10986,8 +11436,62 @@ function fmtTime(sec) {
 
 let interactTarget = null;
 
+/* ---- compass strip + map location ---------------------------------------
+   The strip is built once from -180 to 540 degrees, so the copy that belongs
+   on screen is always inside it, and per frame it is only translated. */
+const COMPASS_PX = 3;                 // pixels per degree
+const COMPASS_LABELS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const SECTOR_NAMES = [
+  'RUSTY RIDGE', 'COPPER FLATS', 'ASH HOLLOW', 'BROKEN SPIRE', 'GREY MARSH', 'SALT BASIN',
+  'PINE BREAK', 'IRON GULCH', 'OLD QUARRY', 'WIND SCAR', 'MUD CREEK', 'STONE STEPS',
+  'BLACK RIDGE', 'HAWK POINT', 'DUST BOWL', 'FROST CUT', 'EMBER FIELD', 'LOW WATER',
+  'TALL GRASS', 'SUNKEN ROAD', 'CLIFF FACE', 'WILD ORCHARD', 'TIN ROOFS', 'NORTH GATE',
+  'KESTREL BAY', 'WET DOCK', 'FOUNDRY', 'RED CLAY', 'GLASS HILL', 'CROW PASS',
+  'MILL RACE', 'HAY FIELD', 'SILVER PIT', 'FAR SHORE', 'LAST LIGHT', 'SOUTH WALL',
+];
+
+function buildCompass() {
+  const strip = compassStripEl;
+  if (!strip || strip.dataset.built) return;
+  strip.dataset.built = '1';
+  let html = '';
+  for (let d = -180; d <= 540; d += 15) {
+    const x = (d + 180) * COMPASS_PX;
+    const norm = ((d % 360) + 360) % 360;
+    const major = norm % 45 === 0;
+    html += '<i class="cTick' + (major ? ' major' : '') + '" style="left:' + x + 'px"></i>';
+    if (major) {
+      html += '<span class="cLbl' + (norm % 90 === 0 ? ' card' : '') + '" style="left:' + x + 'px">' +
+        COMPASS_LABELS[norm / 45] + '</span>';
+    }
+  }
+  strip.innerHTML = html;
+}
+
+function updateCompass() {
+  if (!compassStripEl) return;
+  buildCompass();
+  const hdg = ((player.yaw * 180 / Math.PI) % 360 + 360) % 360;
+  const win = compassStripEl.parentNode;
+  const half = ((win && win.clientWidth) || 272) / 2;
+  compassStripEl.style.transform = 'translateX(' + (half - (hdg + 180) * COMPASS_PX) + 'px)';
+}
+
+function updateMapName() {
+  if (!mapNameEl) return;
+  const cx = clamp(Math.floor((player.pos.x / WORLD_EDGE + 1) / 2 * 6), 0, 5);
+  const cz = clamp(Math.floor((player.pos.z / WORLD_EDGE + 1) / 2 * 6), 0, 5);
+  const nm = SECTOR_NAMES[cz * 6 + cx];
+  if (mapNameEl.dataset.sec !== nm) {
+    mapNameEl.dataset.sec = nm;
+    mapNameEl.textContent = nm;
+  }
+}
+
 function updateHUD() {
   updateBlitzWheel();
+  updateCompass();
+  updateMapName();
   const hpPct = clamp(player.hp / player.maxHp, 0, 1) * 100;
   const totalShield = player.shield + (player.overshield || 0);
   const maxBoth = player.maxShield + player.maxOvershield;
@@ -11028,6 +11532,17 @@ function updateHUD() {
   }
   hpBarEl.classList.toggle('low', player.hp <= 35);
   elMatWood.textContent = player.wood;
+  if (matWoodBigEl) matWoodBigEl.textContent = player.wood;
+  if (questTextEl) {
+    const q = !player.spriteId ? 'Find a Sprite Pod'
+      : !player.spriteExtracted ? 'Extract your Sprite'
+      : 'Sprite banked';
+    if (questTextEl.dataset.q !== q) {
+      questTextEl.dataset.q = q;
+      questTextEl.textContent = q;
+      if (questCountEl) questCountEl.textContent = player.spriteExtracted ? '1/1' : '0/1';
+    }
+  }
 
   let alive = 0;
   for (const b of bots) if (b.alive) alive++;
@@ -12185,8 +12700,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 0, patch: 4 };
-const VERSION_PREV = '7.0.3';
+const VERSION = { major: 7, minor: 1, patch: 0 };
+const VERSION_PREV = '7.0.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
