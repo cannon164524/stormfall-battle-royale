@@ -4198,10 +4198,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #padHints .pgDot { width:9px; height:9px; border:1.5px solid rgba(255,255,255,.6); border-radius:50%; }
 #padHints .pgDot.sq { border-radius:2px; }
 
-/* ---- magazine dial: a quarter-circle gauge hugging the crosshair ---- */
+/* ---- magazine dial: the bottom-right quarter of a circle, hung off the
+   lower-left of the crosshair so it curves around the reticle ---- */
 #ammoGauge {
   position:absolute; left:50%; top:50%; width:124px; height:124px;
   margin:-62px 0 0 -62px; pointer-events:none; opacity:0;
+  transform:translate(-52%, -2%);
   transition:opacity .16s linear;
 }
 #ammoGauge.on { opacity:1; }
@@ -4374,9 +4376,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </div>
   <div id="ammoGauge">
     <svg viewBox="0 0 100 100" aria-hidden="true">
-      <path class="agUnder" d="M50 90A40 40 0 0 0 10 50"></path>
-      <path class="agTrack" d="M50 90A40 40 0 0 0 10 50"></path>
-      <path class="agFill" id="ammoArcFill" pathLength="100" d="M50 90A40 40 0 0 0 10 50"></path>
+      <path class="agUnder" d="M50 90A40 40 0 0 1 90 50"></path>
+      <path class="agTrack" d="M50 90A40 40 0 0 1 90 50"></path>
+      <path class="agFill" id="ammoArcFill" pathLength="100" d="M50 90A40 40 0 0 1 90 50"></path>
     </svg>
   </div>
   <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
@@ -5121,8 +5123,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SHOTGUNS HIT HARDER</b> — every shotgun got a damage bump: the pump now does 15 a pellet across 12 pellets, the double barrel 15 across 10, the tactical 14 and the combat 13, with their mythic and exotic versions lifted to match, and all of them reach further than they did.</div></li>
-      <li><span class="wnTag">02</span><div><b>SHOTGUNS HIT THE SAME</b> — buck used to be a scatter of independent pellets, so the same shot could be a one-pump or nothing at all. It is now an even pattern that turns slightly each shot, every shotgun is tighter, and a blast barely widens the spread, so the second shot of a fight lands like the first.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE AMMO RING SAT RIGHT</b> — the ammo gauge was a quarter arc centred on the reticle, which put it across the middle of the crosshair. It is the bottom-right quarter of a circle now, hung off the lower-left, so it curves around the reticle instead of sitting on it. Same drain, same gold and red warnings, just where it belongs.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12785,8 +12786,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 2 };
-const VERSION_PREV = '7.1.1';
+const VERSION = { major: 7, minor: 1, patch: 3 };
+const VERSION_PREV = '7.1.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
