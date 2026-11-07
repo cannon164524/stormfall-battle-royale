@@ -4676,9 +4676,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>RELOAD ANIMATIONS</b> — your gun now dips and rolls while it feeds a fresh magazine, the off hand swings up to the mag well and back, and the whole motion is timed to the actual reload length, so a fast SMG swap and a slow shotgun load look different.</div></li>
-      <li><span class="wnTag">02</span><div><b>PULL-OUT ON SWITCH</b> — changing slots drops the weapon out of frame and brings the new one up with a roll and a settle. You can feel which gun you just picked.</div></li>
-      <li><span class="wnTag">03</span><div><b>DRINK AND BANDAGE</b> — using a heal swaps the model in your hands to the bottle or medkit, tilts it up to your face and bobs while the timer runs, then puts the real gun back when the heal lands.</div></li>
+      <li><span class="wnTag">01</span><div><b>YOU CAN SEE YOUR ARMS NOW</b> — the arms used to be single boxes turning on their own centres, which buried them inside the torso. They are two-segment limbs hanging from the shoulders now, so every motion actually shows on screen: aiming opens them out, sprinting folds the gun across the chest, firing kicks, and the body bobs and rolls out of the walk.</div></li>
+      <li><span class="wnTag">02</span><div><b>A GUN IN YOUR HAND</b> — the weapon mount hangs off the hand instead of floating beside the chest, so the model travels with the arm, the barrel points where your shots go, and the muzzle flash sits at the end of it.</div></li>
+      <li><span class="wnTag">03</span><div><b>EVERY GUN, ITS OWN MODEL</b> — no more shared silhouettes. Twenty guns got their own build: the drum gun's round magazine, the LMG's side ammo box and bipod, the sniper's big optic and bolt, the thermal's blocky heat scope, the double barrel's twin tubes and break hinge, the minigun's barrel cluster, plus rails, sights, choke tubes and wood furniture across the rest. Mythics wear gold trim, exotics wear teal.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6539,9 +6539,56 @@ const input = {
   sprint: false, lookDX: 0, lookDY: 0,
 };
 
+/* ---------------------------------------------------------------------------
+   CHARACTER RIG
+   Arms are two-segment chains (shoulder, elbow, hand) so they bend instead of
+   swinging like planks, and the weapon hangs off the gun hand so it is held
+   rather than floating in front of the chest. The camera sits over the rig's
+   right shoulder, so local -x is the side facing the player: that hand carries
+   the gun and the animation is actually in view.
+   --------------------------------------------------------------------------- */
+const ARM_UPPER = 0.34;
+const ARM_LOWER = 0.30;
+const GUN_LEVEL = 1.58;   // mount pitch that cancels the rest arm bend
+const GUN_LIFT = 0.16;    // bore line above the palm
+const GUN_FWD = 0.16;     // keeps the wrist clear of the stock
+
+/* Rest and aim poses. Both keep the same net arm bend, so the weapon stays
+   level while the shoulder opens out. */
+const POSE = {
+  gunRest: { sh: -0.62, el: -0.96 },
+  gunAim: { sh: -1.34, el: -0.24 },
+  offRest: { sh: -0.50, el: -1.30 },
+  offAim: { sh: -1.30, el: -0.36 },
+};
+
+function buildArm(sleeve, skin, accent, side) {
+  const root = new THREE.Group();
+  root.position.set(side * 0.42, 1.40, 0.0);
+
+  const upper = new THREE.Mesh(new THREE.BoxGeometry(0.17, ARM_UPPER, 0.19), mat(sleeve, true));
+  upper.position.y = -ARM_UPPER * 0.5;
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.1, 0.21), mat(accent, true));
+  pad.position.y = -ARM_UPPER + 0.03;
+  root.add(upper, pad);
+
+  const elbow = new THREE.Group();
+  elbow.position.y = -ARM_UPPER;
+  const lower = new THREE.Mesh(new THREE.BoxGeometry(0.15, ARM_LOWER, 0.17), mat(sleeve, true));
+  lower.position.y = -ARM_LOWER * 0.5;
+  const hand = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.15, 0.18), mat(skin, true));
+  hand.position.y = -ARM_LOWER - 0.06;
+  elbow.add(lower, hand);
+  root.add(elbow);
+
+  return { root, elbow, hand };
+}
+
 function makeRig(shirt, pants, skin, accent) {
   if (accent === undefined) accent = 0x1b2430;
   const g = new THREE.Group();
+  const body = new THREE.Group();   // torso, head and arms bob as one
+  g.add(body);
 
   const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.84, 0.44), mat(shirt, true));
   torso.position.y = 1.08;
@@ -6559,19 +6606,15 @@ function makeRig(shirt, pants, skin, accent) {
   const pack = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.6, 0.26), mat(0x2f3a4a, true));
   pack.position.set(0, 1.12, -0.36);
 
-  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.56, 0.22), mat(shirt, true));
-  armL.position.set(-0.32, 1.12, 0.1);
-  armL.rotation.x = -1.05;
-  const handL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.18), mat(skin, true));
-  handL.position.set(0, -0.36, 0);
-  armL.add(handL);
-
-  const armR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.56, 0.22), mat(shirt, true));
-  armR.position.set(0.44, 1.12, 0.1);
-  armR.rotation.x = -1.25;
-  const handR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.18), mat(skin, true));
-  handR.position.set(0, -0.36, 0);
-  armR.add(handR);
+  const gunArm = buildArm(shirt, skin, accent, -1);
+  const offArm = buildArm(shirt, skin, accent, 1);
+  gunArm.root.rotation.x = POSE.gunRest.sh;
+  gunArm.root.rotation.z = 0.14;       // held a little across the chest
+  gunArm.elbow.rotation.x = POSE.gunRest.el;
+  offArm.root.rotation.x = POSE.offRest.sh;
+  offArm.root.rotation.z = -0.18;      // support hand reaches for the gun
+  offArm.elbow.rotation.x = POSE.offRest.el;
+  body.add(gunArm.root, offArm.root);
 
   const shL = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.36), mat(accent, true));
   shL.position.set(-0.5, 1.42, 0.02);
@@ -6590,8 +6633,10 @@ function makeRig(shirt, pants, skin, accent) {
   bootR.position.set(0, -0.36, 0.03);
   legR.add(bootR);
 
+  // The mount is parented to the gun hand, so the weapon travels with the arm.
   const mount = new THREE.Group();
-  mount.position.set(0.3, 1.14, 0.34);
+  mount.rotation.x = GUN_LEVEL;
+  gunArm.hand.add(mount);
 
   const flash = new THREE.Mesh(
     new THREE.SphereGeometry(0.13, 6, 4),
@@ -6599,23 +6644,39 @@ function makeRig(shirt, pants, skin, accent) {
   );
   mount.add(flash);
 
-  g.add(torso, chest, hip, head, helmet, visor, pack, armL, armR, shL, shR, legL, legR, mount);
+  body.add(torso, chest, hip, head, helmet, visor, pack, shL, shR);
+  g.add(body, legL, legR);
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   flash.castShadow = false;
 
-  return { group: g, legL, legR, armL, armR, mount, flash, weaponType: null, muzzleZ: 0.6, flashT: 0 };
+  return {
+    group: g, body, legL, legR,
+    armGun: gunArm.root, elbowGun: gunArm.elbow, handGun: gunArm.hand,
+    armOff: offArm.root, elbowOff: offArm.elbow,
+    mount, flash, weaponType: null, muzzleZ: 0.6,
+    flashT: 0, kickT: 0, aimBlend: 0, switchT: 0,
+  };
 }
 
-/* --- blocky 3D weapon models, all built from primitives --- */
+/* --- one blocky 3D model per gun, built from primitives. Everything is
+   modelled around the bore line (y = 0, z = 0 sits in the grip) and the
+   returned tip is the muzzle, which is where the flash and tracer start. --- */
 function buildWeaponModel(type) {
+  const raw = type;
   if (SPECIAL_BASE[type]) type = SPECIAL_BASE[type];
+  const gold = raw.indexOf('mythic') === 0;
+  const neon = raw.indexOf('exotic') === 0;
+
   const g = new THREE.Group();
   const metal = mat(0x2b3038, true);
   const dark = mat(0x161c22, true);
   const poly = mat(0x3d4450, true);
+  const steel = mat(0x4d5665, true);
   const wood = mat(0x8b5a2f, true);
-  const accent = mat(0x6d7787, true);
+  const accent = gold ? mat(0xf2c14e, true) : neon ? mat(0x3ff5ff, true) : mat(0x6d7787, true);
   const glass = new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.85 });
+  const glowRed = new THREE.MeshBasicMaterial({ color: 0xff4d5e });
+  const glowTeal = new THREE.MeshBasicMaterial({ color: 0x5eead4 });
 
   function box(w, h, d, m, x, y, z, rx, ry, rz) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
@@ -6629,114 +6690,257 @@ function buildWeaponModel(type) {
     const c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, 8), m);
     c.position.set(x, y, z);
     if (axis === 'z') c.rotation.x = Math.PI / 2;
+    else if (axis === 'x') c.rotation.z = Math.PI / 2;
     c.castShadow = true;
     g.add(c);
     return c;
   }
+  // a few rail notches, so rifles read as rifles even from behind
+  function rail(x, z, len) {
+    for (let i = 0; i < 4; i++) box(0.05, 0.022, len * 0.16, dark, x, 0.1, z - len / 2 + (i + 0.5) * (len / 4));
+  }
 
   let tip = 0.6;
 
-  if (type === 'ar' || type === 'heavyar' || type === 'drum' || type === 'burst' || type === 'lmg') {
-    box(0.11, 0.16, 0.62, metal, 0, 0, 0);
-    cyl(0.028, 0.028, 0.46, dark, 0, 0.02, 0.5, 'z');
-    box(0.09, 0.1, 0.3, poly, 0, -0.01, -0.44);
-    box(0.06, 0.22, 0.1, dark, 0, -0.16, 0.04, 0.22, 0, 0);
-    box(0.05, 0.12, 0.05, dark, 0, -0.14, -0.12, -0.2, 0, 0);
-    box(0.04, 0.05, 0.3, accent, 0, 0.1, 0.1);
-    box(0.03, 0.08, 0.03, dark, 0, 0.13, 0.62);
+  if (type === 'pistol') {
+    box(0.075, 0.1, 0.32, metal, 0, 0.01, 0.02);          // slide
+    box(0.07, 0.06, 0.22, dark, 0, -0.07, 0.0);           // frame
+    cyl(0.026, 0.026, 0.08, steel, 0, 0.02, 0.22, 'z');   // barrel crown
+    box(0.08, 0.26, 0.11, poly, 0, -0.2, -0.08, 0.2);     // grip
+    box(0.03, 0.05, 0.1, dark, 0, -0.09, 0.1);            // trigger guard
+    box(0.02, 0.03, 0.025, accent, 0, 0.075, 0.16);       // front sight
+    box(0.04, 0.03, 0.025, accent, 0, 0.075, -0.1);       // rear sight
+    tip = 0.26;
+  } else if (type === 'silenced') {
+    box(0.075, 0.1, 0.28, metal, 0, 0.01, 0.0);
+    box(0.07, 0.06, 0.22, dark, 0, -0.07, -0.02);
+    box(0.08, 0.26, 0.11, poly, 0, -0.2, -0.1, 0.2);
+    box(0.02, 0.04, 0.09, dark, 0, -0.09, 0.08);
+    cyl(0.05, 0.05, 0.34, dark, 0, 0.02, 0.3, 'z');       // suppressor body
+    cyl(0.054, 0.054, 0.03, accent, 0, 0.02, 0.46, 'z');  // end cap
+    box(0.045, 0.03, 0.025, accent, 0, 0.075, -0.08);     // tall rear sight
+    tip = 0.48;
+  } else if (type === 'smg') {
+    box(0.1, 0.16, 0.4, metal, 0, 0.0, 0.0);              // receiver
+    box(0.09, 0.09, 0.2, poly, 0, -0.02, 0.26);           // handguard
+    cyl(0.025, 0.025, 0.16, dark, 0, 0.02, 0.44, 'z');    // barrel
+    box(0.05, 0.05, 0.05, accent, 0, 0.02, 0.5);          // muzzle
+    box(0.08, 0.24, 0.1, poly, 0, -0.2, 0.0, 0.12);       // magazine
+    box(0.06, 0.17, 0.08, dark, 0, -0.15, -0.08, 0.1);    // grip
+    box(0.03, 0.03, 0.18, accent, 0, 0.095, 0.06);        // top rail
+    box(0.09, 0.07, 0.12, dark, 0, 0.0, -0.26);           // stock hinge
+    box(0.05, 0.13, 0.05, dark, 0, -0.03, -0.34);         // folded stock
+    tip = 0.52;
+  } else if (type === 'tacsmg') {
+    box(0.1, 0.16, 0.38, metal, 0, 0.0, 0.0);
+    box(0.09, 0.09, 0.22, poly, 0, -0.02, 0.28);
+    cyl(0.023, 0.023, 0.24, dark, 0, 0.02, 0.46, 'z');
+    box(0.07, 0.06, 0.08, accent, 0, 0.02, 0.58);         // muzzle brake
+    box(0.08, 0.28, 0.1, poly, 0, -0.21, 0.02, 0.1);      // long magazine
+    box(0.05, 0.12, 0.05, dark, 0, -0.14, 0.16, -0.4);    // angled foregrip
+    box(0.06, 0.16, 0.08, dark, 0, -0.14, -0.12);
+    box(0.06, 0.07, 0.1, dark, 0, 0.13, 0.02);            // reflex housing
+    box(0.05, 0.05, 0.015, glass, 0, 0.14, 0.07);         // lens
+    box(0.05, 0.2, 0.06, dark, 0, -0.02, -0.28);
+    tip = 0.64;
+  } else if (type === 'drum') {
+    box(0.11, 0.15, 0.44, metal, 0, 0.0, 0.0);            // receiver
+    box(0.1, 0.1, 0.3, wood, 0, -0.01, -0.32);            // buttstock
+    box(0.09, 0.12, 0.28, wood, 0, -0.02, 0.24);          // foregrip
+    cyl(0.028, 0.028, 0.36, dark, 0, 0.03, 0.52, 'z');    // barrel
+    cyl(0.034, 0.034, 0.08, steel, 0, 0.03, 0.68, 'z');   // compensator
+    cyl(0.17, 0.17, 0.1, dark, 0, -0.18, -0.02, 'x');     // drum magazine
+    cyl(0.06, 0.06, 0.12, accent, 0, -0.18, -0.02, 'x');  // drum hub
+    box(0.06, 0.15, 0.08, wood, 0, -0.14, -0.16, 0.1);    // grip
+    box(0.05, 0.06, 0.08, accent, 0, 0.1, -0.1);          // rear sight
+    tip = 0.74;
+  } else if (type === 'ar') {
+    box(0.09, 0.13, 0.5, metal, 0, 0.01, 0.0);            // upper receiver
+    box(0.08, 0.1, 0.26, poly, 0, -0.01, -0.16);          // lower
+    box(0.075, 0.07, 0.28, poly, 0, 0.0, 0.34);           // handguard
+    rail(0, 0.34, 0.26);
+    cyl(0.022, 0.022, 0.3, dark, 0, 0.02, 0.54, 'z');     // barrel
+    box(0.03, 0.09, 0.03, dark, 0, 0.1, 0.42);            // front post
+    box(0.05, 0.05, 0.05, dark, 0, 0.095, -0.1);          // rear sight
+    box(0.07, 0.22, 0.095, dark, 0, -0.17, 0.04, 0.22);   // magazine
+    box(0.065, 0.14, 0.085, dark, 0, -0.26, 0.0, 0.42);
+    box(0.06, 0.17, 0.08, poly, 0, -0.13, -0.14, 0.14);   // grip
+    cyl(0.032, 0.035, 0.14, dark, 0, 0.01, -0.32, 'z');   // buffer tube
+    box(0.07, 0.13, 0.18, poly, 0, -0.01, -0.44);         // stock
+    tip = 0.7;
+  } else if (type === 'heavyar') {
+    box(0.11, 0.16, 0.54, metal, 0, 0.01, 0.0);
+    box(0.1, 0.12, 0.28, poly, 0, -0.01, -0.2);
+    box(0.12, 0.1, 0.3, poly, 0, 0.0, 0.34);              // bulky handguard
+    rail(0, 0.34, 0.28);
+    cyl(0.032, 0.03, 0.36, dark, 0, 0.02, 0.56, 'z');
+    box(0.1, 0.09, 0.1, accent, 0, 0.02, 0.76);           // muzzle brake
+    box(0.09, 0.3, 0.12, dark, 0, -0.2, 0.06, 0.16);      // heavy magazine
+    box(0.07, 0.18, 0.09, poly, 0, -0.14, -0.16, 0.14);
+    box(0.09, 0.15, 0.24, poly, 0, -0.01, -0.46);
+    box(0.03, 0.1, 0.03, accent, 0, 0.105, 0.44);
+    tip = 0.82;
+  } else if (type === 'burst') {
+    box(0.09, 0.14, 0.5, metal, 0, 0.01, 0.0);
+    cyl(0.022, 0.022, 0.4, dark, 0, 0.02, 0.5, 'z');
+    box(0.06, 0.06, 0.06, accent, 0, 0.02, 0.72);         // flash hider
+    box(0.05, 0.05, 0.3, dark, 0, 0.14, 0.08);            // carry handle
+    box(0.04, 0.08, 0.04, dark, 0, 0.09, -0.06);
+    box(0.04, 0.08, 0.04, dark, 0, 0.09, 0.22);
+    box(0.07, 0.22, 0.09, dark, 0, -0.17, 0.04, 0.1);
+    box(0.06, 0.16, 0.08, poly, 0, -0.13, -0.16, 0.12);
+    box(0.08, 0.12, 0.22, poly, 0, 0.0, -0.4);
+    box(0.075, 0.09, 0.24, poly, 0, -0.02, 0.3);
     tip = 0.76;
-    if (type === 'heavyar') {
-      box(0.13, 0.1, 0.34, dark, 0, -0.2, -0.02);
-      g.scale.set(1.12, 1.1, 1.12);
-      tip = 0.82;
-    }
-    if (type === 'lmg') {
-      box(0.17, 0.2, 0.26, dark, 0, -0.22, 0.02);
-      box(0.05, 0.9, 0.05, accent, 0, -0.22, 0.02, 0, 0, 0.5);
-      box(0.05, 0.05, 0.2, accent, 0, 0.14, 0.2);
-      g.scale.set(1.16, 1.12, 1.16);
-      tip = 0.86;
-    }
-  } else if (type === 'scopedar' || type === 'redeye' || type === 'tactical' || type === 'marksman' || type === 'reddot' || type === 'holo' || type === 'hunting') {
-    box(0.11, 0.16, 0.6, metal, 0, 0, 0);
-    cyl(0.028, 0.028, 0.5, dark, 0, 0.02, 0.48, 'z');
-    box(0.09, 0.1, 0.3, poly, 0, -0.01, -0.42);
-    box(0.06, 0.22, 0.1, dark, 0, -0.16, 0.04, 0.22, 0, 0);
-    box(0.05, 0.12, 0.05, dark, 0, -0.14, -0.12, -0.2, 0, 0);
-    cyl(0.05, 0.05, 0.3, dark, 0, 0.15, 0.06, 'z');
-    box(0.04, 0.06, 0.08, accent, 0, 0.09, -0.02);
-    box(0.04, 0.06, 0.08, accent, 0, 0.09, 0.14);
-    if (type === 'redeye') {
-      box(0.02, 0.02, 0.02, new THREE.MeshBasicMaterial({ color: 0xff4d5e }), 0, 0.15, 0.22);
-    }
+  } else if (type === 'lmg') {
+    box(0.13, 0.17, 0.5, metal, 0, 0.01, 0.0);
+    box(0.13, 0.16, 0.22, poly, 0, 0.0, -0.3);            // rear housing
+    cyl(0.03, 0.03, 0.46, dark, 0, 0.02, 0.48, 'z');
+    cyl(0.042, 0.042, 0.1, accent, 0, 0.02, 0.7, 'z');    // muzzle
+    box(0.1, 0.26, 0.22, dark, 0.13, -0.1, 0.02);         // side ammo box
+    box(0.07, 0.18, 0.08, poly, 0, -0.15, -0.14, 0.12);
+    box(0.03, 0.26, 0.03, dark, -0.07, -0.16, 0.42, 0, 0, 0.34);  // bipod
+    box(0.03, 0.26, 0.03, dark, 0.07, -0.16, 0.42, 0, 0, -0.34);
+    rail(0, 0.12, 0.3);
+    box(0.04, 0.1, 0.06, dark, 0, 0.11, -0.18);
+    tip = 0.78;
+  } else if (type === 'holo') {
+    box(0.09, 0.14, 0.54, metal, 0, 0.01, 0.0);
+    box(0.09, 0.1, 0.36, poly, 0, 0.0, 0.34);             // long handguard
+    rail(0, 0.34, 0.32);
+    cyl(0.023, 0.023, 0.26, dark, 0, 0.02, 0.56, 'z');
+    box(0.08, 0.1, 0.12, dark, 0, 0.14, 0.04);            // holo housing
+    box(0.06, 0.06, 0.015, glass, 0, 0.15, 0.1);          // reticle glass
+    box(0.07, 0.24, 0.1, dark, 0, -0.18, 0.06, 0.18);
+    box(0.06, 0.17, 0.08, poly, 0, -0.15, -0.16, 0.12);
+    box(0.08, 0.13, 0.22, poly, 0, 0.0, -0.42);
     tip = 0.72;
-  } else if (type === 'smg' || type === 'tacsmg') {
-    box(0.1, 0.15, 0.44, metal, 0, 0, 0);
-    cyl(0.026, 0.026, 0.2, dark, 0, 0.02, 0.32, 'z');
-    box(0.06, 0.26, 0.09, dark, 0, -0.19, 0.02);
-    box(0.05, 0.12, 0.05, dark, 0, -0.13, -0.1);
-    box(0.03, 0.06, 0.02, accent, 0, 0.1, 0.22);
-    box(0.06, 0.05, 0.18, poly, 0, 0.01, -0.3);
-    tip = 0.46;
-    if (type === 'tacsmg') {
-      box(0.05, 0.04, 0.24, accent, 0, 0.1, 0.08);
-      box(0.03, 0.03, 0.04, dark, 0, 0.12, 0.22);
-      tip = 0.5;
-    }
-  } else if (type === 'shotgun' || type === 'doublebarrel' || type === 'combat' || type === 'tacshot') {
-    box(0.1, 0.14, 0.36, metal, 0, 0, -0.02);
-    cyl(0.034, 0.034, 0.72, dark, 0, 0.04, 0.44, 'z');
-    cyl(0.03, 0.03, 0.5, accent, 0, -0.06, 0.32, 'z');
-    box(0.08, 0.07, 0.26, accent, 0, -0.02, 0.26);
-    box(0.09, 0.11, 0.34, wood, 0, -0.01, -0.4);
-    box(0.05, 0.13, 0.05, wood, 0, -0.13, -0.12, -0.2, 0, 0);
-    tip = 0.84;
-    if (type === 'doublebarrel') {
-      cyl(0.032, 0.034, 0.6, dark, 0.045, 0.04, 0.4, 'z');
-      cyl(0.03, 0.03, 0.3, wood, 0, -0.01, -0.42);
-      tip = 0.72;
-    }
-  } else if (type === 'sniper' || type === 'railgun' || type === 'thermal' || type === 'lever') {
-    box(0.09, 0.13, 0.5, metal, 0, 0, 0);
-    cyl(0.025, 0.025, 0.9, dark, 0, 0.02, 0.62, 'z');
-    cyl(0.045, 0.045, 0.34, dark, 0, 0.13, 0.06, 'z');
-    box(0.05, 0.05, 0.12, accent, 0, 0.09, -0.06);
-    box(0.05, 0.06, 0.12, accent, 0, 0.09, 0.16);
-    box(0.1, 0.12, 0.4, wood, 0, -0.01, -0.5);
-    box(0.05, 0.12, 0.05, dark, 0, -0.12, -0.18, -0.2, 0, 0);
-    tip = 1.08;
-    if (type === 'railgun') {
-      cyl(0.032, 0.032, 0.7, accent, 0, 0.02, 1.0, 'z');
-      box(0.06, 0.05, 0.24, new THREE.MeshBasicMaterial({ color: 0x5eead4 }), 0, 0.16, 0.42);
-      tip = 1.36;
-    }
-    if (type === 'lever') {
-      box(0.03, 0.16, 0.03, accent, 0, -0.06, -0.04, 0.55, 0, 0);
-      box(0.02, 0.02, 0.14, accent, 0, 0.06, 0.12);
-      box(0.05, 0.05, 0.2, wood, 0, 0.01, 0.28);
-      tip = 1.08;
-    }
+  } else if (type === 'hunting') {
+    box(0.09, 0.12, 0.34, metal, 0, 0.0, -0.06);          // receiver
+    cyl(0.024, 0.024, 0.72, dark, 0, 0.02, 0.32, 'z');    // barrel
+    box(0.1, 0.16, 0.34, wood, 0, -0.02, -0.34);          // buttstock
+    box(0.09, 0.1, 0.32, wood, 0, -0.02, 0.2);            // forend
+    box(0.06, 0.1, 0.08, wood, 0, -0.12, -0.16, 0.12);    // wrist
+    cyl(0.028, 0.028, 0.16, dark, 0, 0.1, -0.04, 'z');    // scope body
+    cyl(0.036, 0.036, 0.03, steel, 0, 0.1, 0.04, 'z');
+    cyl(0.036, 0.036, 0.03, steel, 0, 0.1, -0.12, 'z');
+    box(0.04, 0.05, 0.02, glass, 0, 0.1, 0.055);
+    cyl(0.012, 0.012, 0.12, accent, 0.075, 0.0, -0.1, 'x'); // bolt handle
+    box(0.02, 0.03, 0.03, dark, 0.13, 0.0, -0.12);
+    tip = 0.7;
+  } else if (type === 'sniper') {
+    box(0.09, 0.13, 0.36, metal, 0, 0.0, -0.02);
+    cyl(0.024, 0.022, 0.94, dark, 0, 0.02, 0.42, 'z');    // long barrel
+    cyl(0.032, 0.032, 0.08, accent, 0, 0.02, 0.86, 'z');  // muzzle
+    box(0.11, 0.16, 0.34, poly, 0, -0.02, -0.4);          // skeleton stock
+    box(0.06, 0.12, 0.08, dark, 0, -0.12, -0.16, 0.1);
+    cyl(0.055, 0.05, 0.4, dark, 0, 0.14, 0.04, 'z');      // big scope
+    cyl(0.062, 0.062, 0.04, steel, 0, 0.14, 0.24, 'z');   // objective
+    box(0.045, 0.045, 0.02, glass, 0, 0.14, 0.26);
+    cyl(0.03, 0.03, 0.06, accent, 0, 0.1, -0.1, 'y');     // elevation turret
+    cyl(0.02, 0.02, 0.06, dark, 0.065, 0.14, -0.04, 'x'); // windage turret
+    box(0.02, 0.03, 0.12, accent, 0.07, 0.02, -0.06);     // bolt handle
+    box(0.03, 0.3, 0.03, dark, -0.06, -0.18, 0.56, 0, 0, 0.3);   // bipod
+    box(0.03, 0.3, 0.03, dark, 0.06, -0.18, 0.56, 0, 0, -0.3);
+    tip = 0.9;
+  } else if (type === 'thermal') {
+    box(0.1, 0.15, 0.42, metal, 0, 0.0, -0.02);
+    cyl(0.026, 0.024, 0.88, dark, 0, 0.02, 0.4, 'z');
+    cyl(0.036, 0.036, 0.1, steel, 0, 0.02, 0.8, 'z');
+    box(0.11, 0.17, 0.34, poly, 0, -0.02, -0.42);
+    box(0.06, 0.12, 0.08, dark, 0, -0.12, -0.18, 0.1);
+    box(0.115, 0.14, 0.32, dark, 0, 0.15, 0.04);          // thermal block
+    box(0.095, 0.095, 0.02, glowTeal, 0, 0.15, 0.21);     // lens
+    box(0.055, 0.05, 0.03, glowRed, 0, 0.15, -0.13);      // status lamp
+    box(0.03, 0.05, 0.1, accent, 0.075, 0.15, 0.0);       // side dial
+    box(0.045, 0.07, 0.1, accent, 0, 0.06, -0.16);
+    box(0.03, 0.14, 0.03, dark, -0.06, -0.14, 0.5, 0, 0, 0.26);
+    box(0.03, 0.14, 0.03, dark, 0.06, -0.14, 0.5, 0, 0, -0.26);
+    tip = 0.86;
+  } else if (type === 'lever') {
+    box(0.09, 0.13, 0.3, metal, 0, 0.0, -0.08);
+    cyl(0.022, 0.022, 0.76, dark, 0, 0.03, 0.3, 'z');     // barrel
+    cyl(0.02, 0.02, 0.5, accent, 0, -0.05, 0.2, 'z');     // tube magazine
+    box(0.1, 0.15, 0.4, wood, 0, -0.01, -0.36);           // stock
+    box(0.09, 0.09, 0.34, wood, 0, -0.02, 0.26);          // forend
+    box(0.05, 0.16, 0.07, wood, 0, -0.13, -0.14, 0.2);    // wrist
+    box(0.03, 0.06, 0.03, accent, 0, 0.1, -0.18);         // hammer
+    const loop = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.014, 6, 12, Math.PI * 1.2), steel);
+    loop.position.set(0, -0.12, -0.04);
+    loop.rotation.y = Math.PI / 2;
+    loop.castShadow = true;
+    g.add(loop);
+    tip = 0.68;
+  } else if (type === 'shotgun') {
+    cyl(0.034, 0.034, 0.74, dark, 0, 0.04, 0.34, 'z');    // barrel
+    cyl(0.026, 0.026, 0.54, accent, 0, -0.07, 0.22, 'z'); // magazine tube
+    box(0.1, 0.15, 0.3, metal, 0, 0.0, -0.06);            // receiver
+    box(0.1, 0.1, 0.24, poly, 0, -0.04, 0.22);            // pump slide
+    box(0.11, 0.11, 0.12, poly, 0, -0.04, 0.2);           // pump grip
+    box(0.1, 0.2, 0.4, wood, 0, -0.03, -0.38);            // stock
+    box(0.06, 0.14, 0.09, wood, 0, -0.13, -0.14, 0.16);   // wrist
+    box(0.02, 0.03, 0.02, accent, 0, 0.11, 0.68);         // bead sight
+    tip = 0.72;
+  } else if (type === 'tacshot') {
+    cyl(0.032, 0.032, 0.6, dark, 0, 0.04, 0.32, 'z');
+    box(0.11, 0.16, 0.4, metal, 0, 0.0, -0.06);
+    box(0.1, 0.1, 0.22, poly, 0, -0.01, 0.22);            // handguard
+    box(0.09, 0.24, 0.11, dark, 0, -0.2, 0.04, 0.14);     // box magazine
+    box(0.06, 0.16, 0.09, poly, 0, -0.14, -0.18, 0.12);
+    box(0.06, 0.08, 0.1, dark, 0, 0.13, 0.0);             // red dot housing
+    box(0.04, 0.04, 0.015, glowRed, 0, 0.14, 0.06);
+    box(0.09, 0.14, 0.26, poly, 0, -0.01, -0.38);         // tactical stock
+    box(0.07, 0.06, 0.1, accent, 0, 0.04, 0.56);          // muzzle
+    tip = 0.62;
+  } else if (type === 'combat') {
+    cyl(0.03, 0.03, 0.5, dark, 0, 0.04, 0.32, 'z');
+    cyl(0.044, 0.044, 0.08, accent, 0, 0.04, 0.54, 'z');  // choke
+    box(0.11, 0.15, 0.36, metal, 0, 0.0, -0.04);
+    box(0.09, 0.23, 0.1, dark, 0, -0.19, 0.06, 0.12);     // box magazine
+    box(0.06, 0.16, 0.09, poly, 0, -0.14, -0.16, 0.12);
+    box(0.09, 0.13, 0.24, poly, 0, -0.01, -0.34);
+    box(0.05, 0.05, 0.06, dark, 0, 0.1, 0.26);            // front sight
+    box(0.03, 0.05, 0.03, accent, 0, 0.09, 0.42);
+    tip = 0.58;
+  } else if (type === 'doublebarrel') {
+    cyl(0.032, 0.032, 0.72, dark, -0.045, 0.035, 0.32, 'z');
+    cyl(0.032, 0.032, 0.72, dark, 0.045, 0.035, 0.32, 'z');
+    box(0.11, 0.12, 0.28, metal, 0, 0.0, -0.08);          // action
+    box(0.11, 0.07, 0.18, wood, 0, -0.06, 0.16);          // forend
+    box(0.1, 0.17, 0.42, wood, 0, -0.02, -0.4);           // stock
+    box(0.06, 0.14, 0.09, wood, 0, -0.13, -0.14, 0.16);   // wrist
+    cyl(0.016, 0.016, 0.13, accent, 0.05, -0.05, -0.02, 'z'); // break hinge
+    box(0.02, 0.03, 0.02, accent, 0, 0.09, 0.64);         // bead
+    tip = 0.68;
   } else if (type === 'minigun') {
-    box(0.14, 0.16, 0.4, metal, 0, 0, -0.02);
+    box(0.16, 0.18, 0.36, metal, 0, 0.0, -0.1);           // motor housing
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * TAU;
-      cyl(0.018, 0.018, 0.62, dark, Math.cos(a) * 0.045, 0.04 + Math.sin(a) * 0.045, 0.5, 'z');
+      cyl(0.02, 0.02, 0.72, dark, Math.cos(a) * 0.05, Math.sin(a) * 0.05, 0.5, 'z');
     }
-    cyl(0.075, 0.075, 0.12, accent, 0, 0.04, 0.24, 'z');
-    box(0.12, 0.24, 0.13, dark, 0, -0.2, -0.04, 0.12, 0, 0);
-    box(0.07, 0.05, 0.22, poly, 0, 0.02, -0.34);
+    cyl(0.085, 0.085, 0.1, accent, 0, 0.0, 0.2, 'z');     // barrel clamp
+    cyl(0.075, 0.075, 0.08, steel, 0, 0.0, 0.84, 'z');    // muzzle plate
+    box(0.15, 0.16, 0.2, dark, 0.02, -0.17, -0.26);       // ammo box
+    box(0.06, 0.16, 0.09, poly, 0, -0.14, -0.02, 0.12);   // grip
+    box(0.05, 0.16, 0.09, poly, 0.16, -0.14, -0.02, 0.12);
+    box(0.04, 0.06, 0.28, accent, 0, 0.12, -0.08);
     tip = 0.86;
   } else if (type === 'heal') {
-    cyl(0.055, 0.055, 0.2, mat(0x3fa9f5, true), 0, -0.02, 0);
-    cyl(0.02, 0.02, 0.06, mat(0xd8e6f2, true), 0, 0.1, 0);
-    box(0.09, 0.09, 0.09, glass, 0, -0.04, 0);
-    tip = 0.06;
+    cyl(0.062, 0.062, 0.22, mat(0x3fa9f5, true), 0, -0.03, 0, 'y');  // bottle
+    cyl(0.03, 0.03, 0.07, mat(0x3fa9f5, true), 0, 0.11, 0, 'y');      // neck
+    cyl(0.035, 0.035, 0.04, mat(0xd8e6f2, true), 0, 0.16, 0, 'y');    // cap
+    box(0.13, 0.07, 0.13, mat(0xeaf3ff, true), 0, -0.03, 0);          // label
+    box(0.14, 0.02, 0.14, glass, 0, 0.05, 0);
+    tip = 0.2;
   } else if (type === 'grenade') {
-    const s = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), mat(0x4a5568, true));
+    const s = new THREE.Mesh(new THREE.SphereGeometry(0.092, 8, 6), mat(0x3f4d3a, true));
     s.castShadow = true;
     g.add(s);
-    box(0.03, 0.05, 0.02, accent, 0, 0.1, 0);
-    box(0.05, 0.02, 0.02, accent, 0.03, 0.11, 0);
+    box(0.13, 0.02, 0.02, dark, 0, 0.02, 0.075);
+    box(0.02, 0.02, 0.13, dark, 0.075, 0.02, 0);
+    cyl(0.032, 0.032, 0.06, steel, 0, 0.11, 0, 'y');      // fuse cap
+    box(0.02, 0.07, 0.02, accent, 0.045, 0.09, 0);
+    box(0.06, 0.025, 0.02, accent, 0.05, 0.13, 0);
     tip = 0.02;
   } else if (type === 'grappler') {
     box(0.14, 0.1, 0.34, metal, 0, 0, 0.05);
@@ -6745,11 +6949,14 @@ function buildWeaponModel(type) {
     box(0.03, 0.03, 0.16, new THREE.MeshBasicMaterial({ color: 0x7dffb0 }), 0, 0.02, 0.34);
     tip = 0.4;
   } else if (type === 'revolver') {
-    box(0.09, 0.12, 0.36, metal, 0, 0, 0.02);
-    box(0.08, 0.22, 0.1, dark, 0, -0.15, -0.08, 0.16, 0, 0);
-    cyl(0.055, 0.055, 0.14, accent, 0, -0.02, 0.02, 'z');
-    cyl(0.045, 0.045, 0.2, dark, 0, 0.12, 0.05, 'z');
-    tip = 0.34;
+    box(0.08, 0.12, 0.34, metal, 0, 0.01, 0.04);          // frame
+    cyl(0.06, 0.06, 0.13, accent, 0, -0.01, 0.0, 'x');    // cylinder
+    cyl(0.028, 0.026, 0.26, dark, 0, 0.02, 0.28, 'z');    // barrel
+    box(0.02, 0.03, 0.22, steel, 0, 0.09, 0.06);          // top strap
+    box(0.06, 0.2, 0.09, dark, 0, -0.15, -0.1, 0.22);     // grip
+    box(0.03, 0.05, 0.03, accent, 0, 0.1, -0.08);         // hammer
+    box(0.02, 0.03, 0.02, accent, 0, 0.075, 0.2);         // front sight
+    tip = 0.42;
   } else {
     box(0.08, 0.11, 0.34, metal, 0, 0, 0.02);
     box(0.07, 0.22, 0.09, dark, 0, -0.15, -0.08, 0.16, 0, 0);
@@ -6772,9 +6979,10 @@ function setRigWeapon(rig, type) {
   if (!firstEquip && type !== null) rig.switchT = 0.45;
   if (!type) return;
   const built = buildWeaponModel(type);
+  built.group.position.set(0, GUN_LIFT, GUN_FWD);
   rig.mount.add(built.group);
   rig.muzzleZ = built.tip;
-  rig.flash.position.set(0, 0.02, built.tip);
+  rig.flash.position.set(0, GUN_LIFT + 0.02, GUN_FWD + built.tip);
 }
 
 function flashMuzzle(rig) {
@@ -6782,6 +6990,7 @@ function flashMuzzle(rig) {
   rig.flash.material.opacity = 0.95;
   rig.flash.scale.setScalar(0.7 + Math.random() * 0.9);
   rig.flashT = 0.055;
+  rig.kickT = 0.12;
 }
 
 function createPlayerRig() {
@@ -6798,48 +7007,83 @@ function animateRig(rig, speed, t) {
   const sw = Math.sin(t * 11) * 0.7 * s;
   rig.legL.rotation.x = sw;
   rig.legR.rotation.x = -sw;
-  rig.armL.rotation.x = -1.05 + sw * 0.15;
-  rig.armR.rotation.x = -1.25 + Math.sin(t * 11 + 1.2) * 0.06;
 
-  // The weapon arm is a stack of three motions: the draw on a switch, the
-  // reload arc, and the tilt while drinking or bandaging. Only the local
-  // player's rig reads the reload and use state.
+  // ---- stance: hip fire keeps the elbows bent, aiming opens them out -----
   const mine = rig === player.rig;
-  let px = 0.3, py = 1.14, pz = 0.34;
-  let rx = 0, ry = 0, rz = 0;
+  const wantAim = (mine && aimDown && !player.using) ? 1 : 0;
+  rig.aimBlend += (wantAim - rig.aimBlend) * 0.22;
+  const a = rig.aimBlend;
 
+  let shGun = lerp(POSE.gunRest.sh, POSE.gunAim.sh, a);
+  let elGun = lerp(POSE.gunRest.el, POSE.gunAim.el, a);
+  let shOff = lerp(POSE.offRest.sh, POSE.offAim.sh, a);
+  let elOff = lerp(POSE.offRest.el, POSE.offAim.el, a);
+
+  // muzzle pitch and roll, layered on top of the level mount
+  let mx = Math.sin(t * 1.6) * 0.02;
+  let mz = 0;
+
+  // ---- body: bob, sway and a little roll out of the walk -----------------
+  rig.body.position.y = Math.sin(t * 11) * 0.03 * s;
+  rig.body.position.x = Math.sin(t * 5.5) * 0.02 * s;
+  rig.body.rotation.z = sw * 0.03;
+  rig.body.rotation.y = sw * 0.06;
+
+  // ---- sprint: the gun is carried across the chest, muzzle down ----------
+  const sprint = clamp((speed - 6.4) / 2.2, 0, 1);
+  if (sprint > 0) {
+    shGun += sprint * 0.34;
+    shOff += sprint * 0.22;
+    mx += sprint * 0.62;
+    mz -= sprint * 0.34;
+  }
+
+  // ---- draw on a slot change: drop away, roll, come back up -------------
   if (rig.switchT > 0) {
     rig.switchT = Math.max(0, rig.switchT - 0.016);
     const p = clamp(rig.switchT / 0.45, 0, 1);
     const dip = Math.sin(p * Math.PI);
-    py -= dip * 0.52;
-    px -= dip * 0.08;
-    rz += dip * 0.62;
-    rx -= dip * 0.5;
-    rig.armR.rotation.x = -1.25 - dip * 0.55;
+    shGun += dip * 0.9;
+    elGun += dip * 0.4;
+    mz += dip * 0.75;
+    shOff += dip * 0.45;
   }
 
+  // ---- recoil ------------------------------------------------------------
+  if (rig.kickT > 0) {
+    rig.kickT = Math.max(0, rig.kickT - 0.016);
+    const k = rig.kickT / 0.12;
+    shGun -= k * 0.14;
+    mx -= k * 0.26;
+    rig.body.position.y -= k * 0.015;
+  }
+
+  // ---- reload and heal, local player only ------------------------------
   if (mine && player.reloading) {
     const total = Math.max(0.15, player.reloadEnd - (player.reloadStart || 0));
     const tt = clamp(1 - (player.reloadEnd - state.time) / total, 0, 1);
     const arc = Math.sin(clamp(tt / 0.72, 0, 1) * Math.PI);
-    py -= arc * 0.18;
-    rz += arc * 0.55;
-    rx -= Math.sin(tt * Math.PI * 3) * 0.2;
-    rig.armL.rotation.x = -1.05 - arc * 0.9;
+    shGun += arc * 0.1;
+    mx += arc * 0.2;
+    mz += arc * 0.8;                       // gun cants, so the mag well shows
+    shOff -= arc * 0.34;
+    elOff += arc * 0.55 + Math.sin(tt * Math.PI * 2.2) * 0.22;
   }
 
   if (mine && player.using) {
-    const bob = Math.sin(t * 7) * 0.035;
-    py += 0.09 + bob;
-    rz -= 0.4;
-    rx -= 0.55;
-    px -= 0.06;
-    rig.armR.rotation.x = -1.9 - bob * 2;
+    const bob = Math.sin(t * 7) * 0.03;
+    shGun -= 0.5 + bob;
+    elGun += 0.42;
+    mx -= 1.05;                            // bottle tips up to the face
+    mz += 0.22;
   }
 
-  rig.mount.position.set(px, py, pz);
-  rig.mount.rotation.set(rx, ry, rz);
+  rig.armGun.rotation.x = shGun;
+  rig.elbowGun.rotation.x = elGun;
+  rig.armOff.rotation.x = shOff;
+  rig.elbowOff.rotation.x = elOff;
+  rig.mount.rotation.x = GUN_LEVEL + mx;
+  rig.mount.rotation.z = mz;
 
   if (rig.flashT > 0) {
     rig.flashT -= 0.016;
@@ -7331,8 +7575,10 @@ function playerFire() {
   const spread = aimDir ? 0 : currentSpread(w);
   player.lastShotAt = state.time;
   player.bloom = Math.min(bloomCap(w), (player.bloom || 0) + bloomGain(w));
-  const muzzle = player.pos.clone();
-  muzzle.y += 1.35;
+  // Tracers leave the barrel in your hands, not the middle of the chest.
+  const muzzle = new THREE.Vector3();
+  if (player.rig && player.rig.flash) player.rig.flash.getWorldPosition(muzzle);
+  else { muzzle.copy(player.pos); muzzle.y += 1.35; }
   flashMuzzle(player.rig);
 
   const shots = Math.max(1, w.pellets * (w.burst || 1));
@@ -10080,8 +10326,10 @@ function updateDrop(dt) {
     player.rig.group.rotation.y = rigYaw;
     player.rig.legL.rotation.x = 0.5;
     player.rig.legR.rotation.x = 0.5;
-    player.rig.armL.rotation.x = -1.2;
-    player.rig.armR.rotation.x = -1.2;
+    player.rig.armGun.rotation.x = -1.9;
+    player.rig.elbowGun.rotation.x = -0.2;
+    player.rig.armOff.rotation.x = -1.9;
+    player.rig.elbowOff.rotation.x = -0.2;
   }
 }
 
@@ -10218,10 +10466,6 @@ function updatePlayer(dt) {
     animateRig(player.rig, Math.hypot(player.vel.x, player.vel.z), state.time);
     const held = currentItem();
     setRigWeapon(player.rig, player.using ? 'heal' : (held ? (held.kind === 'weapon' ? held.type : held.kind) : null));
-    if (aimDown) {
-      player.rig.armL.rotation.x = -1.5;
-      player.rig.armR.rotation.x = -1.5;
-    }
   }
 }
 
@@ -11941,8 +12185,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 0, patch: 3 };
-const VERSION_PREV = '7.0.2';
+const VERSION = { major: 7, minor: 0, patch: 4 };
+const VERSION_PREV = '7.0.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
