@@ -4199,7 +4199,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #padHints .pgDot.sq { border-radius:2px; }
 
 /* ---- magazine dial: the bottom-right quarter of a circle, set at the
-   bottom-right of the crosshair so the arc curls away from the reticle ---- */
+   bottom-right of the crosshair so the arc curls away from the reticle.
+   With these end points the sweep flag matters: 0 draws the quarter that
+   bulges down and right, 1 draws the up-left one. */
 #ammoGauge {
   position:absolute; left:50%; top:50%; width:124px; height:124px;
   margin:-62px 0 0 -62px; pointer-events:none; opacity:0;
@@ -4511,9 +4513,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </div>
   <div id="ammoGauge">
     <svg viewBox="0 0 100 100" aria-hidden="true">
-      <path class="agUnder" d="M50 90A40 40 0 0 1 90 50"></path>
-      <path class="agTrack" d="M50 90A40 40 0 0 1 90 50"></path>
-      <path class="agFill" id="ammoArcFill" pathLength="100" d="M50 90A40 40 0 0 1 90 50"></path>
+      <path class="agUnder" d="M50 90A40 40 0 0 0 90 50"></path>
+      <path class="agTrack" d="M50 90A40 40 0 0 0 90 50"></path>
+      <path class="agFill" id="ammoArcFill" pathLength="100" d="M50 90A40 40 0 0 0 90 50"></path>
     </svg>
   </div>
   <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
@@ -5258,7 +5260,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>AMMO RING, FAR SIDE</b> — the magazine gauge moved to the bottom-right of the crosshair. It is still the bottom-right quarter of a circle, so the arc now curls down and away from the reticle instead of crowding the left of it. Same drain, same gold and red warnings.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE RIGHT QUARTER</b> — the ammo ring was drawing the wrong quarter of its circle and read as a top-left arc. The path now takes the sweep that bulges down and to the right, so it is the bottom-right quarter again, still sitting at the bottom-right of the crosshair.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12921,8 +12923,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 5 };
-const VERSION_PREV = '7.1.4';
+const VERSION = { major: 7, minor: 1, patch: 6 };
+const VERSION_PREV = '7.1.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
