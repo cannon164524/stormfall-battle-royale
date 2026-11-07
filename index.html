@@ -3738,6 +3738,62 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 }
 .setDanger:hover { background:rgba(255,90,109,.2); color:#fff; }
 .setDanger.armed { background:rgba(255,90,109,.3); border-color:rgba(255,90,109,.9); color:#fff; }
+
+/* sprites */
+.spriteGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:10px; }
+.spriteCard {
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  padding:12px; border-radius:var(--r-md); text-align:center;
+  background:rgba(255,255,255,.028); border:1px solid var(--line);
+}
+.spriteCard.locked { opacity:.5; }
+.spriteCard.equipped { border-color:rgba(61,139,255,.6); background:rgba(61,139,255,.1); }
+.spArt { width:74px; height:74px; }
+.spArt svg { width:100%; height:100%; display:block; }
+.spName { font-family:var(--display); font-weight:700; font-size:13px; color:#fff; }
+.spRar { font-family:var(--label); font-weight:700; font-size:8px; letter-spacing:.14em; }
+.spDesc { font-family:var(--body); font-size:9px; line-height:1.45; color:rgba(255,255,255,.5); min-height:26px; }
+.spPips { display:flex; gap:3px; }
+.spPips i { width:14px; height:3px; border-radius:2px; background:rgba(255,255,255,.15); }
+.spPips i.on { background:var(--accent); }
+.spBtn {
+  width:100%; margin-top:4px; padding:7px; border-radius:8px;
+  font-family:var(--body); font-weight:600; font-size:9.5px; letter-spacing:.08em;
+  border:1px solid var(--line); background:rgba(255,255,255,.05); color:rgba(255,255,255,.7);
+}
+.spBtn.on { border-color:rgba(61,139,255,.6); background:rgba(61,139,255,.16); color:#fff; }
+.spBtn:disabled { opacity:.4; }
+
+#spritePick {
+  position:fixed; inset:0; z-index:72; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:radial-gradient(70% 60% at 50% 35%, rgba(20,40,80,.92), rgba(3,5,10,.985));
+}
+.spkCard {
+  width:min(540px,100%); border-radius:18px; padding:22px 22px 20px;
+  background:rgba(13,16,22,.98); border:1px solid var(--line);
+  box-shadow:0 26px 70px rgba(0,0,0,.8); text-align:center;
+}
+.spkKicker { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.2em; color:var(--accent); }
+.spkTitle { font-family:var(--display); font-weight:800; font-size:clamp(22px,5vw,32px); letter-spacing:-.03em; color:#fff; margin-top:6px; }
+.spkNote { font-family:var(--body); font-size:11px; line-height:1.6; color:rgba(255,255,255,.5); margin:8px auto 0; max-width:44ch; }
+.spkGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:16px 0 14px; }
+.spkItem {
+  padding:12px 8px; border-radius:12px; border:1px solid var(--line);
+  background:rgba(255,255,255,.03); cursor:pointer;
+  transition:border-color .15s, background .15s, transform .15s;
+}
+.spkItem:hover { transform:translateY(-2px); }
+.spkItem.sel { border-color:var(--accent); background:rgba(61,139,255,.16); }
+.spkBtn {
+  width:100%; padding:12px; border-radius:11px; background:var(--accent); color:#fff;
+  font-family:var(--display); font-weight:800; font-size:16px; letter-spacing:.04em;
+}
+.spkBtn:disabled { opacity:.4; }
+@media (max-width: 520px) {
+  .spkGrid { gap:6px; }
+  .spkItem { padding:9px 5px; }
+  .spriteGrid { grid-template-columns:repeat(auto-fill,minmax(126px,1fr)); }
+}
 .rrHead { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .rrLadder { font-family:var(--body); font-weight:600; font-size:9px; letter-spacing:.14em; color:rgba(255,255,255,.3); }
 .rrCard > *:not(.rrBanner) { animation:rrStage .55s cubic-bezier(.2,.9,.3,1) backwards; }
@@ -3952,6 +4008,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <nav class="tabs">
       <button class="tab active" data-tab="play">PLAY</button>
       <button class="tab" data-tab="locker">LOCKER</button>
+      <button class="tab" data-tab="sprites">SPRITES</button>
       <button class="tab" data-tab="shop">ITEM SHOP</button>
       <button class="tab" data-tab="pass">BATTLE PASS</button>
       <button class="tab" data-tab="comp">COMPETITIVE</button>
@@ -4241,6 +4298,18 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <button class="mpBack" data-back>BACK</button>
       <button class="mpBack" id="mpLeave">DISCONNECT</button>
     </div>
+  </section>
+
+  <section id="panelSprites" class="menuPanel hide">
+    <div class="mpHead">
+      <div>
+        <div class="mpKicker">COLLECTION</div>
+        <div class="mpTitle">SPRITES</div>
+      </div>
+      <div class="mpMeta" id="spriteMeta">0 / 8 COLLECTED</div>
+    </div>
+    <div class="mpScroll"><div class="spriteGrid" id="spriteGrid"></div></div>
+    <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
   </section>
 
   <section id="panelSettings" class="menuPanel hide">
@@ -4574,6 +4643,17 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </div>
 </div>
 
+<!-- ============================== STARTER SPRITE ============================== -->
+<div id="spritePick" class="hide">
+  <div class="spkCard">
+    <div class="spkKicker">YOUR FIRST BOND</div>
+    <div class="spkTitle">CHOOSE A SPRITE</div>
+    <p class="spkNote">One companion joins you for good. Its power is yours every match, it levels up as you play, and the rest can be found out in the world.</p>
+    <div class="spkGrid" id="spkGrid"></div>
+    <button class="spkBtn" id="spkConfirm" disabled>TAKE IT</button>
+  </div>
+</div>
+
 <!-- ============================== WHAT'S NEW ============================== -->
 <div id="whatsNew" class="hide">
   <div class="wnCard">
@@ -4590,7 +4670,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE MATE COUNTDOWN HAS ITS OWN CORNER</b> — it used to sit under the storm clock and cover it. It now lives beneath the minimap as a proper card: "MATE REVIVES IN" with a big seconds readout, a "stay alive until it ends" line and a filling bar, with a slow blue pulse so it catches your eye. In the last six seconds it turns amber and pulses faster, because that is when staying alive matters most.</div></li>
+      <li><span class="wnTag">01</span><div><b>SPRITES</b> — a new collection of eight companion creatures. Pick one at the start and it gives you a passive Sprite Power for every match: Ember adds 12% weapon damage, Brisk reloads 20% faster, Glimmer starts you with 25 shield, Nix restores 30 shield per elimination, Pulse fires 15% faster, Tide gives 25 more max health, Grim grants 50 shield per elimination and Lumen makes the first shot after a reload hit for double.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE SPRITES TAB</b> — a new tab in the menu shows all eight. Ones you own are drawn in full with their rarity, ability and five level pips; ones you have not found are shown as an outline silhouette with NOT COLLECTED, so you can see the shape of what is missing. Click any owned one to equip it, and it rides with you every match.</div></li>
+      <li><span class="wnTag">03</span><div><b>FINDING AND MASTERING THEM</b> — Sprite Pods drop on the floor and turn up in chests. Picking one up bonds that Sprite to you and swaps your power for the rest of the match, and you earn Sprite XP from eliminations, placement and wins until it hits level 5 — Mastered.</div></li>
       <li><span class="wnTag">03</span><div><b>RANK EMBLEMS AND A BETTER RECAP</b> — every rank has its own emblem, from Bronze's chevron to Unreal's flame, shown in the lobby and the recap. The recap now counts the RP up, stages each block in, sweeps the progress bar, marks the divisions, names your next rank and pops the crest when it changes.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -6108,6 +6190,88 @@ function makeGrappler() {
    nothing. Each one shows as an icon beside the hotbar, and the inventory
    screen spells out what it does.
    ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+   SPRITES
+   Collectible companions. One is equipped in the menu and gives a passive
+   Sprite Power for the whole match; the rest are found as pods in a match and
+   can be equipped from the Sprites tab. They level from 1 to 5 (Mastered).
+   ------------------------------------------------------------------------- */
+const SPRITES = {
+  ember: { name: 'Ember', rarity: 2, color: '#ff8a3d', power: 'dmg', desc: '+12% WEAPON DAMAGE' },
+  brisk: { name: 'Brisk', rarity: 2, color: '#7fe3ff', desc: 'RELOAD 20% FASTER', power: 'reload' },
+  glimmer: { name: 'Glimmer', rarity: 3, color: '#ff9ad5', desc: 'START EVERY MATCH WITH 25 SHIELD', power: 'shield' },
+  nix: { name: 'Nix', rarity: 3, color: '#b18cff', desc: 'ELIMINATIONS RESTORE 30 SHIELD', power: 'siphon' },
+  pulse: { name: 'Pulse', rarity: 4, color: '#ffd451', desc: '+15% FIRE RATE', power: 'rpm' },
+  tide: { name: 'Tide', rarity: 4, color: '#5fd0ff', desc: '+25 MAX HEALTH', power: 'hp' },
+  grim: { name: 'Grim', rarity: 5, color: '#c8a2ff', desc: 'ELIMINATIONS GRANT 50 SHIELD', power: 'grim' },
+  lumen: { name: 'Lumen', rarity: 6, color: '#fff1a8', desc: 'FIRST SHOT AFTER A RELOAD HITS DOUBLE', power: 'lumen' },
+};
+const SPRITE_IDS = Object.keys(SPRITES);
+const SPRITE_XP_STEPS = [0, 100, 250, 500, 1000];
+const SPRITE_STARTERS = ['ember', 'brisk', 'nix'];
+
+function spriteXP(id) {
+  const rec = profile && profile.sprites ? profile.sprites[id] : null;
+  return rec && rec.xp ? rec.xp : 0;
+}
+
+function spriteLevel(id) {
+  const xp = spriteXP(id);
+  let lv = 1;
+  for (let i = 1; i < SPRITE_XP_STEPS.length; i++) if (xp >= SPRITE_XP_STEPS[i]) lv = i + 1;
+  return lv;
+}
+
+function ownsSprite(id) {
+  return !!(profile && profile.sprites && profile.sprites[id]);
+}
+
+function spriteGainXP(id, amount) {
+  if (!id || !amount) return;
+  profile.sprites = profile.sprites || {};
+  const rec = profile.sprites[id] || (profile.sprites[id] = { xp: 0 });
+  const before = spriteLevel(id);
+  rec.xp = Math.max(0, (rec.xp || 0) + amount);
+  const after = spriteLevel(id);
+  saveProfile();
+  if (after > before && after === 5) toast(SPRITES[id].name.toUpperCase() + ' MASTERED', 'sub');
+}
+
+function collectSprite(id) {
+  if (!SPRITES[id]) return false;
+  const isNew = !ownsSprite(id);
+  profile.sprites = profile.sprites || {};
+  if (isNew) profile.sprites[id] = { xp: 0 };
+  player.spriteId = id;
+  spriteGainXP(id, isNew ? 40 : 60);
+  return isNew;
+}
+
+const ACTIVE_SPRITE_POWER = {};
+function activeSpritePower() {
+  const id = player.spriteId;
+  if (!id || !SPRITES[id]) return '';
+  return SPRITES[id].power;
+}
+function hasSpritePower(power) { return activeSpritePower() === power; }
+
+/* One small blob of a creature, drawn two ways: filled when owned, outline
+   only when it is still missing from the collection. */
+function spriteArt(id, outline) {
+  const s = SPRITES[id] || SPRITES.ember;
+  const body = outline ? 'none' : s.color;
+  const stroke = outline ? 'rgba(255,255,255,.3)' : s.color;
+  const eye = outline ? 'rgba(255,255,255,.22)' : '#0b1a2b';
+  return '<svg viewBox="0 0 64 64" fill="none">' +
+    '<ellipse cx="32" cy="39" rx="18" ry="16" fill="' + body + '" stroke="' + stroke + '" stroke-width="2"/>' +
+    '<path d="M18 27l-2-11 12 6z" fill="' + body + '" stroke="' + stroke + '" stroke-width="2" stroke-linejoin="round"/>' +
+    '<path d="M46 27l2-11-12 6z" fill="' + body + '" stroke="' + stroke + '" stroke-width="2" stroke-linejoin="round"/>' +
+    '<ellipse cx="25" cy="37" rx="3.4" ry="4" fill="' + eye + '"/>' +
+    '<ellipse cx="39" cy="37" rx="3.4" ry="4" fill="' + eye + '"/>' +
+    '<path d="M27 46q5 4 10 0" stroke="' + eye + '" stroke-width="2" stroke-linecap="round"/>' +
+    '</svg>';
+}
+
 const BOONS = {
   radar: { name: 'Rift Radar', color: '#7dffb0', icon: 'radar', desc: 'EVERY ENEMY ON THE MINIMAP' },
   regen: { name: 'Regen Cell', color: '#9be7ff', icon: 'regen', desc: 'SHIELD REGENERATES OUT OF COMBAT' },
@@ -6121,6 +6285,11 @@ const BOON_TYPES = Object.keys(BOONS);
 function makeBoon(type) {
   const key = BOONS[type] ? type : 'radar';
   return { kind: 'boon', type: key, name: BOONS[key].name };
+}
+
+function makeSpritePod(id) {
+  const key = SPRITES[id] ? id : 'ember';
+  return { kind: 'sprite', spriteId: key, name: SPRITES[key].name + ' Sprite' };
 }
 
 /* Once picked up a boon cannot be dropped or taken away. */
@@ -6161,11 +6330,19 @@ function renderBoonList() {
   const el = document.getElementById('boonList');
   if (!el) return;
   el.innerHTML = '';
-  const list = player.boons || [];
-  if (!list.length) {
-    el.innerHTML = '<div class="boonEmpty">No boons yet — they drop on the floor and in chests.</div>';
-    return;
+  let any = false;
+  if (player.spriteId && SPRITES[player.spriteId]) {
+    const sp = SPRITES[player.spriteId];
+    const lv = spriteLevel(player.spriteId);
+    const d = document.createElement('div');
+    d.className = 'boonRow';
+    d.innerHTML = '<div class="bi" style="color:' + sp.color + '">' + spriteArt(player.spriteId, false) + '</div>' +
+      '<div class="bt"><div class="bn">' + sp.name + ' · SPRITE · ' + (lv >= 5 ? 'MASTERED' : 'LV ' + lv) + '</div>' +
+      '<div class="bd">' + sp.desc + '</div></div>';
+    el.appendChild(d);
+    any = true;
   }
+  const list = player.boons || [];
   for (let i = 0; i < list.length; i++) {
     const b = BOONS[list[i]];
     if (!b) continue;
@@ -6174,6 +6351,10 @@ function renderBoonList() {
     d.innerHTML = '<div class="bi" style="color:' + b.color + '">' + (GUN_ICONS[b.icon] || '') + '</div>' +
       '<div class="bt"><div class="bn">' + b.name + '</div><div class="bd">' + b.desc + '</div></div>';
     el.appendChild(d);
+    any = true;
+  }
+  if (!any) {
+    el.innerHTML = '<div class="boonEmpty">No boons yet — they drop on the floor and in chests.</div>';
   }
 }
 
@@ -6184,6 +6365,7 @@ function itemIconHTML(item) {
   if (item.kind === 'grenade') return GUN_ICONS[GRENADES[item.type].icon];
   if (item.kind === 'grappler') return GUN_ICONS.grappler;
   if (item.kind === 'boon') return GUN_ICONS[BOONS[item.type].icon] || GUN_ICONS.ammo;
+  if (item.kind === 'sprite') return spriteArt(item.spriteId, false);
   return GUN_ICONS.ammo;
 }
 function itemColor(item) {
@@ -6193,6 +6375,7 @@ function itemColor(item) {
   if (item.kind === 'grenade') return GRENADES[item.type].color;
   if (item.kind === 'grappler') return '#7dffb0';
   if (item.kind === 'boon') return BOONS[item.type].color;
+  if (item.kind === 'sprite') return SPRITES[item.spriteId].color;
   return '#c9c9c9';
 }
 function itemLabel(item) {
@@ -6202,6 +6385,7 @@ function itemLabel(item) {
   if (item.kind === 'grenade') return GRENADES[item.type].name;
   if (item.kind === 'grappler') return 'Grappler';
   if (item.kind === 'boon') return BOONS[item.type].name;
+  if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
   return 'Item';
 }
 function itemMeta(item) {
@@ -6209,6 +6393,7 @@ function itemMeta(item) {
   if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ' + item.mag + ' rnds';
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
+  if (item.kind === 'sprite') return 'SPRITE · ' + SPRITES[item.spriteId].desc;
   return '';
 }
 function itemColorHex(item) {
@@ -6572,6 +6757,12 @@ function buildLootModel(item) {
     band.rotation.x = Math.PI / 2;
     band.position.y = 0.2;
     g.add(band);
+  } else if (item.kind === 'sprite') {
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 0), mat(itemColorHex(item), true));
+    g.add(orb);
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.025, 6, 22), mat(0xeaf3ff, true));
+    halo.rotation.x = Math.PI / 2;
+    g.add(halo);
   } else if (item.kind === 'heal') {
     if (item.type === 'medkit') {
       const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.36), mat(0xd8dde4, true));
@@ -6692,6 +6883,7 @@ function rollLootItem(rng, bonus) {
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
   if (Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
+  if (Math.random() < 0.06) return makeSpritePod(pick(SPRITE_IDS));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -6760,6 +6952,15 @@ function nearestLoot(radius) {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
+  if (l.item.kind === 'sprite') {
+    const isNew = collectSprite(l.item.spriteId);
+    l.dead = true;
+    if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+    sfx('unlock');
+    toast((isNew ? 'NEW SPRITE · ' : 'SPRITE POWER · ') + SPRITES[l.item.spriteId].name.toUpperCase(), 'sub');
+    refreshHotbar();
+    return;
+  }
   if (l.item.kind === 'boon') {
     if (!addBoon(l.item.type)) {
       toast('ALREADY HAVE ' + BOONS[l.item.type].name.toUpperCase(), 'sub');
@@ -6816,6 +7017,10 @@ function openChest(c) {
   if (Math.random() < 0.45) {
     const ang = Math.random() * TAU;
     spawnLoot(c.x + Math.cos(ang) * 1.3, c.y + 0.6, c.z + Math.sin(ang) * 1.3, makeBoon(pick(BOON_TYPES)));
+  }
+  if (Math.random() < 0.2) {
+    const ang = Math.random() * TAU;
+    spawnLoot(c.x + Math.cos(ang) * 1.4, c.y + 0.6, c.z + Math.sin(ang) * 1.4, makeSpritePod(pick(SPRITE_IDS)));
   }
   const woodMul = hasBoon('scav') ? 1.5 : 1;
   player.wood = Math.min(999, player.wood + Math.round(randInt(30, 60) * woodMul));
@@ -7002,7 +7207,7 @@ function playerFire() {
   if (!w.noAmmo && it.mag <= 0) { startReload(); return; }
 
   if (!adminOn('infAmmo') && !w.noAmmo) it.mag = Math.max(0, it.mag - (w.burst || 1));
-  player.nextFire = state.time + 60 / w.rpm;
+  player.nextFire = state.time + 60 / (w.rpm * (hasSpritePower('rpm') ? 1.15 : 1));
 
   const origin = camera.position.clone();
   const base = new THREE.Vector3();
@@ -7023,6 +7228,8 @@ function playerFire() {
   // reaches up to sqrt(2) x the nominal spread. Scale shots down a touch so the
   // worst-case bullet still lands inside the ring the crosshair draws.
   const shotSpread = spread * 0.62;
+  const spriteMul = (hasSpritePower('dmg') ? 1.12 : 1) * (player.lumenReady ? 2 : 1);
+  player.lumenReady = false;
   for (let p = 0; p < shots; p++) {
     const dir = (aimDir || base).clone();
     dir.x += rand(-1, 1) * shotSpread;
@@ -7031,7 +7238,7 @@ function playerFire() {
     dir.normalize();
     const hit = hitTest(origin, dir, w.range, null, player.team);
     tracerFX(muzzle, hit.point, 0xfff2a8);
-    const dmg = w.dmg * RARITY[it.rarity].mult * (adminOn('oneShot') ? 100 : 1);
+    const dmg = w.dmg * RARITY[it.rarity].mult * (adminOn('oneShot') ? 100 : 1) * spriteMul;
     if (net.connected && !net.isHost) {
       netSend({
         t: 'shot',
@@ -7082,7 +7289,8 @@ function startReload() {
   if (player.ammo[w.ammo] <= 0) { dryWeapon(); return; }
   player.reloading = true;
   player.bloom = 0;
-  player.reloadEnd = state.time + w.reload;
+  player.reloadEnd = state.time + w.reload * (hasSpritePower('reload') ? 0.8 : 1);
+  player.lumenReady = hasSpritePower('lumen');
   sfx('reload');
   refreshHotbar();
 }
@@ -7328,6 +7536,8 @@ function killBot(b, killerName) {
     sfx('elim');
     awardBpXp(100);
     awardTourPoints(3, 'ELIMINATION', b.name);
+    if (hasSpritePower('siphon')) player.shield = Math.min(player.maxShield, player.shield + 30);
+    if (hasSpritePower('grim')) player.shield = Math.min(player.maxShield, player.shield + 50);
     awardRankPoints(isRankedReload() ? 10 : 12, 'ELIMINATION', b.name);
     blitzAddXp(1);
     if (siphonActive()) applySiphon();
@@ -11011,9 +11221,11 @@ function resetPlayerForMatch() {
   player.vel.set(0, 0, 0);
   player.yaw = Math.random() * TAU;
   player.pitch = -0.25;
-  player.maxHp = mod('glass') ? 55 : 100;
+  player.spriteId = profile.sprite || '';
+  player.maxHp = (mod('glass') ? 55 : 100) + (hasSpritePower('hp') ? 25 : 0);
   player.hp = player.maxHp;
-  player.shield = 0;
+  player.shield = hasSpritePower('shield') ? 25 : 0;
+  player.lumenReady = hasSpritePower('lumen');
   player.overshield = player.maxOvershield;
   player.lastDamage = -99;
   player.pocketCd = 0;
@@ -11475,6 +11687,9 @@ function endMatch(win, killerName) {
     awardBpXp(500);
     victoryFanfare();
   }
+  if (profile.sprite) {
+    spriteGainXP(profile.sprite, player.kills * 40 + (win ? 150 : 0) + (placement <= 5 ? 60 : 0));
+  }
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
   const againPlay = document.getElementById('playAgainBtn');
   if (againPlay) {
@@ -11572,8 +11787,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 6, minor: 8, patch: 3 };
-const VERSION_PREV = '6.8.2';
+const VERSION = { major: 7, minor: 0, patch: 0 };
+const VERSION_PREV = '6.8.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -11695,6 +11910,7 @@ function defaultProfile() {
   return {
     vbucks: 0, vbReset: VB_RESET_ID, owned: ['default'], equipped: 'default',
     battlePass: false, bpXp: 0, claimed: [],
+    sprites: {}, sprite: '', spritePicked: false,
     pocket: 'shock',
     rankRp: 0,
     reloadRp: 0,
@@ -11730,6 +11946,9 @@ function loadProfile() {
         base.vbReset = p.vbReset || '';
         base.settings = Object.assign({ sens: 1, fps: false, dmg: true, autoSprint: false }, p.settings || {});
         base.keys = (p.keys && typeof p.keys === 'object') ? p.keys : {};
+        base.sprites = (p.sprites && typeof p.sprites === 'object') ? p.sprites : {};
+        base.sprite = typeof p.sprite === 'string' ? p.sprite : '';
+        base.spritePicked = !!p.spritePicked;
         if (p.season === SEASON) {
           base.battlePass = !!p.battlePass;
           base.bpXp = Math.max(0, p.bpXp || 0);
@@ -12771,6 +12990,95 @@ function miniHTML(sk) {
     '<i class="mGun"></i></div>';
 }
 
+function renderSprites() {
+  const grid = document.getElementById('spriteGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  let owned = 0;
+  SPRITE_IDS.forEach((id) => {
+    const s = SPRITES[id];
+    const has = ownsSprite(id);
+    const lv = has ? spriteLevel(id) : 0;
+    if (has) owned++;
+    const equipped = profile.sprite === id;
+    const d = document.createElement('div');
+    d.className = 'spriteCard' + (has ? '' : ' locked') + (equipped ? ' equipped' : '');
+    d.innerHTML =
+      '<div class="spArt" style="color:' + s.color + '">' + spriteArt(id, !has) + '</div>' +
+      '<div class="spName">' + (has ? s.name : '???') + '</div>' +
+      '<div class="spRar" style="color:' + RARITY[s.rarity].color + '">' + RARITY[s.rarity].name + (lv >= 5 ? ' · MASTERED' : '') + '</div>' +
+      '<div class="spDesc">' + (has ? s.desc : 'NOT COLLECTED') + '</div>' +
+      '<div class="spPips">' +
+        [1, 2, 3, 4, 5].map((n) => '<i class="' + (n <= lv ? 'on' : '') + '"></i>').join('') +
+      '</div>' +
+      (has
+        ? '<button class="spBtn' + (equipped ? ' on' : '') + '" data-equip="' + id + '">' + (equipped ? 'EQUIPPED' : 'EQUIP') + '</button>'
+        : '<button class="spBtn" disabled>LOCKED</button>');
+    grid.appendChild(d);
+  });
+  grid.querySelectorAll('[data-equip]').forEach((b) => {
+    b.addEventListener('click', () => {
+      profile.sprite = b.dataset.equip;
+      saveProfile();
+      renderSprites();
+      renderBoonList();
+      sfx('switch');
+    });
+  });
+  const meta = document.getElementById('spriteMeta');
+  if (meta) {
+    meta.textContent = owned + ' / ' + SPRITE_IDS.length + ' COLLECTED' +
+      (profile.sprite ? ' · ' + SPRITES[profile.sprite].name.toUpperCase() : '');
+  }
+}
+
+let pickSpriteChoice = '';
+
+function openSpritePick(onDone) {
+  const el = document.getElementById('spritePick');
+  if (!el) { if (onDone) onDone(); return; }
+  el.classList.remove('hide');
+  pickSpriteChoice = '';
+  const grid = document.getElementById('spkGrid');
+  const btn = document.getElementById('spkConfirm');
+  if (!grid || !btn) return;
+  grid.innerHTML = '';
+  SPRITE_STARTERS.forEach((id) => {
+    const s = SPRITES[id];
+    const d = document.createElement('div');
+    d.className = 'spkItem';
+    d.innerHTML =
+      '<div class="spArt" style="color:' + s.color + '">' + spriteArt(id, false) + '</div>' +
+      '<div class="spName">' + s.name + '</div>' +
+      '<div class="spRar" style="color:' + RARITY[s.rarity].color + '">' + RARITY[s.rarity].name + '</div>' +
+      '<div class="spDesc">' + s.desc + '</div>';
+    d.addEventListener('click', () => {
+      pickSpriteChoice = id;
+      grid.querySelectorAll('.spkItem').forEach((n) => n.classList.toggle('sel', n === d));
+      btn.disabled = false;
+      btn.textContent = 'TAKE ' + s.name.toUpperCase();
+      sfx('switch');
+    });
+    grid.appendChild(d);
+  });
+  btn.disabled = true;
+  btn.textContent = 'TAKE IT';
+  btn.onclick = () => {
+    if (!pickSpriteChoice) return;
+    profile.sprites = profile.sprites || {};
+    profile.sprites[pickSpriteChoice] = { xp: 0 };
+    profile.sprite = pickSpriteChoice;
+    profile.spritePicked = true;
+    saveProfile();
+    el.classList.add('hide');
+    renderSprites();
+    renderBoonList();
+    sfx('unlock');
+    toast('SPRITE BONDED · ' + SPRITES[pickSpriteChoice].name.toUpperCase(), 'sub');
+    if (onDone) setTimeout(onDone, 500);
+  };
+}
+
 function renderShop() {
   const grid = document.getElementById('shopGrid');
   if (!grid) return;
@@ -12957,13 +13265,14 @@ function switchTab(tab) {
   const playRowEl = document.getElementById('playRowEl');
   if (lobbyEl) lobbyEl.classList.toggle('hide', !play);
   if (playRowEl) playRowEl.classList.toggle('hide', !play);
-  const panels = { locker: 'panelLocker', shop: 'panelShop', pass: 'panelPass', comp: 'panelComp', mp: 'panelMp', settings: 'panelSettings', admin: 'panelAdmin' };
+  const panels = { locker: 'panelLocker', sprites: 'panelSprites', shop: 'panelShop', pass: 'panelPass', comp: 'panelComp', mp: 'panelMp', settings: 'panelSettings', admin: 'panelAdmin' };
   Object.keys(panels).forEach((k) => {
     const el = document.getElementById(panels[k]);
     if (el) el.classList.toggle('hide', k !== tab);
   });
   if (tab === 'shop') renderShop();
   if (tab === 'locker') renderLocker();
+  if (tab === 'sprites') renderSprites();
   if (tab === 'pass') renderPass();
   if (tab === 'comp') renderCompetitive();
   if (tab === 'settings') { renderOpts(); renderKeybinds(); renderControlHints(); }
@@ -14485,6 +14794,8 @@ function boot() {
       startMatch();
     } else if (TEST_QUICK_START) {
       startMatch();
+    } else if (!profile.spritePicked) {
+      openSpritePick(() => showWhatsNew());
     } else {
       showWhatsNew();
     }
