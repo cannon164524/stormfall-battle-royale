@@ -4276,6 +4276,141 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   #useBar { bottom:82px; }
   #buildHud { bottom:52px; left:10px; }
 }
+
+/* =========================================================================
+   FLAT UI — one flat vector language
+   No gradients, no glows, no metallic fills, no ornate cuts. Solid plates,
+   1px hairline borders, 3px corners, everything on a 4px grid. Type carries
+   the hierarchy; nothing else decorates.
+   ========================================================================= */
+:root {
+  --bg:#080a0e;
+  --panel:#101318;
+  --line:rgba(255,255,255,.12);
+  --ink:#f2f5f9;
+  --ink-dim:rgba(242,245,249,.52);
+  --r-sm:2px; --r-md:3px; --r-lg:4px;
+  --shadow:none;
+}
+
+/* ---- shell: no painted gradients behind the menus ---- */
+#menu { background:#080a0e; padding:16px 24px 20px; }
+#menu::before, #menu::after { display:none; }
+#end { background:#080a0e; }
+#end::before, #end::after { display:none; }
+#hud::after { display:none; }
+
+/* ---- no decorative glow anywhere in the shell ---- */
+#menu *, #menu *::before, #menu *::after,
+#hud *, #hud *::before, #hud *::after,
+#inv *, #whatsNew *, #spritePick *, #rankRecap *, #end *, #respawn *, #downLayer *, #rareFind * {
+  text-shadow:none;
+  box-shadow:none;
+  filter:none;
+}
+/* legibility outlines that are not decoration: crisp 1px, never a glow */
+#hud .feedRow, #hud .tpName, #hud .tpState, #hud #pvName, #hud .mapName,
+#hud .metaCell b, #hud .metaCell span, #hud #ammoBox i, #hud #stormLabel,
+#hud #stormTime, #hud .cLbl {
+  text-shadow:0 1px 2px rgba(0,0,0,.9);
+}
+#dmgLayer .dmg {
+  text-shadow:1px 0 0 #0b1626, -1px 0 0 #0b1626, 0 1px 0 #0b1626, 0 -1px 0 #0b1626;
+}
+
+/* ---- solid plates, hairline borders, 3px corners ---- */
+.modeBtn, .seatPanel, .sidePanel, .playerCard, .card, .tier, .stepBtn,
+.pill, .verTag, .cashTag, .vbTag, .exBtn, .optChip, .modChip, .mpTab, .mpBlock,
+.pocketOpt, .tmChip, .compCard, .compCard .cFoot, kbd, .wnCard, .spkCard, .rrCard,
+.invPanel, .invSlot, .invDrop, .rfCard, .wipeBanner, .ann, .ptsRow, .tourneyHud,
+.mapFrame, .slot, #pocketSlot, #prompt, #spectate, #mateTimer, #tourneyHud,
+#stormInfo, #resultCard .rcHead, #resultCard .rcName, .buildPiece {
+  background-image:none;
+  box-shadow:none;
+  clip-path:none;
+  border-radius:3px;
+}
+.modeBtn, .seatPanel, .sidePanel, .playerCard, .card, .tier, .stepBtn, .pill,
+.verTag, .cashTag, .vbTag, .exBtn, .optChip, .modChip, .mpTab, .mpBlock,
+.pocketOpt, .tmChip, .compCard, kbd, .wnCard, .spkCard, .rrCard, .invPanel,
+.invSlot, .rfCard, .wipeBanner, .ann, .ptsRow, #spectate, #mateTimer,
+#tourneyHud, #stormInfo, .mapFrame, .slot, #pocketSlot, #prompt, #resultCard .rcHead {
+  background-color:#101318;
+  border:1px solid rgba(255,255,255,.1);
+}
+
+/* ---- brand: solid type, no gradient fill and no italic ---- */
+.logo {
+  background:none; -webkit-background-clip:border-box; background-clip:border-box;
+  -webkit-text-fill-color:currentColor; color:#f2f5f9;
+  font-style:normal; letter-spacing:-.02em; filter:none;
+}
+.tagline { color:rgba(255,255,255,.42); letter-spacing:.3em; }
+.modeName, #playBtn, .annTitle, .wnTitle, .endTitle, .rrTitle, .wipeText,
+.thPts, .queueMode, .pcName, #ammoBox b, .metaCell b, .thPts { font-style:normal; }
+
+/* ---- navigation ---- */
+.tab, .tab.active { background:none; border-radius:0; }
+.tab { border-bottom:1px solid transparent; padding-bottom:8px; letter-spacing:.14em; color:rgba(242,245,249,.42); }
+.tab:hover { color:rgba(242,245,249,.8); }
+.tab.active { color:#f2f5f9; border-bottom-color:#f2f5f9; animation:none; }
+/* counters are rectangles, not pills */
+.cashTag, .vbTag, .verTag, .pill { border-radius:3px; background:#16202b; border:1px solid rgba(255,255,255,.1); }
+
+/* ---- buttons: flat fill, one accent, sharp corners ---- */
+#playBtn {
+  background:#4fc3ff; color:#07131c; clip-path:none; border-radius:3px;
+  padding:14px 48px; letter-spacing:.08em; box-shadow:none; animation:none;
+}
+#playBtn::after { display:none; }
+#playBtn:hover { background:#74d3ff; box-shadow:none; filter:none; }
+#playBtn:active { transform:none; background:#3bb4f0; }
+#againBtn, #playAgainBtn, .revBtn, .buyBig, .spkBtn, #rrClose, .mpAction, .exBtn {
+  background:#4fc3ff; color:#08131d; border:0; border-radius:3px;
+  clip-path:none; box-shadow:none; font-style:normal;
+}
+#againBtn:hover, #playAgainBtn:hover, .spkBtn:hover, #rrClose:hover, .mpAction:hover { background:#73d2ff; }
+
+/* ---- selection marks are squares, not glowing pills ---- */
+.modeTick { border-radius:2px; border-color:rgba(255,255,255,.22); }
+.modeBtn.active .modeTick { border-color:#4fc3ff; }
+.modeBtn.active .modeTick::after { inset:2px; border-radius:0; background:#4fc3ff; }
+.modeBtn:hover { transform:none; border-color:rgba(255,255,255,.24); }
+.modeBtn.active { background:#16202b; border-color:#4fc3ff; }
+
+/* ---- flat fills: bars, chips, sliders, icons ---- */
+.bar.shield > i, .tpShield > i { background:#2f8fdd; }
+.bar.health > i, .tpHealth > i { background:#3fb84c; }
+.bar.health.low > i { background:#e8432f; }
+#overFill { background:#7fd8ff; }
+#stormBarFill { background:#fff; }
+#livesRow i { background:#2f8fdd; box-shadow:none; }
+.mat .ic, #matsBig .bigIc { background:#8b5a2b; border-radius:2px; }
+#botRange { background:#2a3441; }
+#botRange::-webkit-slider-thumb { background:#fff; box-shadow:none; }
+#weaponName { color:inherit; }
+
+/* ---- HUD: drop the metal behind the held slot, keep one white outline ---- */
+.slot::before { display:none; }
+.slot.active { background:#1b2531; border-color:#fff; box-shadow:none; }
+#ammoGauge .agFill, #ammoGauge.low .agFill, #ammoGauge.crit .agFill { filter:none; }
+#dmgDirs .dmgDir svg { filter:none; }
+#livesRow i { box-shadow:none; }
+#matsBig .bigIc { box-shadow:none; }
+#resultCard .rcHead b, #resultCard.kill .rcHead b { text-shadow:none; }
+#resultCard .rcSweep { opacity:.22; }
+
+/* ---- grid: every HUD edge lands on 12px ---- */
+#modeBadge { left:12px; top:12px; }
+#quitBtn { left:12px; top:36px; }
+#questLine { left:12px; top:60px; }
+#mapWrap { top:12px; right:12px; }
+#feed { left:12px; }
+#teamPanel { left:12px; }
+#mats { left:12px; }
+#buildHud { left:12px; }
+#weaponCluster { right:12px; }
+#padHints { right:12px; }
 </style>
 </head>
 <body>
@@ -5123,7 +5258,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE AMMO RING SAT RIGHT</b> — the ammo gauge was a quarter arc centred on the reticle, which put it across the middle of the crosshair. It is the bottom-right quarter of a circle now, hung off the lower-left, so it curves around the reticle instead of sitting on it. Same drain, same gold and red warnings, just where it belongs.</div></li>
+      <li><span class="wnTag">01</span><div><b>FLAT, NOT FAKE</b> — the whole interface lost its gradients, glows, metallic fills and cut-corner plating. Menus, cards, buttons, slots and the ammo ring are flat colour with a hairline border and a 3px corner now, selection is a plain white or accent outline instead of a halo, and the health and shield bars are single solid colours.</div></li>
+      <li><span class="wnTag">02</span><div><b>TYPE DOES THE WORK</b> — the gradient logo fill and the italic display faces are gone in favour of straight, tight-set type, the mode selector's glowing pills became square marks on the grid, and every HUD edge now sits on a 12px margin.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12786,8 +12922,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 3 };
-const VERSION_PREV = '7.1.2';
+const VERSION = { major: 7, minor: 1, patch: 4 };
+const VERSION_PREV = '7.1.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
