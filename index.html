@@ -5121,7 +5121,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>AMMO AT A GLANCE</b> — a quarter-circle gauge now sits around the crosshair and shows exactly how much is left in the magazine. It drains as you fire, turns gold when you are low, red when you are nearly dry, and dims while the gun is reloading, so you never have to look away to the corner to know whether you can keep shooting.</div></li>
+      <li><span class="wnTag">01</span><div><b>SHOTGUNS HIT HARDER</b> — every shotgun got a damage bump: the pump now does 15 a pellet across 12 pellets, the double barrel 15 across 10, the tactical 14 and the combat 13, with their mythic and exotic versions lifted to match, and all of them reach further than they did.</div></li>
+      <li><span class="wnTag">02</span><div><b>SHOTGUNS HIT THE SAME</b> — buck used to be a scatter of independent pellets, so the same shot could be a one-pump or nothing at all. It is now an even pattern that turns slightly each shot, every shotgun is tighter, and a blast barely widens the spread, so the second shot of a fight lands like the first.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6486,11 +6487,11 @@ const WEAPONS = {
   silenced: { name: 'Suppressed Pistol', ammo: 'light', dmg: 24, rpm: 400, mag: 16, reload: 1.5, spread: 0.012, ads: 0.006, pellets: 1, hs: 2.1, range: 175, auto: true, sfx: 'pistol' },
   lmg: { name: 'Light Machine Gun', ammo: 'medium', dmg: 28, rpm: 470, mag: 60, reload: 3.4, spread: 0.024, ads: 0.013, pellets: 1, hs: 1.6, range: 210, auto: true, sfx: 'ar' },
   lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 88, rpm: 60, mag: 6, reload: 3.0, spread: 0.015, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 36, scope: '4x' },
-  tacshot: { name: 'Tactical Shotgun', ammo: 'shells', dmg: 12, rpm: 120, mag: 6, reload: 2.8, spread: 0.050, ads: 0.040, pellets: 8, hs: 1.75, range: 58, auto: false, sfx: 'shotgun' },
+  tacshot: { name: 'Tactical Shotgun', ammo: 'shells', dmg: 14, rpm: 120, mag: 6, reload: 2.8, spread: 0.038, ads: 0.026, pellets: 8, hs: 1.75, range: 80, auto: false, sfx: 'shotgun' },
   minigun: { name: 'Minigun', ammo: 'light', dmg: 17, rpm: 1000, mag: 80, reload: 4.0, spread: 0.038, ads: 0.026, pellets: 1, hs: 1.4, range: 150, auto: true, sfx: 'smg' },
-  shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 13, rpm: 80, mag: 5, reload: 3.1, spread: 0.062, ads: 0.048, pellets: 10, hs: 1.75, range: 62, auto: false, sfx: 'shotgun' },
-  doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 12, rpm: 150, mag: 2, reload: 2.6, spread: 0.070, ads: 0.055, pellets: 8, hs: 1.7, range: 48, auto: false, sfx: 'shotgun' },
-  combat: { name: 'Combat Shotgun', ammo: 'shells', dmg: 11, rpm: 170, mag: 8, reload: 2.9, spread: 0.066, ads: 0.050, pellets: 9, hs: 1.7, range: 58, auto: true, sfx: 'shotgun' },
+  shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 15, rpm: 80, mag: 5, reload: 3.1, spread: 0.044, ads: 0.030, pellets: 12, hs: 1.75, range: 90, auto: false, sfx: 'shotgun' },
+  doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 15, rpm: 150, mag: 2, reload: 2.6, spread: 0.050, ads: 0.036, pellets: 10, hs: 1.7, range: 64, auto: false, sfx: 'shotgun' },
+  combat: { name: 'Combat Shotgun', ammo: 'shells', dmg: 13, rpm: 170, mag: 8, reload: 2.9, spread: 0.050, ads: 0.032, pellets: 10, hs: 1.7, range: 80, auto: true, sfx: 'shotgun' },
   ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.4, spread: 0.042, ads: 0.015, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
   heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 38, rpm: 260, mag: 25, reload: 2.9, spread: 0.050, ads: 0.018, pellets: 1, hs: 1.7, range: 270, auto: true, sfx: 'ar' },
   burst: { name: 'Burst Rifle', ammo: 'medium', dmg: 30, rpm: 200, mag: 27, reload: 2.6, spread: 0.026, ads: 0.012, pellets: 1, burst: 3, hs: 1.75, range: 250, auto: false, sfx: 'ar' },
@@ -6500,19 +6501,19 @@ const WEAPONS = {
   thermal: { name: 'Thermal Sniper', ammo: 'heavy', dmg: 118, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal' },
   // Mythic — stronger versions of guns already in the pool.
   mythic_ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 46, rpm: 400, mag: 35, reload: 2.0, spread: 0.030, ads: 0.010, pellets: 1, hs: 1.8, range: 280, auto: true, sfx: 'ar' },
-  mythic_shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 18, rpm: 95, mag: 6, reload: 2.5, spread: 0.055, ads: 0.045, pellets: 12, hs: 1.9, range: 70, auto: false, sfx: 'shotgun' },
+  mythic_shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 20, rpm: 95, mag: 6, reload: 2.5, spread: 0.040, ads: 0.028, pellets: 12, hs: 1.9, range: 100, auto: false, sfx: 'shotgun' },
   mythic_smg: { name: 'SMG', ammo: 'light', dmg: 24, rpm: 820, mag: 36, reload: 1.8, spread: 0.016, ads: 0.008, pellets: 1, hs: 1.6, range: 160, auto: true, sfx: 'smg' },
   mythic_tacsmg: { name: 'Tactical SMG', ammo: 'light', dmg: 21, rpm: 860, mag: 36, reload: 1.7, spread: 0.014, ads: 0.007, pellets: 1, hs: 1.7, range: 160, auto: true, sfx: 'smg' },
   mythic_sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 145, rpm: 46, mag: 1, reload: 2.4, spread: 0.040, ads: 0.0001, pellets: 1, hs: 2.8, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 21, scope: '8x' },
   mythic_pistol: { name: 'Pistol', ammo: 'light', dmg: 34, rpm: 420, mag: 20, reload: 1.3, spread: 0.012, ads: 0.005, pellets: 1, hs: 2.0, range: 180, auto: true, sfx: 'pistol' },
-  mythic_doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 16, rpm: 170, mag: 3, reload: 2.2, spread: 0.062, ads: 0.050, pellets: 10, hs: 1.8, range: 54, auto: false, sfx: 'shotgun' },
+  mythic_doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 19, rpm: 170, mag: 3, reload: 2.2, spread: 0.046, ads: 0.034, pellets: 12, hs: 1.8, range: 70, auto: false, sfx: 'shotgun' },
   mythic_heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 46, rpm: 280, mag: 30, reload: 2.6, spread: 0.042, ads: 0.014, pellets: 1, hs: 1.8, range: 300, auto: true, sfx: 'ar' },
   mythic_lmg: { name: 'Light Machine Gun', ammo: 'medium', dmg: 34, rpm: 500, mag: 70, reload: 3.0, spread: 0.021, ads: 0.011, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'ar' },
   mythic_lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 104, rpm: 66, mag: 7, reload: 2.7, spread: 0.012, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 34, scope: '4x' },
   mythic_hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 96, rpm: 60, mag: 6, reload: 2.5, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.3, range: 370, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
   // Exotic — ordinary guns with a twist.
   exotic_holo: { name: 'Leeching Holo Rifle', ammo: 'medium', dmg: 33, rpm: 330, mag: 26, reload: 2.2, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.75, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'siphon', siphon: 6 },
-  exotic_tacshot: { name: 'Shoving Tactical Shotgun', ammo: 'shells', dmg: 12, rpm: 130, mag: 7, reload: 2.7, spread: 0.048, ads: 0.038, pellets: 8, hs: 1.75, range: 58, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 16 },
+  exotic_tacshot: { name: 'Shoving Tactical Shotgun', ammo: 'shells', dmg: 14, rpm: 130, mag: 7, reload: 2.7, spread: 0.036, ads: 0.026, pellets: 10, hs: 1.75, range: 80, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 16 },
   exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 3.4, blastDmg: 38 },
   exotic_pistol: { name: 'Endless Pistol', ammo: 'light', dmg: 24, rpm: 320, mag: 18, reload: 1.2, spread: 0.014, ads: 0.006, pellets: 1, burst: 2, hs: 2.0, range: 170, auto: true, sfx: 'pistol', noAmmo: true },
   exotic_burst: { name: 'Piercing Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', pierce: true },
@@ -7904,7 +7905,7 @@ function hitTest(o, d, maxDist, shooter, shooterTeam) {
 
 function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
   let dmg = baseDmg;
-  if (falloff) dmg *= clamp(1 - (dist - 8) / 80, 0.5, 1);
+  if (falloff) dmg *= clamp(1 - (dist - 10) / 90, 0.62, 1);
   if (hit.kind === 'bot' && hit.bot) {
     const m = hit.head ? hsMult : 1;
     damageBot(hit.bot, dmg * m, shooterName, hit.head, hit.point);
@@ -7986,14 +7987,26 @@ function weaponSpecial(w, hit, dir, dmg) {
   }
 }
 
+/* The shotguns, by base type. They share a bloom model, a recoil kick and a
+   damage falloff, so none of them can quietly fall behind the others. */
+const SHOTGUN_FAMILY = ['shotgun', 'tacshot', 'combat', 'doublebarrel'];
+
 /* Spray bloom is what a held trigger looks like on the reticle. A fast
    automatic earns a much smaller window than a slow rifle, and no gun ever
    adds more than BLOOM_ADD_MAX to its cone, or the reticle stops reading as
-   a gun. */
+   a gun. A shell barely blooms at all: buck already spreads on its own, and
+   stacking bloom on it made the second shot of a fight miss far more than
+   the first. */
 const BLOOM_ADD_MAX = 0.020;
 function rapidFire(w) { return !!w.auto && (w.rpm || 0) >= 450; }
-function bloomGain(w) { return w.spread * (rapidFire(w) ? 0.55 : 0.8); }
-function bloomCap(w) { return Math.min(BLOOM_ADD_MAX, w.spread * (rapidFire(w) ? 1.1 : 1.6)); }
+function bloomGain(w) {
+  if (w.pellets > 1) return w.spread * 0.22;
+  return w.spread * (rapidFire(w) ? 0.55 : 0.8);
+}
+function bloomCap(w) {
+  if (w.pellets > 1) return Math.min(0.008, w.spread * 0.35);
+  return Math.min(BLOOM_ADD_MAX, w.spread * (rapidFire(w) ? 1.1 : 1.6));
+}
 
 function playerFire() {
   if (!player.alive || player.dropping || player.knocked) return;
@@ -8029,13 +8042,35 @@ function playerFire() {
   // reaches up to sqrt(2) x the nominal spread. Scale shots down a touch so the
   // worst-case bullet still lands inside the ring the crosshair draws.
   const shotSpread = spread * 0.62;
+  // Buck is laid out as an even, area-weighted cone instead of independent
+  // random pellets: the pattern turns a little shot to shot, but the number
+  // that lands stays roughly the same, which is what makes a shotgun feel
+  // reliable rather than lucky.
+  const pelletCone = w.pellets > 1;
+  let coneRight = null;
+  let coneUp = null;
+  let coneTurn = 0;
+  if (pelletCone) {
+    const ref = Math.abs(base.y) > 0.95 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+    coneRight = new THREE.Vector3().crossVectors(ref, base).normalize();
+    coneUp = new THREE.Vector3().crossVectors(base, coneRight).normalize();
+    coneTurn = Math.random() * TAU;
+  }
   const spriteMul = (hasSpritePower('dmg') ? 1.12 : 1) * (player.lumenReady ? 2 : 1);
   player.lumenReady = false;
   for (let p = 0; p < shots; p++) {
     const dir = (aimDir || base).clone();
-    dir.x += rand(-1, 1) * shotSpread;
-    dir.y += rand(-1, 1) * shotSpread;
-    dir.z += rand(-1, 1) * shotSpread;
+    if (pelletCone) {
+      const ang = coneTurn + (p / shots) * TAU;
+      const ring = Math.sqrt((p + 0.55) / shots);
+      const rad = shotSpread * ring * (0.94 + Math.random() * 0.12);
+      dir.addScaledVector(coneRight, Math.cos(ang) * rad);
+      dir.addScaledVector(coneUp, Math.sin(ang) * rad);
+    } else {
+      dir.x += rand(-1, 1) * shotSpread;
+      dir.y += rand(-1, 1) * shotSpread;
+      dir.z += rand(-1, 1) * shotSpread;
+    }
     dir.normalize();
     const hit = hitTest(origin, dir, w.range, null, player.team);
     tracerFX(muzzle, hit.point, 0xfff2a8);
@@ -8050,12 +8085,12 @@ function playerFire() {
       });
       if (hit.kind === 'bot' && hit.bot) hitmarker(false, true);
     } else {
-      applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, wt === 'shotgun');
+      applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, SHOTGUN_FAMILY.indexOf(wt) >= 0);
       weaponSpecial(w, hit, dir, dmg);
     }
   }
 
-  const kick = wt === 'shotgun' ? 0.055 : wt === 'sniper' ? 0.085 : wt === 'smg' ? 0.013 : 0.021;
+  const kick = SHOTGUN_FAMILY.indexOf(wt) >= 0 ? 0.045 : wt === 'sniper' ? 0.085 : wt === 'smg' ? 0.013 : 0.021;
   camRig.recoil += scopedAds ? kick * 0.15 : kick;
   sfx(w.sfx);
   if (!w.noAmmo && it.mag <= 0) startReload();
@@ -12750,8 +12785,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 1 };
-const VERSION_PREV = '7.1.0';
+const VERSION = { major: 7, minor: 1, patch: 2 };
+const VERSION_PREV = '7.1.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
