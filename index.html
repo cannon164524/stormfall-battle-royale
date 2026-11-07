@@ -4198,12 +4198,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #padHints .pgDot { width:9px; height:9px; border:1.5px solid rgba(255,255,255,.6); border-radius:50%; }
 #padHints .pgDot.sq { border-radius:2px; }
 
-/* ---- magazine dial: the bottom-right quarter of a circle, hung off the
-   lower-left of the crosshair so it curves around the reticle ---- */
+/* ---- magazine dial: the bottom-right quarter of a circle, set at the
+   bottom-right of the crosshair so the arc curls away from the reticle ---- */
 #ammoGauge {
   position:absolute; left:50%; top:50%; width:124px; height:124px;
   margin:-62px 0 0 -62px; pointer-events:none; opacity:0;
-  transform:translate(-52%, -2%);
+  transform:translate(2%, -6%);
   transition:opacity .16s linear;
 }
 #ammoGauge.on { opacity:1; }
@@ -5258,8 +5258,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>FLAT, NOT FAKE</b> — the whole interface lost its gradients, glows, metallic fills and cut-corner plating. Menus, cards, buttons, slots and the ammo ring are flat colour with a hairline border and a 3px corner now, selection is a plain white or accent outline instead of a halo, and the health and shield bars are single solid colours.</div></li>
-      <li><span class="wnTag">02</span><div><b>TYPE DOES THE WORK</b> — the gradient logo fill and the italic display faces are gone in favour of straight, tight-set type, the mode selector's glowing pills became square marks on the grid, and every HUD edge now sits on a 12px margin.</div></li>
+      <li><span class="wnTag">01</span><div><b>AMMO RING, FAR SIDE</b> — the magazine gauge moved to the bottom-right of the crosshair. It is still the bottom-right quarter of a circle, so the arc now curls down and away from the reticle instead of crowding the left of it. Same drain, same gold and red warnings.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12922,8 +12921,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 4 };
-const VERSION_PREV = '7.1.3';
+const VERSION = { major: 7, minor: 1, patch: 5 };
+const VERSION_PREV = '7.1.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
