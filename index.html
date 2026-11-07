@@ -5260,7 +5260,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>EASED BACK</b> — the ammo ring sits a touch further out, down and to the right, and is drawn at three-quarter strength so it reads as part of the scene rather than a sticker on top of it.</div></li>
+      <li><span class="wnTag">01</span><div><b>NO MORE STUCK LOADING</b> — the loading screen could sit on "loading assets" forever if a texture or a font never called back. Every asset task is now raced against a timer, the loading screen comes down as soon as that pass settles, and a fallback closes it after twelve seconds no matter what. Shader compilation also moved behind the menu instead of blocking in front of it.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12923,8 +12923,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 7 };
-const VERSION_PREV = '7.1.6';
+const VERSION = { major: 7, minor: 1, patch: 8 };
+const VERSION_PREV = '7.1.7';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -15463,29 +15463,40 @@ function applyTextures() {
   }
 }
 
+/* A texture that never calls back (a decoder that stalls, a data URL the web
+   view refuses) must not hold the loading screen up for good, so every asset
+   task is raced against a timer. */
+function withAssetTimeout(promise, ms) {
+  return new Promise((res) => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; res(); } };
+    promise.then(finish, finish);
+    setTimeout(finish, ms);
+  });
+}
+
 function loadAssets() {
   const started = performance.now();
   const specs = textureSpecs();
   const keys = Object.keys(specs);
   const tasks = [];
 
-  tasks.push(new Promise((res) => {
+  tasks.push(withAssetTimeout(new Promise((res) => {
     if (!document.fonts || !document.fonts.load) { res(); return; }
     Promise.all([
-      document.fonts.load('700 48px Anton'),
-      document.fonts.load('700 16px "Barlow Condensed"'),
-      document.fonts.load('600 16px "Barlow Semi Condensed"'),
+      document.fonts.load('800 16px Archivo'),
+      document.fonts.load('600 16px Inter'),
     ]).then(() => res()).catch(() => res());
-  }));
+  }), 2500));
 
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
-    tasks.push(new Promise((res) => {
+    tasks.push(withAssetTimeout(new Promise((res) => {
       new THREE.TextureLoader().load(specs[key], (t) => {
         TEX[key] = t;
         res();
       }, undefined, () => res());
-    }));
+    }), 4000));
   }
 
   assets.total = tasks.length;
@@ -15923,11 +15934,19 @@ function boot() {
   switchTab('play');
   showLoading();
 
-  loadAssets().then(() => {
-    applyTextures();
+  // The loading screen has to come down: the asset pass is guaranteed to settle
+  // on its own, and this is the belt-and-braces call in case anything in the
+  // boot sequence below hangs before it gets there.
+  let booted = false;
+  function finishBoot() {
+    if (booted) return;
+    booted = true;
+    try { applyTextures(); } catch (e) { /* ignore */ }
     assets.ready = true;
-    try { renderer.compile(scene, camera); } catch (e) { /* ignore */ }
     hideLoading();
+    // Shader compile used to block the loading screen. Let the menu appear
+    // first and compile behind it.
+    setTimeout(() => { try { renderer.compile(scene, camera); } catch (e) { /* ignore */ } }, 40);
     if (pendingStart) {
       pendingStart = false;
       startMatch();
@@ -15940,7 +15959,10 @@ function boot() {
     }
     lastT = performance.now();
     requestAnimationFrame(animate);
-  });
+  }
+
+  loadAssets().then(finishBoot);
+  setTimeout(finishBoot, 12000);
 }
 boot();
 
