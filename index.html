@@ -4676,7 +4676,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO MORE DOUBLED SOUND</b> — the room effect behind every sound was a delay with feedback, repeating each one about a tenth of a second later, which read as the game playing every shot and every click twice. It is now a single 38 ms slap with no feedback at all: it thickens a gunshot without ever coming back as a second one.</div></li>
+      <li><span class="wnTag">01</span><div><b>RELOAD ANIMATIONS</b> — your gun now dips and rolls while it feeds a fresh magazine, the off hand swings up to the mag well and back, and the whole motion is timed to the actual reload length, so a fast SMG swap and a slow shotgun load look different.</div></li>
+      <li><span class="wnTag">02</span><div><b>PULL-OUT ON SWITCH</b> — changing slots drops the weapon out of frame and brings the new one up with a roll and a settle. You can feel which gun you just picked.</div></li>
+      <li><span class="wnTag">03</span><div><b>DRINK AND BANDAGE</b> — using a heal swaps the model in your hands to the bottle or medkit, tilts it up to your face and bobs while the timer runs, then puts the real gun back when the heal lands.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6767,7 +6769,7 @@ function setRigWeapon(rig, type) {
     rig.mount.remove(c);
     disposeTree(c);
   }
-  if (!firstEquip && type !== null) rig.switchT = 0.32;
+  if (!firstEquip && type !== null) rig.switchT = 0.45;
   if (!type) return;
   const built = buildWeaponModel(type);
   rig.mount.add(built.group);
@@ -6799,17 +6801,45 @@ function animateRig(rig, speed, t) {
   rig.armL.rotation.x = -1.05 + sw * 0.15;
   rig.armR.rotation.x = -1.25 + Math.sin(t * 11 + 1.2) * 0.06;
 
+  // The weapon arm is a stack of three motions: the draw on a switch, the
+  // reload arc, and the tilt while drinking or bandaging. Only the local
+  // player's rig reads the reload and use state.
+  const mine = rig === player.rig;
+  let px = 0.3, py = 1.14, pz = 0.34;
+  let rx = 0, ry = 0, rz = 0;
+
   if (rig.switchT > 0) {
     rig.switchT = Math.max(0, rig.switchT - 0.016);
-    const p = rig.switchT / 0.32;
+    const p = clamp(rig.switchT / 0.45, 0, 1);
     const dip = Math.sin(p * Math.PI);
-    rig.mount.position.set(0.3 - dip * 0.1, 1.14 - dip * 0.6, 0.34 - dip * 0.12);
-    rig.mount.rotation.set(-dip * 1.7, 0, dip * 0.5);
+    py -= dip * 0.52;
+    px -= dip * 0.08;
+    rz += dip * 0.62;
+    rx -= dip * 0.5;
     rig.armR.rotation.x = -1.25 - dip * 0.55;
-  } else if (rig.mount.position.y !== 1.14) {
-    rig.mount.position.set(0.3, 1.14, 0.34);
-    rig.mount.rotation.set(0, 0, 0);
   }
+
+  if (mine && player.reloading) {
+    const total = Math.max(0.15, player.reloadEnd - (player.reloadStart || 0));
+    const tt = clamp(1 - (player.reloadEnd - state.time) / total, 0, 1);
+    const arc = Math.sin(clamp(tt / 0.72, 0, 1) * Math.PI);
+    py -= arc * 0.18;
+    rz += arc * 0.55;
+    rx -= Math.sin(tt * Math.PI * 3) * 0.2;
+    rig.armL.rotation.x = -1.05 - arc * 0.9;
+  }
+
+  if (mine && player.using) {
+    const bob = Math.sin(t * 7) * 0.035;
+    py += 0.09 + bob;
+    rz -= 0.4;
+    rx -= 0.55;
+    px -= 0.06;
+    rig.armR.rotation.x = -1.9 - bob * 2;
+  }
+
+  rig.mount.position.set(px, py, pz);
+  rig.mount.rotation.set(rx, ry, rz);
 
   if (rig.flashT > 0) {
     rig.flashT -= 0.016;
@@ -7371,6 +7401,7 @@ function startReload() {
   if (player.ammo[w.ammo] <= 0) { dryWeapon(); return; }
   player.reloading = true;
   player.bloom = 0;
+  player.reloadStart = state.time;
   player.reloadEnd = state.time + w.reload * (hasSpritePower('reload') ? 0.8 : 1);
   player.lumenReady = hasSpritePower('lumen');
   sfx('reload');
@@ -10186,7 +10217,7 @@ function updatePlayer(dt) {
     player.rig.group.rotation.y = rigYaw;
     animateRig(player.rig, Math.hypot(player.vel.x, player.vel.z), state.time);
     const held = currentItem();
-    setRigWeapon(player.rig, held ? (held.kind === 'weapon' ? held.type : held.kind) : null);
+    setRigWeapon(player.rig, player.using ? 'heal' : (held ? (held.kind === 'weapon' ? held.type : held.kind) : null));
     if (aimDown) {
       player.rig.armL.rotation.x = -1.5;
       player.rig.armR.rotation.x = -1.5;
@@ -11910,8 +11941,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 0, patch: 2 };
-const VERSION_PREV = '7.0.1';
+const VERSION = { major: 7, minor: 0, patch: 3 };
+const VERSION_PREV = '7.0.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
