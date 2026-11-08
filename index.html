@@ -4607,7 +4607,16 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px;
   background:rgba(7,10,16,.98); border-top:1px solid rgba(255,255,255,.08);
 }
-#lobbyEl.modesOpen .modeRow { display:grid; }
+#lobbyEl.modesOpen .modeRow {
+  display:grid; position:fixed; inset:0; z-index:9;
+  height:auto; max-height:none; align-content:start;
+  grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px;
+  padding:14px 12px 66px; overflow-y:auto;
+  background:rgba(6,9,14,.99);
+}
+#lobbyEl.modesOpen #modeBar { z-index:10; }
+#lobbyEl.modesOpen .modeBtn { min-height:78px; padding:10px 12px; }
+#lobbyEl.modesOpen .modeName { font-size:16px; }
 #lobbyEl.modesOpen #modeBar .mbHint { color:#10131c; background:#dfe4ff; border-color:#dfe4ff; }
 .modeRow .modeBtn { flex:none; min-height:62px; }
 
@@ -4621,9 +4630,11 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .heroFig .mini { transform:scale(2.6); }
   .heroName { font-size:8px; }
   .heroGlow { height:52px; }
-  #modeBar { height:42px; padding:0 10px; }
+  #modeBar { height:42px; padding:0 10px; z-index:9; }
   #modeBar b { font-size:12px; }
   .modeRow { bottom:42px; max-height:52vh; }
+  #lobbyEl.modesOpen .modeRow { padding:10px 8px 54px; gap:6px; }
+  #lobbyEl.modesOpen .modeBtn { min-height:66px; padding:8px 10px; }
   .playRow { bottom:52px; }
   .lobbyFoot { bottom:196px; }
 }
@@ -5485,8 +5496,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>YOUR OUTFIT ON THE STAGE</b> — the lobby now stands the skin you have equipped in the middle of the screen, on a lit platform, with its name underneath. Equip something else in the locker and it is what you see when you come back.</div></li>
-      <li><span class="wnTag">02</span><div><b>ALL MODES ON TAP</b> — the mode row along the bottom is a bar now: it shows the mode you have selected and, when you press it, opens the full list of every game mode to pick from. Choosing one closes the list and updates the bar.</div></li>
+      <li><span class="wnTag">01</span><div><b>FULL-SCREEN MODES</b> — pressing the mode bar no longer opens a short panel; the grid takes over the whole screen, two wide tiles per row with taller names, scrolling if it needs to, and the bar stays pinned along the bottom to close it again.</div></li>
     </ul>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -13154,8 +13164,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 2, patch: 1 };
-const VERSION_PREV = '7.2.0';
+const VERSION = { major: 7, minor: 2, patch: 2 };
+const VERSION_PREV = '7.2.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
