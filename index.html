@@ -4413,6 +4413,155 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #buildHud { left:12px; }
 #weaponCluster { right:12px; }
 #padHints { right:12px; }
+
+/* =========================================================================
+   LOBBY — current Fortnite-style home screen
+   Slim nav across the top with the selected tab in a pale pill, the mode
+   panel and Play at the lower left, a discovery row of mode tiles along the
+   bottom, party and modifiers on the right, and a lit stage behind it all.
+   ========================================================================= */
+#menu {
+  padding:0;
+  background:
+    radial-gradient(70% 55% at 50% 40%, rgba(96,132,232,.30), transparent 72%),
+    radial-gradient(120% 80% at 50% 108%, rgba(30,86,150,.42), transparent 72%),
+    linear-gradient(180deg, #0c1526 0%, #080e1a 58%, #05080f 100%);
+}
+#menu::before {
+  display:block; content:'';
+  position:absolute; left:50%; top:44%; width:min(58vw,540px); height:min(58vw,540px);
+  transform:translate(-50%,-42%); border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, rgba(126,196,255,.20), rgba(126,196,255,0) 64%);
+}
+#menu::after {
+  display:block; content:'';
+  position:absolute; left:50%; bottom:112px; width:min(62vw,420px); height:96px;
+  transform:translateX(-50%); border-radius:50%; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%, rgba(120,220,255,.24), rgba(120,220,255,0) 70%);
+}
+
+/* ---- slim nav ---- */
+.menuTop {
+  position:absolute; top:0; left:0; right:0; z-index:6;
+  height:44px; padding:0 12px; gap:12px; align-items:center;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg, rgba(7,11,19,.9), rgba(7,11,19,.45));
+}
+.brand { display:flex; align-items:baseline; gap:8px; }
+.logo { font-family:var(--display); font-size:15px; font-weight:800; letter-spacing:.14em; color:#f2f5f9; }
+.tagline { display:none; }
+.tabs { display:flex; align-items:center; gap:1px; margin:0 0 0 6px; padding:0; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
+.tabs::-webkit-scrollbar { display:none; }
+.tab, .tab.active {
+  background:none; border:0; border-radius:999px;
+  padding:6px 11px; font-family:var(--body); font-size:9.5px; font-weight:700;
+  letter-spacing:.12em; color:rgba(242,245,249,.6); white-space:nowrap;
+}
+.tab:hover { color:#fff; background:rgba(255,255,255,.06); }
+.tab.active { background:#dfe4ff; color:#10131c; border:0; }
+.topRight { margin-left:auto; gap:6px; }
+.cashTag, .vbTag {
+  display:flex; align-items:center; gap:5px; padding:3px 9px;
+  background:rgba(12,16,24,.6); border:1px solid rgba(255,255,255,.1); border-radius:999px;
+  font-family:var(--body); font-size:9.5px; font-weight:700; color:#f2f5f9;
+}
+.cashCoin, .vbCoin { width:13px; height:13px; font-size:8px; box-shadow:none; background:#8b95a8; color:#0b0f16; }
+#adminEntry { font-family:var(--body); font-size:8.5px; font-weight:600; letter-spacing:.12em; color:rgba(255,255,255,.42); }
+#adminEntry:hover { color:#fff; }
+.verTag { border:0; background:none; padding:0; font-family:var(--body); font-size:8.5px; letter-spacing:.08em; color:rgba(255,255,255,.35); }
+
+/* ---- lobby area ---- */
+.lobby { position:absolute; inset:44px 0 0 0; display:block; padding:0; }
+.modeRow {
+  position:absolute; left:0; right:0; bottom:0; height:98px;
+  display:flex; align-items:stretch; gap:8px; padding:8px 12px;
+  overflow-x:auto; overflow-y:hidden;
+  background:linear-gradient(0deg, rgba(5,8,14,.94), rgba(5,8,14,.55) 62%, transparent);
+}
+.modeRow::-webkit-scrollbar { height:0; }
+.modeGroup { display:contents; }
+.modeGroupLabel { display:none; }
+.modeBtn, .modeBtn:hover, .modeBtn.active {
+  flex:0 0 172px; display:flex; flex-direction:column; justify-content:flex-end; gap:1px;
+  padding:7px 10px 8px; border-radius:4px; text-align:left; transform:none;
+  background:rgba(17,21,30,.86); border:1px solid rgba(255,255,255,.08); clip-path:none;
+}
+.modeBtn:hover { background:rgba(27,34,48,.92); border-color:rgba(255,255,255,.22); }
+.modeBtn.active { background:rgba(32,44,66,.96); border-color:#dfe4ff; box-shadow:none; }
+.modeKicker { font-family:var(--body); font-size:7.5px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.45); }
+.modeKicker.new { color:#fff500; }
+.modeName { font-family:var(--display); font-size:14px; font-weight:800; letter-spacing:0; color:#f2f5f9; }
+.modeFoot { font-family:var(--body); font-size:7.5px; font-weight:600; letter-spacing:.06em; color:rgba(255,255,255,.42); }
+.modeFoot b { color:rgba(255,255,255,.75); }
+.modeTick { display:none; }
+
+/* ---- mode panel + Play, lower left ---- */
+.playRow {
+  position:absolute; left:12px; bottom:106px; width:min(302px, calc(100% - 24px)); z-index:5;
+  display:flex; flex-direction:column; align-items:stretch; gap:7px;
+  padding:10px 10px 10px; border-radius:4px;
+  background:rgba(16,20,29,.88); border:1px solid rgba(255,255,255,.09);
+}
+.playRow .playerCard { background:none; border:0; padding:0; gap:8px; }
+.pcAvatar { width:34px; height:42px; }
+.pcName { font-family:var(--display); font-size:13px; font-weight:800; letter-spacing:.02em; color:#f2f5f9; }
+.pcSkin { font-family:var(--body); font-size:8.5px; font-weight:600; letter-spacing:.1em; color:rgba(255,255,255,.42); }
+.queueMode { font-family:var(--display); font-size:17px; font-weight:800; letter-spacing:0; color:#f2f5f9; text-transform:uppercase; }
+.queueSub { font-family:var(--body); font-size:9px; font-weight:500; letter-spacing:.02em; color:rgba(255,255,255,.45); margin-top:1px; }
+#playBtn {
+  width:100%; padding:11px 10px; border-radius:3px;
+  background:#fff500; color:#14160c;
+  font-family:var(--display); font-size:18px; font-weight:800; letter-spacing:.08em;
+  text-align:center; box-shadow:none; animation:none;
+}
+#playBtn:hover { background:#fff95c; }
+#playBtn:active { transform:none; background:#e8df00; }
+
+/* ---- party, rules and modifiers, right ---- */
+.lobbyFoot {
+  position:absolute; right:12px; bottom:106px; top:12px; width:min(288px, 42vw);
+  display:flex; flex-direction:column; gap:6px; padding:0;
+  overflow-y:auto; scrollbar-width:none;
+}
+.lobbyFoot::-webkit-scrollbar { display:none; }
+.lobbyFoot .sidePanel { display:none; }
+.seatPanel, .seatPanel:hover {
+  padding:8px 10px; border-radius:4px;
+  background:rgba(16,20,29,.82); border:1px solid rgba(255,255,255,.08); box-shadow:none;
+}
+.seatLabel { font-family:var(--body); font-size:8px; font-weight:700; letter-spacing:.16em; color:rgba(255,255,255,.45); margin-bottom:6px; }
+.seatCount { font-family:var(--body); font-size:8.5px; letter-spacing:.1em; color:rgba(255,255,255,.5); }
+.seatCount b { font-family:var(--display); font-size:19px; letter-spacing:0; color:#f2f5f9; }
+#reloadInfo .reloadRules span, .reloadRules span {
+  border-radius:3px; font-family:var(--body); font-size:8px; letter-spacing:.1em;
+  color:rgba(255,255,255,.6); border:1px solid rgba(255,255,255,.12); padding:4px 6px;
+}
+.reloadRules b { color:#fff500; }
+.stepBtn, .pocketOpt, .modChip { border-radius:3px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); color:rgba(255,255,255,.7); }
+.pocketOpt.sel, .modChip.sel { background:#dfe4ff; color:#10131c; border-color:#dfe4ff; }
+
+/* ---- overlay panels sit under the nav ---- */
+#menu .menuPanel { position:absolute; top:44px; left:0; right:0; bottom:0; z-index:5; padding:14px 14px 16px; background:rgba(6,9,15,.94); }
+#menu .menuPanel .mpFoot { padding-top:10px; }
+
+@media (max-width: 640px) {
+  .menuTop { gap:8px; padding:0 10px; height:40px; }
+  .logo { font-size:13px; letter-spacing:.1em; }
+  .tabs { margin-left:2px; }
+  .tab { padding:5px 8px; font-size:8.5px; letter-spacing:.08em; }
+  .cashTag, .vbTag { padding:2px 7px; font-size:8.5px; }
+  .verTag, #adminEntry { display:none; }
+  .lobby { inset:40px 0 0 0; }
+  .modeRow { height:84px; padding:6px 8px; }
+  .modeBtn { flex:0 0 142px; padding:6px 8px 7px; }
+  .modeName { font-size:12px; }
+  .playRow { left:8px; right:8px; width:auto; bottom:92px; padding:8px; gap:5px; }
+  #playBtn { font-size:16px; padding:10px; }
+  .lobbyFoot { right:8px; top:auto; bottom:200px; width:132px; }
+  .lobbyFoot .seatPanel:not(#botSeatEl) { display:none; }
+  #menu::before { width:70vw; height:70vw; top:40%; }
+  #menu::after { display:none; }
+}
 </style>
 </head>
 <body>
@@ -5260,7 +5409,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO MORE STUCK LOADING</b> — the loading screen could sit on "loading assets" forever if a texture or a font never called back. Every asset task is now raced against a timer, the loading screen comes down as soon as that pass settles, and a fallback closes it after twelve seconds no matter what. Shader compilation also moved behind the menu instead of blocking in front of it.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE LOBBY IS A LOBBY NOW</b> — the home screen was rebuilt to the current Fortnite layout: a slim navigation row across the top with the current tab as a pale pill, currency and profile on the right, and the old wall of mode cards replaced by a horizontal discovery row of wide mode tiles along the bottom edge.</div></li>
+      <li><span class="wnTag">02</span><div><b>MODE PANEL AND PLAY</b> — your outfit, the selected mode's name and the count of players now sit in one panel at the lower left, with PLAY as a wide yellow button, and the party size, match rules, pocket item, modifiers and rank stacked down the right. The middle of the screen is left to the scene, lit by a stage glow instead of filled with panels.</div></li>
+    </ul>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12923,8 +13074,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 1, patch: 8 };
-const VERSION_PREV = '7.1.7';
+const VERSION = { major: 7, minor: 2, patch: 0 };
+const VERSION_PREV = '7.1.8';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
