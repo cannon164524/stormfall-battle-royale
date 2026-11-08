@@ -4607,17 +4607,44 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px;
   background:rgba(7,10,16,.98); border-top:1px solid rgba(255,255,255,.08);
 }
-#lobbyEl.modesOpen .modeRow {
+/* the mode grid: full screen, faded and lifted in and out */
+.modeRow {
   display:grid; position:fixed; inset:0; z-index:9;
   height:auto; max-height:none; align-content:start;
   grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px;
-  padding:14px 12px 66px; overflow-y:auto;
-  background:rgba(6,9,14,.99);
+  padding:14px 12px 16px; overflow-y:auto;
+  background:rgba(6,9,14,.99); border:0;
+  opacity:0; visibility:hidden; pointer-events:none;
+  transform:translateY(18px) scale(.985);
+  transition:opacity .2s ease, transform .28s cubic-bezier(.2,.9,.3,1), visibility 0s linear .28s;
 }
-#lobbyEl.modesOpen #modeBar { z-index:10; }
-#lobbyEl.modesOpen .modeBtn { min-height:78px; padding:10px 12px; }
-#lobbyEl.modesOpen .modeName { font-size:16px; }
-#lobbyEl.modesOpen #modeBar .mbHint { color:#10131c; background:#dfe4ff; border-color:#dfe4ff; }
+#menu.modesOpen .modeRow {
+  opacity:1; visibility:visible; pointer-events:auto; transform:none;
+  transition:opacity .24s ease, transform .32s cubic-bezier(.2,.9,.3,1), visibility 0s;
+}
+/* nothing else on screen while it is open */
+#menu.modesOpen .menuTop,
+#menu.modesOpen #lobbyHero,
+#menu.modesOpen .playRow,
+#menu.modesOpen .lobbyFoot,
+#menu.modesOpen #modeBar {
+  opacity:0; pointer-events:none; transition:opacity .16s ease;
+}
+#menu.modesOpen .modeBtn { min-height:78px; padding:10px 12px; }
+#menu.modesOpen .modeName { font-size:16px; }
+.mpkHead {
+  grid-column:1/-1; display:flex; align-items:center; justify-content:space-between;
+  padding:2px 2px 8px;
+}
+.mpkTitle {
+  font-family:var(--body); font-size:9.5px; font-weight:700; letter-spacing:.2em;
+  color:rgba(255,255,255,.55);
+}
+#modesClose {
+  font-family:var(--body); font-size:8.5px; font-weight:700; letter-spacing:.14em;
+  color:#10131c; background:#dfe4ff; border-radius:999px; padding:5px 13px;
+}
+#modesClose:hover { background:#fff; }
 .modeRow .modeBtn { flex:none; min-height:62px; }
 
 /* keep everything clear of the bar */
@@ -4634,7 +4661,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   #modeBar b { font-size:12px; }
   .modeRow { bottom:42px; max-height:52vh; }
   #lobbyEl.modesOpen .modeRow { padding:10px 8px 54px; gap:6px; }
-  #lobbyEl.modesOpen .modeBtn { min-height:66px; padding:8px 10px; }
+  #menu.modesOpen .modeRow { padding:10px 8px 16px; gap:6px; }
+  #menu.modesOpen .modeBtn { min-height:66px; padding:8px 10px; }
   .playRow { bottom:52px; }
   .lobbyFoot { bottom:196px; }
 }
@@ -4845,6 +4873,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <div class="heroName" id="lobbyHeroName">SPRITE RUNNER</div>
     </div>
     <div class="modeRow" id="modeRowEl">
+      <div class="mpkHead">
+        <span class="mpkTitle">ALL GAME MODES</span>
+        <button id="modesClose" type="button">CLOSE</button>
+      </div>
       <div class="modeGroup">
         <div class="modeGroupLabel">BATTLE ROYALE</div>
         <button class="modeBtn active" data-mode="br">
@@ -5496,7 +5528,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>FULL-SCREEN MODES</b> — pressing the mode bar no longer opens a short panel; the grid takes over the whole screen, two wide tiles per row with taller names, scrolling if it needs to, and the bar stays pinned along the bottom to close it again.</div></li>
+      <li><span class="wnTag">01</span><div><b>A CLEAN MODE PICKER</b> — opening the mode list now clears everything else away: the navigation, your outfit, the mode panel with its Play button and the side panels all fade out, leaving the grid alone with a title and a close button. The grid itself fades and slides up over a quarter second as it opens, and fades away as it closes.</div></li>
     </ul>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -13154,8 +13186,8 @@ function setMode(m) {
   if (sub) sub.textContent = def.desc;
   const mb = document.getElementById('mbMode');
   if (mb) mb.textContent = def.name.toUpperCase();
-  const lobbyEl = document.getElementById('lobbyEl');
-  if (lobbyEl) lobbyEl.classList.remove('modesOpen');
+  const menuEl = document.getElementById('menu');
+  if (menuEl) menuEl.classList.remove('modesOpen');
   refreshRank();
 }
 
@@ -13164,8 +13196,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 2, patch: 2 };
-const VERSION_PREV = '7.2.1';
+const VERSION = { major: 7, minor: 2, patch: 3 };
+const VERSION_PREV = '7.2.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -14641,6 +14673,8 @@ document.querySelectorAll('.pocketOpt').forEach((b) => {
 /* ---------------- menu tabs ---------------- */
 function switchTab(tab) {
   state.menuTab = tab;
+  const menuEl = document.getElementById('menu');
+  if (menuEl) menuEl.classList.remove('modesOpen');
   document.querySelectorAll('.tab').forEach((t) => {
     t.classList.toggle('active', t.dataset.tab === tab);
   });
@@ -14685,10 +14719,19 @@ document.querySelectorAll('.modeBtn').forEach((btn) => {
 const modeBarEl = document.getElementById('modeBar');
 if (modeBarEl) {
   modeBarEl.addEventListener('click', () => {
-    const l = document.getElementById('lobbyEl');
-    if (l) l.classList.toggle('modesOpen');
+    const m = document.getElementById('menu');
+    if (m) m.classList.toggle('modesOpen');
     audioInit();
     sfx('reload');
+  });
+}
+const modesCloseEl = document.getElementById('modesClose');
+if (modesCloseEl) {
+  modesCloseEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const m = document.getElementById('menu');
+    if (m) m.classList.remove('modesOpen');
+    sfx('switch');
   });
 }
 
