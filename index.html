@@ -4562,6 +4562,71 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   #menu::before { width:70vw; height:70vw; top:40%; }
   #menu::after { display:none; }
 }
+
+/* =========================================================================
+   LOBBY HERO + MODE BAR
+   The outfit you have equipped stands on the stage in the middle, and the
+   bottom bar opens the full list of game modes.
+   ========================================================================= */
+#lobbyHero {
+  position:absolute; left:50%; bottom:150px; transform:translateX(-50%); z-index:2;
+  display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;
+}
+.heroGlow {
+  position:absolute; left:50%; bottom:2px; width:min(64vw,300px); height:72px;
+  transform:translateX(-50%); border-radius:50%; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%, rgba(120,220,255,.34), rgba(120,220,255,0) 70%);
+}
+.heroFig { width:232px; height:326px; display:flex; align-items:flex-end; justify-content:center; }
+.heroFig .mini { transform:scale(3.9); transform-origin:bottom center; margin:0; }
+.heroFig .mini .mHead { border-radius:10px; }
+.heroName {
+  font-family:var(--body); font-size:9px; font-weight:700; letter-spacing:.18em;
+  color:rgba(255,255,255,.62); text-align:center;
+}
+
+#modeBar {
+  position:absolute; left:0; right:0; bottom:0; z-index:7;
+  height:46px; display:flex; align-items:center; gap:10px; padding:0 14px;
+  background:rgba(7,11,17,.96); border-top:1px solid rgba(255,255,255,.09);
+  text-align:left; cursor:pointer;
+}
+#modeBar:hover { background:rgba(13,19,28,.98); }
+#modeBar .mbLabel { font-family:var(--body); font-size:7.5px; font-weight:700; letter-spacing:.2em; color:rgba(255,255,255,.4); }
+#modeBar b { font-family:var(--display); font-size:14px; font-weight:800; letter-spacing:.01em; color:#f2f5f9; }
+#modeBar .mbHint {
+  margin-left:auto; padding:3px 10px; border-radius:999px;
+  font-family:var(--body); font-size:8px; font-weight:700; letter-spacing:.14em;
+  color:#dfe4ff; border:1px solid rgba(223,228,255,.4);
+}
+
+/* the mode list itself, closed until the bar is pressed */
+.modeRow {
+  display:none; position:absolute; left:0; right:0; bottom:46px;
+  max-height:58vh; overflow-y:auto; padding:10px 12px 12px;
+  grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px;
+  background:rgba(7,10,16,.98); border-top:1px solid rgba(255,255,255,.08);
+}
+#lobbyEl.modesOpen .modeRow { display:grid; }
+#lobbyEl.modesOpen #modeBar .mbHint { color:#10131c; background:#dfe4ff; border-color:#dfe4ff; }
+.modeRow .modeBtn { flex:none; min-height:62px; }
+
+/* keep everything clear of the bar */
+.playRow { bottom:58px; }
+.lobbyFoot { bottom:58px; }
+
+@media (max-width: 640px) {
+  #lobbyHero { bottom:236px; }
+  .heroFig { width:150px; height:212px; }
+  .heroFig .mini { transform:scale(2.6); }
+  .heroName { font-size:8px; }
+  .heroGlow { height:52px; }
+  #modeBar { height:42px; padding:0 10px; }
+  #modeBar b { font-size:12px; }
+  .modeRow { bottom:42px; max-height:52vh; }
+  .playRow { bottom:52px; }
+  .lobbyFoot { bottom:196px; }
+}
 </style>
 </head>
 <body>
@@ -4763,6 +4828,11 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </div>
 
   <div class="lobby" id="lobbyEl">
+    <div id="lobbyHero">
+      <div class="heroGlow"></div>
+      <div class="heroFig" id="lobbyHeroFig"></div>
+      <div class="heroName" id="lobbyHeroName">SPRITE RUNNER</div>
+    </div>
     <div class="modeRow" id="modeRowEl">
       <div class="modeGroup">
         <div class="modeGroupLabel">BATTLE ROYALE</div>
@@ -4842,6 +4912,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         </button>
       </div>
     </div>
+
+    <button id="modeBar" type="button">
+      <span class="mbLabel">GAME MODE</span>
+      <b id="mbMode">BATTLE ROYALE</b>
+      <span class="mbHint">ALL MODES</span>
+    </button>
 
     <div class="lobbyFoot">
       <div class="seatPanel" id="botSeatEl">
@@ -5409,8 +5485,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE LOBBY IS A LOBBY NOW</b> — the home screen was rebuilt to the current Fortnite layout: a slim navigation row across the top with the current tab as a pale pill, currency and profile on the right, and the old wall of mode cards replaced by a horizontal discovery row of wide mode tiles along the bottom edge.</div></li>
-      <li><span class="wnTag">02</span><div><b>MODE PANEL AND PLAY</b> — your outfit, the selected mode's name and the count of players now sit in one panel at the lower left, with PLAY as a wide yellow button, and the party size, match rules, pocket item, modifiers and rank stacked down the right. The middle of the screen is left to the scene, lit by a stage glow instead of filled with panels.</div></li>
+      <li><span class="wnTag">01</span><div><b>YOUR OUTFIT ON THE STAGE</b> — the lobby now stands the skin you have equipped in the middle of the screen, on a lit platform, with its name underneath. Equip something else in the locker and it is what you see when you come back.</div></li>
+      <li><span class="wnTag">02</span><div><b>ALL MODES ON TAP</b> — the mode row along the bottom is a bar now: it shows the mode you have selected and, when you press it, opens the full list of every game mode to pick from. Choosing one closes the list and updates the bar.</div></li>
     </ul>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -13066,6 +13142,10 @@ function setMode(m) {
   }
   const sub = document.getElementById('queueSub');
   if (sub) sub.textContent = def.desc;
+  const mb = document.getElementById('mbMode');
+  if (mb) mb.textContent = def.name.toUpperCase();
+  const lobbyEl = document.getElementById('lobbyEl');
+  if (lobbyEl) lobbyEl.classList.remove('modesOpen');
   refreshRank();
 }
 
@@ -13074,8 +13154,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 2, patch: 0 };
-const VERSION_PREV = '7.1.8';
+const VERSION = { major: 7, minor: 2, patch: 1 };
+const VERSION_PREV = '7.2.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -13294,6 +13374,8 @@ function refreshWallet() {
   }
   const pcSkin = document.getElementById('pcSkin');
   const pcAvatar = document.getElementById('pcAvatar');
+  const heroFig = document.getElementById('lobbyHeroFig');
+  const heroName = document.getElementById('lobbyHeroName');
   if (pcSkin) {
     const sk = equippedSkin();
     pcSkin.textContent = sk.name.toUpperCase();
@@ -13301,6 +13383,11 @@ function refreshWallet() {
       pcAvatar.dataset.skin = sk.id;
       pcAvatar.innerHTML = miniHTML(sk);
     }
+    if (heroFig && heroFig.dataset.skin !== sk.id) {
+      heroFig.dataset.skin = sk.id;
+      heroFig.innerHTML = miniHTML(sk);
+    }
+    if (heroName) heroName.textContent = sk.name.toUpperCase();
   }
 }
 
@@ -14584,6 +14671,16 @@ if (rrCloseEl) rrCloseEl.addEventListener('click', closeRankedRecap);
 document.querySelectorAll('.modeBtn').forEach((btn) => {
   btn.addEventListener('click', () => { setMode(btn.dataset.mode); audioInit(); sfx('reload'); });
 });
+
+const modeBarEl = document.getElementById('modeBar');
+if (modeBarEl) {
+  modeBarEl.addEventListener('click', () => {
+    const l = document.getElementById('lobbyEl');
+    if (l) l.classList.toggle('modesOpen');
+    audioInit();
+    sfx('reload');
+  });
+}
 
 /* ---------------- inventory ---------------- */
 let invOpen = false;
