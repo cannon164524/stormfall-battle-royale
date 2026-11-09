@@ -4794,6 +4794,378 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 @media (max-width: 900px) {
   .lobby::before { display:none; }
 }
+
+/* =========================================================================
+   OVERHAUL 7.4 — new shapes, new layout, new colours
+   Acid lime on ink with teal and coral, cut-corner plates instead of rounded
+   boxes, a vertical rail down the left, a briefing column on the right, and a
+   segmented HUD that reads like a scope overlay rather than a console.
+   ========================================================================= */
+:root {
+  --bg:#070b0c;
+  --panel:#0d1416;
+  --ink:#e7f5ec;
+  --ink-dim:rgba(231,245,236,.55);
+  --line:rgba(220,255,236,.12);
+  --accent:#c2ff3d;
+  --lime:#c2ff3d;
+  --teal:#3fe0c5;
+  --coral:#ff6a4d;
+  --gold:#ffc844;
+  --danger:#ff6a4d;
+}
+
+/* ---------------- LOBBY ---------------- */
+#menu {
+  padding:0;
+  background:
+    radial-gradient(60% 50% at 32% 42%, rgba(194,255,61,.07), transparent 70%),
+    radial-gradient(70% 60% at 90% 100%, rgba(63,224,197,.08), transparent 72%),
+    linear-gradient(180deg, #070b0c 0%, #050809 60%, #040607 100%);
+}
+#menu::before { display:none; }
+#menu::after { display:none; }
+
+/* left rail */
+.menuTop {
+  position:absolute; left:0; top:0; bottom:0; width:78px; height:auto; z-index:8;
+  padding:10px 0 12px; gap:0; display:flex; flex-direction:column; align-items:center;
+  border-right:1px solid var(--line); border-bottom:0;
+  background:#080c0e;
+}
+.brand { display:block; padding:0 0 10px; text-align:center; }
+.logo { font-family:var(--display); font-size:12px; font-weight:800; letter-spacing:.2em; line-height:1.05; color:var(--lime); }
+.logo::before { content:none; }
+.tagline { display:block; margin-top:3px; font-size:6px; font-weight:700; letter-spacing:.28em; color:var(--ink-dim); }
+.tabs {
+  display:flex; flex-direction:column; width:100%; margin:0; padding:0; gap:0;
+  overflow:visible; counter-reset:none;
+}
+.tab, .tab.active {
+  width:100%; padding:9px 2px; text-align:center; border:0; border-radius:0;
+  border-top:1px solid var(--line); background:none; position:relative;
+  font-family:var(--body); font-size:7.5px; font-weight:800; letter-spacing:.14em;
+  color:rgba(231,245,236,.5);
+}
+.tab::before { content:none; }
+.tab:hover { background:rgba(194,255,61,.08); color:var(--ink); }
+.tab.active { background:var(--lime); color:#0a0f07; }
+.tab.active::after { display:none; }
+.topRight {
+  margin:auto 0 0; width:100%; flex-direction:column; align-items:center; gap:6px;
+}
+.cashTag, .vbTag {
+  width:58px; justify-content:center; padding:4px 0; border-radius:0;
+  background:#0d1416; border:1px solid var(--line); font-size:8px; color:var(--ink);
+}
+.cashCoin, .vbCoin { border-radius:0; background:var(--teal); color:#04211c; }
+#adminEntry, .verTag { display:none; }
+
+/* main area */
+.lobby { position:absolute; left:78px; right:0; top:0; bottom:0; display:block; padding:0; }
+.lobby::before { display:none; }
+
+#lobbyHero { left:36%; bottom:104px; gap:6px; }
+.heroGlow {
+  background:none; border:1px solid rgba(194,255,61,.4); border-radius:0;
+  width:200px; height:14px; bottom:-4px;
+  clip-path:polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+}
+.heroFig { width:210px; height:300px; }
+.heroFig .mini { transform:scale(3.4); transform-origin:bottom center; margin:0; }
+.heroFig .mini .mHead { border-radius:2px; }
+.heroName {
+  font-family:var(--body); font-size:7.5px; font-weight:800; letter-spacing:.26em;
+  color:var(--lime);
+}
+
+/* briefing column */
+.playRow {
+  position:absolute; left:auto; right:16px; bottom:64px; width:314px; z-index:5;
+  display:flex; flex-direction:column; align-items:stretch; gap:0; padding:0;
+  border:1px solid var(--line); border-radius:0; background:#0d1416;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+}
+.playRow::before {
+  content:'MATCH BRIEF'; display:block; padding:9px 12px 7px; margin:0;
+  border-bottom:1px solid var(--line);
+  font-family:var(--body); font-size:7px; font-weight:800; letter-spacing:.3em; color:var(--ink-dim);
+}
+.playRow .playerCard { padding:9px 12px 0; }
+.pcAvatar { width:30px; height:38px; }
+.pcName { font-size:12px; letter-spacing:.16em; color:var(--ink); }
+.pcSkin { font-size:8px; color:var(--ink-dim); }
+.queueInfo { padding:8px 12px 10px; }
+.queueMode { font-family:var(--display); font-size:14px; font-weight:800; letter-spacing:.14em; color:var(--ink); }
+.queueSub { font-size:8.5px; color:var(--ink-dim); }
+#playBtn {
+  margin:0 12px 14px; width:auto; padding:11px 12px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-radius:0; background:var(--lime); color:#0a0f07;
+  font-family:var(--display); font-size:14px; font-weight:800; letter-spacing:.24em;
+  clip-path:polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+}
+#playBtn::after { content:'▸'; font-size:13px; }
+#playBtn:hover { background:#d6ff74; }
+
+/* readouts, upper right */
+.lobbyFoot {
+  position:absolute; left:auto; right:16px; top:14px; bottom:auto; width:314px;
+  max-height:calc(100% - 300px); overflow-y:auto; gap:5px; padding:0;
+}
+.lobbyFoot::-webkit-scrollbar { display:none; }
+.lobbyFoot .sidePanel { display:none; }
+.seatPanel {
+  padding:8px 11px; border-radius:0; background:#0d1416;
+  border:1px solid var(--line); border-left:0;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+.seatLabel { font-size:7px; font-weight:800; letter-spacing:.24em; color:var(--ink-dim); margin-bottom:5px; }
+.seatCount { font-size:8px; color:var(--ink-dim); }
+.seatCount b { font-family:var(--display); font-size:17px; color:var(--lime); }
+.stepBtn, .pocketOpt, .modChip {
+  border-radius:0; background:rgba(194,255,61,.06); border:1px solid var(--line); color:var(--ink);
+}
+.pocketOpt.sel, .modChip.sel { background:var(--lime); border-color:var(--lime); color:#0a0f07; }
+.reloadRules span { border-radius:0; border:1px solid var(--line); color:var(--ink-dim); }
+.reloadRules b { color:var(--lime); }
+
+/* bottom mode strip */
+#modeBar {
+  left:0; right:0; bottom:0; height:52px; padding:0 14px; gap:12px;
+  background:#0a0f11; border-top:1px solid var(--line); border-radius:0;
+}
+#modeBar .mbLabel { font-size:7px; letter-spacing:.3em; color:var(--ink-dim); }
+#modeBar b { font-family:var(--display); font-size:12px; letter-spacing:.22em; color:var(--lime); }
+#modeBar .mbHint {
+  border-radius:0; border:1px solid rgba(194,255,61,.45); color:var(--lime);
+  clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+}
+#modeBar:hover { background:#0d1416; }
+
+/* full-screen picker */
+.modeRow {
+  inset:0 0 0 78px; background:#070b0c; padding:14px; gap:6px;
+}
+#menu.modesOpen .modeRow { inset:0 0 0 78px; }
+#menu.modesOpen .menuTop { opacity:1; pointer-events:auto; }
+.mpkHead { border-bottom:1px solid var(--line); padding:2px 2px 10px; }
+.mpkTitle { font-size:8px; letter-spacing:.3em; color:var(--ink-dim); }
+#modesClose {
+  border-radius:0; background:var(--lime); color:#0a0f07; letter-spacing:.2em;
+  clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+}
+.modeBtn, .modeBtn:hover, .modeBtn.active {
+  border-radius:0; background:#0d1416; border:1px solid var(--line);
+  justify-content:flex-start; gap:3px; padding:11px 12px;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+.modeBtn:hover { border-color:rgba(194,255,61,.35); background:#111a1c; }
+.modeBtn.active { background:rgba(194,255,61,.10); border-color:var(--lime); border-left:0; }
+.modeBtn.active .modeName { color:var(--lime); }
+.modeName { font-family:var(--display); font-size:14px; font-weight:800; letter-spacing:.06em; color:var(--ink); }
+#menu.modesOpen .modeName { font-size:15px; }
+.modeKicker { font-size:7px; letter-spacing:.24em; color:var(--ink-dim); }
+.modeKicker.new { color:var(--coral); }
+.modeFoot { font-size:7.5px; color:var(--ink-dim); }
+
+/* ---------------- IN-GAME HUD ---------------- */
+#modeBadge {
+  left:14px; top:14px; padding:4px 10px; border:1px solid var(--line); border-radius:0;
+  background:#0a0f11; color:var(--ink); font-size:8px; letter-spacing:.24em;
+  clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+}
+#modeBadge::before { background:var(--lime); }
+#quitBtn { left:14px; top:40px; border-radius:0; border:1px solid var(--line); background:#0a0f11; color:var(--ink-dim); }
+#questLine { left:14px; top:68px; }
+#questLine .qGlyph { border-color:var(--lime); color:var(--lime); border-radius:0; }
+#questLine .qText { color:var(--ink); }
+#questLine .qText b { color:var(--lime); }
+
+#compass { height:24px; background:none; }
+#compass .cTick { background:rgba(231,245,236,.28); }
+#compass .cTick.major { background:var(--lime); }
+#compass .cLbl { color:var(--ink-dim); font-size:7.5px; }
+#compass .cLbl.card { color:var(--ink); }
+#compass .cMark { border-bottom-color:var(--lime); }
+
+#stormInfo {
+  border-radius:0; border:1px solid var(--line); background:#0a0f11;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+#stormLabel { color:var(--ink-dim); letter-spacing:.2em; }
+#stormBar { background:rgba(231,245,236,.12); }
+#stormBarFill { background:var(--coral); }
+#stormTime { color:var(--ink); font-size:14px; }
+#stormTag { color:var(--coral); }
+#stormTag::before { background:var(--coral); }
+#stormTag b { color:var(--ink); }
+#stormWarn { border-radius:0; background:#2a0f0a; border:1px solid rgba(255,106,77,.55); color:#ffd6cc; }
+
+/* map */
+.mapFrame {
+  border-radius:0; border:1px solid var(--line); background:#0a0f11; padding:0;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+#minimap { border-radius:0; }
+.mapName { color:var(--lime); font-size:clamp(9px, 1.4vw, 14px); }
+.mapReport { border-radius:0; border:1px solid var(--line); background:#0a0f11; color:var(--ink-dim); }
+.metaCell b { color:var(--lime); }
+.metaCell span { color:var(--ink-dim); }
+
+/* feed + alerts */
+.feedRow { color:rgba(231,245,236,.9); }
+.feedRow b { color:var(--lime); }
+.toast { color:var(--lime); }
+.toast.sub { color:var(--ink-dim); }
+#teamPanel { left:14px; }
+.tpRow, #teamPanel .tpRow { border-left:2px solid rgba(63,224,197,.5); }
+.tpRow.knocked, #teamPanel .tpRow.knocked { border-left-color:var(--coral); }
+.tpName { color:var(--ink); }
+.tpBar { background:rgba(231,245,236,.12); }
+.tpShield > i { background:var(--teal); }
+.tpHealth > i { background:var(--lime); }
+
+/* vitals: a compact plate, bottom left, segmented bars */
+#vitals {
+  left:14px; right:auto; bottom:14px; transform:none; width:214px; gap:4px;
+  padding:8px 10px 9px; background:#0a0f11; border:1px solid var(--line);
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+.bar {
+  height:8px; border-radius:0; background:rgba(231,245,236,.10);
+  box-shadow:none; overflow:hidden; position:relative;
+}
+.bar > i { border-radius:0; }
+.bar::after {
+  display:block; content:''; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(90deg, transparent 0 9px, rgba(0,0,0,.5) 9px 10px);
+}
+.bar > b { left:8px; right:auto; font-family:var(--display); font-weight:800; font-size:8px; line-height:8px; color:#04110a; }
+.bar.shield > i { background:var(--teal); }
+.bar.health > i { background:var(--lime); }
+.bar.health.low > i { background:var(--coral); }
+#pvName { color:var(--ink-dim); font-size:8px; letter-spacing:.2em; margin-top:2px; }
+
+/* weapon cluster */
+.slot {
+  border-radius:0; border:1px solid var(--line); background:#0a0f11;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+.slot.active {
+  border-color:var(--lime); background:rgba(194,255,61,.12); box-shadow:none;
+  transform:translateY(-3px);
+}
+.slot .key { color:var(--ink-dim); }
+.slot .cnt { color:var(--ink); }
+.slot .rar { height:2px; }
+#pocketSlot {
+  border-radius:0; border:1px solid var(--line); background:#0a0f11;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+#pocketSlot.ready { border-color:rgba(194,255,61,.5); }
+#ammoBox b { color:var(--ink); font-size:28px; }
+#ammoBox span { color:var(--ink-dim); font-size:13px; }
+#ammoBox i { color:var(--lime); letter-spacing:.2em; }
+#matsBig .bigIc { background:var(--teal); }
+#matsBig b { color:var(--ink); font-size:22px; }
+#padHints .pgKey { border-radius:0; border:1px solid var(--line); color:var(--ink-dim); }
+#padHints .pgDot { border-color:var(--ink-dim); border-radius:0; }
+
+/* reticle: corner brackets and a lime dot */
+#crosshair i {
+  background:none; box-shadow:none; width:9px; height:9px;
+  border-color:#eef7f1; border-style:solid; border-width:0;
+}
+#crosshair i.u { border-left-width:2px; border-top-width:2px; transform:translate(calc(-10px - var(--gap)), calc(-10px - var(--gap))); }
+#crosshair i.d { border-left-width:2px; border-bottom-width:2px; transform:translate(calc(-10px - var(--gap)), var(--gap)); }
+#crosshair i.l { border-right-width:2px; border-top-width:2px; transform:translate(var(--gap), calc(-10px - var(--gap))); }
+#crosshair i.r { border-right-width:2px; border-bottom-width:2px; transform:translate(var(--gap), var(--gap)); }
+#crosshair b { width:3px; height:3px; margin:-1.5px 0 0 -1.5px; background:var(--lime); border-radius:0; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
+
+/* ammo: vertical segmented strip beside the reticle */
+#ammoGauge {
+  left:50%; top:50%; width:7px; height:72px; margin:-36px 0 0 34px;
+  transform:none; background:rgba(4,10,8,.7); border:1px solid rgba(231,245,236,.2);
+  opacity:0; transition:opacity .16s linear; pointer-events:none;
+}
+#ammoGauge svg { display:none; }
+#ammoGauge.on { opacity:.95; }
+#ammoGauge .agFill {
+  position:absolute; left:0; right:0; bottom:0; height:100%;
+  background:var(--lime); transition:height .1s linear, background .18s linear;
+}
+#ammoGauge.low .agFill { background:var(--gold); }
+#ammoGauge.crit .agFill { background:var(--coral); }
+#ammoGauge.reloading .agFill { opacity:.3; }
+#ammoGauge .agCap {
+  position:absolute; left:-2px; right:-2px; top:-4px; height:2px; background:rgba(231,245,236,.35);
+}
+
+/* misc */
+#prompt {
+  border-radius:0; border:1px solid var(--line); background:#0a0f11; color:var(--ink);
+  clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+}
+#useBar { border-radius:0; height:3px; background:rgba(231,245,236,.12); }
+#useBar i { border-radius:0; background:var(--lime); }
+.buildPiece {
+  border-radius:0; border:1px solid var(--line); background:#0a0f11; color:var(--ink-dim);
+}
+.buildPiece.sel { border-color:var(--lime); color:var(--lime); background:rgba(194,255,61,.08); }
+#spectate, #mateTimer { border-radius:0; border:1px solid var(--line); background:#0a0f11; }
+#mateTimer b { color:var(--lime); }
+#tourneyHud { border-radius:0; border:1px solid var(--line); background:#0a0f11; }
+.bar.shield.over { box-shadow:none; }
+#overFill { background:#9cf3e6; }
+
+/* result card: lime knock, coral kill */
+#resultCard { top:66%; }
+#resultCard .rcHead {
+  border-radius:0; border:1px solid rgba(194,255,61,.5); background:#0b1210;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+#resultCard .rcHead b { color:var(--lime); font-size:clamp(16px, 2.3vw, 22px); letter-spacing:.08em; }
+#resultCard .rcIcon { color:var(--lime); }
+#resultCard .rcName {
+  border-radius:0; border:1px solid var(--line); border-top:0; background:#0a0f11;
+  color:var(--ink); font-size:10px; letter-spacing:.14em;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
+}
+#resultCard.kill .rcHead { border-color:rgba(255,106,77,.55); background:#140a08; }
+#resultCard.kill .rcHead b { color:var(--coral); }
+#resultCard.kill .rcIcon { color:var(--coral); }
+#resultCard .rcRing { border-radius:0; border-color:rgba(194,255,61,.5); }
+#resultCard.kill .rcRing { border-color:rgba(255,106,77,.5); }
+
+/* end screen */
+#end.win { background:radial-gradient(70% 60% at 50% 36%, rgba(24,52,10,.92), rgba(3,6,10,.97)); }
+#end.win .endTitle { color:var(--lime); }
+#endTitle { color:var(--ink); }
+
+@media (max-width: 760px) {
+  .menuTop { width:58px; padding:8px 0 10px; }
+  .logo { font-size:9px; letter-spacing:.14em; }
+  .tagline { display:none; }
+  .tab, .tab.active { padding:8px 1px; font-size:6.5px; letter-spacing:.06em; }
+  .cashTag, .vbTag { width:44px; font-size:7px; }
+  .lobby { left:58px; }
+  .modeRow, #menu.modesOpen .modeRow { inset:0 0 0 58px; padding:10px 8px; gap:6px; }
+  #lobbyHero { left:50%; bottom:250px; }
+  .heroFig { width:150px; height:214px; }
+  .heroFig .mini { transform:scale(2.4); }
+  .heroGlow { width:130px; height:10px; }
+  .playRow { left:8px; right:8px; width:auto; bottom:58px; }
+  .lobbyFoot { display:none; }
+  #modeBar { height:46px; padding:0 10px; }
+  #modeBar b { font-size:11px; letter-spacing:.16em; }
+  #modeBar .mbHint { font-size:7px; padding:2px 8px; }
+  .modeBtn { padding:9px 10px; }
+  .modeName { font-size:12px; }
+  #vitals { left:8px; width:170px; bottom:8px; }
+  #weaponCluster { right:8px; bottom:22px; }
+  #ammoGauge { margin-left:26px; height:60px; margin-top:-30px; width:6px; }
+}
 </style>
 </head>
 <body>
@@ -4893,11 +5265,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <span class="grapDot"></span>
   </div>
   <div id="ammoGauge">
-    <svg viewBox="0 0 100 100" aria-hidden="true">
-      <path class="agUnder" d="M50 90A40 40 0 0 0 90 50"></path>
-      <path class="agTrack" d="M50 90A40 40 0 0 0 90 50"></path>
-      <path class="agFill" id="ammoArcFill" pathLength="100" d="M50 90A40 40 0 0 0 90 50"></path>
-    </svg>
+    <div class="agFill" id="ammoArcFill"></div>
+    <span class="agCap"></span>
   </div>
   <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
   <div id="scope" class="hide">
@@ -5656,9 +6025,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>OUR OWN LOOK</b> — the lobby stopped borrowing another game's style. Deep slate and a single cyan accent replace the yellow and pale lavender, every rounded pill is a square corner, the navigation is numbered and underlined rather than boxed, and a horizon rule runs across the screen.</div></li>
-      <li><span class="wnTag">02</span><div><b>READ AS A PANEL, NOT A POSTER</b> — the mode box is headed DEPLOYMENT, the action reads DEPLOY with an arrow instead of a wide yellow bar, the right-hand readouts are hairline rows with a cyan edge, and the mode list is a grid of squared tiles with a cyan caret on the one you have selected.</div></li>
-      <li><span class="wnTag">03</span><div><b>WINNING IS OURS TOO</b> — a win reads STORM CLEARED now, in cyan on a cold backdrop, and the knock card and ammo ring follow the same accent instead of gold and white.</div></li>
+      <li><span class="wnTag">01</span><div><b>NEW BONES</b> — the lobby is built the other way round. Navigation is a vertical rail down the left edge with the section you are on filled in, your outfit stands free in the middle of the room, and everything you decide — mode, party size, rules, modifiers, rank, DEPLOY — lives in one column on the right. The bottom strip is just the mode you have queued.</div></li>
+      <li><span class="wnTag">02</span><div><b>NEW SHAPES</b> — rounded corners are gone entirely. Plates are cut on one corner, buttons on another, bars are segmented into ticks, the crosshair is four corner brackets around a lime dot, and the ammo ring was replaced by a vertical magazine strip beside the reticle that drains in blocks.</div></li>
+      <li><span class="wnTag">03</span><div><b>NEW COLOURS</b> — acid lime on ink, with teal for shield and coral for danger, storm and eliminations. No blue, no gold, no lavender. Life bars are lime, shields are teal, the storm clock reads in coral, and a win lands on STORM CLEARED in lime.</div></li>
     </ul>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -11940,7 +12309,7 @@ function updateAmmoDial() {
   ammoGaugeEl.classList.toggle('reloading', show && !!player.reloading);
   ammoGaugeEl.classList.toggle('crit', show && pct <= 0.12);
   ammoGaugeEl.classList.toggle('low', show && pct > 0.12 && pct <= 0.3);
-  ammoArcFillEl.style.strokeDashoffset = String(100 - pct * 100);
+  ammoArcFillEl.style.height = (pct * 100).toFixed(1) + '%';
 }
 
 /* Teammates: health, shield, knock state and revive progress. */
@@ -13326,8 +13695,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 3, patch: 0 };
-const VERSION_PREV = '7.2.3';
+const VERSION = { major: 7, minor: 4, patch: 0 };
+const VERSION_PREV = '7.3.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
