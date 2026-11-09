@@ -6028,9 +6028,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ROUNDS TAKE LONGER TO ARRIVE</b> — sniper and marksman rounds now travel much slower, so you have to lead a running target at range: the Lever Action comes in at 380, the Hunting Rifle 420, the Bolt Sniper 470, the Thermal 490, the Gauss 520 and the Rail Lance 560, with every mythic and exotic variant slowed to match.</div></li>
-      <li><span class="wnTag">02</span><div><b>SCOPED RIFLES CARRY TOO</b> — the Holo Rifle and its exotic versions now fire travelling rounds at 620, the speed sniper rounds used to have before this patch. Scoped rifles are no longer a point-and-click hit at any distance.</div></li>
-      <li><span class="wnTag">03</span><div><b>REAPER SNIPER</b> — a new heavyweight rifle: three rounds in the magazine, 150 damage each, armour-piercing, 8X scope, a slow 30 rpm and a heavy 430-speed round. It is in the loot pool, so it turns up in chests and in the hands of the better bots.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE NEW HARDWARE IS EVERYWHERE</b> — the energy and rail weapons were a small slice of the loot table and easy to go a whole match without seeing. Pulse Carbines are three times as likely now, and the Ion Repeater, Tesla Arc, Nova Burster, Cryo Projector, Gauss Rifle and Rail Lance each doubled, with the Reaper Sniper doubled as well. The older guns gave up their duplicate slots to make room, so the pool is about half futuristic hardware.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7479,32 +7477,32 @@ const SPECIAL_BASE = {
    weapons that carry the early game are tight enough to actually hit. */
 const LOOT_WEAPON_POOL = [
   // close range
-  'tacsmg', 'tacsmg',
-  'smg', 'smg',
-  'shotgun', 'shotgun',
-  'tacshot', 'tacshot',
+  'tacsmg',
+  'smg',
+  'shotgun',
+  'tacshot',
   'doublebarrel',
-  'pistol', 'pistol',
+  'pistol',
   'silenced',
   // mid range
-  'ar', 'ar',
+  'ar',
   'burst',
   'heavyar',
   'lmg',
   // scoped and long range
-  'holo', 'holo',
+  'holo',
   'lever',
   'hunting',
   'sniper',
-  'reaper',
-  // futuristic hardware
-  'pulse', 'pulse',
-  'ion',
-  'tesla',
-  'nova',
-  'cryo',
-  'gauss',
-  'rail',
+  'reaper', 'reaper',
+  // futuristic hardware — the newer hardware turns up as often as the classics
+  'pulse', 'pulse', 'pulse',
+  'ion', 'ion',
+  'tesla', 'tesla',
+  'nova', 'nova',
+  'cryo', 'cryo',
+  'gauss', 'gauss',
+  'rail', 'rail',
   // heavy suppression
   'minigun',
 ];
@@ -13864,8 +13862,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 5, patch: 2 };
-const VERSION_PREV = '7.5.1';
+const VERSION = { major: 7, minor: 5, patch: 3 };
+const VERSION_PREV = '7.5.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
