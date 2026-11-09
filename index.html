@@ -6028,9 +6028,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE NAV MOVED BACK UP</b> — the lobby navigation is a horizontal bar across the top again, with the section you are on filled in lime, the currency and version on the right, and the lobby, mode library and brief panel using the whole width beneath it.</div></li>
-      <li><span class="wnTag">02</span><div><b>RETICLE RESTORED</b> — the crosshair is back to the four bars and a dot that it used before the overhaul: centred, opening outward as spread grows, and leaving the shotgun pellet ring alone.</div></li>
-      <li><span class="wnTag">03</span><div><b>SEVEN NEW WEAPONS</b> — futuristic hardware with its own models and icons: the Pulse Carbine, Ion Repeater, Tesla Arc (chains to a second target), Nova Burster (three-round burst), Cryo Projector (freezes), Gauss Rifle and Rail Lance, the last two piercing and scoped. Three mythic variants and three exotics — a detonating Nova, a deep-freeze projector and a siphoning Ion — join the drop tables and bot loadouts.</div></li>
+      <li><span class="wnTag">01</span><div><b>LONG GUNS HAVE FLIGHT TIME</b> — marksman rifles and snipers no longer land instantly. The Hunting Rifle, Lever Action, Bolt Sniper, Thermal Sniper, Gauss Rifle and Rail Lance now fire a round that visibly travels, and the hit registers when it arrives: around a fifth of a second at close range, over half a second at the far end of the map. Lead a moving target, exactly as you would expect from a bolt-action.</div></li>
+      <li><span class="wnTag">02</span><div><b>EVERY VARIANT TOO</b> — the mythic snipers, levers and hunting rifles and the exotic freezing, siphoning and piercing versions all carry the same flight time, tuned slightly faster where the gun is stronger. Bots firing these weapons use the same travel, so a sniper duel is a fair exchange.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7394,7 +7393,7 @@ const WEAPONS = {
   tacsmg: { name: 'Tactical SMG', ammo: 'light', dmg: 17, rpm: 800, mag: 30, reload: 1.9, spread: 0.013, ads: 0.007, pellets: 1, hs: 1.6, range: 155, auto: true, sfx: 'smg' },
   silenced: { name: 'Suppressed Pistol', ammo: 'light', dmg: 24, rpm: 400, mag: 16, reload: 1.5, spread: 0.012, ads: 0.006, pellets: 1, hs: 2.1, range: 175, auto: true, sfx: 'pistol' },
   lmg: { name: 'Light Machine Gun', ammo: 'medium', dmg: 28, rpm: 470, mag: 60, reload: 3.4, spread: 0.024, ads: 0.013, pellets: 1, hs: 1.6, range: 210, auto: true, sfx: 'ar' },
-  lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 88, rpm: 60, mag: 6, reload: 3.0, spread: 0.015, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 36, scope: '4x' },
+  lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 88, rpm: 60, mag: 6, reload: 3.0, spread: 0.015, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 36, scope: '4x', bulletSpeed: 520 },
   tacshot: { name: 'Tactical Shotgun', ammo: 'shells', dmg: 14, rpm: 120, mag: 6, reload: 2.8, spread: 0.038, ads: 0.026, pellets: 8, hs: 1.75, range: 80, auto: false, sfx: 'shotgun' },
   minigun: { name: 'Minigun', ammo: 'light', dmg: 17, rpm: 1000, mag: 80, reload: 4.0, spread: 0.038, ads: 0.026, pellets: 1, hs: 1.4, range: 150, auto: true, sfx: 'smg' },
   shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 15, rpm: 80, mag: 5, reload: 3.1, spread: 0.044, ads: 0.030, pellets: 12, hs: 1.75, range: 90, auto: false, sfx: 'shotgun' },
@@ -7404,42 +7403,42 @@ const WEAPONS = {
   heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 38, rpm: 260, mag: 25, reload: 2.9, spread: 0.050, ads: 0.018, pellets: 1, hs: 1.7, range: 270, auto: true, sfx: 'ar' },
   burst: { name: 'Burst Rifle', ammo: 'medium', dmg: 30, rpm: 200, mag: 27, reload: 2.6, spread: 0.026, ads: 0.012, pellets: 1, burst: 3, hs: 1.75, range: 250, auto: false, sfx: 'ar' },
   holo: { name: 'Holo Rifle', ammo: 'medium', dmg: 33, rpm: 320, mag: 24, reload: 2.5, spread: 0.034, ads: 0.0001, pellets: 1, hs: 1.75, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo' },
-  hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 78, rpm: 55, mag: 5, reload: 2.9, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
-  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x' },
-  thermal: { name: 'Thermal Sniper', ammo: 'heavy', dmg: 118, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal' },
+  hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 78, rpm: 55, mag: 5, reload: 2.9, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', bulletSpeed: 560 },
+  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x', bulletSpeed: 620 },
+  thermal: { name: 'Thermal Sniper', ammo: 'heavy', dmg: 118, rpm: 34, mag: 1, reload: 3.2, spread: 0.045, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'thermal', bulletSpeed: 650 },
   // Mythic — stronger versions of guns already in the pool.
   mythic_ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 46, rpm: 400, mag: 35, reload: 2.0, spread: 0.030, ads: 0.010, pellets: 1, hs: 1.8, range: 280, auto: true, sfx: 'ar' },
   mythic_shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 20, rpm: 95, mag: 6, reload: 2.5, spread: 0.040, ads: 0.028, pellets: 12, hs: 1.9, range: 100, auto: false, sfx: 'shotgun' },
   mythic_smg: { name: 'SMG', ammo: 'light', dmg: 24, rpm: 820, mag: 36, reload: 1.8, spread: 0.016, ads: 0.008, pellets: 1, hs: 1.6, range: 160, auto: true, sfx: 'smg' },
   mythic_tacsmg: { name: 'Tactical SMG', ammo: 'light', dmg: 21, rpm: 860, mag: 36, reload: 1.7, spread: 0.014, ads: 0.007, pellets: 1, hs: 1.7, range: 160, auto: true, sfx: 'smg' },
-  mythic_sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 145, rpm: 46, mag: 1, reload: 2.4, spread: 0.040, ads: 0.0001, pellets: 1, hs: 2.8, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 21, scope: '8x' },
+  mythic_sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 145, rpm: 46, mag: 1, reload: 2.4, spread: 0.040, ads: 0.0001, pellets: 1, hs: 2.8, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 21, scope: '8x', bulletSpeed: 660 },
   mythic_pistol: { name: 'Pistol', ammo: 'light', dmg: 34, rpm: 420, mag: 20, reload: 1.3, spread: 0.012, ads: 0.005, pellets: 1, hs: 2.0, range: 180, auto: true, sfx: 'pistol' },
   mythic_doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 19, rpm: 170, mag: 3, reload: 2.2, spread: 0.046, ads: 0.034, pellets: 12, hs: 1.8, range: 70, auto: false, sfx: 'shotgun' },
   mythic_heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 46, rpm: 280, mag: 30, reload: 2.6, spread: 0.042, ads: 0.014, pellets: 1, hs: 1.8, range: 300, auto: true, sfx: 'ar' },
   mythic_lmg: { name: 'Light Machine Gun', ammo: 'medium', dmg: 34, rpm: 500, mag: 70, reload: 3.0, spread: 0.021, ads: 0.011, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'ar' },
-  mythic_lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 104, rpm: 66, mag: 7, reload: 2.7, spread: 0.012, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 34, scope: '4x' },
-  mythic_hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 96, rpm: 60, mag: 6, reload: 2.5, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.3, range: 370, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x' },
+  mythic_lever: { name: 'Lever Action Rifle', ammo: 'medium', dmg: 104, rpm: 66, mag: 7, reload: 2.7, spread: 0.012, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 34, scope: '4x', bulletSpeed: 550 },
+  mythic_hunting: { name: 'Hunting Rifle', ammo: 'medium', dmg: 96, rpm: 60, mag: 6, reload: 2.5, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.3, range: 370, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', bulletSpeed: 600 },
   // Exotic — ordinary guns with a twist.
   exotic_holo: { name: 'Leeching Holo Rifle', ammo: 'medium', dmg: 33, rpm: 330, mag: 26, reload: 2.2, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.75, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'siphon', siphon: 6 },
   exotic_tacshot: { name: 'Shoving Tactical Shotgun', ammo: 'shells', dmg: 14, rpm: 130, mag: 7, reload: 2.7, spread: 0.036, ads: 0.026, pellets: 10, hs: 1.75, range: 80, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 16 },
-  exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 3.4, blastDmg: 38 },
+  exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 3.4, blastDmg: 38, bulletSpeed: 560 },
   exotic_pistol: { name: 'Endless Pistol', ammo: 'light', dmg: 24, rpm: 320, mag: 18, reload: 1.2, spread: 0.014, ads: 0.006, pellets: 1, burst: 2, hs: 2.0, range: 170, auto: true, sfx: 'pistol', noAmmo: true },
   exotic_burst: { name: 'Piercing Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', pierce: true },
   exotic_minigun: { name: 'Shredding Minigun', ammo: 'light', dmg: 17, rpm: 1050, mag: 90, reload: 3.8, spread: 0.036, ads: 0.024, pellets: 1, hs: 1.5, range: 160, auto: true, sfx: 'smg', onHit: 'knock', knockForce: 4 },
-  exotic_sniper: { name: 'Freezing Bolt Sniper', ammo: 'heavy', dmg: 100, rpm: 42, mag: 1, reload: 2.8, spread: 0.050, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x', onHit: 'freeze', freezeTime: 2.6 },
+  exotic_sniper: { name: 'Freezing Bolt Sniper', ammo: 'heavy', dmg: 100, rpm: 42, mag: 1, reload: 2.8, spread: 0.050, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: '8x', onHit: 'freeze', freezeTime: 2.6, bulletSpeed: 620 },
   exotic_chain: { name: 'Chaining Holo Rifle', ammo: 'medium', dmg: 30, rpm: 330, mag: 26, reload: 2.3, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.7, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'chain', chainR: 9, chainMul: 0.5 },
-  exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'siphon', siphon: 12 },
-  exotic_lever: { name: 'Piercing Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x', pierce: true },
+  exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'siphon', siphon: 12, bulletSpeed: 560 },
+  exotic_lever: { name: 'Piercing Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x', pierce: true, bulletSpeed: 540 },
   // Futuristic — energy, coil and rail hardware.
   pulse: { name: 'Pulse Carbine', ammo: 'medium', dmg: 23, rpm: 620, mag: 30, reload: 2.1, spread: 0.026, ads: 0.012, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'ar' },
   ion: { name: 'Ion Repeater', ammo: 'light', dmg: 15, rpm: 900, mag: 40, reload: 1.8, spread: 0.018, ads: 0.010, pellets: 1, hs: 1.6, range: 165, auto: true, sfx: 'smg' },
   tesla: { name: 'Tesla Arc', ammo: 'medium', dmg: 22, rpm: 300, mag: 24, reload: 2.3, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.7, range: 190, auto: true, sfx: 'ar', onHit: 'chain', chainR: 8, chainMul: 0.45 },
   nova: { name: 'Nova Burster', ammo: 'medium', dmg: 26, rpm: 180, mag: 21, reload: 2.4, spread: 0.028, ads: 0.012, pellets: 1, burst: 3, hs: 1.8, range: 210, auto: false, sfx: 'ar' },
   cryo: { name: 'Cryo Projector', ammo: 'light', dmg: 20, rpm: 260, mag: 20, reload: 2.2, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.6, range: 175, auto: true, sfx: 'smg', onHit: 'freeze', freezeTime: 2.2 },
-  gauss: { name: 'Gauss Rifle', ammo: 'heavy', dmg: 78, rpm: 70, mag: 6, reload: 2.8, spread: 0.014, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 34, scope: '4x', pierce: true },
-  rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 95, rpm: 48, mag: 3, reload: 3.0, spread: 0.010, ads: 0.0001, pellets: 1, hs: 2.4, range: 420, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 28, scope: '4x', pierce: true },
+  gauss: { name: 'Gauss Rifle', ammo: 'heavy', dmg: 78, rpm: 70, mag: 6, reload: 2.8, spread: 0.014, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 34, scope: '4x', pierce: true, bulletSpeed: 700 },
+  rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 95, rpm: 48, mag: 3, reload: 3.0, spread: 0.010, ads: 0.0001, pellets: 1, hs: 2.4, range: 420, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 28, scope: '4x', pierce: true, bulletSpeed: 780 },
   mythic_pulse: { name: 'Pulse Carbine', ammo: 'medium', dmg: 32, rpm: 700, mag: 36, reload: 1.9, spread: 0.021, ads: 0.010, pellets: 1, hs: 1.8, range: 250, auto: true, sfx: 'ar' },
-  mythic_rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 130, rpm: 52, mag: 4, reload: 2.6, spread: 0.008, ads: 0.0001, pellets: 1, hs: 2.5, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 27, scope: '4x', pierce: true },
+  mythic_rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 130, rpm: 52, mag: 4, reload: 2.6, spread: 0.008, ads: 0.0001, pellets: 1, hs: 2.5, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 27, scope: '4x', pierce: true, bulletSpeed: 820 },
   mythic_tesla: { name: 'Tesla Arc', ammo: 'medium', dmg: 30, rpm: 340, mag: 30, reload: 2.0, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.8, range: 210, auto: true, sfx: 'ar', onHit: 'chain', chainR: 10, chainMul: 0.55 },
   exotic_nova: { name: 'Detonating Nova Burster', ammo: 'medium', dmg: 30, rpm: 190, mag: 24, reload: 2.2, spread: 0.026, ads: 0.012, pellets: 1, burst: 3, hs: 1.8, range: 220, auto: false, sfx: 'ar', onHit: 'explode', blastR: 2.6, blastDmg: 22 },
   exotic_cryo: { name: 'Deep Freeze Projector', ammo: 'light', dmg: 24, rpm: 280, mag: 24, reload: 2.0, spread: 0.020, ads: 0.010, pellets: 1, hs: 1.7, range: 185, auto: true, sfx: 'smg', onHit: 'freeze', freezeTime: 3.0 },
@@ -9092,20 +9091,27 @@ function playerFire() {
     }
     dir.normalize();
     const hit = hitTest(origin, dir, w.range, null, player.team);
-    tracerFX(muzzle, hit.point, 0xfff2a8);
     const dmg = w.dmg * RARITY[it.rarity].mult * (adminOn('oneShot') ? 100 : 1) * spriteMul;
-    if (net.connected && !net.isHost) {
-      netSend({
-        t: 'shot',
-        o: [origin.x, origin.y, origin.z],
-        d: [dir.x, dir.y, dir.z],
-        dmg: dmg,
-        range: w.range,
-      });
-      if (hit.kind === 'bot' && hit.bot) hitmarker(false, true);
+    const land = () => {
+      if (net.connected && !net.isHost) {
+        netSend({
+          t: 'shot',
+          o: [origin.x, origin.y, origin.z],
+          d: [dir.x, dir.y, dir.z],
+          dmg: dmg,
+          range: w.range,
+        });
+        if (hit.kind === 'bot' && hit.bot) hitmarker(false, true);
+      } else {
+        applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, SHOTGUN_FAMILY.indexOf(wt) >= 0);
+        weaponSpecial(w, hit, dir, dmg);
+      }
+    };
+    if (w.bulletSpeed) {
+      spawnTravelBullet(muzzle, hit.point, w.bulletSpeed, land, 0xd8ffe0);
     } else {
-      applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, SHOTGUN_FAMILY.indexOf(wt) >= 0);
-      weaponSpecial(w, hit, dir, dmg);
+      tracerFX(muzzle, hit.point, 0xfff2a8);
+      land();
     }
   }
 
@@ -10627,18 +10633,20 @@ function botFire(b, target) {
 
   const dir = aimPoint.clone().sub(eye).normalize();
   const hit = hitTest(eye, dir, def.range, b, b.team);
-  tracerFX(eye, hit.point, 0xffd0a0);
   flashMuzzle(b.rig);
-
-  if (hit.kind === 'player') {
-    const m = RARITY[b.weapon.rarity].mult;
-    hurtPlayer(def.dmg * m * botDmgMul() * (hit.head ? def.hs * 0.7 : 1), b.name, false, eye);
-  } else if (hit.kind === 'bot' && hit.bot) {
-    const m = RARITY[b.weapon.rarity].mult;
-    damageBot(hit.bot, def.dmg * m * botDmgMul() * (hit.head ? def.hs : 1), b.name, hit.head, hit.point);
-  } else if (hit.kind === 'world' && hit.col) {
-    damageCollider(hit.col, def.dmg * 0.55);
-  }
+  const land = () => {
+    if (hit.kind === 'player') {
+      const m = RARITY[b.weapon.rarity].mult;
+      hurtPlayer(def.dmg * m * botDmgMul() * (hit.head ? def.hs * 0.7 : 1), b.name, false, eye);
+    } else if (hit.kind === 'bot' && hit.bot) {
+      const m = RARITY[b.weapon.rarity].mult;
+      damageBot(hit.bot, def.dmg * m * botDmgMul() * (hit.head ? def.hs : 1), b.name, hit.head, hit.point);
+    } else if (hit.kind === 'world' && hit.col) {
+      damageCollider(hit.col, def.dmg * 0.55);
+    }
+  };
+  if (def.bulletSpeed) spawnTravelBullet(eye, hit.point, def.bulletSpeed, land, 0xffd0a0);
+  else { tracerFX(eye, hit.point, 0xffd0a0); land(); }
   sfxPanned(def.sfx, b.pos);
 }
 
@@ -11515,6 +11523,22 @@ function tracerFX(from, to, color) {
   line.life = 0.06;
 }
 
+/* Long guns fire a round that travels. The trajectory is worked out on the
+   trigger pull, but the hit is only resolved when the round arrives, and the
+   mark it leaves is drawn where it lands. */
+const bullets = [];
+function spawnTravelBullet(from, to, speed, onLand, color) {
+  const dist = from.distanceTo(to);
+  if (bullets.length > 24 || dist < 1) { if (onLand) onLand(); return; }
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.09, 5, 4),
+    new THREE.MeshBasicMaterial({ color: color || 0xd8ffe0, transparent: true, opacity: 0.95, depthWrite: false })
+  );
+  mesh.position.copy(from);
+  fxGroup.add(mesh);
+  bullets.push({ mesh, from: from.clone(), to: to.clone(), t: 0, travel: Math.max(0.02, dist / Math.max(1, speed)), onLand });
+}
+
 function impactFX(p) {
   if (fx.length > 90) return;
   const m = new THREE.Mesh(
@@ -11536,6 +11560,19 @@ function updateFX(dt) {
       t.visible = false;
     } else {
       t.material.opacity = clamp(t.life / 0.06, 0, 1) * 0.85;
+    }
+  }
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.t += dt;
+    const k = clamp(b.t / b.travel, 0, 1);
+    b.mesh.position.lerpVectors(b.from, b.to, k);
+    if (k >= 1) {
+      if (b.mesh.parent) b.mesh.parent.remove(b.mesh);
+      if (b.mesh.geometry) b.mesh.geometry.dispose();
+      if (b.mesh.material) b.mesh.material.dispose();
+      bullets.splice(i, 1);
+      if (b.onLand) b.onLand();
     }
   }
   for (let i = fx.length - 1; i >= 0; i--) {
@@ -13808,8 +13845,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 5, patch: 0 };
-const VERSION_PREV = '7.4.1';
+const VERSION = { major: 7, minor: 5, patch: 1 };
+const VERSION_PREV = '7.5.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
