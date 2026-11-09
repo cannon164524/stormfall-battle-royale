@@ -5349,7 +5349,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div class="menuTop">
     <div class="brand">
       <div class="logo">STORMFALL</div>
-      <div class="tagline">BATTLE ROYALE</div>
+      <div class="tagline">BATTLE ROYALE · SEASON 6</div>
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="play">PLAY</button>
@@ -5572,7 +5572,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <div class="mpKicker">STORE</div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
-      <div class="mpMeta">SEASON 5 · NEW ROTATION</div>
+      <div class="mpMeta">SEASON 6 · NEW ROTATION</div>
     </div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -5593,7 +5593,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 5</div>
+        <div class="mpKicker">SEASON 6</div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -6037,9 +6037,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>AIM MECHANIC TESTING</b> — a new lab mode in the mode picker. Normal Battle Royale rules, loot, bots and storm, but the gunplay is stripped back to the two things a shot really is: where you point it, and how long the round takes to get there. Pick your own bot count like any other solo mode.</div></li>
-      <li><span class="wnTag">02</span><div><b>ZERO BLOOM, EVERY GUN</b> — spread, recoil bloom and the first-shot accuracy rule are all switched off. A round leaves the barrel exactly where the reticle is, every trigger pull, whether you are tap-firing a pistol or holding down an SMG.</div></li>
-      <li><span class="wnTag">03</span><div><b>EVERY ROUND TRAVELS AT 320 m/s</b> — pistols, shotguns and SMGs stop being instant-hit here and join the snipers with a real projectile at one flat speed, pellets included. Bots fire the same travelling rounds back at you, so the flight time is on both sides of the fight.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE ISLAND WAS REBUILT</b> — every prop on the map was resurfaced over the off-season. Habitats are brushed alloy with charged seams and window bands, the pines are rift spires with a light running up the trunk, the boulders are shard outcrops, and eleven relay beacons stand over the POIs with halo rings and a column of light. The ground itself cooled from grass to mineral teal, the sky is a darker dusk, and the 36 map sectors are renamed to match.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE OLD ARSENAL IS VAULTED</b> — nothing from the old loot table can drop this season. Chests, floor loot, bot loadouts and the Gun Game ladder are all energy and coil hardware now: the Pulse Sidearm, Shard Scattergun, Prism Shotgun, Cycler LMG, Helix Beam Rifle and Specter Marksman join the Pulse Carbine, Ion Repeater, Cryo Projector, Tesla Arc, Nova Burster, Gauss Rifle, Rail Lance and Reaper. They come back later.</div></li>
+      <li><span class="wnTag">03</span><div><b>ROUNDS THAT ARRIVE LATE</b> — travel time now reads by role instead of by gun. Snipers (Rail Lance 460 m/s, Reaper 430) are the slowest rounds on the island, marksman rifles (Gauss 660, Specter 680) and the scoped Helix Beam (700) get there much faster, and anything you fire from the hip is still instant. The Aim Mechanic Testing lab keeps its flat 320 m/s on everything.</div></li>
+      <li><span class="wnTag">04</span><div><b>SEASON 6</b> — a new pass with five outfits built from the island's own materials, a fresh shop rotation, and the usual season reset: rank and battle pass roll over. Aim Mechanic Testing is still in the mode picker.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6127,7 +6128,7 @@ const REVIVE_TIME = 3.4;
 const REVIVE_RANGE = 3.6;
 const REBOOT_TIME = 10;
 const SURVIVE_TIME = 20;   // Reload Duos: how long your mate must stay alive
-const GUN_ORDER = ['pistol', 'silenced', 'tacsmg', 'smg', 'doublebarrel', 'tacshot', 'shotgun', 'lmg', 'ar', 'burst', 'holo', 'hunting', 'sniper'];
+const GUN_ORDER = ['pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler', 'beam', 'gauss', 'specter', 'rail'];
 
 const MODE_DEFS = {
   br: {
@@ -6178,10 +6179,10 @@ const MODE_DEFS = {
   },
   gungame: {
     name: 'GUN GAME', short: 'GUN GAME', kicker: 'ARMS RACE',
-    desc: 'No loot. Start on a pistol and upgrade one weapon on every elimination.',
-    rules: ['<b>10</b> WEAPONS', 'NO LOOT', 'UPGRADE ON ELIM'],
+    desc: 'No loot. Start on the Pulse Sidearm and climb the whole Season 6 ladder, one elimination per rung.',
+    rules: ['<b>13</b> WEAPONS', 'NO LOOT', 'UPGRADE ON ELIM'],
     adjustable: true,
-    queue: (n) => n + ' OPPONENTS · 10 WEAPONS',
+    queue: (n) => n + ' OPPONENTS · 13 WEAPONS',
   },
   blitz: {
     name: 'BLITZ', short: 'BLITZ', kicker: 'FAST',
@@ -6383,16 +6384,16 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xa9cdec, 260, 800);
+scene.fog = new THREE.Fog(0x1b3c42, 260, 800);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.15, 3000);
 camera.position.set(0, 70, 190);
 
-const hemi = new THREE.HemisphereLight(0xcfe8ff, 0x4a5a3a, 1.15);
+const hemi = new THREE.HemisphereLight(0x9ff2ff, 0x14312e, 1.05);
 scene.add(hemi);
 
 const SUN_OFFSET = new THREE.Vector3(70, 130, 50);
-const sun = new THREE.DirectionalLight(0xfff2d8, 2.0);
+const sun = new THREE.DirectionalLight(0xd6f7ff, 1.7);
 sun.position.copy(SUN_OFFSET);
 sun.castShadow = false;
 sun.shadow.mapSize.set(1024, 1024);
@@ -6421,10 +6422,10 @@ function buildSky() {
       varying vec3 vp;
       void main() {
         float h = normalize(vp).y;
-        vec3 top = vec3(0.10, 0.34, 0.76);
-        vec3 hor = vec3(0.66, 0.85, 0.98);
+        vec3 top = vec3(0.02, 0.05, 0.12);
+        vec3 hor = vec3(0.09, 0.36, 0.38);
         vec3 col = mix(hor, top, smoothstep(-0.02, 0.55, h));
-        col = mix(vec3(0.52, 0.70, 0.85), col, smoothstep(-0.45, 0.02, h));
+        col = mix(vec3(0.05, 0.15, 0.20), col, smoothstep(-0.45, 0.02, h));
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -6457,13 +6458,13 @@ function mat(color, flat) {
    TERRAIN + WATER
    ========================================================================= */
 const COLOR = {
-  sandWet: new THREE.Color(0xc8b489),
-  sand: new THREE.Color(0xe8d8a8),
-  grassA: new THREE.Color(0x5fae3c),
-  grassB: new THREE.Color(0x86cc54),
-  grassC: new THREE.Color(0x3f8f34),
-  rock: new THREE.Color(0x8d8b80),
-  snow: new THREE.Color(0xdfe6e0),
+  sandWet: new THREE.Color(0x2c4a4c),
+  sand: new THREE.Color(0x52706b),
+  grassA: new THREE.Color(0x1f4b45),
+  grassB: new THREE.Color(0x2d6b57),
+  grassC: new THREE.Color(0x17393a),
+  rock: new THREE.Color(0x39454f),
+  snow: new THREE.Color(0xa8dcd6),
 };
 
 let waterMesh = null;
@@ -6503,7 +6504,7 @@ function buildTerrain() {
 
   const seabed = new THREE.Mesh(
     new THREE.PlaneGeometry(WORLD_SIZE * 3, WORLD_SIZE * 3),
-    mat(0x143a52)
+    mat(0x0a242c)
   );
   seabed.rotation.x = -Math.PI / 2;
   seabed.position.y = -36;
@@ -6511,7 +6512,7 @@ function buildTerrain() {
 
   waterMesh = new THREE.Mesh(
     new THREE.PlaneGeometry(WORLD_SIZE * 3, WORLD_SIZE * 3, 1, 1),
-    new THREE.MeshLambertMaterial({ color: 0x2b86bd, transparent: true, opacity: 0.86 })
+    new THREE.MeshLambertMaterial({ color: 0x11606e, transparent: true, opacity: 0.88 })
   );
   waterMesh.rotation.x = -Math.PI / 2;
   waterMesh.position.y = WATER_Y;
@@ -6751,34 +6752,72 @@ function rayTerrain(o, d, maxT) {
 /* =========================================================================
    WORLD PROPS
    ========================================================================= */
+/* ---- Season 6 palette -------------------------------------------------
+   The island was resurfaced over the off-season: brushed alloy instead of
+   timber and plaster, and a standing charge in everything that used to be
+   painted. These are the only three lights on the map besides the sun. */
 const HOUSE_COLORS = [
-  { wall: 0xd9c9a8, roof: 0x8b4a3a },
-  { wall: 0xc9d4dc, roof: 0x3f5a78 },
-  { wall: 0xe0b98a, roof: 0x6d3826 },
-  { wall: 0xbfc6b0, roof: 0x4a5a40 },
-  { wall: 0xd8b0b0, roof: 0x5a3a4a },
+  { wall: 0x22303a, roof: 0x2f4750 },
+  { wall: 0x2b303c, roof: 0x3a4a5e },
+  { wall: 0x1f3a3c, roof: 0x2c5450 },
+  { wall: 0x33303e, roof: 0x4a3f5e },
+  { wall: 0x2a3a44, roof: 0x354f5c },
 ];
-const CONTAINER_COLORS = [0xa8453a, 0x2f6f9e, 0x3e8a5a, 0xb8862f, 0x6a5a9e];
+const CONTAINER_COLORS = [0x2a6f7a, 0x3a5a8e, 0x2f7a5e, 0x7a5f2f, 0x5e4a8e];
+const GLOW = {
+  teal: new THREE.MeshBasicMaterial({ color: 0x4ff0d0 }),
+  lime: new THREE.MeshBasicMaterial({ color: 0xc6ff4a }),
+  pink: new THREE.MeshBasicMaterial({ color: 0xff5ea8 }),
+  amber: new THREE.MeshBasicMaterial({ color: 0xffb04a }),
+  ice: new THREE.MeshBasicMaterial({ color: 0x9fe8ff }),
+};
+const GLOW_LIST = [GLOW.teal, GLOW.ice, GLOW.pink, GLOW.lime];
 
+/* A visual-only block hung off a building, rotated into its local frame.
+   localBox also registers a collider; trim, seams and signage never need one. */
+function localDeco(g, x, z, rot, lx, ly, lz, geo, material) {
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const wx = x + lx * cs + lz * sn;
+  const wz = z - lx * sn + lz * cs;
+  const m = new THREE.Mesh(geo, material);
+  m.position.set(wx - x, ly, wz - z);
+  m.rotation.y = rot;
+  g.add(m);
+  return m;
+}
+
+/* Rift spire: what replaced the pines. A dark crystal column with a charged
+   core and shards floating around it, so the skyline glows at night. */
 function makeTree(x, z, rng) {
   const y = terrainHeight(x, z);
   const s = 0.85 + rng() * 0.5;
   const g = new THREE.Group();
   const th = 5.4 * s;
 
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.34 * s, 0.5 * s, th, 6), mat(0x6b4a2b, true));
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3 * s, 0.62 * s, th, 6), mat(0x1d2b34, true));
   trunk.position.y = th / 2;
   trunk.castShadow = true;
   g.add(trunk);
 
-  const leafMat = mat(pick([0x2f8c3e, 0x3fa34a, 0x57b452]), true);
+  const coreMat = rng() < 0.22 ? GLOW.pink : GLOW.teal;
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(0.075 * s, 0.11 * s, th * 0.86, 5), coreMat);
+  core.position.y = th * 0.56;
+  g.add(core);
+
+  const shardMat = mat(rng() < 0.5 ? 0x24444c : 0x2b3a4c, true);
   for (let i = 0; i < 3; i++) {
-    const rr = (2.3 - i * 0.55) * s;
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(rr, 2.6 * s, 7), leafMat);
-    cone.position.y = th * 0.62 + i * 1.45 * s;
-    cone.castShadow = true;
-    g.add(cone);
+    const rr = (1.45 - i * 0.32) * s;
+    const shard = new THREE.Mesh(new THREE.ConeGeometry(rr * 0.5, 1.7 * s, 4), shardMat);
+    shard.position.set(Math.cos(i * 2.3) * 0.45 * s, th * 0.62 + i * 1.3 * s, Math.sin(i * 2.3) * 0.45 * s);
+    shard.rotation.y = i * 0.7;
+    shard.rotation.z = 0.08 * (i - 1);
+    shard.castShadow = true;
+    g.add(shard);
   }
+
+  const crown = new THREE.Mesh(new THREE.OctahedronGeometry(0.3 * s, 0), rng() < 0.3 ? GLOW.lime : GLOW.ice);
+  crown.position.y = th + 1.2 * s;
+  g.add(crown);
 
   g.position.set(x, y, z);
   g.rotation.y = rng() * TAU;
@@ -6786,17 +6825,32 @@ function makeTree(x, z, rng) {
   addBox(x, y + th * 0.5, z, 0.38 * s, th * 0.5, 0.38 * s, g, { hp: 130, kind: 'tree' });
 }
 
+/* Shard outcrop: the old boulders, grown through with the same charge. */
 function makeRock(x, z, rng) {
   const y = terrainHeight(x, z);
   const s = 0.9 + rng() * 1.6;
   const geo = new THREE.IcosahedronGeometry(s, 0);
-  const m = new THREE.Mesh(geo, mat(pick([0x8a8a80, 0x9b978c, 0x76746b]), true));
+  const m = new THREE.Mesh(geo, mat(pick([0x2c3a44, 0x33424e, 0x24303a]), true));
   m.position.set(x, y + s * 0.45, z);
   m.rotation.set(rng() * 3, rng() * 3, rng() * 3);
   m.scale.set(1, 0.75 + rng() * 0.3, 1);
   m.castShadow = true;
   m.receiveShadow = true;
   propsGroup.add(m);
+
+  const veinCount = 2 + Math.floor(rng() * 2);
+  for (let i = 0; i < veinCount; i++) {
+    const a = rng() * TAU;
+    const shard = new THREE.Mesh(new THREE.ConeGeometry(0.12 + rng() * 0.14, s * (0.7 + rng() * 0.7), 4), rng() < 0.3 ? GLOW.lime : GLOW.teal);
+    shard.position.set(
+      x + Math.cos(a) * s * 0.45,
+      y + s * (0.55 + rng() * 0.4),
+      z + Math.sin(a) * s * 0.45
+    );
+    shard.rotation.z = (rng() - 0.5) * 0.5;
+    propsGroup.add(shard);
+  }
+
   addBox(x, y + s * 0.4, z, s * 0.85, s * 0.4, s * 0.85, m, { hp: 220, kind: 'rock' });
 }
 
@@ -6871,13 +6925,33 @@ function makeHouse(x, z, rot, rng, dims) {
   // roof slab (walkable)
   localBox(g, x, z, 0, rot, 0, top + 0.22, 0, hw + 0.4, 0.22, hd + 0.4, roofMat, { hp: 400, kind: 'wall' });
 
-  // pyramid roof cap (visual only) — inscribed so it can't overhang the walls
-  const capR = Math.max(1.5, (Math.min(w, d) / 2 + 0.3) / Math.SQRT1_2);
-  const cap = new THREE.Mesh(new THREE.ConeGeometry(capR, 2.6, 4), roofMat);
-  cap.position.y = top + 0.44 + 1.3;
-  cap.rotation.y = Math.PI / 4;
-  cap.castShadow = true;
-  g.add(cap);
+  // flat roof with a charged seam, a window band and a comms mast
+  const trim = rng() < 0.35 ? GLOW.pink : GLOW.teal;
+  localDeco(g, x, z, rot, 0, top + 0.5, hd + 0.06, new THREE.BoxGeometry(w + 0.2, 0.12, 0.07), trim);
+  localDeco(g, x, z, rot, 0, top + 0.5, -hd - 0.06, new THREE.BoxGeometry(w + 0.2, 0.12, 0.07), trim);
+  localDeco(g, x, z, rot, hw + 0.06, top + 0.5, 0, new THREE.BoxGeometry(0.07, 0.12, d + 0.2), trim);
+  localDeco(g, x, z, rot, -hw - 0.06, top + 0.5, 0, new THREE.BoxGeometry(0.07, 0.12, d + 0.2), trim);
+
+  for (let c = 0; c < 2; c++) {
+    const cxs = c === 0 ? -hw : hw;
+    localDeco(g, x, z, rot, cxs, highY + 1.7, hd + 0.09, new THREE.BoxGeometry(0.07, 2.8, 0.07), GLOW.ice);
+    localDeco(g, x, z, rot, cxs, highY + 1.7, -hd - 0.09, new THREE.BoxGeometry(0.07, 2.8, 0.07), GLOW.ice);
+  }
+  for (let s2 = 0; s2 < 2; s2++) {
+    const wxs = s2 === 0 ? -hw - 0.1 : hw + 0.1;
+    localDeco(g, x, z, rot, wxs, highY + 2.2, 0, new THREE.BoxGeometry(0.06, 0.7, Math.max(2, d * 0.5)), GLOW.ice);
+  }
+
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.12, 4.2, 6), mat(0x1a252c, true));
+  mast.position.set(0, top + 0.44 + 2.1, 0);
+  g.add(mast);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6), GLOW.amber);
+  beacon.position.set(0, top + 0.44 + 4.3, 0);
+  g.add(beacon);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.05, 6, 18), trim);
+  ring.position.set(0, top + 0.44 + 3.4, 0);
+  ring.rotation.x = Math.PI / 2;
+  g.add(ring);
 
   // interior loot
   for (let i = 0; i < (rng() < 0.55 ? 2 : 1); i++) {
@@ -6889,9 +6963,9 @@ function makeHouse(x, z, rot, rng, dims) {
   }
 }
 
-/* Two- or three-storey building with an interior stair well in one corner. */
+/* Two- to four-storey tower with an interior stair well in one corner. */
 function makeApartment(x, z, rot, rng, floors) {
-  floors = clamp(floors || 2, 2, 3);
+  floors = clamp(floors || 3, 2, 4);
   const w = 13, d = 12, floorH = 3.4, t = 0.16;
   const cs = Math.cos(rot), sn = Math.sin(rot);
   const hw = w / 2, hd = d / 2;
@@ -6983,6 +7057,32 @@ function makeApartment(x, z, rot, rng, floors) {
   localBox(g, x, z, 0, rot, 0, shellTop + 0.8, hd + 0.28, hw + 0.4, 0.44, 0.12, wallMat, { hp: 200, kind: 'wall', noStand: true });
   localBox(g, x, z, 0, rot, 0, shellTop + 0.8, -hd - 0.28, hw + 0.4, 0.44, 0.12, wallMat, { hp: 200, kind: 'wall', noStand: true });
 
+  // comms array on the roof — the tallest thing on the skyline
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.16, 6.4, 6), mat(0x18242c, true));
+  mast.position.set(0, shellTop + 0.44 + 3.2, 0);
+  g.add(mast);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), GLOW.amber);
+  beacon.position.set(0, shellTop + 0.44 + 6.5, 0);
+  g.add(beacon);
+  for (let r = 0; r < 2; r++) {
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(1.05 - r * 0.35, 0.05, 6, 20), r ? GLOW.pink : GLOW.ice);
+    halo.position.set(0, shellTop + 0.44 + 4.4 + r * 1.1, 0);
+    halo.rotation.x = Math.PI / 2;
+    g.add(halo);
+  }
+
+  // charged bands around every storey and a light column on each corner
+  for (let f = 0; f < floors; f++) {
+    const by = base + floorH * f + 0.22;
+    const bandMat = f % 2 ? GLOW.ice : GLOW.teal;
+    localDeco(g, x, z, rot, 0, by, hd + 0.08, new THREE.BoxGeometry(w + 0.16, 0.1, 0.06), bandMat);
+    localDeco(g, x, z, rot, 0, by, -hd - 0.08, new THREE.BoxGeometry(w + 0.16, 0.1, 0.06), bandMat);
+    localDeco(g, x, z, rot, hw + 0.08, by, 0, new THREE.BoxGeometry(0.06, 0.1, d + 0.16), bandMat);
+    localDeco(g, x, z, rot, -hw - 0.08, by, 0, new THREE.BoxGeometry(0.06, 0.1, d + 0.16), bandMat);
+  }
+  localDeco(g, x, z, rot, -hw - 0.1, base + floorH * floors * 0.5, -hd - 0.1, new THREE.BoxGeometry(0.08, floorH * floors * 0.9, 0.08), GLOW.pink);
+  localDeco(g, x, z, rot, hw + 0.1, base + floorH * floors * 0.5, hd + 0.1, new THREE.BoxGeometry(0.08, floorH * floors * 0.9, 0.08), GLOW.pink);
+
   // one chest per floor, kept out of the stair well
   for (let f = 0; f < floors; f++) {
     let lx = 0, lz = 0;
@@ -7011,9 +7111,20 @@ function makeContainer(x, z, rng) {
   body.receiveShadow = true;
   g.add(body);
 
-  const trim = new THREE.Mesh(new THREE.BoxGeometry(w + 0.12, 0.18, d + 0.12), mat(0x2a2a2a, true));
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(w + 0.12, 0.18, d + 0.12), mat(0x18232a, true));
   trim.position.y = h;
   g.add(trim);
+
+  const edge = rng() < 0.5 ? GLOW.teal : GLOW.ice;
+  for (let i = 0; i < 2; i++) {
+    const zs = i === 0 ? d / 2 + 0.04 : -d / 2 - 0.04;
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(w * 0.86, 0.09, 0.05), edge);
+    strip.position.set(0, h * 0.7, zs);
+    g.add(strip);
+  }
+  const hatch = new THREE.Mesh(new THREE.BoxGeometry(0.07, h * 0.5, 0.07), edge);
+  hatch.position.set(w / 2 - 0.5, h * 0.5, d / 2 + 0.05);
+  g.add(hatch);
 
   g.position.set(x, y, z);
   g.rotation.y = rot;
@@ -7029,28 +7140,73 @@ function makeContainer(x, z, rng) {
   }
 }
 
+/* Relay beacon: the new landmarks. A charged mast with three halo rings and a
+   column of light, tall enough to orient by from across the island. */
+function makeBeacon(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const h = 16 + rng() * 10;
+  const g = new THREE.Group();
+  g.position.set(x, y, z);
+  claimSite(x, z, 3.4);
+
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.6, 0.6, 8), mat(0x1b2730, true));
+  plinth.position.y = 0.3;
+  plinth.receiveShadow = true;
+  g.add(plinth);
+
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.75, h, 6), mat(0x24323c, true));
+  mast.position.y = h / 2;
+  mast.castShadow = true;
+  g.add(mast);
+
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.18, h * 0.92, 5), GLOW.teal);
+  core.position.y = h * 0.5;
+  g.add(core);
+
+  for (let i = 0; i < 3; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.1 - i * 0.5, 0.07, 6, 22), i === 1 ? GLOW.pink : GLOW.ice);
+    ring.position.y = h * (0.42 + i * 0.2);
+    ring.rotation.x = Math.PI / 2;
+    g.add(ring);
+  }
+
+  const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9, 0), GLOW.lime);
+  orb.position.y = h + 0.6;
+  g.add(orb);
+
+  const column = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.55, 1.4, h * 2.4, 10, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0x6dffd8, transparent: true, opacity: 0.09, depthWrite: false, side: THREE.DoubleSide })
+  );
+  column.position.y = h * 1.2;
+  g.add(column);
+
+  propsGroup.add(g);
+  addBox(x, y + h * 0.5, z, 0.7, h * 0.5, 0.7, mast, { hp: 500, kind: 'wall' });
+}
+
 function addChest(x, z, y) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(0x7a5a24, true));
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(0x17242b, true));
   body.position.y = 0.35;
   body.castShadow = true;
   g.add(body);
 
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.28, 1.0), mat(0xd9a13c, true));
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.28, 1.0), mat(0x24444c, true));
   lid.position.set(0, 0.76, 0);
   lid.castShadow = true;
   g.add(lid);
 
   const glow = new THREE.Mesh(
     new THREE.BoxGeometry(1.3, 0.04, 0.8),
-    new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.85 })
+    new THREE.MeshBasicMaterial({ color: 0x6dffd8, transparent: true, opacity: 0.9 })
   );
   glow.position.y = 0.74;
   g.add(glow);
 
   const beam = new THREE.Mesh(
     new THREE.CylinderGeometry(0.35, 0.55, 6, 8, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0xffd75e, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: 0x4ff0d0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide })
   );
   beam.position.y = 3.2;
   g.add(beam);
@@ -7107,7 +7263,7 @@ function populateWorld() {
       if (!ok) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
       const swap = Math.abs(Math.sin(rot)) > 0.5;
-      if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.4 ? 3 : 2);
+      if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.5 ? 4 : 3);
       else makeHouse(ox, oz, rot, rng, dims);
       claimSite(ox, oz, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
     }
@@ -7139,7 +7295,7 @@ function populateWorld() {
     if (!ok) continue;
     const rot = Math.floor(rng() * 4) * (Math.PI / 2);
     const swap = Math.abs(Math.sin(rot)) > 0.5;
-    if (apt) makeApartment(x, z, rot, rng, rng() < 0.5 ? 3 : 2);
+    if (apt) makeApartment(x, z, rot, rng, rng() < 0.55 ? 4 : 3);
     else makeHouse(x, z, rot, rng, dims);
     claimSite(x, z, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
   }
@@ -7162,6 +7318,16 @@ function populateWorld() {
     if (terrainHeight(x, z) < 1.0) continue;
     if (!siteFreeAt(x, z, 1.6)) continue;
     makeRock(x, z, rng);
+  }
+
+  // relay beacons — charged masts you can navigate by
+  for (let i = 0; i < 11; i++) {
+    const ang = rng() * TAU;
+    const rad = 45 + Math.sqrt(rng()) * 225;
+    const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+    if (terrainHeight(x, z) < 2.2) continue;
+    if (!siteFreeAt(x, z, 5.4)) continue;
+    makeBeacon(x, z, rng);
   }
 
   // a few open-field chests
@@ -7372,11 +7538,11 @@ function buildMinimapBase() {
       const z = (py / size - 0.5) * WORLD_SIZE * 0.82;
       const h = terrainHeight(x, z);
       let r, g, b;
-      if (h < 0.4) { r = 36; g = 92; b = 132; }
-      else if (h < 2.2) { r = 206; g = 190; b = 140; }
+      if (h < 0.4) { r = 16; g = 62; b = 74; }
+      else if (h < 2.2) { r = 78; g = 110; b = 104; }
       else {
         const t = clamp((h - 2) / 40, 0, 1);
-        r = 76 + t * 44; g = 150 - t * 18; b = 62 + t * 18;
+        r = 34 + t * 96; g = 82 + t * 106; b = 76 + t * 104;
       }
       const i = (py * size + px) * 4;
       img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b; img.data[i + 3] = 255;
@@ -7454,15 +7620,36 @@ const WEAPONS = {
   tesla: { name: 'Tesla Arc', ammo: 'medium', dmg: 22, rpm: 300, mag: 24, reload: 2.3, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.7, range: 190, auto: true, sfx: 'ar', onHit: 'chain', chainR: 8, chainMul: 0.45 },
   nova: { name: 'Nova Burster', ammo: 'medium', dmg: 26, rpm: 180, mag: 21, reload: 2.4, spread: 0.028, ads: 0.012, pellets: 1, burst: 3, hs: 1.8, range: 210, auto: false, sfx: 'ar' },
   cryo: { name: 'Cryo Projector', ammo: 'light', dmg: 20, rpm: 260, mag: 20, reload: 2.2, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.6, range: 175, auto: true, sfx: 'smg', onHit: 'freeze', freezeTime: 2.2 },
-  gauss: { name: 'Gauss Rifle', ammo: 'heavy', dmg: 78, rpm: 70, mag: 6, reload: 2.8, spread: 0.014, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 34, scope: '4x', pierce: true, bulletSpeed: 520 },
-  rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 95, rpm: 48, mag: 3, reload: 3.0, spread: 0.010, ads: 0.0001, pellets: 1, hs: 2.4, range: 420, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 28, scope: '4x', pierce: true, bulletSpeed: 560 },
+  gauss: { name: 'Gauss Rifle', ammo: 'medium', dmg: 78, rpm: 70, mag: 8, reload: 2.7, spread: 0.014, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 34, scope: '4x', pierce: true, bulletSpeed: 660 },
+  rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 95, rpm: 48, mag: 3, reload: 3.0, spread: 0.010, ads: 0.0001, pellets: 1, hs: 2.4, range: 420, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 28, scope: '4x', pierce: true, bulletSpeed: 460 },
   reaper: { name: 'Reaper Sniper', ammo: 'heavy', dmg: 150, rpm: 30, mag: 3, reload: 3.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 480, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: '8x', pierce: true, bulletSpeed: 430 },
+  /* Season 6 — the vault is shut. Every role has an energy or coil answer,
+     and the rounds tell you what range a gun is for: snipers lob slowly,
+     marksman and scoped rifles get there fast, everything hip-fired is
+     still instant. */
+  pulsepistol: { name: 'Pulse Sidearm', ammo: 'light', dmg: 26, rpm: 420, mag: 18, reload: 1.4, spread: 0.012, ads: 0.005, pellets: 1, hs: 2.0, range: 175, auto: true, sfx: 'pistol' },
+  scatter: { name: 'Shard Scattergun', ammo: 'shells', dmg: 15, rpm: 85, mag: 5, reload: 2.9, spread: 0.042, ads: 0.030, pellets: 11, hs: 1.75, range: 88, auto: false, sfx: 'shotgun' },
+  prism: { name: 'Prism Shotgun', ammo: 'shells', dmg: 13, rpm: 165, mag: 8, reload: 2.7, spread: 0.048, ads: 0.032, pellets: 9, hs: 1.7, range: 82, auto: true, sfx: 'tacshot' },
+  cycler: { name: 'Cycler LMG', ammo: 'medium', dmg: 26, rpm: 500, mag: 60, reload: 3.2, spread: 0.022, ads: 0.012, pellets: 1, hs: 1.55, range: 215, auto: true, sfx: 'lmg' },
+  beam: { name: 'Helix Beam Rifle', ammo: 'medium', dmg: 30, rpm: 330, mag: 24, reload: 2.4, spread: 0.028, ads: 0.0001, pellets: 1, hs: 1.75, range: 280, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', bulletSpeed: 700 },
+  specter: { name: 'Specter Marksman', ammo: 'medium', dmg: 60, rpm: 100, mag: 8, reload: 2.6, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', bulletSpeed: 680 },
   mythic_pulse: { name: 'Pulse Carbine', ammo: 'medium', dmg: 32, rpm: 700, mag: 36, reload: 1.9, spread: 0.021, ads: 0.010, pellets: 1, hs: 1.8, range: 250, auto: true, sfx: 'ar' },
-  mythic_rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 130, rpm: 52, mag: 4, reload: 2.6, spread: 0.008, ads: 0.0001, pellets: 1, hs: 2.5, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 27, scope: '4x', pierce: true, bulletSpeed: 580 },
+  mythic_rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 130, rpm: 52, mag: 4, reload: 2.6, spread: 0.008, ads: 0.0001, pellets: 1, hs: 2.5, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 27, scope: '4x', pierce: true, bulletSpeed: 480 },
   mythic_tesla: { name: 'Tesla Arc', ammo: 'medium', dmg: 30, rpm: 340, mag: 30, reload: 2.0, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.8, range: 210, auto: true, sfx: 'ar', onHit: 'chain', chainR: 10, chainMul: 0.55 },
+  mythic_pulsepistol: { name: 'Pulse Sidearm', ammo: 'light', dmg: 34, rpm: 460, mag: 22, reload: 1.2, spread: 0.010, ads: 0.004, pellets: 1, hs: 2.1, range: 190, auto: true, sfx: 'pistol' },
+  mythic_scatter: { name: 'Shard Scattergun', ammo: 'shells', dmg: 19, rpm: 105, mag: 6, reload: 2.5, spread: 0.040, ads: 0.028, pellets: 13, hs: 1.9, range: 96, auto: false, sfx: 'shotgun' },
+  mythic_cycler: { name: 'Cycler LMG', ammo: 'medium', dmg: 32, rpm: 540, mag: 70, reload: 2.9, spread: 0.019, ads: 0.010, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'lmg' },
+  mythic_beam: { name: 'Helix Beam Rifle', ammo: 'medium', dmg: 38, rpm: 360, mag: 28, reload: 2.1, spread: 0.024, ads: 0.0001, pellets: 1, hs: 1.8, range: 300, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 40, scope: 'holo', bulletSpeed: 740 },
+  mythic_gauss: { name: 'Gauss Rifle', ammo: 'medium', dmg: 96, rpm: 78, mag: 10, reload: 2.4, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 390, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 32, scope: '4x', pierce: true, bulletSpeed: 700 },
+  mythic_specter: { name: 'Specter Marksman', ammo: 'medium', dmg: 78, rpm: 108, mag: 10, reload: 2.3, spread: 0.022, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: '4x', bulletSpeed: 720 },
   exotic_nova: { name: 'Detonating Nova Burster', ammo: 'medium', dmg: 30, rpm: 190, mag: 24, reload: 2.2, spread: 0.026, ads: 0.012, pellets: 1, burst: 3, hs: 1.8, range: 220, auto: false, sfx: 'ar', onHit: 'explode', blastR: 2.6, blastDmg: 22 },
   exotic_cryo: { name: 'Deep Freeze Projector', ammo: 'light', dmg: 24, rpm: 280, mag: 24, reload: 2.0, spread: 0.020, ads: 0.010, pellets: 1, hs: 1.7, range: 185, auto: true, sfx: 'smg', onHit: 'freeze', freezeTime: 3.0 },
   exotic_ion: { name: 'Siphoning Ion Repeater', ammo: 'light', dmg: 18, rpm: 1000, mag: 50, reload: 1.6, spread: 0.016, ads: 0.009, pellets: 1, hs: 1.7, range: 175, auto: true, sfx: 'smg', onHit: 'siphon', siphon: 4 },
+  exotic_scatter: { name: 'Shoving Shard Scattergun', ammo: 'shells', dmg: 15, rpm: 95, mag: 6, reload: 2.6, spread: 0.040, ads: 0.028, pellets: 11, hs: 1.8, range: 90, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 11 },
+  exotic_prism: { name: 'Detonating Prism Shotgun', ammo: 'shells', dmg: 13, rpm: 175, mag: 9, reload: 2.4, spread: 0.044, ads: 0.030, pellets: 9, hs: 1.75, range: 84, auto: true, sfx: 'tacshot', onHit: 'explode', blastR: 1.8, blastDmg: 11 },
+  exotic_cycler: { name: 'Piercing Cycler LMG', ammo: 'medium', dmg: 30, rpm: 520, mag: 64, reload: 3.0, spread: 0.020, ads: 0.011, pellets: 1, hs: 1.6, range: 225, auto: true, sfx: 'lmg', pierce: true },
+  exotic_beam: { name: 'Siphoning Helix Rifle', ammo: 'medium', dmg: 32, rpm: 340, mag: 26, reload: 2.2, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 290, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'siphon', siphon: 5, bulletSpeed: 720 },
+  exotic_specter: { name: 'Explosive Specter Marksman', ammo: 'medium', dmg: 62, rpm: 100, mag: 8, reload: 2.6, spread: 0.024, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'explode', blastR: 2.4, blastDmg: 26, bulletSpeed: 700 },
 };
 
 /* Every family gets its own report: a tactical SMG should not share a voice
@@ -7476,11 +7663,19 @@ const WEAPON_SFX = {
   mythic_heavyar: 'heavyar', mythic_lever: 'lever', mythic_hunting: 'hunting',
   exotic_tacshot: 'tacshot', exotic_lever: 'lever', exotic_siphonhunt: 'hunting',
   exotic_minigun: 'minigun', exotic_hunting: 'hunting',
+  pulsepistol: 'pistol', scatter: 'shotgun', prism: 'tacshot', cycler: 'lmg',
+  beam: 'ar', specter: 'hunting',
+  mythic_pulsepistol: 'pistol', mythic_scatter: 'shotgun', mythic_cycler: 'lmg',
+  mythic_beam: 'ar', mythic_specter: 'hunting', mythic_gauss: 'sniper',
+  exotic_scatter: 'shotgun', exotic_prism: 'tacshot', exotic_cycler: 'lmg',
+  exotic_beam: 'ar', exotic_specter: 'hunting',
 };
 for (const k in WEAPON_SFX) if (WEAPONS[k]) WEAPONS[k].sfx = WEAPON_SFX[k];
 
-const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_heavyar', 'mythic_lmg', 'mythic_lever', 'mythic_hunting', 'mythic_pulse', 'mythic_rail', 'mythic_tesla'];
-const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_minigun', 'exotic_lever', 'exotic_nova', 'exotic_cryo', 'exotic_ion'];
+/* Season 6: the old arsenal is vaulted, not deleted. Everything that can roll
+   out of a chest, a floor pile or a bot's hands is energy or coil hardware. */
+const MYTHIC_WEAPONS = ['mythic_pulsepistol', 'mythic_scatter', 'mythic_cycler', 'mythic_pulse', 'mythic_tesla', 'mythic_beam', 'mythic_gauss', 'mythic_specter', 'mythic_rail'];
+const EXOTIC_WEAPONS = ['exotic_scatter', 'exotic_prism', 'exotic_nova', 'exotic_cryo', 'exotic_ion', 'exotic_cycler', 'exotic_beam', 'exotic_specter'];
 const SPECIAL_BASE = {
   mythic_ar: 'ar', mythic_tacsmg: 'tacsmg', mythic_smg: 'smg', mythic_sniper: 'sniper', mythic_lmg: 'lmg',
   mythic_shotgun: 'shotgun', mythic_pistol: 'pistol', mythic_doublebarrel: 'doublebarrel', mythic_heavyar: 'heavyar',
@@ -7489,42 +7684,34 @@ const SPECIAL_BASE = {
   exotic_burst: 'burst', exotic_sniper: 'sniper', exotic_chain: 'holo', exotic_siphonhunt: 'hunting',
   exotic_minigun: 'minigun', exotic_lever: 'lever',
   mythic_pulse: 'pulse', mythic_rail: 'rail', mythic_tesla: 'tesla',
+  mythic_pulsepistol: 'pulsepistol', mythic_scatter: 'scatter', mythic_cycler: 'cycler',
+  mythic_beam: 'beam', mythic_gauss: 'gauss', mythic_specter: 'specter',
   exotic_nova: 'nova', exotic_cryo: 'cryo', exotic_ion: 'ion',
+  exotic_scatter: 'scatter', exotic_prism: 'prism', exotic_cycler: 'cycler',
+  exotic_beam: 'beam', exotic_specter: 'specter',
 };
 
-/* Weighted loot pool — Season 5 reforged it. The drum gun, combat shotgun and
-   thermal sniper are vaulted, six new guns share the table, and the spray
-   weapons that carry the early game are tight enough to actually hit. */
+/* Weighted loot pool — Season 6 replaced the island's guns wholesale. Nothing
+   here is a hitscan spray gun: the close range is dispersers and repeaters,
+   the mid range is pulse and coil, and the long range is scoped and travelling. */
 const LOOT_WEAPON_POOL = [
-  // close range
-  'tacsmg',
-  'smg',
-  'shotgun',
-  'tacshot',
-  'doublebarrel',
-  'pistol',
-  'silenced',
-  // mid range
-  'ar',
-  'burst',
-  'heavyar',
-  'lmg',
-  // scoped and long range
-  'holo',
-  'lever',
-  'hunting',
-  'sniper',
-  'reaper', 'reaper',
-  // futuristic hardware — the newer hardware turns up as often as the classics
-  'pulse', 'pulse', 'pulse',
-  'ion', 'ion',
-  'tesla', 'tesla',
-  'nova', 'nova',
+  // sidearms and close range
+  'pulsepistol', 'pulsepistol',
+  'ion', 'ion', 'ion',
   'cryo', 'cryo',
+  'tesla',
+  'scatter', 'scatter', 'scatter',
+  'prism', 'prism',
+  // mid range
+  'pulse', 'pulse', 'pulse',
+  'nova', 'nova',
+  'cycler',
+  // scoped rifles and long range
+  'beam', 'beam',
   'gauss', 'gauss',
+  'specter', 'specter',
   'rail', 'rail',
-  // heavy suppression
-  'minigun',
+  'reaper', 'reaper',
 ];
 
 const GUN_ICONS = {
@@ -7557,6 +7744,23 @@ GUN_ICONS.cryo = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26
 GUN_ICONS.gauss = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="29" width="46" height="6" rx="1"/><rect x="48" y="30" width="14" height="4" rx="1"/><rect x="14" y="22" width="20" height="6" rx="1"/><rect x="20" y="36" width="8" height="12" rx="1"/><rect x="34" y="27" width="3" height="10" opacity=".6"/><rect x="40" y="27" width="3" height="10" opacity=".6"/></svg>';
 GUN_ICONS.rail = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="28" width="56" height="3" rx="1"/><rect x="2" y="35" width="56" height="3" rx="1"/><rect x="10" y="31" width="18" height="3"/><rect x="16" y="40" width="8" height="10" rx="1"/><rect x="30" y="22" width="16" height="5" rx="1"/></svg>';
 GUN_ICONS.reaper = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="30" width="54" height="4" rx="1"/><rect x="50" y="28" width="12" height="8" rx="1"/><rect x="18" y="20" width="26" height="8" rx="2"/><circle cx="26" cy="24" r="2.6" fill="#0b0f14"/><circle cx="36" cy="24" r="2.6" fill="#0b0f14"/><rect x="22" y="34" width="8" height="14" rx="1"/><rect x="34" y="34" width="12" height="4" rx="1"/><rect x="6" y="34" width="12" height="6" rx="1" opacity=".7"/></svg>';
+GUN_ICONS.pulsepistol = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="16" y="24" width="30" height="8" rx="1"/><rect x="14" y="31" width="12" height="18" rx="1"/><rect x="24" y="16" width="14" height="5" rx="1" opacity=".8"/><rect x="46" y="26" width="6" height="4" rx="1"/><rect x="20" y="34" width="6" height="3" rx="1" opacity=".5"/></svg>';
+GUN_ICONS.scatter = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="26" width="44" height="9" rx="1"/><rect x="46" y="24" width="14" height="13" rx="2"/><rect x="18" y="35" width="12" height="7" rx="1"/><rect x="8" y="20" width="18" height="6" rx="1"/><path d="M52 20l4-6 2 7z" opacity=".7"/></svg>';
+GUN_ICONS.prism = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="6" y="27" width="38" height="10" rx="1"/><rect x="42" y="24" width="8" height="16" rx="2"/><rect x="50" y="24" width="8" height="16" rx="2"/><rect x="4" y="22" width="12" height="5" rx="1" opacity=".7"/><rect x="18" y="37" width="10" height="12" rx="1"/></svg>';
+GUN_ICONS.cycler = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="24" width="38" height="12" rx="1"/><rect x="42" y="27" width="18" height="5" rx="1"/><circle cx="21" cy="30" r="6" fill="#0b0f14"/><circle cx="21" cy="30" r="2.4"/><rect x="18" y="36" width="10" height="14" rx="1"/><rect x="8" y="18" width="14" height="6" rx="1"/><rect x="34" y="18" width="8" height="6" rx="1" opacity=".7"/></svg>';
+GUN_ICONS.beam = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="28" width="38" height="7" rx="1"/><rect x="40" y="30" width="20" height="3" rx="1"/><rect x="13" y="18" width="22" height="7" rx="2"/><circle cx="24" cy="21.5" r="2.4" fill="#0b0f14"/><rect x="20" y="25" width="7" height="4"/><rect x="16" y="35" width="9" height="13" rx="1"/><rect x="8" y="20" width="4" height="8" rx="1" opacity=".6"/></svg>';
+GUN_ICONS.specter = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="29" width="50" height="5" rx="1"/><rect x="50" y="28" width="12" height="7" rx="1"/><rect x="12" y="17" width="26" height="7" rx="2"/><rect x="18" y="24" width="4" height="5"/><rect x="30" y="24" width="4" height="5"/><rect x="20" y="34" width="8" height="13" rx="1"/><rect x="34" y="34" width="12" height="4" rx="1"/><path d="M52 20l6 0 0 6" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>';
+GUN_ICONS.mythic_pulsepistol = GUN_ICONS.pulsepistol;
+GUN_ICONS.mythic_scatter = GUN_ICONS.scatter;
+GUN_ICONS.mythic_cycler = GUN_ICONS.cycler;
+GUN_ICONS.mythic_beam = GUN_ICONS.beam;
+GUN_ICONS.mythic_gauss = GUN_ICONS.gauss;
+GUN_ICONS.mythic_specter = GUN_ICONS.specter;
+GUN_ICONS.exotic_scatter = GUN_ICONS.scatter;
+GUN_ICONS.exotic_prism = GUN_ICONS.prism;
+GUN_ICONS.exotic_cycler = GUN_ICONS.cycler;
+GUN_ICONS.exotic_beam = GUN_ICONS.beam;
+GUN_ICONS.exotic_specter = GUN_ICONS.specter;
 GUN_ICONS.mythic_pulse = GUN_ICONS.pulse;
 GUN_ICONS.mythic_rail = GUN_ICONS.rail;
 GUN_ICONS.mythic_tesla = GUN_ICONS.tesla;
@@ -8456,6 +8660,79 @@ function buildWeaponModel(type) {
     box(0.06, 0.14, 0.08, poly, 0, -0.12, -0.1, 0.1);
     cyl(0.02, 0.02, 0.16, dark, 0, -0.03, 0.44, 'z');
     tip = 0.52;
+  } else if (type === 'pulsepistol') {
+    box(0.08, 0.09, 0.26, metal, 0, 0.01, 0.02);          // slide
+    box(0.07, 0.05, 0.18, dark, 0, -0.06, 0.0);           // frame
+    cyl(0.024, 0.024, 0.1, glowTeal, 0, 0.02, 0.22, 'z'); // emitter
+    box(0.08, 0.26, 0.11, poly, 0, -0.2, -0.08, 0.2);     // grip
+    box(0.05, 0.035, 0.14, glowTeal, 0, 0.075, 0.0);      // energy rail
+    box(0.03, 0.05, 0.1, dark, 0, -0.09, 0.1);            // trigger guard
+    box(0.02, 0.03, 0.025, accent, 0, 0.062, 0.16);       // front sight
+    box(0.04, 0.03, 0.025, accent, 0, 0.062, -0.1);       // rear sight
+    tip = 0.26;
+  } else if (type === 'scatter') {
+    box(0.15, 0.16, 0.44, metal, 0, 0.0, -0.02);          // shard housing
+    cyl(0.05, 0.038, 0.62, dark, -0.055, 0.03, 0.36, 'z');
+    cyl(0.05, 0.038, 0.62, dark, 0.055, 0.03, 0.36, 'z');
+    cyl(0.062, 0.062, 0.05, glowTeal, -0.055, 0.03, 0.68, 'z');
+    cyl(0.062, 0.062, 0.05, glowTeal, 0.055, 0.03, 0.68, 'z');
+    box(0.16, 0.07, 0.2, poly, 0, -0.08, 0.2);            // rack
+    box(0.06, 0.06, 0.16, glowTeal, 0, 0.1, 0.1);         // cell
+    box(0.13, 0.2, 0.34, poly, 0, -0.05, -0.4);           // stock
+    box(0.07, 0.15, 0.09, poly, 0, -0.14, -0.14, 0.16);   // wrist
+    box(0.02, 0.03, 0.02, accent, 0, 0.12, 0.62);         // bead
+    tip = 0.72;
+  } else if (type === 'prism') {
+    box(0.13, 0.15, 0.4, metal, 0, 0.0, -0.04);           // receiver
+    cyl(0.042, 0.042, 0.46, dark, -0.045, 0.03, 0.32, 'z');
+    cyl(0.042, 0.042, 0.46, dark, 0.045, 0.03, 0.32, 'z');
+    cyl(0.055, 0.055, 0.04, glowTeal, -0.045, 0.03, 0.55, 'z');
+    cyl(0.055, 0.055, 0.04, glowTeal, 0.045, 0.03, 0.55, 'z');
+    box(0.05, 0.03, 0.34, glowTeal, 0, 0.1, 0.18);        // top prism rail
+    box(0.16, 0.12, 0.14, accent, 0, 0.02, 0.06);         // prism block
+    box(0.09, 0.22, 0.1, dark, 0, -0.18, 0.04, 0.12);     // magazine
+    box(0.06, 0.16, 0.09, poly, 0, -0.14, -0.18, 0.12);
+    box(0.1, 0.13, 0.28, poly, 0, -0.01, -0.36);
+    tip = 0.58;
+  } else if (type === 'cycler') {
+    box(0.15, 0.18, 0.52, metal, 0, 0.01, 0.0);           // body
+    cyl(0.032, 0.032, 0.5, dark, 0, 0.02, 0.5, 'z');
+    for (let i = 0; i < 4; i++) cyl(0.07, 0.07, 0.03, accent, 0, 0.02, 0.3 + i * 0.09, 'z');
+    cyl(0.042, 0.042, 0.08, glowTeal, 0, 0.02, 0.76, 'z');
+    cyl(0.16, 0.16, 0.1, dark, 0.14, -0.02, 0.02, 'x');   // coil drum
+    cyl(0.06, 0.06, 0.12, glowTeal, 0.14, -0.02, 0.02, 'x');
+    box(0.07, 0.18, 0.09, poly, 0, -0.16, -0.16, 0.12);
+    box(0.11, 0.15, 0.24, poly, 0, -0.01, -0.42);
+    box(0.03, 0.26, 0.03, dark, -0.07, -0.18, 0.42, 0, 0, 0.34);
+    box(0.03, 0.26, 0.03, dark, 0.07, -0.18, 0.42, 0, 0, -0.34);
+    tip = 0.8;
+  } else if (type === 'beam') {
+    box(0.09, 0.13, 0.5, metal, 0, 0.01, 0.0);            // receiver
+    box(0.09, 0.09, 0.34, poly, 0, 0.0, 0.36);            // shroud
+    cyl(0.022, 0.022, 0.36, dark, 0, 0.02, 0.6, 'z');
+    box(0.035, 0.035, 0.3, glowTeal, 0, -0.055, 0.42);    // beam channel
+    box(0.095, 0.12, 0.2, dark, 0, 0.14, 0.02);           // optic housing
+    box(0.07, 0.07, 0.02, glass, 0, 0.15, 0.13);          // lens
+    cyl(0.03, 0.03, 0.06, accent, 0.06, 0.14, -0.04, 'x');
+    box(0.07, 0.24, 0.1, dark, 0, -0.18, 0.06, 0.18);     // magazine
+    box(0.06, 0.17, 0.08, poly, 0, -0.15, -0.16, 0.12);
+    box(0.08, 0.13, 0.22, poly, 0, 0.0, -0.42);
+    tip = 0.78;
+  } else if (type === 'specter') {
+    box(0.1, 0.13, 0.4, metal, 0, 0.0, -0.06);            // receiver
+    cyl(0.026, 0.024, 0.86, dark, 0, 0.02, 0.38, 'z');    // long barrel
+    cyl(0.036, 0.036, 0.07, glowTeal, 0, 0.02, 0.82, 'z');// emitter
+    box(0.05, 0.04, 0.42, glowTeal, 0, -0.055, 0.34);     // rail light
+    box(0.11, 0.15, 0.34, poly, 0, -0.02, -0.38);         // stock
+    box(0.06, 0.12, 0.08, dark, 0, -0.13, -0.16, 0.12);
+    cyl(0.056, 0.05, 0.44, dark, 0, 0.15, 0.06, 'z');     // long scope
+    cyl(0.064, 0.064, 0.04, steel, 0, 0.15, 0.28, 'z');
+    box(0.045, 0.045, 0.02, glass, 0, 0.15, 0.3);
+    cyl(0.03, 0.03, 0.06, accent, 0, 0.11, -0.1, 'y');
+    box(0.08, 0.2, 0.1, dark, 0, -0.17, 0.06, 0.14);      // magazine
+    box(0.03, 0.26, 0.03, dark, -0.06, -0.17, 0.54, 0, 0, 0.3);
+    box(0.03, 0.26, 0.03, dark, 0.06, -0.17, 0.54, 0, 0, -0.3);
+    tip = 0.86;
   } else {
     box(0.08, 0.11, 0.34, metal, 0, 0, 0.02);
     box(0.07, 0.22, 0.09, dark, 0, -0.15, -0.08, 0.16, 0, 0);
@@ -8497,7 +8774,7 @@ function createPlayerRig() {
   player.rig = makeRig(sk.shirt, sk.pants, sk.skin, sk.accent);
   player.rig.group.position.copy(player.pos);
   dynGroup.add(player.rig.group);
-  setRigWeapon(player.rig, 'pistol');
+  setRigWeapon(player.rig, 'pulsepistol');
 }
 
 function animateRig(rig, speed, t) {
@@ -8717,8 +8994,8 @@ function clearLoot() {
 }
 
 function lootWeaponType() {
-  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting', 'gauss', 'rail', 'reaper']);
-  if (mod('shotguns')) return pick(['shotgun', 'tacshot']);
+  if (mod('snipers')) return pick(['gauss', 'specter', 'rail', 'rail', 'reaper']);
+  if (mod('shotguns')) return pick(['scatter', 'prism']);
   return pick(LOOT_WEAPON_POOL);
 }
 
@@ -9044,7 +9321,7 @@ function weaponSpecial(w, hit, dir, dmg) {
 
 /* The shotguns, by base type. They share a bloom model, a recoil kick and a
    damage falloff, so none of them can quietly fall behind the others. */
-const SHOTGUN_FAMILY = ['shotgun', 'tacshot', 'combat', 'doublebarrel'];
+const SHOTGUN_FAMILY = ['shotgun', 'tacshot', 'combat', 'doublebarrel', 'scatter', 'prism'];
 
 /* Spray bloom is what a held trigger looks like on the reticle. A fast
    automatic earns a much smaller window than a slow rifle, and no gun ever
@@ -9154,7 +9431,9 @@ function playerFire() {
     }
   }
 
-  const kick = SHOTGUN_FAMILY.indexOf(wt) >= 0 ? 0.045 : wt === 'sniper' ? 0.085 : wt === 'smg' ? 0.013 : 0.021;
+  const kick = SHOTGUN_FAMILY.indexOf(wt) >= 0 ? 0.045
+    : w.scoped ? (w.auto ? 0.032 : 0.085)
+    : wt === 'smg' ? 0.013 : 0.021;
   camRig.recoil += scopedAds ? kick * 0.15 : kick;
   sfx(w.sfx);
   if (!w.noAmmo && it.mag <= 0) startReload();
@@ -9923,8 +10202,8 @@ function rebootMate() {
   m.hp = mod('glass') ? 55 : 100;
   m.shield = 0;
   m.overshield = 50;
-  m.weapon = makeWeapon('pistol', 0);
-  m.mag = WEAPONS.pistol.mag;
+  m.weapon = makeWeapon('pulsepistol', 0);
+  m.mag = WEAPONS.pulsepistol.mag;
   m.nextFire = 0;
   m.target = null;
   m.goal = null;
@@ -9936,7 +10215,7 @@ function rebootMate() {
     m.rig.group.visible = true;
     dynGroup.add(m.rig.group);
     m.rig.group.position.copy(m.pos);
-    if (!state.remoteJoin) setRigWeapon(m.rig, 'pistol');
+    if (!state.remoteJoin) setRigWeapon(m.rig, 'pulsepistol');
   }
   toast('MATE REBOOTED', 'sub');
   sfx('respawn');
@@ -9954,8 +10233,8 @@ function rebootPlayerAtVan(van) {
   player.shield = 0;
   player.overshield = player.maxOvershield;
   player.lastDamage = -99;
-  player.inv = [makeWeapon('pistol', 0), null, null, null, null];
-  player.ammo = ammoKit('pistol');
+  player.inv = [makeWeapon('pulsepistol', 0), null, null, null, null];
+  player.ammo = ammoKit('pulsepistol');
   player.slot = 0;
   player.wood = Math.max(120, player.wood);
   player.reloading = false;
@@ -10518,10 +10797,10 @@ let botNamePool = [];
 let botPhase = 0;
 
 function botWeaponType(level) {
-  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting', 'gauss', 'rail', 'reaper']);
-  if (mod('shotguns')) return pick(['shotgun', 'tacshot']);
+  if (mod('snipers')) return pick(['gauss', 'specter', 'rail', 'rail', 'reaper']);
+  if (mod('shotguns')) return pick(['scatter', 'prism']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['ar', 'tacsmg', 'smg', 'shotgun', 'tacshot', 'lmg', 'burst', 'holo', 'hunting', 'sniper', 'silenced', 'doublebarrel', 'heavyar', 'lever', 'pulse', 'ion', 'tesla', 'nova', 'cryo', 'gauss', 'rail', 'reaper']);
+  return pick(['pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler', 'beam', 'gauss', 'specter', 'rail', 'reaper']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -12623,12 +12902,12 @@ let interactTarget = null;
 const COMPASS_PX = 3;                 // pixels per degree
 const COMPASS_LABELS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 const SECTOR_NAMES = [
-  'RUSTY RIDGE', 'COPPER FLATS', 'ASH HOLLOW', 'BROKEN SPIRE', 'GREY MARSH', 'SALT BASIN',
-  'PINE BREAK', 'IRON GULCH', 'OLD QUARRY', 'WIND SCAR', 'MUD CREEK', 'STONE STEPS',
-  'BLACK RIDGE', 'HAWK POINT', 'DUST BOWL', 'FROST CUT', 'EMBER FIELD', 'LOW WATER',
-  'TALL GRASS', 'SUNKEN ROAD', 'CLIFF FACE', 'WILD ORCHARD', 'TIN ROOFS', 'NORTH GATE',
-  'KESTREL BAY', 'WET DOCK', 'FOUNDRY', 'RED CLAY', 'GLASS HILL', 'CROW PASS',
-  'MILL RACE', 'HAY FIELD', 'SILVER PIT', 'FAR SHORE', 'LAST LIGHT', 'SOUTH WALL',
+  'NEON STRIP', 'CATHODE ROW', 'RELAY NINE', 'VOID GARDEN', 'SPIRE YARD', 'GLASS STEP',
+  'HELIX DOCK', 'ION FLATS', 'HALO YARD', 'NULL BASIN', 'PHASE REEF', 'CIRCUIT WALK',
+  'TESLA FIELD', 'SHARD BANKS', 'PULSE GATE', 'LUMEN CUT', 'ARC HOLLOW', 'DRIFT STEPS',
+  'BEACON RIDGE', 'PRISM CREEK', 'QUARTZ BRAKE', 'SIGNAL DECK', 'ECHO VAULT', 'CORE LINE',
+  'ORBIT ROW', 'COIL YARD', 'FAR MAST', 'INK SHORE', 'LAST SIGNAL', 'SOUTH ARRAY',
+  'SEVER BAY', 'CARBON RUN', 'FREE PORT', 'TETHER POINT', 'ZERO LINE', 'AFTERMATH',
 ];
 
 function buildCompass() {
@@ -13387,10 +13666,10 @@ function plannedBotCount() {
 }
 
 function startWeaponType() {
-  if (mod('snipers')) return 'sniper';
-  if (mod('shotguns')) return 'shotgun';
+  if (mod('snipers')) return 'reaper';
+  if (mod('shotguns')) return 'scatter';
   if (isGunGame()) return GUN_ORDER[0];
-  return 'pistol';
+  return 'pulsepistol';
 }
 
 function placeOnGround(e) {
@@ -13889,8 +14168,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 5, patch: 4 };
-const VERSION_PREV = '7.5.3';
+const VERSION = { major: 7, minor: 6, patch: 0 };
+const VERSION_PREV = '7.5.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -13940,6 +14219,12 @@ const SKINS = [
   { id: 's5c', name: 'Volt Ranger', shirt: 0x7dffb0, pants: 0x123023, skin: 0xb07a4a, accent: 0x1e5a3a, rarity: 3 },
   { id: 's5d', name: 'Solar Sentinel', shirt: 0xffd23f, pants: 0x3a2d08, skin: 0xf0c9a0, accent: 0x7a5c10, rarity: 4 },
   { id: 's5e', name: 'Nightfall Prime', shirt: 0x2b2f5a, pants: 0x0f1120, skin: 0xb07a4a, accent: 0xa06bff, rarity: 4 },
+  // Season 6 battle pass — the island's own materials
+  { id: 's6a', name: 'Null Courier', shirt: 0x2a6f7a, pants: 0x0f1f24, skin: 0xe8b98a, accent: 0x4ff0d0, rarity: 2 },
+  { id: 's6b', name: 'Circuit Fold', shirt: 0x3a4a5e, pants: 0x141a24, skin: 0xd8a878, accent: 0x9fe8ff, rarity: 3 },
+  { id: 's6c', name: 'Helix Runner', shirt: 0x1f4b45, pants: 0x0e2020, skin: 0xb07a4a, accent: 0xc6ff4a, rarity: 3 },
+  { id: 's6d', name: 'Prism Warden', shirt: 0x5e4a8e, pants: 0x17122a, skin: 0xf0c9a0, accent: 0xff5ea8, rarity: 4 },
+  { id: 's6e', name: 'Zero Signal', shirt: 0x111820, pants: 0x0a0e13, skin: 0xd8a878, accent: 0x6dffd8, rarity: 4 },
   // Season 5 item shop rotation
   { id: 'shop_rift', name: 'Riftwalker', shirt: 0x7b6bff, pants: 0x161228, skin: 0xe8b98a, accent: 0x3a2a7a, rarity: 3, price: 1200, fresh: true },
   { id: 'shop_tide', name: 'Tide Breaker', shirt: 0x39c6c0, pants: 0x0f2a2a, skin: 0xf0c9a0, accent: 0x1a4a48, rarity: 3, price: 1200, fresh: true },
@@ -13961,20 +14246,20 @@ const SHOP_ITEMS = SKINS.filter((s) => s.price && s.fresh);
 
 const BP_TIERS = [
   { xp: 250, type: 'vb', amount: 100, name: '100 V-BUCKS' },
-  { xp: 500, type: 'skin', id: 's5a', name: 'Rift Marauder' },
+  { xp: 500, type: 'skin', id: 's6a', name: 'Null Courier' },
   { xp: 800, type: 'vb', amount: 150, name: '150 V-BUCKS' },
-  { xp: 1100, type: 'skin', id: 's5b', name: 'Ashfall' },
+  { xp: 1100, type: 'skin', id: 's6b', name: 'Circuit Fold' },
   { xp: 1450, type: 'vb', amount: 200, name: '200 V-BUCKS' },
-  { xp: 1800, type: 'skin', id: 's5c', name: 'Volt Ranger' },
+  { xp: 1800, type: 'skin', id: 's6c', name: 'Helix Runner' },
   { xp: 2200, type: 'vb', amount: 250, name: '250 V-BUCKS' },
-  { xp: 2600, type: 'skin', id: 's5d', name: 'Solar Sentinel' },
+  { xp: 2600, type: 'skin', id: 's6d', name: 'Prism Warden' },
   { xp: 3000, type: 'vb', amount: 300, name: '300 V-BUCKS' },
-  { xp: 3500, type: 'skin', id: 's5e', name: 'Nightfall Prime' },
+  { xp: 3500, type: 'skin', id: 's6e', name: 'Zero Signal' },
 ];
 const BP_COST = 1000;
 const PROFILE_KEY = 'stormfall.profile.v1';
 
-const SEASON = 5;
+const SEASON = 6;
 
 const TOURNEY_GAMES = 3;
 
@@ -15307,7 +15592,7 @@ function buyBattlePass() {
   renderLocker();
   sfx('bpBuy');
   playReveal({
-    kicker: 'SEASON 5',
+    kicker: 'SEASON 6',
     title: 'BATTLE PASS',
     name: 'UNLOCKED',
     sub: 'ALL REWARDS ARE NOW YOURS TO EARN',
@@ -15996,7 +16281,7 @@ function netEnsureRemoteRig() {
   const rig = makeRig(sk.shirt, sk.pants, sk.skin, sk.accent);
   rig.group.visible = false;
   dynGroup.add(rig.group);
-  setRigWeapon(rig, 'ar');
+  setRigWeapon(rig, 'pulse');
   net.remoteRig = rig;
   return rig;
 }
@@ -16644,7 +16929,7 @@ function adminRefill() {
 
 function adminLoadout() {
   if (!player.alive) { toast('START A MATCH FIRST', 'sub'); return; }
-  const picks = ['lever', 'tacshot', 'ar', 'holo', 'sniper'];
+  const picks = ['scatter', 'prism', 'pulse', 'beam', 'reaper'];
   for (let i = 0; i < picks.length && i < player.inv.length; i++) {
     player.inv[i] = makeWeapon(picks[i], 4);
   }
