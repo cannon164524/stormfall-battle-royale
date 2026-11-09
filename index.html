@@ -4938,7 +4938,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   background:#0a0f11; border-top:1px solid var(--line); border-radius:0;
 }
 #modeBar .mbLabel { font-size:7px; letter-spacing:.3em; color:var(--ink-dim); }
-#modeBar b { font-family:var(--display); font-size:12px; letter-spacing:.22em; color:var(--lime); }
+#modeBar b {
+  font-family:var(--display); font-size:12px; letter-spacing:.22em; color:var(--lime);
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
 #modeBar .mbHint {
   border-radius:0; border:1px solid rgba(194,255,61,.45); color:var(--lime);
   clip-path:polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
@@ -5451,6 +5454,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
           <span class="modeKicker">CREATIVE</span>
           <span class="modeName">SANDBOX</span>
           <span class="modeFoot">INFINITE MATS · NO STORM</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="aimtest">
+          <span class="modeKicker new">LAB</span>
+          <span class="modeName">AIM TESTING</span>
+          <span class="modeFoot"><b>0</b> BLOOM · ALL ROUNDS TRAVEL</span>
           <span class="modeTick"></span>
         </button>
       </div>
@@ -6028,7 +6037,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE NEW HARDWARE IS EVERYWHERE</b> — the energy and rail weapons were a small slice of the loot table and easy to go a whole match without seeing. Pulse Carbines are three times as likely now, and the Ion Repeater, Tesla Arc, Nova Burster, Cryo Projector, Gauss Rifle and Rail Lance each doubled, with the Reaper Sniper doubled as well. The older guns gave up their duplicate slots to make room, so the pool is about half futuristic hardware.</div></li>
+      <li><span class="wnTag">01</span><div><b>AIM MECHANIC TESTING</b> — a new lab mode in the mode picker. Normal Battle Royale rules, loot, bots and storm, but the gunplay is stripped back to the two things a shot really is: where you point it, and how long the round takes to get there. Pick your own bot count like any other solo mode.</div></li>
+      <li><span class="wnTag">02</span><div><b>ZERO BLOOM, EVERY GUN</b> — spread, recoil bloom and the first-shot accuracy rule are all switched off. A round leaves the barrel exactly where the reticle is, every trigger pull, whether you are tap-firing a pistol or holding down an SMG.</div></li>
+      <li><span class="wnTag">03</span><div><b>EVERY ROUND TRAVELS AT 320 m/s</b> — pistols, shotguns and SMGs stop being instant-hit here and join the snipers with a real projectile at one flat speed, pellets included. Bots fire the same travelling rounds back at you, so the flight time is on both sides of the fight.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6192,6 +6203,13 @@ const MODE_DEFS = {
     rules: ['INFINITE MATS', 'NO STORM', 'NO BOTS'],
     queue: () => 'INFINITE MATS · NO STORM',
   },
+  aimtest: {
+    name: 'AIM MECHANIC TESTING', short: 'AIM TEST', kicker: 'LAB',
+    desc: 'A pure aim lab against live opponents: zero bloom on every gun, so a shot goes exactly where the reticle is, and every round travels at one flat speed, so nothing lands the instant you pull the trigger.',
+    rules: ['<b>0</b> BLOOM', 'ALL GUNS TRAVEL', 'FULL LOOT'],
+    adjustable: true,
+    queue: (n) => n + ' TARGETS · EVERY ROUND TRAVELS',
+  },
 };
 const MODE_KEYS = Object.keys(MODE_DEFS);
 
@@ -6206,6 +6224,8 @@ function isSandbox() { return state.mode === 'sandbox'; }
 function isRankedReload() { return state.mode === 'rankedreload'; }
 function isRanked() { return state.mode === 'ranked' || state.mode === 'rankedduos' || state.mode === 'rankedreload'; }
 function isBlitz() { return state.mode === 'blitz'; }
+const AIM_TEST_SPEED = 320;   // m/s every round travels at in Aim Mechanic Testing
+function isAimTest() { return state.mode === 'aimtest'; }
 function respawnMode() { return state.mode === 'reload' || state.mode === 'rankedreload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
 function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox'; }
 function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
@@ -9035,6 +9055,7 @@ const SHOTGUN_FAMILY = ['shotgun', 'tacshot', 'combat', 'doublebarrel'];
 const BLOOM_ADD_MAX = 0.020;
 function rapidFire(w) { return !!w.auto && (w.rpm || 0) >= 450; }
 function bloomGain(w) {
+  if (isAimTest()) return 0;
   if (w.pellets > 1) return w.spread * 0.22;
   return w.spread * (rapidFire(w) ? 0.55 : 0.8);
 }
@@ -9124,8 +9145,9 @@ function playerFire() {
         weaponSpecial(w, hit, dir, dmg);
       }
     };
-    if (w.bulletSpeed) {
-      spawnTravelBullet(muzzle, hit.point, w.bulletSpeed, land, 0xd8ffe0);
+    const speed = w.bulletSpeed || (isAimTest() ? AIM_TEST_SPEED : 0);
+    if (speed) {
+      spawnTravelBullet(muzzle, hit.point, speed, land, 0xd8ffe0);
     } else {
       tracerFX(muzzle, hit.point, 0xfff2a8);
       land();
@@ -10150,6 +10172,7 @@ function spawnShockwaveGrenade(origin, dir, power, def) {
 const FIRST_ACCURACY_TIME = 0.4;
 
 function currentSpread(w) {
+  if (isAimTest()) return 0.0002;
   const scopedAds = aimDown && !!w.scoped;
   const first = w.pellets <= 1 && (state.time - (player.lastShotAt || -1e9)) >= FIRST_ACCURACY_TIME;
   let s = (first || scopedAds) ? 0.0002 : (aimDown ? w.ads : w.spread);
@@ -10662,7 +10685,8 @@ function botFire(b, target) {
       damageCollider(hit.col, def.dmg * 0.55);
     }
   };
-  if (def.bulletSpeed) spawnTravelBullet(eye, hit.point, def.bulletSpeed, land, 0xffd0a0);
+  const bSpeed = def.bulletSpeed || (isAimTest() ? AIM_TEST_SPEED : 0);
+  if (bSpeed) spawnTravelBullet(eye, hit.point, bSpeed, land, 0xffd0a0);
   else { tracerFX(eye, hit.point, 0xffd0a0); land(); }
   sfxPanned(def.sfx, b.pos);
 }
@@ -13416,6 +13440,7 @@ function badgeText() {
   if (isReload()) return 'RELOAD · <b>3</b> LIVES';
   if (isRanked()) return 'RANKED · <b>' + rankInfo(profile.rankRp || 0).name + '</b>';
   if (isSandbox()) return 'SANDBOX · <b>CREATIVE</b>';
+  if (isAimTest()) return 'AIM TEST · <b>0</b> BLOOM · ALL ROUNDS TRAVEL';
   if (isBlitz()) return 'BLITZ · LV <b>' + (state.blitzLvl || 1) + '</b> · ' + (state.blitzXp || 0) + '/' + blitzNeed();
   return 'SOLO · <b>' + (bots.length + 1) + '</b> PLAYERS';
 }
@@ -13575,11 +13600,13 @@ function startMatch() {
     rankedduos: 'RANKED DUOS · ' + rankInfo(profile.rankRp || 0).name,
     rankedreload: 'RANKED RELOAD · ' + rankInfo(profile.reloadRp || 0).name,
     reload: 'RELOAD · 3 LIVES',
+    aimtest: 'AIM TESTING · 0 BLOOM',
   }[state.mode] || 'DROPPING IN';
   const hint = isRumble() ? 'ENDLESS RESPAWNS · FIRST TO 30'
     : isReloadDuos() ? 'IF YOU DIE YOUR MATE MUST SURVIVE 20s'
     : isDuos() ? 'YOUR MATE CAN REVIVE AND REBOOT YOU'
     : isSandbox() ? 'INFINITE MATS · NO STORM'
+    : isAimTest() ? 'A SHOT GOES WHERE THE RETICLE IS · EVERY ROUND TRAVELS'
     : isGunGame() ? 'NEW WEAPON ON EVERY ELIMINATION'
     : isBlitz() ? 'THE STORM IS ALREADY CLOSING'
     : isRankedReload() ? 'RELOAD RP · YOUR BR RANK IS SAFE'
@@ -13862,8 +13889,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 5, patch: 3 };
-const VERSION_PREV = '7.5.2';
+const VERSION = { major: 7, minor: 5, patch: 4 };
+const VERSION_PREV = '7.5.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
