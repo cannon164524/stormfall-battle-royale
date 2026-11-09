@@ -4828,23 +4828,24 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 
 /* left rail */
 .menuTop {
-  position:absolute; left:0; top:0; bottom:0; width:78px; height:auto; z-index:8;
-  padding:10px 0 12px; gap:0; display:flex; flex-direction:column; align-items:center;
+  position:absolute; left:0; top:0; bottom:0; width:84px; height:auto; z-index:8;
+  padding:10px 0 12px; gap:0; display:flex; flex-direction:column; align-items:stretch;
   border-right:1px solid var(--line); border-bottom:0;
-  background:#080c0e;
+  background:#080c0e; overflow:hidden;
 }
-.brand { display:block; padding:0 0 10px; text-align:center; }
-.logo { font-family:var(--display); font-size:12px; font-weight:800; letter-spacing:.2em; line-height:1.05; color:var(--lime); }
+.brand { display:block; padding:0 4px 10px; text-align:center; }
+.logo { font-family:var(--display); font-size:12px; font-weight:800; letter-spacing:.16em; line-height:1.05; color:var(--lime); }
 .logo::before { content:none; }
-.tagline { display:block; margin-top:3px; font-size:6px; font-weight:700; letter-spacing:.28em; color:var(--ink-dim); }
+.tagline { display:block; margin-top:3px; font-size:6px; font-weight:700; letter-spacing:.24em; color:var(--ink-dim); }
 .tabs {
   display:flex; flex-direction:column; width:100%; margin:0; padding:0; gap:0;
-  overflow:visible; counter-reset:none;
+  overflow:hidden; counter-reset:none;
 }
 .tab, .tab.active {
-  width:100%; padding:9px 2px; text-align:center; border:0; border-radius:0;
+  width:100%; padding:8px 4px; text-align:center; border:0; border-radius:0;
   border-top:1px solid var(--line); background:none; position:relative;
-  font-family:var(--body); font-size:7.5px; font-weight:800; letter-spacing:.14em;
+  font-family:var(--body); font-size:7px; font-weight:800; letter-spacing:.1em;
+  line-height:1.25; white-space:normal; word-break:break-word; overflow:hidden;
   color:rgba(231,245,236,.5);
 }
 .tab::before { content:none; }
@@ -4853,16 +4854,17 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 .tab.active::after { display:none; }
 .topRight {
   margin:auto 0 0; width:100%; flex-direction:column; align-items:center; gap:6px;
+  padding:0 4px;
 }
 .cashTag, .vbTag {
-  width:58px; justify-content:center; padding:4px 0; border-radius:0;
-  background:#0d1416; border:1px solid var(--line); font-size:8px; color:var(--ink);
+  width:100%; justify-content:center; padding:4px 0; border-radius:0;
+  background:#0d1416; border:1px solid var(--line); font-size:7.5px; color:var(--ink);
 }
 .cashCoin, .vbCoin { border-radius:0; background:var(--teal); color:#04211c; }
 #adminEntry, .verTag { display:none; }
 
 /* main area */
-.lobby { position:absolute; left:78px; right:0; top:0; bottom:0; display:block; padding:0; }
+.lobby { position:absolute; left:84px; right:0; top:0; bottom:0; display:block; padding:0; }
 .lobby::before { display:none; }
 
 #lobbyHero { left:36%; bottom:104px; gap:6px; }
@@ -4945,9 +4947,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 
 /* full-screen picker */
 .modeRow {
-  inset:0 0 0 78px; background:#070b0c; padding:14px; gap:6px;
+  inset:0 0 0 84px; background:#070b0c; padding:14px; gap:6px;
 }
-#menu.modesOpen .modeRow { inset:0 0 0 78px; }
+#menu.modesOpen .modeRow { inset:0 0 0 84px; }
 #menu.modesOpen .menuTop { opacity:1; pointer-events:auto; }
 .mpkHead { border-bottom:1px solid var(--line); padding:2px 2px 10px; }
 .mpkTitle { font-size:8px; letter-spacing:.3em; color:var(--ink-dim); }
@@ -5072,20 +5074,20 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #padHints .pgKey { border-radius:0; border:1px solid var(--line); color:var(--ink-dim); }
 #padHints .pgDot { border-color:var(--ink-dim); border-radius:0; }
 
-/* reticle: corner brackets and a lime dot */
-#crosshair i {
-  background:none; box-shadow:none; width:9px; height:9px;
-  border-color:#eef7f1; border-style:solid; border-width:0;
+/* reticle: four corner brackets around a lime dot */
+#crosshair > i {
+  background:none; box-shadow:none; width:9px; height:9px; border-radius:0;
+  border:0 solid #eef7f1; border-style:solid;
 }
-#crosshair i.u { border-left-width:2px; border-top-width:2px; transform:translate(calc(-10px - var(--gap)), calc(-10px - var(--gap))); }
-#crosshair i.d { border-left-width:2px; border-bottom-width:2px; transform:translate(calc(-10px - var(--gap)), var(--gap)); }
-#crosshair i.l { border-right-width:2px; border-top-width:2px; transform:translate(var(--gap), calc(-10px - var(--gap))); }
-#crosshair i.r { border-right-width:2px; border-bottom-width:2px; transform:translate(var(--gap), var(--gap)); }
-#crosshair b { width:3px; height:3px; margin:-1.5px 0 0 -1.5px; background:var(--lime); border-radius:0; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
+#crosshair > i.u { border-left-width:2px; border-top-width:2px; transform:translate(calc(-10px - var(--gap)), calc(-10px - var(--gap))); }
+#crosshair > i.d { border-left-width:2px; border-bottom-width:2px; transform:translate(calc(-10px - var(--gap)), var(--gap)); }
+#crosshair > i.l { border-right-width:2px; border-top-width:2px; transform:translate(var(--gap), calc(-10px - var(--gap))); }
+#crosshair > i.r { border-right-width:2px; border-bottom-width:2px; transform:translate(var(--gap), var(--gap)); }
+#crosshair > b { width:3px; height:3px; margin:-1.5px 0 0 -1.5px; background:var(--lime); border-radius:0; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
 
 /* ammo: vertical segmented strip beside the reticle */
 #ammoGauge {
-  left:50%; top:50%; width:7px; height:72px; margin:-36px 0 0 34px;
+  left:50%; top:50%; width:7px; height:72px; margin:-36px 0 0 44px;
   transform:none; background:rgba(4,10,8,.7); border:1px solid rgba(231,245,236,.2);
   opacity:0; transition:opacity .16s linear; pointer-events:none;
 }
@@ -5144,18 +5146,18 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #endTitle { color:var(--ink); }
 
 @media (max-width: 760px) {
-  .menuTop { width:58px; padding:8px 0 10px; }
-  .logo { font-size:9px; letter-spacing:.14em; }
+  .menuTop { width:64px; padding:8px 0 10px; }
+  .logo { font-size:9px; letter-spacing:.1em; }
   .tagline { display:none; }
-  .tab, .tab.active { padding:8px 1px; font-size:6.5px; letter-spacing:.06em; }
-  .cashTag, .vbTag { width:44px; font-size:7px; }
-  .lobby { left:58px; }
-  .modeRow, #menu.modesOpen .modeRow { inset:0 0 0 58px; padding:10px 8px; gap:6px; }
+  .tab, .tab.active { padding:7px 3px; font-size:6.5px; letter-spacing:.05em; }
+  .cashTag, .vbTag { width:100%; font-size:7px; }
+  .lobby { left:64px; }
+  .modeRow, #menu.modesOpen .modeRow { inset:0 0 0 64px; padding:10px 8px; gap:6px; }
   #lobbyHero { left:50%; bottom:250px; }
   .heroFig { width:150px; height:214px; }
   .heroFig .mini { transform:scale(2.4); }
   .heroGlow { width:130px; height:10px; }
-  .playRow { left:8px; right:8px; width:auto; bottom:58px; }
+  .playRow { left:72px; right:8px; width:auto; bottom:58px; }
   .lobbyFoot { display:none; }
   #modeBar { height:46px; padding:0 10px; }
   #modeBar b { font-size:11px; letter-spacing:.16em; }
@@ -5164,7 +5166,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .modeName { font-size:12px; }
   #vitals { left:8px; width:170px; bottom:8px; }
   #weaponCluster { right:8px; bottom:22px; }
-  #ammoGauge { margin-left:26px; height:60px; margin-top:-30px; width:6px; }
+  #ammoGauge { margin-left:42px; height:60px; margin-top:-30px; width:6px; }
 }
 </style>
 </head>
@@ -6025,10 +6027,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NEW BONES</b> — the lobby is built the other way round. Navigation is a vertical rail down the left edge with the section you are on filled in, your outfit stands free in the middle of the room, and everything you decide — mode, party size, rules, modifiers, rank, DEPLOY — lives in one column on the right. The bottom strip is just the mode you have queued.</div></li>
-      <li><span class="wnTag">02</span><div><b>NEW SHAPES</b> — rounded corners are gone entirely. Plates are cut on one corner, buttons on another, bars are segmented into ticks, the crosshair is four corner brackets around a lime dot, and the ammo ring was replaced by a vertical magazine strip beside the reticle that drains in blocks.</div></li>
-      <li><span class="wnTag">03</span><div><b>NEW COLOURS</b> — acid lime on ink, with teal for shield and coral for danger, storm and eliminations. No blue, no gold, no lavender. Life bars are lime, shields are teal, the storm clock reads in coral, and a win lands on STORM CLEARED in lime.</div></li>
-    </ul>
+      <li><span class="wnTag">01</span><div><b>THE RAIL KEEPS TO ITSELF</b> — the left navigation rail is wider, clips its own labels instead of letting them spill, and the lobby, the mode library and the match-brief panel all start clear of it. On a phone the brief panel begins at the rail's edge now instead of underneath it.</div></li>
+      <li><span class="wnTag">02</span><div><b>A PROPER RETICLE</b> — the crosshair is four clean corner brackets around a lime dot again, centred on the exact aim point and opening outward as your spread grows. The brackets no longer touch the shotgun pellet ring, which keeps its own round dots.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -13695,8 +13695,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 4, patch: 0 };
-const VERSION_PREV = '7.3.0';
+const VERSION = { major: 7, minor: 4, patch: 1 };
+const VERSION_PREV = '7.4.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
