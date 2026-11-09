@@ -4666,6 +4666,134 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .playRow { bottom:52px; }
   .lobbyFoot { bottom:196px; }
 }
+
+/* =========================================================================
+   STORMFALL IDENTITY
+   A cold instrument-panel UI: deep slate, one cyan accent, hairline rules,
+   square corners, numbered navigation, measured type. Nothing here borrows
+   the yellow-and-lavender, pill-shaped look.
+   ========================================================================= */
+:root { --accent:#59d2ff; --ink:#eef3f8; --line:rgba(255,255,255,.09); }
+
+#menu {
+  background:
+    radial-gradient(70% 46% at 50% 100%, rgba(56,140,205,.20), transparent 72%),
+    linear-gradient(180deg, #070a10 0%, #05080d 58%, #04060a 100%);
+  animation:none;
+}
+#menu::before { display:none; }
+#menu::after {
+  display:block; content:''; position:absolute; left:0; right:0; top:58%; height:1px;
+  width:auto; transform:none; border-radius:0; bottom:auto; opacity:1;
+  background:linear-gradient(90deg, transparent, rgba(89,210,255,.32), transparent);
+}
+.lobby::before {
+  content:'STORMFALL // DEPLOY'; position:absolute; left:12px; top:46%;
+  transform:rotate(-90deg); transform-origin:left center; white-space:nowrap;
+  font-family:var(--body); font-size:8px; font-weight:700; letter-spacing:.34em;
+  color:rgba(238,243,248,.22); pointer-events:none;
+}
+
+/* nav */
+.menuTop { background:linear-gradient(180deg, rgba(4,7,11,.94), rgba(4,7,11,.5)); border-bottom:1px solid rgba(255,255,255,.08); }
+.logo { font-size:13px; letter-spacing:.26em; }
+.logo::before { content:'// '; color:var(--accent); }
+.tabs { counter-reset:tab; gap:0; }
+.tab, .tab.active { background:none; border:0; border-radius:0; padding:6px 10px; }
+.tab { position:relative; font-size:8.5px; font-weight:700; letter-spacing:.2em; color:rgba(238,243,248,.42); }
+.tab::before {
+  counter-increment:tab; content:counter(tab, decimal-leading-zero); margin-right:5px;
+  font-size:7px; letter-spacing:0; color:rgba(238,243,248,.24);
+}
+.tab:hover { background:none; color:rgba(238,243,248,.8); }
+.tab.active { background:none; color:#fff; }
+.tab.active::before { color:var(--accent); }
+.tab.active::after {
+  content:''; position:absolute; left:10px; right:10px; bottom:-1px; height:2px; background:var(--accent);
+}
+.cashTag, .vbTag { border-radius:2px; background:rgba(8,12,17,.7); border:1px solid rgba(255,255,255,.1); }
+.cashCoin, .vbCoin { border-radius:1px; }
+#adminEntry { color:rgba(238,243,248,.35); }
+
+/* hero */
+.heroGlow {
+  background:none; border:1px solid rgba(89,210,255,.34); border-radius:50%;
+  height:46px; box-shadow:none;
+}
+.heroName { font-size:8px; letter-spacing:.3em; color:rgba(238,243,248,.5); }
+
+/* deployment panel */
+.playRow {
+  border-radius:2px; border:1px solid rgba(255,255,255,.1); background:rgba(8,12,17,.92);
+  padding:10px 12px 12px; gap:8px;
+}
+.playRow::before {
+  content:'DEPLOYMENT'; display:block; padding-bottom:7px; margin-bottom:1px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-family:var(--body); font-size:7.5px; font-weight:700; letter-spacing:.3em; color:rgba(238,243,248,.35);
+}
+.pcName { font-size:12px; letter-spacing:.14em; }
+.pcSkin { color:rgba(238,243,248,.4); }
+.queueMode { font-size:15px; letter-spacing:.1em; color:#fff; }
+.queueSub { color:rgba(238,243,248,.4); }
+#playBtn {
+  border-radius:2px; background:var(--accent); color:#04121a;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:11px 12px; font-size:15px; letter-spacing:.22em;
+}
+#playBtn::after { content:'▸'; font-size:14px; letter-spacing:0; }
+#playBtn:hover { background:#8ce0ff; }
+
+/* right-hand readouts */
+.seatPanel {
+  border-radius:2px; background:rgba(8,12,17,.86);
+  border:1px solid rgba(255,255,255,.08); border-left:2px solid rgba(89,210,255,.45);
+}
+.seatLabel { color:rgba(238,243,248,.34); letter-spacing:.24em; }
+.seatCount b { font-size:18px; }
+.stepBtn, .pocketOpt, .modChip { border-radius:2px; background:rgba(255,255,255,.04); }
+.pocketOpt.sel, .modChip.sel { background:rgba(89,210,255,.16); border-color:rgba(89,210,255,.5); color:#fff; }
+
+/* mode bar */
+#modeBar { height:44px; background:rgba(5,8,12,.96); }
+#modeBar .mbLabel { color:rgba(238,243,248,.32); }
+#modeBar b { font-size:13px; letter-spacing:.16em; }
+#modeBar .mbHint { border-radius:2px; color:var(--accent); border-color:rgba(89,210,255,.45); }
+
+/* mode grid */
+.modeRow { background:#05080c; padding:12px; gap:6px; }
+.mpkHead { padding:2px 2px 10px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:4px; }
+.mpkTitle { letter-spacing:.28em; color:rgba(238,243,248,.38); }
+#modesClose { border-radius:2px; background:var(--accent); color:#04121a; letter-spacing:.18em; }
+.modeBtn, .modeBtn:hover {
+  border-radius:2px; background:rgba(8,12,17,.9);
+  border:1px solid rgba(255,255,255,.08); justify-content:flex-start; gap:3px; padding:10px 12px;
+}
+.modeBtn:hover { border-color:rgba(255,255,255,.22); }
+.modeBtn.active { border-color:rgba(89,210,255,.55); border-left:3px solid var(--accent); background:rgba(89,210,255,.07); }
+#menu.modesOpen .modeName { font-size:15px; letter-spacing:.06em; }
+.modeKicker { letter-spacing:.2em; color:rgba(238,243,248,.36); }
+.modeKicker.new { color:var(--accent); }
+.modeFoot { color:rgba(238,243,248,.34); }
+
+/* HUD: the accent replaces the borrowed white and gold */
+#ammoGauge .agFill { stroke:var(--accent); }
+#ammoGauge.low .agFill { stroke:#ffc844; }
+#ammoGauge.crit .agFill { stroke:#ff4d5e; }
+.slot.active { border-color:var(--accent); background:rgba(89,210,255,.12); box-shadow:none; }
+#resultCard.knock .rcHead { border-color:rgba(89,210,255,.5); }
+#resultCard .rcHead b { color:var(--accent); text-shadow:none; }
+#resultCard .rcIcon { color:var(--accent); }
+#resultCard .rcRing { border-color:rgba(89,210,255,.5); }
+#resultCard .rcSweep { background:linear-gradient(90deg, transparent, rgba(140,220,255,.4), transparent); }
+#end.win {
+  background:radial-gradient(70% 60% at 50% 36%, rgba(10,52,78,.9), rgba(3,6,10,.97));
+}
+#end.win .endTitle { color:var(--accent); }
+
+@media (max-width: 900px) {
+  .lobby::before { display:none; }
+}
 </style>
 </head>
 <body>
@@ -5054,7 +5182,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <div class="queueMode" id="queueMode">SOLO — <span id="queueBots">24</span> OPPONENTS</div>
       <div class="queueSub">Survive the storm. Take the crown.</div>
     </div>
-    <button id="playBtn">PLAY</button>
+    <button id="playBtn">DEPLOY</button>
   </div>
 
   <section id="panelShop" class="menuPanel hide">
@@ -5358,7 +5486,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <div class="endFx"><div class="endRays"></div><div class="endFlash" id="endFlash"></div><div class="endConfetti" id="endConfetti"></div></div>
     <div class="endCrest" id="endCrest"></div>
     <div class="endPlace" id="endPlace">#1</div>
-    <div class="endTitle" id="endTitle">VICTORY ROYALE</div>
+    <div class="endTitle" id="endTitle">STORM CLEARED</div>
     <div class="endRule"></div>
     <div class="endSub" id="endSub"></div>
     <div class="endStats">
@@ -5528,7 +5656,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>A CLEAN MODE PICKER</b> — opening the mode list now clears everything else away: the navigation, your outfit, the mode panel with its Play button and the side panels all fade out, leaving the grid alone with a title and a close button. The grid itself fades and slides up over a quarter second as it opens, and fades away as it closes.</div></li>
+      <li><span class="wnTag">01</span><div><b>OUR OWN LOOK</b> — the lobby stopped borrowing another game's style. Deep slate and a single cyan accent replace the yellow and pale lavender, every rounded pill is a square corner, the navigation is numbered and underlined rather than boxed, and a horizon rule runs across the screen.</div></li>
+      <li><span class="wnTag">02</span><div><b>READ AS A PANEL, NOT A POSTER</b> — the mode box is headed DEPLOYMENT, the action reads DEPLOY with an arrow instead of a wide yellow bar, the right-hand readouts are hairline rows with a cyan edge, and the mode list is a grid of squared tiles with a cyan caret on the one you have selected.</div></li>
+      <li><span class="wnTag">03</span><div><b>WINNING IS OURS TOO</b> — a win reads STORM CLEARED now, in cyan on a cold backdrop, and the knock card and ammo ring follow the same accent instead of gold and white.</div></li>
     </ul>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -13023,7 +13153,7 @@ function endMatch(win, killerName) {
 
   const endEl = document.getElementById('end');
   document.getElementById('endPlace').textContent = '#' + placement;
-  document.getElementById('endTitle').textContent = win ? 'VICTORY ROYALE' : (isRumble() ? 'DEFEAT' : 'ELIMINATED');
+  document.getElementById('endTitle').textContent = win ? 'STORM CLEARED' : (isRumble() ? 'DEFEAT' : 'ELIMINATED');
 
   let sub;
   if (win) {
@@ -13073,7 +13203,7 @@ function endMatch(win, killerName) {
   if (win) {
     state.timeScale = 0.3;
     announce({
-      kind: 'good', kicker: 'VICTORY', title: 'VICTORY ROYALE',
+      kind: 'good', kicker: 'VICTORY', title: 'STORM CLEARED',
       sub: 'LAST ONE STANDING', icon: CREST_CROWN, dur: 3200,
     });
     setTimeout(() => showEndScreen(true), 950);
@@ -13196,8 +13326,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 2, patch: 3 };
-const VERSION_PREV = '7.2.2';
+const VERSION = { major: 7, minor: 3, patch: 0 };
+const VERSION_PREV = '7.2.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
