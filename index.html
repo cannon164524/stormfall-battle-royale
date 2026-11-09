@@ -8697,7 +8697,7 @@ function clearLoot() {
 }
 
 function lootWeaponType() {
-  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
+  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting', 'gauss', 'rail', 'reaper']);
   if (mod('shotguns')) return pick(['shotgun', 'tacshot']);
   return pick(LOOT_WEAPON_POOL);
 }
@@ -10495,10 +10495,10 @@ let botNamePool = [];
 let botPhase = 0;
 
 function botWeaponType(level) {
-  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting']);
+  if (mod('snipers')) return pick(['sniper', 'hunting', 'hunting', 'gauss', 'rail', 'reaper']);
   if (mod('shotguns')) return pick(['shotgun', 'tacshot']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['ar', 'tacsmg', 'smg', 'shotgun', 'tacshot', 'lmg', 'burst', 'holo', 'hunting', 'sniper', 'silenced', 'doublebarrel', 'heavyar', 'lever']);
+  return pick(['ar', 'tacsmg', 'smg', 'shotgun', 'tacshot', 'lmg', 'burst', 'holo', 'hunting', 'sniper', 'silenced', 'doublebarrel', 'heavyar', 'lever', 'pulse', 'ion', 'tesla', 'nova', 'cryo', 'gauss', 'rail', 'reaper']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
