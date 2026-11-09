@@ -4826,45 +4826,45 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #menu::before { display:none; }
 #menu::after { display:none; }
 
-/* left rail */
+/* top nav */
 .menuTop {
-  position:absolute; left:0; top:0; bottom:0; width:84px; height:auto; z-index:8;
-  padding:10px 0 12px; gap:0; display:flex; flex-direction:column; align-items:stretch;
-  border-right:1px solid var(--line); border-bottom:0;
+  position:absolute; left:0; right:0; top:0; bottom:auto; width:auto; height:46px; z-index:8;
+  padding:0 14px; gap:14px; display:flex; flex-direction:row; align-items:center;
+  border-right:0; border-bottom:1px solid var(--line);
   background:#080c0e; overflow:hidden;
 }
-.brand { display:block; padding:0 4px 10px; text-align:center; }
-.logo { font-family:var(--display); font-size:12px; font-weight:800; letter-spacing:.16em; line-height:1.05; color:var(--lime); }
+.brand { display:flex; align-items:baseline; gap:8px; padding:0; text-align:left; }
+.logo { font-family:var(--display); font-size:13px; font-weight:800; letter-spacing:.2em; line-height:1; color:var(--lime); }
 .logo::before { content:none; }
-.tagline { display:block; margin-top:3px; font-size:6px; font-weight:700; letter-spacing:.24em; color:var(--ink-dim); }
+.tagline { display:none; }
 .tabs {
-  display:flex; flex-direction:column; width:100%; margin:0; padding:0; gap:0;
-  overflow:hidden; counter-reset:none;
+  display:flex; flex-direction:row; align-items:center; width:auto; margin:0; padding:0; gap:0;
+  overflow-x:auto; scrollbar-width:none;
 }
+.tabs::-webkit-scrollbar { display:none; }
 .tab, .tab.active {
-  width:100%; padding:8px 4px; text-align:center; border:0; border-radius:0;
-  border-top:1px solid var(--line); background:none; position:relative;
-  font-family:var(--body); font-size:7px; font-weight:800; letter-spacing:.1em;
-  line-height:1.25; white-space:normal; word-break:break-word; overflow:hidden;
-  color:rgba(231,245,236,.5);
+  width:auto; padding:6px 10px; text-align:center; border:0; border-radius:0;
+  border-top:0; border-left:1px solid var(--line); background:none; position:relative;
+  font-family:var(--body); font-size:8px; font-weight:800; letter-spacing:.14em;
+  line-height:1.2; white-space:nowrap; overflow:visible; color:rgba(231,245,236,.5);
 }
 .tab::before { content:none; }
 .tab:hover { background:rgba(194,255,61,.08); color:var(--ink); }
 .tab.active { background:var(--lime); color:#0a0f07; }
 .tab.active::after { display:none; }
 .topRight {
-  margin:auto 0 0; width:100%; flex-direction:column; align-items:center; gap:6px;
-  padding:0 4px;
+  margin:0 0 0 auto; width:auto; flex-direction:row; align-items:center; gap:6px; padding:0;
 }
 .cashTag, .vbTag {
-  width:100%; justify-content:center; padding:4px 0; border-radius:0;
-  background:#0d1416; border:1px solid var(--line); font-size:7.5px; color:var(--ink);
+  width:auto; justify-content:center; padding:3px 8px; border-radius:0;
+  background:#0d1416; border:1px solid var(--line); font-size:8px; color:var(--ink);
 }
 .cashCoin, .vbCoin { border-radius:0; background:var(--teal); color:#04211c; }
-#adminEntry, .verTag { display:none; }
+.verTag { display:block; font-size:8px; color:var(--ink-dim); }
+#adminEntry { display:block; font-size:8px; color:var(--ink-dim); }
 
 /* main area */
-.lobby { position:absolute; left:84px; right:0; top:0; bottom:0; display:block; padding:0; }
+.lobby { position:absolute; left:0; right:0; top:46px; bottom:0; display:block; padding:0; }
 .lobby::before { display:none; }
 
 #lobbyHero { left:36%; bottom:104px; gap:6px; }
@@ -4947,10 +4947,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 
 /* full-screen picker */
 .modeRow {
-  inset:0 0 0 84px; background:#070b0c; padding:14px; gap:6px;
+  inset:0; background:#070b0c; padding:14px; gap:6px;
 }
-#menu.modesOpen .modeRow { inset:0 0 0 84px; }
-#menu.modesOpen .menuTop { opacity:1; pointer-events:auto; }
+#menu.modesOpen .modeRow { inset:0; }
+#menu.modesOpen .menuTop { opacity:0; pointer-events:none; }
 .mpkHead { border-bottom:1px solid var(--line); padding:2px 2px 10px; }
 .mpkTitle { font-size:8px; letter-spacing:.3em; color:var(--ink-dim); }
 #modesClose {
@@ -5074,16 +5074,16 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #padHints .pgKey { border-radius:0; border:1px solid var(--line); color:var(--ink-dim); }
 #padHints .pgDot { border-color:var(--ink-dim); border-radius:0; }
 
-/* reticle: four corner brackets around a lime dot */
+/* reticle: the classic four bars and a dot */
 #crosshair > i {
-  background:none; box-shadow:none; width:9px; height:9px; border-radius:0;
-  border:0 solid #eef7f1; border-style:solid;
+  background:#fff; border:0; border-radius:1px; width:auto; height:auto;
+  box-shadow:0 0 3px rgba(0,0,0,.95), 0 0 1px rgba(0,0,0,.85);
 }
-#crosshair > i.u { border-left-width:2px; border-top-width:2px; transform:translate(calc(-10px - var(--gap)), calc(-10px - var(--gap))); }
-#crosshair > i.d { border-left-width:2px; border-bottom-width:2px; transform:translate(calc(-10px - var(--gap)), var(--gap)); }
-#crosshair > i.l { border-right-width:2px; border-top-width:2px; transform:translate(var(--gap), calc(-10px - var(--gap))); }
-#crosshair > i.r { border-right-width:2px; border-bottom-width:2px; transform:translate(var(--gap), var(--gap)); }
-#crosshair > b { width:3px; height:3px; margin:-1.5px 0 0 -1.5px; background:var(--lime); border-radius:0; box-shadow:0 0 0 1px rgba(0,0,0,.6); }
+#crosshair > i.u { width:2px; height:9px; transform:translate(-1px, calc(-9px - var(--gap))); }
+#crosshair > i.d { width:2px; height:9px; transform:translate(-1px, var(--gap)); }
+#crosshair > i.l { width:9px; height:2px; transform:translate(calc(-9px - var(--gap)), -1px); }
+#crosshair > i.r { width:9px; height:2px; transform:translate(var(--gap), -1px); }
+#crosshair > b { width:3px; height:3px; margin:-1.5px 0 0 -1.5px; background:#fff; border-radius:50%; box-shadow:none; }
 
 /* ammo: vertical segmented strip beside the reticle */
 #ammoGauge {
@@ -5146,18 +5146,19 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #endTitle { color:var(--ink); }
 
 @media (max-width: 760px) {
-  .menuTop { width:64px; padding:8px 0 10px; }
-  .logo { font-size:9px; letter-spacing:.1em; }
+  .menuTop { height:42px; padding:0 10px; gap:8px; }
+  .logo { font-size:11px; letter-spacing:.14em; }
   .tagline { display:none; }
-  .tab, .tab.active { padding:7px 3px; font-size:6.5px; letter-spacing:.05em; }
-  .cashTag, .vbTag { width:100%; font-size:7px; }
-  .lobby { left:64px; }
-  .modeRow, #menu.modesOpen .modeRow { inset:0 0 0 64px; padding:10px 8px; gap:6px; }
+  .tab, .tab.active { padding:5px 8px; font-size:7px; letter-spacing:.08em; }
+  .cashTag, .vbTag { font-size:7px; padding:2px 6px; }
+  .verTag, #adminEntry { display:none; }
+  .lobby { top:42px; }
+  .modeRow, #menu.modesOpen .modeRow { inset:0; padding:10px 8px; gap:6px; }
   #lobbyHero { left:50%; bottom:250px; }
   .heroFig { width:150px; height:214px; }
   .heroFig .mini { transform:scale(2.4); }
   .heroGlow { width:130px; height:10px; }
-  .playRow { left:72px; right:8px; width:auto; bottom:58px; }
+  .playRow { left:8px; right:8px; width:auto; bottom:58px; }
   .lobbyFoot { display:none; }
   #modeBar { height:46px; padding:0 10px; }
   #modeBar b { font-size:11px; letter-spacing:.16em; }
@@ -6027,8 +6028,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE RAIL KEEPS TO ITSELF</b> — the left navigation rail is wider, clips its own labels instead of letting them spill, and the lobby, the mode library and the match-brief panel all start clear of it. On a phone the brief panel begins at the rail's edge now instead of underneath it.</div></li>
-      <li><span class="wnTag">02</span><div><b>A PROPER RETICLE</b> — the crosshair is four clean corner brackets around a lime dot again, centred on the exact aim point and opening outward as your spread grows. The brackets no longer touch the shotgun pellet ring, which keeps its own round dots.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE NAV MOVED BACK UP</b> — the lobby navigation is a horizontal bar across the top again, with the section you are on filled in lime, the currency and version on the right, and the lobby, mode library and brief panel using the whole width beneath it.</div></li>
+      <li><span class="wnTag">02</span><div><b>RETICLE RESTORED</b> — the crosshair is back to the four bars and a dot that it used before the overhaul: centred, opening outward as spread grows, and leaving the shotgun pellet ring alone.</div></li>
+      <li><span class="wnTag">03</span><div><b>SEVEN NEW WEAPONS</b> — futuristic hardware with its own models and icons: the Pulse Carbine, Ion Repeater, Tesla Arc (chains to a second target), Nova Burster (three-round burst), Cryo Projector (freezes), Gauss Rifle and Rail Lance, the last two piercing and scoped. Three mythic variants and three exotics — a detonating Nova, a deep-freeze projector and a siphoning Ion — join the drop tables and bot loadouts.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7428,6 +7430,20 @@ const WEAPONS = {
   exotic_chain: { name: 'Chaining Holo Rifle', ammo: 'medium', dmg: 30, rpm: 330, mag: 26, reload: 2.3, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.7, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'holo', onHit: 'chain', chainR: 9, chainMul: 0.5 },
   exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: '4x', onHit: 'siphon', siphon: 12 },
   exotic_lever: { name: 'Piercing Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: '4x', pierce: true },
+  // Futuristic — energy, coil and rail hardware.
+  pulse: { name: 'Pulse Carbine', ammo: 'medium', dmg: 23, rpm: 620, mag: 30, reload: 2.1, spread: 0.026, ads: 0.012, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'ar' },
+  ion: { name: 'Ion Repeater', ammo: 'light', dmg: 15, rpm: 900, mag: 40, reload: 1.8, spread: 0.018, ads: 0.010, pellets: 1, hs: 1.6, range: 165, auto: true, sfx: 'smg' },
+  tesla: { name: 'Tesla Arc', ammo: 'medium', dmg: 22, rpm: 300, mag: 24, reload: 2.3, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.7, range: 190, auto: true, sfx: 'ar', onHit: 'chain', chainR: 8, chainMul: 0.45 },
+  nova: { name: 'Nova Burster', ammo: 'medium', dmg: 26, rpm: 180, mag: 21, reload: 2.4, spread: 0.028, ads: 0.012, pellets: 1, burst: 3, hs: 1.8, range: 210, auto: false, sfx: 'ar' },
+  cryo: { name: 'Cryo Projector', ammo: 'light', dmg: 20, rpm: 260, mag: 20, reload: 2.2, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.6, range: 175, auto: true, sfx: 'smg', onHit: 'freeze', freezeTime: 2.2 },
+  gauss: { name: 'Gauss Rifle', ammo: 'heavy', dmg: 78, rpm: 70, mag: 6, reload: 2.8, spread: 0.014, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '3X', scopedFov: 34, scope: '4x', pierce: true },
+  rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 95, rpm: 48, mag: 3, reload: 3.0, spread: 0.010, ads: 0.0001, pellets: 1, hs: 2.4, range: 420, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 28, scope: '4x', pierce: true },
+  mythic_pulse: { name: 'Pulse Carbine', ammo: 'medium', dmg: 32, rpm: 700, mag: 36, reload: 1.9, spread: 0.021, ads: 0.010, pellets: 1, hs: 1.8, range: 250, auto: true, sfx: 'ar' },
+  mythic_rail: { name: 'Rail Lance', ammo: 'heavy', dmg: 130, rpm: 52, mag: 4, reload: 2.6, spread: 0.008, ads: 0.0001, pellets: 1, hs: 2.5, range: 460, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 27, scope: '4x', pierce: true },
+  mythic_tesla: { name: 'Tesla Arc', ammo: 'medium', dmg: 30, rpm: 340, mag: 30, reload: 2.0, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.8, range: 210, auto: true, sfx: 'ar', onHit: 'chain', chainR: 10, chainMul: 0.55 },
+  exotic_nova: { name: 'Detonating Nova Burster', ammo: 'medium', dmg: 30, rpm: 190, mag: 24, reload: 2.2, spread: 0.026, ads: 0.012, pellets: 1, burst: 3, hs: 1.8, range: 220, auto: false, sfx: 'ar', onHit: 'explode', blastR: 2.6, blastDmg: 22 },
+  exotic_cryo: { name: 'Deep Freeze Projector', ammo: 'light', dmg: 24, rpm: 280, mag: 24, reload: 2.0, spread: 0.020, ads: 0.010, pellets: 1, hs: 1.7, range: 185, auto: true, sfx: 'smg', onHit: 'freeze', freezeTime: 3.0 },
+  exotic_ion: { name: 'Siphoning Ion Repeater', ammo: 'light', dmg: 18, rpm: 1000, mag: 50, reload: 1.6, spread: 0.016, ads: 0.009, pellets: 1, hs: 1.7, range: 175, auto: true, sfx: 'smg', onHit: 'siphon', siphon: 4 },
 };
 
 /* Every family gets its own report: a tactical SMG should not share a voice
@@ -7444,8 +7460,8 @@ const WEAPON_SFX = {
 };
 for (const k in WEAPON_SFX) if (WEAPONS[k]) WEAPONS[k].sfx = WEAPON_SFX[k];
 
-const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_heavyar', 'mythic_lmg', 'mythic_lever', 'mythic_hunting'];
-const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_minigun', 'exotic_lever'];
+const MYTHIC_WEAPONS = ['mythic_ar', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_pistol', 'mythic_doublebarrel', 'mythic_heavyar', 'mythic_lmg', 'mythic_lever', 'mythic_hunting', 'mythic_pulse', 'mythic_rail', 'mythic_tesla'];
+const EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_minigun', 'exotic_lever', 'exotic_nova', 'exotic_cryo', 'exotic_ion'];
 const SPECIAL_BASE = {
   mythic_ar: 'ar', mythic_tacsmg: 'tacsmg', mythic_smg: 'smg', mythic_sniper: 'sniper', mythic_lmg: 'lmg',
   mythic_shotgun: 'shotgun', mythic_pistol: 'pistol', mythic_doublebarrel: 'doublebarrel', mythic_heavyar: 'heavyar',
@@ -7453,6 +7469,8 @@ const SPECIAL_BASE = {
   exotic_holo: 'holo', exotic_tacshot: 'tacshot', exotic_hunting: 'hunting', exotic_pistol: 'pistol',
   exotic_burst: 'burst', exotic_sniper: 'sniper', exotic_chain: 'holo', exotic_siphonhunt: 'hunting',
   exotic_minigun: 'minigun', exotic_lever: 'lever',
+  mythic_pulse: 'pulse', mythic_rail: 'rail', mythic_tesla: 'tesla',
+  exotic_nova: 'nova', exotic_cryo: 'cryo', exotic_ion: 'ion',
 };
 
 /* Weighted loot pool — Season 5 reforged it. The drum gun, combat shotgun and
@@ -7477,6 +7495,14 @@ const LOOT_WEAPON_POOL = [
   'lever',
   'hunting',
   'sniper',
+  // futuristic hardware
+  'pulse', 'pulse',
+  'ion',
+  'tesla',
+  'nova',
+  'cryo',
+  'gauss',
+  'rail',
   // heavy suppression
   'minigun',
 ];
@@ -7503,6 +7529,20 @@ const GUN_ICONS = {
   bubble: '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 8c13 0 22 10 22 22 0 14-10 26-22 26S10 44 10 30C10 18 19 8 32 8z" opacity=".85"/><path d="M22 26c2-6 7-9 13-9" stroke="#08121e" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
   mist: '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="24" cy="34" r="11" opacity=".8"/><circle cx="39" cy="30" r="13" opacity=".7"/><circle cx="45" cy="40" r="9" opacity=".6"/><rect x="28" y="10" width="8" height="10" rx="2"/><circle cx="42" cy="16" r="3" opacity=".7"/></svg>',
 };
+GUN_ICONS.pulse = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="6" y="26" width="34" height="8" rx="1"/><rect x="40" y="28" width="18" height="4" rx="1"/><rect x="18" y="18" width="16" height="5" rx="1"/><rect x="20" y="34" width="9" height="14" rx="1"/><path d="M48 22h6l4 4-4 4h-6z" opacity=".8"/></svg>';
+GUN_ICONS.ion = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="10" y="27" width="26" height="8" rx="1"/><rect x="36" y="25" width="8" height="4" rx="1"/><rect x="36" y="33" width="8" height="4" rx="1"/><rect x="20" y="35" width="8" height="15" rx="1"/><rect x="12" y="20" width="10" height="6" rx="1"/><rect x="48" y="28" width="8" height="6" rx="2" opacity=".7"/></svg>';
+GUN_ICONS.tesla = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="27" width="30" height="9" rx="1"/><circle cx="22" cy="31" r="5" fill="#0b0f14"/><circle cx="34" cy="31" r="5" fill="#0b0f14"/><path d="M44 22l10 6-10 6 10 6" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/><rect x="16" y="36" width="8" height="14" rx="1"/></svg>';
+GUN_ICONS.nova = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="6" y="26" width="32" height="11" rx="1"/><circle cx="44" cy="31" r="8"/><circle cx="44" cy="31" r="3" fill="#0b0f14"/><rect x="18" y="37" width="9" height="13" rx="1"/><path d="M28 20l6 5-6 5z" opacity=".8"/></svg>';
+GUN_ICONS.cryo = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="30" height="9" rx="1"/><rect x="38" y="28" width="14" height="5" rx="2"/><rect x="18" y="35" width="8" height="15" rx="1"/><path d="M50 22l6 9h-9z" opacity=".8"/><rect x="12" y="20" width="8" height="5" rx="1" opacity=".7"/></svg>';
+GUN_ICONS.gauss = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="29" width="46" height="6" rx="1"/><rect x="48" y="30" width="14" height="4" rx="1"/><rect x="14" y="22" width="20" height="6" rx="1"/><rect x="20" y="36" width="8" height="12" rx="1"/><rect x="34" y="27" width="3" height="10" opacity=".6"/><rect x="40" y="27" width="3" height="10" opacity=".6"/></svg>';
+GUN_ICONS.rail = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="28" width="56" height="3" rx="1"/><rect x="2" y="35" width="56" height="3" rx="1"/><rect x="10" y="31" width="18" height="3"/><rect x="16" y="40" width="8" height="10" rx="1"/><rect x="30" y="22" width="16" height="5" rx="1"/></svg>';
+GUN_ICONS.mythic_pulse = GUN_ICONS.pulse;
+GUN_ICONS.mythic_rail = GUN_ICONS.rail;
+GUN_ICONS.mythic_tesla = GUN_ICONS.tesla;
+GUN_ICONS.exotic_nova = GUN_ICONS.nova;
+GUN_ICONS.exotic_cryo = GUN_ICONS.cryo;
+GUN_ICONS.exotic_ion = GUN_ICONS.ion;
+
 GUN_ICONS.heavyar = GUN_ICONS.ar;
 GUN_ICONS.burst = GUN_ICONS.ar;
 GUN_ICONS.lmg = GUN_ICONS.ar;
@@ -8307,6 +8347,79 @@ function buildWeaponModel(type) {
     box(0.03, 0.05, 0.03, accent, 0, 0.1, -0.08);         // hammer
     box(0.02, 0.03, 0.02, accent, 0, 0.075, 0.2);         // front sight
     tip = 0.42;
+  } else if (type === 'pulse') {
+    box(0.1, 0.13, 0.46, metal, 0, 0.0, 0.0);
+    cyl(0.022, 0.022, 0.44, dark, 0, 0.02, 0.46, 'z');
+    box(0.06, 0.03, 0.3, glowTeal, 0, 0.09, 0.24);        // energy cell
+    box(0.07, 0.18, 0.09, dark, 0, -0.16, 0.02, 0.14);     // magazine
+    box(0.06, 0.15, 0.08, poly, 0, -0.13, -0.16, 0.12);
+    box(0.08, 0.12, 0.2, poly, 0, 0.0, -0.4);
+    box(0.03, 0.06, 0.12, accent, 0, 0.1, -0.02);
+    cyl(0.032, 0.032, 0.06, glowTeal, 0, 0.02, 0.68, 'z');
+    tip = 0.72;
+  } else if (type === 'ion') {
+    box(0.09, 0.12, 0.34, metal, 0, 0.0, 0.0);
+    cyl(0.018, 0.018, 0.2, dark, -0.025, 0.02, 0.3, 'z');
+    cyl(0.018, 0.018, 0.2, dark, 0.025, 0.02, 0.3, 'z');
+    box(0.03, 0.03, 0.2, glowTeal, 0, 0.08, 0.16);
+    box(0.07, 0.24, 0.09, dark, 0, -0.19, 0.02, 0.1);
+    box(0.06, 0.15, 0.08, poly, 0, -0.13, -0.14, 0.1);
+    box(0.07, 0.1, 0.14, poly, 0, 0.0, -0.28);
+    cyl(0.03, 0.03, 0.05, accent, 0, 0.02, 0.42, 'z');
+    tip = 0.46;
+  } else if (type === 'tesla') {
+    box(0.1, 0.14, 0.4, metal, 0, 0.0, 0.0);
+    cyl(0.075, 0.075, 0.025, accent, 0, 0.02, 0.2, 'z');
+    cyl(0.075, 0.075, 0.025, accent, 0, 0.02, 0.3, 'z');
+    cyl(0.075, 0.075, 0.025, accent, 0, 0.02, 0.4, 'z');
+    cyl(0.03, 0.03, 0.42, glowTeal, 0, 0.02, 0.3, 'z');
+    box(0.02, 0.12, 0.02, dark, -0.05, 0.02, 0.5);
+    box(0.02, 0.12, 0.02, dark, 0.05, 0.02, 0.5);
+    box(0.07, 0.18, 0.09, dark, 0, -0.16, 0.02, 0.12);
+    box(0.06, 0.15, 0.08, poly, 0, -0.13, -0.16, 0.12);
+    tip = 0.56;
+  } else if (type === 'nova') {
+    box(0.11, 0.16, 0.4, metal, 0, 0.0, 0.0);
+    cyl(0.02, 0.02, 0.26, dark, -0.05, 0.02, 0.38, 'z');
+    cyl(0.02, 0.02, 0.26, dark, 0, 0.02, 0.38, 'z');
+    cyl(0.02, 0.02, 0.26, dark, 0.05, 0.02, 0.38, 'z');
+    box(0.11, 0.02, 0.02, glowTeal, 0, 0.07, 0.5);
+    box(0.08, 0.2, 0.1, dark, 0, -0.17, 0.02, 0.12);
+    box(0.06, 0.15, 0.08, poly, 0, -0.13, -0.16, 0.12);
+    box(0.08, 0.12, 0.18, poly, 0, 0.0, -0.34);
+    tip = 0.52;
+  } else if (type === 'cryo') {
+    box(0.1, 0.12, 0.34, metal, 0, 0.0, 0.0);
+    cyl(0.062, 0.062, 0.3, glowTeal, 0, -0.01, -0.06, 'z');
+    cyl(0.04, 0.024, 0.22, dark, 0, 0.02, 0.32, 'z');
+    cyl(0.045, 0.045, 0.03, accent, 0, 0.02, 0.22, 'z');
+    box(0.075, 0.18, 0.09, dark, 0, -0.15, -0.04, 0.12);
+    box(0.06, 0.15, 0.08, poly, 0, -0.13, -0.18, 0.12);
+    box(0.07, 0.1, 0.16, poly, 0, 0.0, -0.3);
+    tip = 0.44;
+  } else if (type === 'gauss') {
+    box(0.09, 0.13, 0.5, metal, 0, 0.0, 0.0);
+    cyl(0.026, 0.026, 0.74, dark, 0, 0.02, 0.44, 'z');
+    cyl(0.052, 0.052, 0.03, accent, 0, 0.02, 0.24, 'z');
+    cyl(0.052, 0.052, 0.03, accent, 0, 0.02, 0.38, 'z');
+    cyl(0.052, 0.052, 0.03, accent, 0, 0.02, 0.52, 'z');
+    box(0.06, 0.05, 0.16, glowTeal, 0, 0.09, 0.18);
+    cyl(0.04, 0.04, 0.22, dark, 0, 0.14, 0.02, 'z');
+    box(0.08, 0.16, 0.24, poly, 0, -0.02, -0.4);
+    box(0.06, 0.14, 0.08, poly, 0, -0.12, -0.18, 0.1);
+    box(0.07, 0.2, 0.1, dark, 0, -0.16, 0.02, 0.1);
+    tip = 0.82;
+  } else if (type === 'rail') {
+    box(0.08, 0.1, 0.62, metal, 0, 0.0, 0.0);
+    box(0.022, 0.03, 0.64, dark, -0.05, 0.02, 0.14);
+    box(0.022, 0.03, 0.64, dark, 0.05, 0.02, 0.14);
+    box(0.012, 0.012, 0.52, glowTeal, 0, 0.02, 0.3);
+    box(0.1, 0.12, 0.14, poly, 0, 0.0, -0.22);
+    box(0.1, 0.14, 0.26, poly, 0, 0.0, -0.42);
+    box(0.05, 0.05, 0.18, accent, 0, 0.08, 0.02);
+    box(0.06, 0.14, 0.08, poly, 0, -0.12, -0.1, 0.1);
+    cyl(0.02, 0.02, 0.16, dark, 0, -0.03, 0.44, 'z');
+    tip = 0.52;
   } else {
     box(0.08, 0.11, 0.34, metal, 0, 0, 0.02);
     box(0.07, 0.22, 0.09, dark, 0, -0.15, -0.08, 0.16, 0, 0);
@@ -13695,8 +13808,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 4, patch: 1 };
-const VERSION_PREV = '7.4.0';
+const VERSION = { major: 7, minor: 5, patch: 0 };
+const VERSION_PREV = '7.4.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
