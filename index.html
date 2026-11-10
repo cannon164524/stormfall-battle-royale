@@ -6286,7 +6286,7 @@ const MODE_DEFS = {
   gungame: {
     name: 'GUN GAME', short: 'GUN GAME', kicker: 'ARMS RACE',
     desc: 'No loot. Start on the Pulse Sidearm and climb the whole Season 6 ladder, one elimination per rung.',
-    rules: ['<b>13</b> WEAPONS', 'NO LOOT', 'UPGRADE ON ELIM'],
+    rules: ['<b>13</b> WEAPONS', 'NO LOOT', 'NO STORM', 'UPGRADE ON ELIM'],
     adjustable: true,
     queue: (n) => n + ' OPPONENTS · 13 WEAPONS',
   },
@@ -6334,7 +6334,7 @@ function isBlitz() { return state.mode === 'blitz'; }
 const AIM_TEST_SPEED = 320;   // m/s every round travels at in Aim Mechanic Testing
 function isAimTest() { return state.mode === 'aimtest'; }
 function respawnMode() { return state.mode === 'reload' || state.mode === 'rankedreload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
-function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox'; }
+function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox' || state.mode === 'gungame'; }
 function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
 const SIPHON_AMOUNT = 100;
 function siphonActive() { return isRanked() || !!state.tourneyId; }
@@ -14805,8 +14805,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 2 };
-const VERSION_PREV = '7.8.1';
+const VERSION = { major: 7, minor: 8, patch: 3 };
+const VERSION_PREV = '7.8.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
