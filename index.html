@@ -6077,8 +6077,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THREE KINDS OF OPTIC</b> — the scope overlay used to be the same big tube on everything. Now it reads by weapon. Snipers get the full black scope: the screen goes dark apart from a big circle, with a heavy duplex crosshair and mil ticks inside it. Marksman rifles get a medium tube you can still see around, a lighter crosshair and only the middle ticks. Scoped ARs get an open red dot — a small red ring and dot floating on an otherwise clear screen, no blackout at all.</div></li>
-      <li><span class="wnTag">02</span><div><b>WHO GETS WHAT</b> — Reaper and Rail Lance take the sniper tube. Specter Marksman and the Gauss Rifle take the marksman optic. The Helix Beam Rifle takes the red dot, which suits a 2× auto rifle far better than a sniper tube did. The label under each optic names the type, and the camera zoom each gun had is unchanged.</div></li>
+      <li><span class="wnTag">01</span><div><b>SNIPERS ARE GUARANTEED NOW</b> — floor loot used to spawn only inside a 210 m circle around the middle of the island, so whole POIs had almost nothing on the ground. Loot now covers the full 300 m of island, the drop count went up, and every match seeds eight extra long guns (three Rail Lances, three Reapers, two Helix Beams) on top of whatever rolls naturally.</div></li>
+      <li><span class="wnTag">02</span><div><b>ONE IS WAITING WHERE YOU LAND</b> — each match also places a Rail Lance, Reaper or Helix Beam within about ten to twenty metres of your landing spot, so your first move can be picking up a real long gun. Bot loadouts are weighted harder toward the same three guns too.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7747,11 +7747,11 @@ const LOOT_WEAPON_POOL = [
   'nova', 'nova',
   'cycler',
   // scoped rifles and long range — the common long guns now
-  'beam', 'beam', 'beam', 'beam', 'beam',
+  'beam', 'beam', 'beam', 'beam', 'beam', 'beam',
   'gauss', 'gauss',
   'specter', 'specter',
-  'rail', 'rail', 'rail', 'rail', 'rail',
-  'reaper', 'reaper', 'reaper', 'reaper', 'reaper',
+  'rail', 'rail', 'rail', 'rail', 'rail', 'rail', 'rail',
+  'reaper', 'reaper', 'reaper', 'reaper', 'reaper', 'reaper', 'reaper',
 ];
 
 const GUN_ICONS = {
@@ -9077,15 +9077,54 @@ function rollLootItem(rng, bonus) {
 }
 
 function scatterLoot(rng) {
-  const n = (isBlitz() || isSandbox()) ? 86 : 54;
+  const n = (isBlitz() || isSandbox()) ? 92 : 60;
   for (let i = 0; i < n; i++) {
     const ang = rng() * TAU;
-    const rad = 30 + Math.sqrt(rng()) * 210;
+    const rad = 25 + Math.sqrt(rng()) * 300;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     const y = terrainHeight(x, z);
     if (y < 2) continue;
     spawnLoot(x, y, z, rollLootItem(rng, 0));
   }
+}
+
+/* Season 6 runs on long guns, so every match seeds a handful of guaranteed
+   ones across the whole island — and one within a short walk of where you land,
+   so a scoped rifle is never a whole-match search. */
+const SEED_LONG_GUNS = ['rail', 'reaper', 'beam', 'rail', 'reaper', 'beam', 'rail', 'reaper'];
+
+function seedLongGunLoot() {
+  for (let i = 0; i < SEED_LONG_GUNS.length; i++) {
+    for (let t = 0; t < 50; t++) {
+      const ang = Math.random() * TAU;
+      const rad = 35 + Math.sqrt(Math.random()) * 290;
+      const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+      const y = terrainHeight(x, z);
+      if (y < 2.4) continue;
+      if (!siteFreeAt(x, z, 1.2)) continue;
+      spawnLoot(x, y, z, makeWeapon(SEED_LONG_GUNS[i], rarityRoll(0.1)));
+      break;
+    }
+  }
+}
+
+function seedLongGunNear(pos) {
+  const type = pick(['rail', 'reaper', 'beam']);
+  let fallback = null;
+  for (let t = 0; t < 80; t++) {
+    const ang = Math.random() * TAU;
+    const rad = 9 + Math.random() * 10;
+    const x = pos.x + Math.cos(ang) * rad;
+    const z = pos.z + Math.sin(ang) * rad;
+    const y = terrainHeight(x, z);
+    if (y < 2.2) continue;
+    if (!fallback) fallback = { x, y, z };
+    if (!siteFreeAt(x, z, 1.0)) continue;
+    spawnLoot(x, y, z, makeWeapon(type, rarityRoll(0.15)));
+    return;
+  }
+  // landed inside a POI: put it down anyway rather than skip the guarantee
+  if (fallback) spawnLoot(fallback.x, fallback.y, fallback.z, makeWeapon(type, rarityRoll(0.15)));
 }
 
 function giveItem(item) {
@@ -10890,7 +10929,7 @@ function botWeaponType(level) {
   if (mod('shotguns')) return pick(['scatter', 'prism']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
   return pick(['pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler',
-    'beam', 'beam', 'gauss', 'specter', 'rail', 'rail', 'reaper', 'reaper']);
+    'beam', 'beam', 'gauss', 'specter', 'rail', 'rail', 'rail', 'reaper', 'reaper', 'reaper']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -12305,6 +12344,11 @@ function updateDrop(dt) {
     player.onGround = true;
     toast('LANDED', 'sub');
     sfx('land');
+    // one long gun waiting near the landing spot, once per match
+    if (!state.landGunSeeded && !isGunGame()) {
+      state.landGunSeeded = true;
+      seedLongGunNear(p);
+    }
   }
 
   if (player.rig) {
@@ -13935,6 +13979,7 @@ function startMatch() {
   clearWorld();
   populateWorld();
   scatterLoot(Math.random);
+  if (!isGunGame()) seedLongGunLoot();
   resetStorm();
   resetPlayerForMatch();
   player.pocketType = profile.pocket || 'shock';
@@ -13943,6 +13988,12 @@ function startMatch() {
   spawnBots(botCount);
   assignTeams();
   positionFighters();
+  // A drop seeds its long gun when the player lands; a ground start seeds it here.
+  state.landGunSeeded = false;
+  if (!player.dropping && !isGunGame()) {
+    seedLongGunNear(player.pos);
+    state.landGunSeeded = true;
+  }
   state.alive = bots.length + 1;
 
   if (net.connected) {
@@ -14283,8 +14334,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 6, patch: 3 };
-const VERSION_PREV = '7.6.2';
+const VERSION = { major: 7, minor: 6, patch: 4 };
+const VERSION_PREV = '7.6.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
