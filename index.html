@@ -6452,9 +6452,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>A SURVEY INSTRUMENT</b> — the in-game HUD now belongs to Season 6. Every panel is a flat hairline plate with chamfered corners, tick rails and tabular numerals: teal for shields and instruments, lime for you, coral for danger. No gradients, no glows, no rounded cards. The lobby is untouched.</div></li>
-      <li><span class="wnTag">02</span><div><b>NEW READOUTS</b> — vitals begin with a <b>YOU</b> header and a segmented tick rail; the weapon cluster gains an <b>IN HAND</b> label, a big lime infinity over the heat percentage, and rarity rails up the left edge of every slot; the minimap gets teal corner brackets and a joined alive/elims strip.</div></li>
-      <li><span class="wnTag">03</span><div><b>SAME PLACES</b> — nothing moved. Crosshair, heat gauge, hotbar, vitals and minimap keep their positions and sizes, including the compact values on small screens, so the game reads the same and only its skin changed.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOTS FIGHT EACH OTHER</b> — bots now pick a rival bot over you unless you are clearly closer, turn on whoever shoots them for six seconds, and only three to six of them can have you as their target at once. The whole lobby no longer converges on one player.</div></li>
+      <li><span class="wnTag">02</span><div><b>CHESTS, SPELLED OUT</b> — every chest is the same deal: one weapon, then either a heal or a boon (50/50, never both), a grappler one time in four, and fifty gold. The items are laid out in a ring around the chest so you can see the whole drop at a glance.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9805,6 +9804,14 @@ function pickupLoot(l) {
   refreshHotbar();
 }
 
+// A chest always holds a gun, so this rolls a weapon and never a utility item.
+function rollChestWeapon() {
+  if (Math.random() < 0.03) return makeWeapon(pick(MYTHIC_WEAPONS), R_MYTHIC);
+  if (Math.random() < 0.03) return makeWeapon(pick(EXOTIC_WEAPONS), R_EXOTIC);
+  if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
+  return makeWeapon(lootWeaponType(), rarityRoll(0.18));
+}
+
 function openChest(c) {
   if (!c || c.opened) return;
   c.opened = true;
@@ -9814,37 +9821,28 @@ function openChest(c) {
   c.glow.material.opacity = 0.12;
   c.beam.material.opacity = 0.03;
 
-  const rolls = 1 + (Math.random() < 0.45 ? 1 : 0);
-  for (let i = 0; i < rolls; i++) {
-    const it = rollLootItem(Math.random, 0.18);
-    const ang = Math.random() * TAU;
-    const r = 0.8 + Math.random() * 1.2;
-    spawnLoot(c.x + Math.cos(ang) * r, c.y + 0.6, c.z + Math.sin(ang) * r, it);
-    if (it && it.kind === 'weapon' && it.rarity >= R_ASCENDANT) {
-      showRareFind(it, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
-    }
+  // The chest table, fixed: one weapon, then a heal 50% or a boon 50% (never
+  // both), a grappler 25%, and fifty gold. Nothing else is dropped.
+  const gun = rollChestWeapon();
+  const drops = [gun];
+  if (Math.random() < 0.5) {
+    drops.push(makeHeal(pick(['bandage', 'mini', 'shield']), 1));
+  } else {
+    drops.push(makeBoon(pick(BOON_TYPES)));
   }
-  spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeHeal(pick(['bandage', 'mini', 'shield']), 1));
-  spawnLoot(c.x + rand(-1.2, 1.2), c.y + 0.6, c.z + rand(-1.2, 1.2), makeGold(50));
-  if (Math.random() < 0.12) {
-    const id = Math.random() < 0.5 ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
-    const rareItem = makeWeapon(id, MYTHIC_WEAPONS.indexOf(id) >= 0 ? R_MYTHIC : R_EXOTIC);
-    const ang = Math.random() * TAU;
-    spawnLoot(c.x + Math.cos(ang) * 1.5, c.y + 0.7, c.z + Math.sin(ang) * 1.5, rareItem);
-    showRareFind(rareItem);
+  if (Math.random() < 0.25) drops.push(makeGrappler());
+  drops.push(makeGold(50));
+
+  const a0 = Math.random() * TAU;
+  for (let i = 0; i < drops.length; i++) {
+    const a = a0 + (i * TAU) / drops.length;
+    const r = 1.0 + (i % 2) * 0.25;
+    spawnLoot(c.x + Math.cos(a) * r, c.y + 0.6, c.z + Math.sin(a) * r, drops[i]);
   }
-  if (Math.random() < 0.1) {
-    const ang = Math.random() * TAU;
-    spawnLoot(c.x + Math.cos(ang) * 1.2, c.y + 0.6, c.z + Math.sin(ang) * 1.2, makeGrappler());
+  if (gun.rarity >= R_ASCENDANT) {
+    showRareFind(gun, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
   }
-  if (Math.random() < 0.45) {
-    const ang = Math.random() * TAU;
-    spawnLoot(c.x + Math.cos(ang) * 1.3, c.y + 0.6, c.z + Math.sin(ang) * 1.3, makeBoon(pick(BOON_TYPES)));
-  }
-  if (Math.random() < 0.2) {
-    const ang = Math.random() * TAU;
-    spawnLoot(c.x + Math.cos(ang) * 1.4, c.y + 0.6, c.z + Math.sin(ang) * 1.4, makeSpritePod(pick(SPRITE_IDS)));
-  }
+
   const woodMul = hasBoon('scav') ? 1.5 : 1;
   player.wood = Math.min(999, player.wood + Math.round(randInt(30, 60) * woodMul));
   sfx('chest');
@@ -11187,7 +11185,7 @@ const SKULL_SVG = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" st
   '<circle cx="29" cy="27" r="2.6" fill="currentColor" stroke="none"/>' +
   '<path d="M20 40v4M24 40v5M28 40v4"/></svg>';
 
-function damageBot(b, amount, attackerName, head, point) {
+function damageBot(b, amount, attackerName, head, point, attacker) {
   if (!b.alive) return;
   let d = amount;
   let shieldHit = 0;
@@ -11206,6 +11204,23 @@ function damageBot(b, amount, attackerName, head, point) {
   const healthHit = d;
   b.hp -= d;
   b.lastHit = state.time;
+
+  // Remember the shooter: a bot turns on whoever hit it before it picks a
+  // fresh target, so fights between bots keep going instead of fizzling out.
+  if (attackerName === 'You') {
+    b.retaliate = player;
+    b.retaliateAt = state.time;
+  } else if (attackerName && attackerName !== 'Storm') {
+    b.retaliateAt = state.time;
+    if (attacker && attacker !== b) {
+      b.retaliate = attacker;
+    } else {
+      b.retaliate = null;
+      for (let i = 0; i < bots.length; i++) {
+        if (bots[i] !== b && bots[i].name === attackerName) { b.retaliate = bots[i]; break; }
+      }
+    }
+  }
 
   if (attackerName === 'You') {
     player.damage += amount;
@@ -11716,18 +11731,49 @@ function chooseBotGoal(b) {
 }
 
 function acquireTarget(b) {
-  let best = null, bestD = 72;
+  const now = state.time;
+
+  // Whoever just shot this bot is the target, bot or player, for a few
+  // seconds. Without this, bots forget a rival the moment it stops being the
+  // closest thing and the fight between them dies out.
+  const hitBack = b.retaliate;
+  if (hitBack && hitBack.alive && !hitBack.dropping && !hitBack.knocked && !hitBack.out &&
+      now - (b.retaliateAt || -99) < 6 &&
+      !(state.teamMode && hitBack.team === b.team) &&
+      b.pos.distanceTo(hitBack.pos) < 92) {
+    return hitBack;
+  }
+
+  const playerOk = player.alive && !player.dropping && !player.knocked && !player.out &&
+    (!state.teamMode || player.team !== b.team);
+
+  // The human should not be the whole lobby's target. Once enough bots are
+  // already on them, the rest look for a rival bot unless the player is close.
+  let onPlayer = 0;
+  for (let i = 0; i < bots.length; i++) {
+    if (bots[i] !== b && bots[i].target === player) onPlayer++;
+  }
+  const playerCap = 3 + Math.round((state.botTier || 0) * 3);
+
+  let best = null, bestScore = Infinity;
   for (let i = 0; i < bots.length; i++) {
     const o = bots[i];
     if (o === b || !o.alive || o.dropping || o.knocked || o.out) continue;
     if (state.teamMode && o.team === b.team) continue;
     const d = b.pos.distanceTo(o.pos);
-    if (d < bestD) { bestD = d; best = o; }
+    if (d > 88) continue;
+    // A little noise per bot means two bots side by side do not always pick
+    // the same victim.
+    const score = d * (0.88 + Math.random() * 0.24);
+    if (score < bestScore) { bestScore = score; best = o; }
   }
-  if (player.alive && !player.dropping && !player.knocked && !player.out) {
-    if (!state.teamMode || player.team !== b.team) {
-      const d = b.pos.distanceTo(player.pos);
-      if (d < bestD) { bestD = d; best = player; }
+  if (playerOk) {
+    const d = b.pos.distanceTo(player.pos);
+    const reach = onPlayer >= playerCap ? 30 : 72;
+    if (d < reach) {
+      // The human has to be clearly closer than any bot to be chosen.
+      const score = d * 1.35 * (0.92 + Math.random() * 0.16);
+      if (score < bestScore) { bestScore = score; best = player; }
     }
   }
   if (!best && b.target && b.target.alive && b.pos.distanceTo(b.target.pos) < 90) return b.target;
@@ -11777,7 +11823,7 @@ function botFire(b, target) {
       hurtPlayer(def.dmg * m * botDmgMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
     } else if (h.kind === 'bot' && h.bot) {
       const m = RARITY[b.weapon.rarity].mult;
-      damageBot(h.bot, def.dmg * m * botDmgMul() * (h.head ? def.hs : 1), b.name, h.head, h.point);
+      damageBot(h.bot, def.dmg * m * botDmgMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
     } else if (h.kind === 'world' && h.col) {
       damageCollider(h.col, def.dmg * 0.55);
     }
@@ -15149,8 +15195,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 5 };
-const VERSION_PREV = '7.8.4';
+const VERSION = { major: 7, minor: 8, patch: 6 };
+const VERSION_PREV = '7.8.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
