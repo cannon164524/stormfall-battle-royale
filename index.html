@@ -6143,10 +6143,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>HEAT TAKES ITS TIME</b> — the emitter no longer starts cooling the instant you stop shooting. It waits at least 1.15 s after your last shot, longer on slow guns (a Reaper waits 1.7 s), and then bleeds at 0.30 per second instead of 0.42. Holding the trigger still almost stops the sink.</div></li>
-      <li><span class="wnTag">02</span><div><b>SNIPERS AND SHOTGUNS CAN'T BE SPAMMED</b> — slow weapons now build heat per trigger pull rather than per second, so their downtime between shots is not enough to cool them. A Reaper overheats in about three shots, the Rail Lance in four or five, and a scattergun in five pulls. You can no longer fire a sniper forever.</div></li>
-      <li><span class="wnTag">03</span><div><b>AMMO IS OUT OF THE LOOT</b> — with every gun running on cells, ammo drops did nothing, so they are gone: no ammo on the floor, none in chests, none on bodies. Their share of the loot table went to heals and small gold piles instead. Ammo comes back in a later season.</div></li>
-
+      <li><span class="wnTag">01</span><div><b>PIERCING IS NOW RICOCHET</b> — every piercing exotic has been rebuilt as a ricochet exotic. A round that lands on an enemy now bounces outward and hits every other enemy within about four metres for 25% of the weapon's damage, with a short cyan trace from the impact to each one.</div></li>
+      <li><span class="wnTag">02</span><div><b>WALLS STOP IT</b> — the ricochet only reaches enemies in the open from where the round landed. A build, a building, a rock face, terrain or a shield bubble between the impact and a target blocks it completely, so it cannot splash through cover. That means the Ricochet Burst Rifle, Ricochet Lever Rifle and Ricochet Cycler LMG reward hitting someone in the open, not shooting the wall next to a squad.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7886,12 +7884,12 @@ const WEAPONS = {
   exotic_tacshot: { name: 'Shoving Tactical Shotgun', ammo: 'shells', dmg: 14, rpm: 130, mag: 7, reload: 2.7, spread: 0.036, ads: 0.026, pellets: 10, hs: 1.75, range: 80, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 16 },
   exotic_hunting: { name: 'Explosive Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 60, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.0, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', onHit: 'explode', blastR: 3.4, blastDmg: 38, bulletSpeed: 420 },
   exotic_pistol: { name: 'Endless Pistol', ammo: 'light', dmg: 24, rpm: 320, mag: 18, reload: 1.2, spread: 0.014, ads: 0.006, pellets: 1, burst: 2, hs: 2.0, range: 170, auto: true, sfx: 'pistol', noAmmo: true },
-  exotic_burst: { name: 'Piercing Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', pierce: true },
+  exotic_burst: { name: 'Ricochet Burst Rifle', ammo: 'medium', dmg: 28, rpm: 210, mag: 27, reload: 2.4, spread: 0.024, ads: 0.010, pellets: 1, burst: 3, hs: 1.8, range: 260, auto: false, sfx: 'ar', ricochet: true, ricochetR: 4.2, ricochetMul: 0.25 },
   exotic_minigun: { name: 'Shredding Minigun', ammo: 'light', dmg: 17, rpm: 1050, mag: 90, reload: 3.8, spread: 0.036, ads: 0.024, pellets: 1, hs: 1.5, range: 160, auto: true, sfx: 'smg', onHit: 'knock', knockForce: 4 },
   exotic_sniper: { name: 'Freezing Bolt Sniper', ammo: 'heavy', dmg: 100, rpm: 42, mag: 1, reload: 2.8, spread: 0.050, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: 'sniper', onHit: 'freeze', freezeTime: 2.6, bulletSpeed: 470 },
   exotic_chain: { name: 'Chaining Holo Rifle', ammo: 'medium', dmg: 30, rpm: 330, mag: 26, reload: 2.3, spread: 0.032, ads: 0.0001, pellets: 1, hs: 1.7, range: 250, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'reddot', onHit: 'chain', chainR: 9, chainMul: 0.5, bulletSpeed: 620 },
   exotic_siphonhunt: { name: 'Siphoning Hunting Rifle', ammo: 'medium', dmg: 70, rpm: 55, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', onHit: 'siphon', siphon: 12, bulletSpeed: 420 },
-  exotic_lever: { name: 'Piercing Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: 'marksman', pierce: true, bulletSpeed: 400 },
+  exotic_lever: { name: 'Ricochet Lever Rifle', ammo: 'medium', dmg: 92, rpm: 66, mag: 6, reload: 2.8, spread: 0.011, ads: 0.0001, pellets: 1, hs: 2.3, range: 360, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 32, scope: 'marksman', ricochet: true, ricochetR: 4.6, ricochetMul: 0.25, bulletSpeed: 400 },
   // Futuristic — energy, coil and rail hardware.
   pulse: { name: 'Pulse Carbine', ammo: 'medium', dmg: 23, rpm: 620, mag: 30, reload: 2.1, spread: 0.026, ads: 0.012, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'ar' },
   ion: { name: 'Ion Repeater', ammo: 'light', dmg: 15, rpm: 900, mag: 40, reload: 1.8, spread: 0.018, ads: 0.010, pellets: 1, hs: 1.6, range: 165, auto: true, sfx: 'smg' },
@@ -7925,7 +7923,7 @@ const WEAPONS = {
   exotic_ion: { name: 'Siphoning Ion Repeater', ammo: 'light', dmg: 18, rpm: 1000, mag: 50, reload: 1.6, spread: 0.016, ads: 0.009, pellets: 1, hs: 1.7, range: 175, auto: true, sfx: 'smg', onHit: 'siphon', siphon: 4 },
   exotic_scatter: { name: 'Shoving Shard Scattergun', ammo: 'shells', dmg: 15, rpm: 95, mag: 6, reload: 2.6, spread: 0.040, ads: 0.028, pellets: 11, hs: 1.8, range: 90, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 11 },
   exotic_prism: { name: 'Detonating Prism Shotgun', ammo: 'shells', dmg: 13, rpm: 175, mag: 9, reload: 2.4, spread: 0.044, ads: 0.030, pellets: 9, hs: 1.75, range: 84, auto: true, sfx: 'tacshot', onHit: 'explode', blastR: 1.8, blastDmg: 11 },
-  exotic_cycler: { name: 'Piercing Cycler LMG', ammo: 'medium', dmg: 30, rpm: 520, mag: 64, reload: 3.0, spread: 0.020, ads: 0.011, pellets: 1, hs: 1.6, range: 225, auto: true, sfx: 'lmg', pierce: true },
+  exotic_cycler: { name: 'Ricochet Cycler LMG', ammo: 'medium', dmg: 30, rpm: 520, mag: 64, reload: 3.0, spread: 0.020, ads: 0.011, pellets: 1, hs: 1.6, range: 225, auto: true, sfx: 'lmg', ricochet: true, ricochetR: 4.2, ricochetMul: 0.25 },
   exotic_beam: { name: 'Siphoning Helix Rifle', ammo: 'medium', dmg: 32, rpm: 340, mag: 26, reload: 2.2, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 290, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'reddot', onHit: 'siphon', siphon: 5, bulletSpeed: 720 },
   exotic_specter: { name: 'Explosive Specter Marksman', ammo: 'medium', dmg: 62, rpm: 100, mag: 8, reload: 2.6, spread: 0.024, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', onHit: 'explode', blastR: 2.4, blastDmg: 26, bulletSpeed: 700 },
 };
@@ -9689,6 +9687,27 @@ function blastDamage(pos, r, dmg, skip) {
   impactFX(pos);
 }
 
+/* A ricochet round never punches through geometry: the second target has to be
+   in the open from the impact point. */
+function ricochetBlocked(from, to) {
+  const d = to.clone().sub(from);
+  const dist = d.length();
+  if (dist < 0.05) return false;
+  d.normalize();
+  for (let i = 0; i < colliders.length; i++) {
+    const c = colliders[i];
+    if (c.dead) continue;
+    const t = rayBox(from, d, c);
+    if (t > 0.1 && t < dist) return true;
+  }
+  for (let i = 0; i < bubbles.length; i++) {
+    const b = bubbles[i];
+    const t = raySphere(from, d, b.pos.x, b.pos.y, b.pos.z, b.r);
+    if (t > 0.1 && t < dist) return true;
+  }
+  return rayTerrain(from, d, dist) < dist;
+}
+
 /* Mythic and exotic on-hit quirks. */
 function weaponSpecial(w, hit, dir, dmg) {
   if (!w || !hit) return;
@@ -9729,6 +9748,21 @@ function weaponSpecial(w, hit, dir, dmg) {
         damageBot(nearest, dmg * (w.chainMul || 0.5), 'You', false, nearest.pos.clone());
         tracerFX(hit.point, nearest.pos.clone().setY(nearest.pos.y + 1.2), 0x8ff6ff);
       }
+    }
+  }
+  if (w.ricochet && hit.kind === 'bot' && hit.point) {
+    const radius = w.ricochetR || 4.5;
+    const mul = w.ricochetMul || 0.25;
+    const from = hit.point.clone().addScaledVector(dir, 0.08);
+    for (let i = 0; i < bots.length; i++) {
+      const b = bots[i];
+      if (!b.alive || b.out || b === hit.bot || b.dropping) continue;
+      if (state.teamMode && b.team === player.team) continue;
+      const target = b.pos.clone().setY(b.pos.y + 1.0);
+      if (from.distanceTo(target) > radius) continue;
+      if (ricochetBlocked(from, target)) continue;
+      damageBot(b, dmg * mul, 'You', false, target);
+      tracerFX(from, target, 0x8ff6ff);
     }
   }
   if (w.pierce && hit.kind === 'bot' && hit.point) {
@@ -14805,8 +14839,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 3 };
-const VERSION_PREV = '7.8.2';
+const VERSION = { major: 7, minor: 8, patch: 4 };
+const VERSION_PREV = '7.8.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
