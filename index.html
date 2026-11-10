@@ -15319,8 +15319,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 12 };
-const VERSION_PREV = '7.8.11';
+const VERSION = { major: 7, minor: 8, patch: 13 };
+const VERSION_PREV = '7.8.12';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18511,6 +18511,80 @@ if (motdCloseEl) motdCloseEl.addEventListener('click', () => {
   card.classList.add('hide');
 });
 
+/* ---------------- weapon stats from the shared Gist ----------------
+   The Gist's weapons.json overrides only the numbers it names, so a buff or
+   nerf is one edit and no new build. Shape: { "rail": { "dmg": 100 }, ... }.
+   Missing weapons and fields keep the values in WEAPONS. */
+const WEAPON_STATS_URL = 'https://gist.githubusercontent.com/cannon164524/53e30ebd0b724394a72dd6729b454936/raw/weapons.json';
+const WEAPON_STATS_CACHE = 'stormfall.weapons.remote';
+const WEAPON_TUNABLE = {
+  dmg: [1, 500],
+  rpm: [10, 1200],
+  mag: [1, 200],
+  reload: [0.2, 12],
+  spread: [0, 0.2],
+  ads: [0, 0.2],
+  pellets: [1, 40],
+  hs: [1, 6],
+  range: [10, 900],
+  bulletSpeed: [50, 2000],
+  burst: [1, 12],
+  scopedFov: [10, 90],
+  siphon: [0, 50],
+  knockForce: [0, 40],
+  blastR: [0, 10],
+  blastDmg: [0, 200],
+  chainR: [0, 20],
+  chainMul: [0, 1],
+  freezeTime: [0, 6],
+  ricochetR: [0, 12],
+  ricochetMul: [0, 1],
+};
+
+function applyWeaponStats(data) {
+  if (!data || typeof data !== 'object') return;
+  const list = (data.weapons && typeof data.weapons === 'object') ? data.weapons : data;
+  for (const type in list) {
+    if (!Object.prototype.hasOwnProperty.call(WEAPONS, type)) continue;
+    const tune = list[type];
+    if (!tune || typeof tune !== 'object') continue;
+    const def = WEAPONS[type];
+    for (const key in tune) {
+      if (!Object.prototype.hasOwnProperty.call(WEAPON_TUNABLE, key)) continue;
+      const v = Number(tune[key]);
+      if (!Number.isFinite(v)) continue;
+      const [lo, hi] = WEAPON_TUNABLE[key];
+      def[key] = Math.min(hi, Math.max(lo, v));
+    }
+  }
+  if (Array.isArray(data.rarity)) {
+    for (let i = 0; i < data.rarity.length && i < RARITY.length; i++) {
+      const m = Number(data.rarity[i]);
+      if (Number.isFinite(m)) RARITY[i].mult = Math.min(3, Math.max(0.5, m));
+    }
+  }
+}
+
+function loadWeaponStats() {
+  try {
+    const raw = localStorage.getItem(WEAPON_STATS_CACHE);
+    if (raw) applyWeaponStats(JSON.parse(raw));
+  } catch (e) { /* ignore */ }
+
+  if (!WEAPON_STATS_URL) return;
+  fetch(WEAPON_STATS_URL + '?t=' + Date.now(), { cache: 'no-store' })
+    .then((res) => res.ok ? res.text() : null)
+    .then((text) => {
+      if (!text) return;
+      const data = JSON.parse(text);
+      if (!data || typeof data !== 'object') return;
+      applyWeaponStats(data);
+      try { localStorage.setItem(WEAPON_STATS_CACHE, JSON.stringify(data)); } catch (e) { /* ignore */ }
+    })
+    .catch(() => { /* offline: cached values stay */ });
+}
+
+loadWeaponStats();
 boot();
 loadMotd();
 
