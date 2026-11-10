@@ -4428,6 +4428,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #stormBarFill { background:#fff; }
 #livesRow i { background:#2f8fdd; box-shadow:none; }
 .mat .ic, #matsBig .bigIc { background:#8b5a2b; border-radius:2px; }
+.mat.gold .ic { background:#ffc844; }
 #botRange { background:#2a3441; }
 #botRange::-webkit-slider-thumb { background:#fff; box-shadow:none; }
 #weaponName { color:inherit; }
@@ -5113,6 +5114,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 #ammoBox span { color:var(--ink-dim); font-size:13px; }
 #ammoBox i { color:var(--lime); letter-spacing:.2em; }
 #matsBig .bigIc { background:var(--teal); }
+#matsBig .bigIc.gold { background:#ffc844; }
+#matsBig { flex-direction:row; align-items:flex-start; gap:10px; }
+.bigMat { display:flex; flex-direction:column; align-items:center; gap:3px; }
 #matsBig b { color:var(--ink); font-size:22px; }
 #padHints .pgKey { border-radius:0; border:1px solid var(--line); color:var(--ink-dim); }
 #padHints .pgDot { border-color:var(--ink-dim); border-radius:0; }
@@ -5357,6 +5361,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 
   <div id="mats">
     <div class="mat"><span class="ic"></span><b id="matWood">400</b></div>
+    <div class="mat gold"><span class="ic"></span><b id="matGold">0</b></div>
   </div>
 
   <div id="weaponCluster">
@@ -5371,7 +5376,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       </div>
       <div id="hotbar"></div>
     </div>
-    <div id="matsBig"><span class="bigIc"></span><b id="matWoodBig">400</b></div>
+    <div id="matsBig">
+      <span class="bigMat"><span class="bigIc"></span><b id="matWoodBig">400</b></span>
+      <span class="bigMat"><span class="bigIc gold"></span><b id="matGoldBig">0</b></span>
+    </div>
   </div>
   <div id="padHints">
     <span class="pgKey">LB</span>
@@ -6077,10 +6085,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>EVERY GUN IS A LASER</b> — bullets are gone. Each shot is a bright additive beam from the muzzle to whatever it hits, tinted by role: cyan for sidearms and repeaters, mint for rifles, pink for the scatterguns, green for anything scoped. Travelling rounds are now glowing bolt segments streaking along the ray instead of a dot.</div></li>
-      <li><span class="wnTag">02</span><div><b>INFINITE CELLS, HEAT INSTEAD</b> — no weapon carries ammo any more. Every gun feeds from the same bank, so you never run dry, but the emitter builds heat with every shot and locks out at full. It shows as HEAT on the ammo readout and as the dial around the crosshair, cooling when you stop.</div></li>
-      <li><span class="wnTag">03</span><div><b>VENT WITH R</b> — hold R for a second to dump the whole heat bar, or grab a coolant cell (what ammo boxes are now) on the floor for an instant vent. Overheating gives a rising whine and a warning; you cannot fire again until heat drops back under a quarter.</div></li>
-      <li><span class="wnTag">04</span><div><b>IT SOUNDS LIKE IT LOOKS</b> — every weapon family has its own synthesised laser voice: sharp sidearm chirps, spraying SMG blips, a charging whine and crack from the snipers, a low thudding burst from scatterguns, and a hiss when you vent or overheat.</div></li>
+      <li><span class="wnTag">01</span><div><b>VENDING MACHINES ARE LIVE</b> — twelve of them are scattered across the island, each stocking one weapon at 250 gold. Walk up, and the prompt offers the buy; press E and the gun is yours, that machine then reads SOLD OUT. Every machine is a gold diamond on the minimap so you can plan a route to one.</div></li>
+      <li><span class="wnTag">02</span><div><b>GOLD BARS</b> — a match-only currency you cannot buy with real money. Chests hold 50 and every eliminated bot drops 50 at the body; both auto-collect when you walk within a few metres, same as coolant cells. Your total sits beside the wood counter in the HUD.</div></li>
+      <li><span class="wnTag">03</span><div><b>WHAT'S IN STOCK</b> — every machine sells a different Season 6 gun, rolled at Epic, Legendary or Ascendant, all at a flat 250 gold. That is five chests, or one chest and four eliminations, so a vending machine is a real objective rather than a vending machine in name only. Gold resets with each new match.</div></li>
+
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7225,6 +7233,98 @@ function makeBeacon(x, z, rng) {
   addBox(x, y + h * 0.5, z, 0.7, h * 0.5, 0.7, mast, { hp: 500, kind: 'wall' });
 }
 
+/* ---- Vending machines: the only place gold buys a gun. Twelve of them, each
+   stocked with one weapon at a fixed price, all marked on the minimap. ---- */
+const VEND_PRICE = 250;
+const vendingMachines = [];
+const VEND_TYPES = ['pulse', 'ion', 'cryo', 'tesla', 'nova', 'cycler', 'beam', 'gauss', 'specter', 'rail', 'reaper', 'scatter', 'prism', 'pulsepistol'];
+
+function makeVendingMachine(x, z, rng) {
+  const y = terrainHeight(x, z);
+  claimSite(x, z, 2.4);
+  const type = pick(VEND_TYPES);
+  const rarity = pick([3, 3, 4, 4, 5]);
+  const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+  const g = new THREE.Group();
+  g.position.set(x, y, z);
+  g.rotation.y = rot;
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.3, 0.9), mat(0x1d2a33, true));
+  body.position.y = 1.15;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  const goldMat = new THREE.MeshBasicMaterial({ color: 0xffc844 });
+  const screenMat = new THREE.MeshBasicMaterial({ color: 0x2a1f06 });
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(1.16, 1.02, 0.06), screenMat);
+  screen.position.set(0, 1.62, 0.47);
+  g.add(screen);
+
+  const built = buildWeaponModel(type);
+  built.group.scale.setScalar(1.05);
+  built.group.rotation.y = -Math.PI / 2;
+  built.group.position.set(0, 1.55, 0.56);
+  g.add(built.group);
+
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.12, 1.0), goldMat);
+  trim.position.y = 2.32;
+  g.add(trim);
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.3, 0.06), goldMat);
+  sign.position.set(0, 2.55, 0.3);
+  g.add(sign);
+  const foot = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.12, 1.0), goldMat);
+  foot.position.y = 0.06;
+  g.add(foot);
+
+  propsGroup.add(g);
+  addBox(x, y + 1.15, z, 0.85, 1.15, 0.55, body, { hp: 600, kind: 'wall' });
+  vendingMachines.push({ x, y, z, type, rarity, bought: false, mesh: g, screen });
+}
+
+function buildVendingMachines(rng) {
+  vendingMachines.length = 0;
+  let tries = 0;
+  while (vendingMachines.length < 12 && tries < 500) {
+    tries++;
+    const ang = rng() * TAU;
+    const rad = 45 + Math.sqrt(rng()) * 245;
+    const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+    if (terrainHeight(x, z) < 2.4) continue;
+    if (!siteFreeAt(x, z, 3.0)) continue;
+    makeVendingMachine(x, z, rng);
+  }
+}
+
+function nearestVending(pos, range) {
+  let best = null, bd = range;
+  for (let i = 0; i < vendingMachines.length; i++) {
+    const vm = vendingMachines[i];
+    const d = Math.hypot(vm.x - pos.x, vm.z - pos.z);
+    if (d < bd && Math.abs(vm.y - pos.y) < 3) { bd = d; best = vm; }
+  }
+  return best;
+}
+
+function buyVending(vm) {
+  if (!vm) return;
+  if (vm.bought) { toast('SOLD OUT', 'sub'); sfx('reload'); return; }
+  const nm = RARITY[vm.rarity].name + ' ' + WEAPONS[vm.type].name;
+  if ((player.gold || 0) < VEND_PRICE) {
+    toast('NEED ' + VEND_PRICE + ' GOLD', 'sub');
+    sfx('reload');
+    return;
+  }
+  player.gold -= VEND_PRICE;
+  vm.bought = true;
+  if (vm.screen) vm.screen.material.color.set(0x12200c);
+  giveItem(makeWeapon(vm.type, vm.rarity));
+  refreshHotbar();
+  updateHudGold();
+  sfx('purchase');
+  toast('BOUGHT ' + nm.toUpperCase(), 'sub');
+}
+
 function addChest(x, z, y) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(0x17242b, true));
@@ -7369,6 +7469,8 @@ function populateWorld() {
     if (!siteFreeAt(x, z, 5.4)) continue;
     makeBeacon(x, z, rng);
   }
+
+  buildVendingMachines(rng);
 
   // a few open-field chests
   for (let i = 0; i < 10; i++) {
@@ -7921,6 +8023,9 @@ function makeWeapon(type, rarity) {
 function makeAmmo(ammoType, count) {
   return { kind: 'ammo', ammoType, count };
 }
+function makeGold(n) {
+  return { kind: 'gold', amount: n || 50, name: 'Gold Bars' };
+}
 function makeGrenade(type, count) {
   return { kind: 'grenade', type, count: count || 1, name: GRENADES[type].name };
 }
@@ -8149,6 +8254,7 @@ function itemColor(item) {
   if (item.kind === 'heal') return HEALS[item.type].color;
   if (item.kind === 'grenade') return GRENADES[item.type].color;
   if (item.kind === 'grappler') return '#7dffb0';
+  if (item.kind === 'gold') return '#ffc844';
   if (item.kind === 'boon') return BOONS[item.type].color;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].color;
   return '#c9c9c9';
@@ -8160,6 +8266,7 @@ function itemLabel(item) {
   if (item.kind === 'grenade') return GRENADES[item.type].name;
   if (item.kind === 'grappler') return 'Grappler';
   if (item.kind === 'ammo') return 'Coolant Cell';
+  if (item.kind === 'gold') return 'Gold Bars';
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
   return 'Item';
@@ -8167,6 +8274,7 @@ function itemLabel(item) {
 function itemMeta(item) {
   if (!item) return '';
   if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ∞ cells';
+  if (item.kind === 'gold') return item.amount + ' gold bars';
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
   if (item.kind === 'sprite') return 'SPRITE · ' + SPRITES[item.spriteId].desc;
@@ -8204,6 +8312,7 @@ const player = {
   slot: 0,
   ammo: { light: 0, medium: 0, heavy: 0, shells: 0 },
   wood: 400,
+  gold: 0,
   kills: 0, damage: 0,
   nextFire: 0,
   heat: 0, ventEnd: 0, overheated: false, overheatWarnAt: -99,
@@ -8998,6 +9107,19 @@ function buildLootModel(item) {
       built.group.scale.setScalar(1.9);
       g.add(built.group);
     }
+  } else if (item.kind === 'gold') {
+    for (let i = 0; i < 3; i++) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.13, 0.2), mat(0xffc844, true));
+      bar.position.set((i - 1) * 0.05, i * 0.13, 0);
+      bar.rotation.y = i * 0.22;
+      g.add(bar);
+    }
+    const shine = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.02, 0.26),
+      new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.7 })
+    );
+    shine.position.y = 0.4;
+    g.add(shine);
   } else {
     const box = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.24, 0.3), mat(0x4a5568, true));
     g.add(box);
@@ -9159,6 +9281,10 @@ function seedLongGunNear(pos) {
 function giveItem(item) {
   if (!item) return -1;
   if (item.kind === 'boon') return -3;
+  if (item.kind === 'gold') {
+    player.gold = (player.gold || 0) + (item.amount || 50);
+    return -4;
+  }
   if (item.kind === 'ammo') {
     // Ammo boxes are coolant cells now: they vent the emitter instantly.
     player.heat = 0;
@@ -9203,6 +9329,15 @@ function nearestLoot(radius) {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
+  if (l.item.kind === 'gold') {
+    l.dead = true;
+    if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+    player.gold = (player.gold || 0) + (l.item.amount || 50);
+    sfx('purchase');
+    toast('+' + (l.item.amount || 50) + ' GOLD', 'sub');
+    updateHudGold();
+    return;
+  }
   if (l.item.kind === 'boon') {
     if (!addBoon(l.item.type)) {
       toast('ALREADY HAVE ' + BOONS[l.item.type].name.toUpperCase(), 'sub');
@@ -9245,6 +9380,7 @@ function openChest(c) {
     }
   }
   spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
+  spawnLoot(c.x + rand(-1.2, 1.2), c.y + 0.6, c.z + rand(-1.2, 1.2), makeGold(50));
   if (Math.random() < 0.12) {
     const id = Math.random() < 0.5 ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
     const rareItem = makeWeapon(id, MYTHIC_WEAPONS.indexOf(id) >= 0 ? R_MYTHIC : R_EXOTIC);
@@ -10606,7 +10742,7 @@ function damageBot(b, amount, attackerName, head, point) {
 }
 
 function dropBotLoot(b) {
-  const items = [b.weapon, makeAmmo(WEAPONS[b.weapon.type].ammo, randInt(40, 80))];
+  const items = [b.weapon, makeAmmo(WEAPONS[b.weapon.type].ammo, randInt(40, 80)), makeGold(50)];
   if (Math.random() < 0.6) items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   for (const it of items) {
     spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
@@ -12908,6 +13044,14 @@ const pocketCdEl = document.getElementById('pocketCd');
 const pocketIconEl = document.getElementById('pocketIcon');
 const elMatWood = document.getElementById('matWood');
 const matWoodBigEl = document.getElementById('matWoodBig');
+const elMatGold = document.getElementById('matGold');
+const elMatGoldBig = document.getElementById('matGoldBig');
+
+function updateHudGold() {
+  const g = player.gold || 0;
+  if (elMatGold) elMatGold.textContent = g;
+  if (elMatGoldBig) elMatGoldBig.textContent = g;
+}
 const questCountEl = document.getElementById('questCount');
 const questTextEl = document.getElementById('questText');
 const ammoBoxEl = document.getElementById('ammoBox');
@@ -13271,6 +13415,7 @@ function updateHUD() {
   hpBarEl.classList.toggle('low', player.hp <= 35);
   elMatWood.textContent = player.wood;
   if (matWoodBigEl) matWoodBigEl.textContent = player.wood;
+  updateHudGold();
   if (questTextEl) {
     const q = !player.spriteId ? 'Find a Sprite Pod'
       : !player.spriteExtracted ? 'Extract your Sprite'
@@ -13338,12 +13483,22 @@ function updateHUD() {
         interactTarget = { type: 'chest', obj: chest };
         promptText = '<b>E</b> OPEN CHEST';
       } else {
-        const l = nearestLoot(3.2);
-        if (l) {
-          interactTarget = { type: 'loot', obj: l };
-          const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
-            : itemLabel(l.item);
-          promptText = '<b>E</b> PICK UP ' + nm.toUpperCase();
+        const vm = nearestVending(player.pos, 3.4);
+        if (vm) {
+          interactTarget = { type: 'vending', obj: vm };
+          const nm = (RARITY[vm.rarity].name + ' ' + WEAPONS[vm.type].name).toUpperCase();
+          promptText = vm.bought ? '<b>SOLD OUT</b>'
+            : (player.gold || 0) >= VEND_PRICE
+              ? '<b>E</b> BUY ' + nm + ' · ' + VEND_PRICE + ' G'
+              : 'NEED ' + VEND_PRICE + ' GOLD · ' + nm;
+        } else {
+          const l = nearestLoot(3.2);
+          if (l) {
+            interactTarget = { type: 'loot', obj: l };
+            const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
+              : itemLabel(l.item);
+            promptText = '<b>E</b> PICK UP ' + nm.toUpperCase();
+          }
         }
       }
     }
@@ -13517,6 +13672,23 @@ function drawMinimap() {
     }
   }
 
+  // vending machines — gold diamonds on the map
+  for (let i = 0; i < vendingMachines.length; i++) {
+    const vm = vendingMachines[i];
+    const [mx, my] = w2m(vm.x, vm.z);
+    ctx.beginPath();
+    ctx.moveTo(mx, my - 4.4);
+    ctx.lineTo(mx + 4.4, my);
+    ctx.lineTo(mx, my + 4.4);
+    ctx.lineTo(mx - 4.4, my);
+    ctx.closePath();
+    ctx.fillStyle = vm.bought ? 'rgba(255,200,68,.35)' : '#ffc844';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.75)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
   // player arrow (or your mate's, while spectating)
   const mapMate = (!player.alive && player.out && isDuos()) ? mateOf() : null;
   const arrowX = mapMate ? mapMate.pos.x : player.pos.x;
@@ -13620,6 +13792,7 @@ function interact() {
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
     else if (interactTarget.type === 'extract') interactWithSite(interactTarget.obj);
+    else if (interactTarget.type === 'vending') buyVending(interactTarget.obj);
     return;
   }
   const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
@@ -13628,6 +13801,8 @@ function interact() {
   if (van) { startChannel('reboot', van); return; }
   const chest = nearestChest(3.2);
   if (chest) { openChest(chest); return; }
+  const vm = nearestVending(player.pos, 3.4);
+  if (vm) { buyVending(vm); return; }
   const l = nearestLoot(3.2);
   if (l) pickupLoot(l);
 }
@@ -13900,6 +14075,7 @@ function resetPlayerForMatch() {
   player.ammo = ammoKit(sw);
   player.ammo[WEAPONS[sw].ammo] = isGunGame() ? 240 : 90;
   player.wood = isSandbox() ? 9999 : 400;
+  player.gold = 0;
   player.kills = 0;
   player.damage = 0;
   player.nextFire = 0;
@@ -14455,8 +14631,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 7, patch: 0 };
-const VERSION_PREV = '7.6.4';
+const VERSION = { major: 7, minor: 8, patch: 0 };
+const VERSION_PREV = '7.7.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -16313,7 +16489,7 @@ function autoPickup() {
   if (!player.alive || player.dropping || player.knocked) return;
   for (let i = loot.length - 1; i >= 0; i--) {
     const l = loot[i];
-    if (l.dead || l.item.kind !== 'ammo') continue;
+    if (l.dead || (l.item.kind !== 'ammo' && l.item.kind !== 'gold')) continue;
     if (Math.hypot(l.x - player.pos.x, l.z - player.pos.z) < 3.2 && Math.abs(l.y - player.pos.y) < 2.5) {
       pickupLoot(l);
     }
