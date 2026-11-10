@@ -5572,7 +5572,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
           <li><kbd data-bind="jump"></kbd> Jump</li>
           <li><kbd data-bind="fire"></kbd> Fire / Grapple</li>
           <li><kbd data-bind="aim"></kbd> Aim</li>
-          <li><kbd data-bind="reload"></kbd> Reload</li>
+          <li><kbd data-bind="reload"></kbd> Vent heat</li>
           <li><kbd data-bind="interact"></kbd> Interact</li>
           <li><kbd data-bind="build"></kbd> Build</li>
           <li><kbd data-bind="pocket"></kbd> Pocket Item</li>
@@ -5837,7 +5837,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <button class="adminChip" data-adm="god">GOD MODE<b>NO DAMAGE</b></button>
         <button class="adminChip" data-adm="aimbot">AIMBOT<b>LOCK + NO SPREAD</b></button>
         <button class="adminChip" data-adm="oneShot">ONE SHOT<b>1000 DAMAGE</b></button>
-        <button class="adminChip" data-adm="infAmmo">INFINITE AMMO<b>NEVER RELOAD</b></button>
+        <button class="adminChip" data-adm="infAmmo">NO HEAT<b>NEVER OVERHEATS</b></button>
         <button class="adminChip" data-adm="infMats">INFINITE MATS<b>FREE BUILDS</b></button>
         <button class="adminChip" data-adm="speed">SUPER SPEED<b>2.4X MOVE</b></button>
       </div>
@@ -5925,7 +5925,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div id="stick"><div id="stickKnob"></div></div>
   <div id="touchBtns">
     <div class="row">
-      <button class="tbtn small" data-act="reload">RELOAD</button>
+      <button class="tbtn small" data-act="reload">VENT</button>
       <button class="tbtn small" data-act="build">BUILD</button>
       <button class="tbtn small" data-act="inv">INV</button>
     </div>
@@ -6077,8 +6077,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SNIPERS ARE GUARANTEED NOW</b> — floor loot used to spawn only inside a 210 m circle around the middle of the island, so whole POIs had almost nothing on the ground. Loot now covers the full 300 m of island, the drop count went up, and every match seeds eight extra long guns (three Rail Lances, three Reapers, two Helix Beams) on top of whatever rolls naturally.</div></li>
-      <li><span class="wnTag">02</span><div><b>ONE IS WAITING WHERE YOU LAND</b> — each match also places a Rail Lance, Reaper or Helix Beam within about ten to twenty metres of your landing spot, so your first move can be picking up a real long gun. Bot loadouts are weighted harder toward the same three guns too.</div></li>
+      <li><span class="wnTag">01</span><div><b>EVERY GUN IS A LASER</b> — bullets are gone. Each shot is a bright additive beam from the muzzle to whatever it hits, tinted by role: cyan for sidearms and repeaters, mint for rifles, pink for the scatterguns, green for anything scoped. Travelling rounds are now glowing bolt segments streaking along the ray instead of a dot.</div></li>
+      <li><span class="wnTag">02</span><div><b>INFINITE CELLS, HEAT INSTEAD</b> — no weapon carries ammo any more. Every gun feeds from the same bank, so you never run dry, but the emitter builds heat with every shot and locks out at full. It shows as HEAT on the ammo readout and as the dial around the crosshair, cooling when you stop.</div></li>
+      <li><span class="wnTag">03</span><div><b>VENT WITH R</b> — hold R for a second to dump the whole heat bar, or grab a coolant cell (what ammo boxes are now) on the floor for an instant vent. Overheating gives a rising whine and a warning; you cannot fire again until heat drops back under a quarter.</div></li>
+      <li><span class="wnTag">04</span><div><b>IT SOUNDS LIKE IT LOOKS</b> — every weapon family has its own synthesised laser voice: sharp sidearm chirps, spraying SMG blips, a charging whine and crack from the snipers, a low thudding burst from scatterguns, and a hiss when you vent or overheat.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7710,6 +7712,31 @@ const WEAPON_SFX = {
 };
 for (const k in WEAPON_SFX) if (WEAPONS[k]) WEAPONS[k].sfx = WEAPON_SFX[k];
 
+/* Every Season 6 gun is an emitter, so each role gets its own laser voice. */
+const LASER_VOICE = {
+  pistol: 'laserPistol',
+  suppressed: 'laserPistol',
+  smg: 'laserSmg',
+  tacsmg: 'laserSmg',
+  drum: 'laserSmg',
+  minigun: 'laserSmg',
+  ar: 'laserRifle',
+  heavyar: 'laserRifle',
+  lmg: 'laserLmg',
+  shotgun: 'laserScatter',
+  tacshot: 'laserScatter',
+  doublebarrel: 'laserScatter',
+  combat: 'laserScatter',
+  sniper: 'laserSnipe',
+  hunting: 'laserMarks',
+  lever: 'laserMarks',
+};
+for (const k in WEAPONS) {
+  const w = WEAPONS[k];
+  if (!w || typeof w.rpm !== 'number') continue;
+  w.sfx = LASER_VOICE[w.sfx] || 'laserRifle';
+}
+
 /* Season 6: the old arsenal is vaulted, not deleted. Everything that can roll
    out of a chest, a floor pile or a bot's hands is energy or coil hardware. */
 const MYTHIC_WEAPONS = ['mythic_pulsepistol', 'mythic_scatter', 'mythic_cycler', 'mythic_pulse', 'mythic_tesla', 'mythic_beam', 'mythic_gauss', 'mythic_specter', 'mythic_rail'];
@@ -8132,13 +8159,14 @@ function itemLabel(item) {
   if (item.kind === 'heal') return HEALS[item.type].name;
   if (item.kind === 'grenade') return GRENADES[item.type].name;
   if (item.kind === 'grappler') return 'Grappler';
+  if (item.kind === 'ammo') return 'Coolant Cell';
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
   return 'Item';
 }
 function itemMeta(item) {
   if (!item) return '';
-  if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ' + item.mag + ' rnds';
+  if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ∞ cells';
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
   if (item.kind === 'sprite') return 'SPRITE · ' + SPRITES[item.spriteId].desc;
@@ -8178,6 +8206,7 @@ const player = {
   wood: 400,
   kills: 0, damage: 0,
   nextFire: 0,
+  heat: 0, ventEnd: 0, overheated: false, overheatWarnAt: -99,
   reloading: false, reloadEnd: 0,
   using: null, useEnd: 0, useStart: 0,
   lastHitBy: '',
@@ -9131,7 +9160,9 @@ function giveItem(item) {
   if (!item) return -1;
   if (item.kind === 'boon') return -3;
   if (item.kind === 'ammo') {
-    player.ammo[item.ammoType] = Math.min(999, player.ammo[item.ammoType] + item.count);
+    // Ammo boxes are coolant cells now: they vent the emitter instantly.
+    player.heat = 0;
+    player.overheated = false;
     return -2;
   }
   if (item.kind === 'weapon') {
@@ -9441,6 +9472,22 @@ function weaponSpecial(w, hit, dir, dmg) {
    damage falloff, so none of them can quietly fall behind the others. */
 const SHOTGUN_FAMILY = ['shotgun', 'tacshot', 'combat', 'doublebarrel', 'scatter', 'prism'];
 
+/* Season 6 runs on cells, not cartridges. Every shot pushes the emitter closer
+   to a lockout; the only cost of firing is the vent that follows. Five seconds
+   of held trigger reaches the limit on any weapon. */
+function heatPerShot(w) {
+  return 12 / Math.max(40, w.rpm || 100);
+}
+
+/* One beam colour per role, so a shotgun reads pink and a sniper green. */
+function laserTint(type) {
+  const wt = SPECIAL_BASE[type] || type;
+  if (SHOTGUN_FAMILY.indexOf(wt) >= 0) return 0xff7ae0;
+  if (wt === 'sniper' || wt === 'specter' || wt === 'gauss' || wt === 'rail' || wt === 'reaper') return 0x7dff9a;
+  if (wt === 'smg' || wt === 'ion' || wt === 'pulsepistol') return 0x8fe8ff;
+  return 0xa8ffdc;
+}
+
 /* Spray bloom is what a held trigger looks like on the reticle. A fast
    automatic earns a much smaller window than a slow rifle, and no gun ever
    adds more than BLOOM_ADD_MAX to its cone, or the reticle stops reading as
@@ -9467,9 +9514,18 @@ function playerFire() {
   if (state.time < player.nextFire) return;
   const w = WEAPONS[it.type];
   const wt = SPECIAL_BASE[it.type] || it.type;
-  if (!w.noAmmo && it.mag <= 0) { startReload(); return; }
-
-  if (!adminOn('infAmmo') && !w.noAmmo) it.mag = Math.max(0, it.mag - (w.burst || 1));
+  // Infinite cells: the only thing that can stop the trigger is heat.
+  if (player.ventEnd && state.time < player.ventEnd) return;
+  if (player.overheated) return;
+  if (!adminOn('infAmmo')) {
+    player.heat = Math.min(1, (player.heat || 0) + heatPerShot(w) * (w.burst || 1));
+    if (player.heat >= 1) {
+      player.overheated = true;
+      player.overheatWarnAt = state.time;
+      sfx('overheat');
+      toast('OVERHEATED · R TO VENT', 'sub');
+    }
+  }
   player.nextFire = state.time + 60 / (w.rpm * (hasSpritePower('rpm') ? 1.15 : 1));
 
   const origin = camera.position.clone();
@@ -9550,11 +9606,11 @@ function playerFire() {
       const flight = travelDistanceFor(origin, dir, w.range, null, player.team, hit.dist);
       const end = origin.clone().addScaledVector(dir, flight);
       spawnTravelBullet(
-        muzzle, end, speed, land, 0xd8ffe0,
+        muzzle, end, speed, land, laserTint(it.type),
         () => hitTest(origin, dir, w.range, null, player.team)
       );
     } else {
-      tracerFX(muzzle, hit.point, 0xfff2a8);
+      tracerFX(muzzle, hit.point, laserTint(it.type));
       land();
     }
   }
@@ -9564,7 +9620,6 @@ function playerFire() {
     : wt === 'smg' ? 0.013 : 0.021;
   camRig.recoil += scopedAds ? kick * 0.15 : kick;
   sfx(w.sfx);
-  if (!w.noAmmo && it.mag <= 0) startReload();
   updateAmmoReadout();
 }
 
@@ -9591,28 +9646,26 @@ function startReload() {
   const it = currentItem();
   if (!it || it.kind !== 'weapon') return;
   if (!player.alive || player.knocked) return;
-  const w = WEAPONS[it.type];
-  if (player.reloading || it.mag >= w.mag) return;
-  if (player.ammo[w.ammo] <= 0) { dryWeapon(); return; }
+  if (player.reloading) return;
+  if ((player.heat || 0) < 0.02 && !player.overheated) return;
+  // R is a vent now: one second of forced cooling clears the whole cell bank.
   player.reloading = true;
-  player.bloom = 0;
+  player.ventEnd = state.time + 1.1;
   player.reloadStart = state.time;
-  player.reloadEnd = state.time + w.reload * (hasSpritePower('reload') ? 0.8 : 1);
-  player.lumenReady = hasSpritePower('lumen');
-  sfx('reload');
+  player.reloadEnd = player.ventEnd;
+  player.bloom = 0;
+  sfx('vent');
   refreshHotbar();
 }
 
 function finishReload() {
   player.reloading = false;
-  const it = currentItem();
-  if (!it || it.kind !== 'weapon') return;
-  const w = WEAPONS[it.type];
-  const need = w.mag - it.mag;
-  const take = Math.min(need, player.ammo[w.ammo]);
-  it.mag += take;
-  if (!adminOn('infAmmo')) player.ammo[w.ammo] -= take;
+  player.ventEnd = 0;
+  player.heat = 0;
+  player.overheated = false;
   refreshHotbar();
+  updateAmmoReadout();
+  updateAmmoDial();
 }
 
 function startUse() {
@@ -10030,6 +10083,9 @@ function respawnPlayer() {
   player.dropping = true;
   player.onGround = false;
   player.respawnAt = 0;
+  player.heat = 0;
+  player.overheated = false;
+  player.ventEnd = 0;
   player.using = null;
   player.reloading = false;
   player.lastHitBy = '';
@@ -10970,7 +11026,7 @@ function spawnBot(i) {
     alive: true, dropping: true,
     team: 1, mate: false, knocked: false, bleed: 0, reviveT: 0, rebootT: 0,
     gunLevel,
-    weapon: w, mag: WEAPONS[w.type].mag,
+    weapon: w, mag: WEAPONS[w.type].mag, heat: 0, heatLock: 0,
     nextFire: 0, reloadEnd: 0,
     target: null, think: Math.random() * 0.5,
     goal: null, goalTime: 0,
@@ -11056,15 +11112,12 @@ function acquireTarget(b) {
 function botFire(b, target) {
   if (state.time < b.nextFire || state.time < b.reloadEnd) return;
   const def = WEAPONS[b.weapon.type];
-  if (b.mag <= 0) {
-    b.reloadEnd = state.time + def.reload;
-    b.mag = def.mag;
-    return;
-  }
+  if (state.time < (b.heatLock || 0)) return;
   const d = b.pos.distanceTo(target.pos);
   if (d > def.range) return;
 
-  b.mag--;
+  b.heat = (b.heat || 0) + heatPerShot(def) * (def.burst || 1);
+  if (b.heat >= 1) { b.heat = 0.5; b.heatLock = state.time + 1.8; }
   b.nextFire = state.time + (60 / def.rpm) * (1 + rand(0, 0.35));
   if (def.auto && Math.random() < 0.05) b.nextFire = state.time + 0.45 + Math.random() * 0.8;
 
@@ -11107,10 +11160,10 @@ function botFire(b, target) {
     const flight = travelDistanceFor(eye, dir, def.range, b, b.team, hit.dist);
     const end = eye.clone().addScaledVector(dir, flight);
     spawnTravelBullet(
-      eye, end, bSpeed, land, 0xffd0a0,
+      eye, end, bSpeed, land, laserTint(b.weapon.type),
       () => hitTest(eye, dir, def.range, b, b.team)
     );
-  } else { tracerFX(eye, hit.point, 0xffd0a0); land(); }
+  } else { tracerFX(eye, hit.point, laserTint(b.weapon.type)); land(); }
   sfxPanned(def.sfx, b.pos);
 }
 
@@ -11148,6 +11201,7 @@ function botBuild(b) {
 
 function updateBot(b, dt) {
   if (!b.alive || b.out) return;
+  b.heat = Math.max(0, (b.heat || 0) - dt * 0.4);
   if (b.knocked) { updateBotCrawl(b, dt); return; }
 
   if (b.dropping) {
@@ -11871,6 +11925,41 @@ function playSound(kind, vol) {
     case 'hunting': shot({ crack: 4300, crackDur: 0.05, crackGain: 0.5, body: 800, bodyDur: 0.2, bodyGain: 0.5, low: 220, lowDur: 0.3, lowGain: 0.5, thump: 80, thumpDur: 0.2, thumpGain: 0.34, tail: 700, tailDur: 0.45, rev: 0.5 }); break;
     case 'lever': shot({ crack: 3700, crackDur: 0.06, crackGain: 0.5, body: 840, bodyDur: 0.22, bodyGain: 0.5, low: 235, lowDur: 0.3, lowGain: 0.5, thump: 88, thumpDur: 0.2, thumpGain: 0.32, click: true, clickAt: 0.12, clickGain: 0.2, tail: 660, tailDur: 0.4 }); break;
     case 'sniper': shot({ crack: 5200, crackDur: 0.07, crackGain: 0.66, body: 700, bodyDur: 0.32, bodyGain: 0.55, low: 165, lowDur: 0.55, lowGain: 0.58, thump: 60, thumpDur: 0.4, thumpGain: 0.42, tail: 600, tailDur: 0.75, rev: 0.7 }); break;
+    case 'laserPistol':
+      thump({ type: 'sawtooth', f1: 1800, f2: 420, dur: 0.08, gain: 0.22 });
+      thump({ type: 'sine', f1: 900, f2: 260, dur: 0.1, gain: 0.12 });
+      break;
+    case 'laserSmg':
+      thump({ type: 'square', f1: 2200, f2: 700, dur: 0.05, gain: 0.16 });
+      break;
+    case 'laserRifle':
+      thump({ type: 'sawtooth', f1: 1500, f2: 300, dur: 0.11, gain: 0.2 });
+      noiseLayer({ type: 'highpass', f1: 3400, f2: 1200, dur: 0.05, gain: 0.09 });
+      break;
+    case 'laserLmg':
+      thump({ type: 'square', f1: 900, f2: 240, dur: 0.14, gain: 0.24 });
+      thump({ type: 'sawtooth', f1: 300, f2: 90, dur: 0.16, gain: 0.16 });
+      break;
+    case 'laserScatter':
+      thump({ type: 'sawtooth', f1: 800, f2: 120, dur: 0.2, gain: 0.3 });
+      thump({ type: 'square', f1: 320, f2: 70, dur: 0.24, gain: 0.2 });
+      noiseLayer({ type: 'bandpass', f1: 2200, f2: 700, q: 1.1, dur: 0.18, gain: 0.18, rev: 0.3 });
+      break;
+    case 'laserSnipe':
+      thump({ type: 'sine', f1: 240, f2: 2200, dur: 0.14, gain: 0.18 });
+      thump({ type: 'sawtooth', f1: 2400, f2: 160, dur: 0.34, gain: 0.26, rev: 0.4 });
+      break;
+    case 'laserMarks':
+      thump({ type: 'sine', f1: 520, f2: 1700, dur: 0.12, gain: 0.16 });
+      thump({ type: 'sawtooth', f1: 1700, f2: 220, dur: 0.24, gain: 0.2, rev: 0.3 });
+      break;
+    case 'overheat':
+      thump({ type: 'square', f1: 260, f2: 70, dur: 0.4, gain: 0.16 });
+      noiseLayer({ type: 'bandpass', f1: 1600, f2: 420, q: 1.8, dur: 0.45, gain: 0.26, rev: 0.2 });
+      break;
+    case 'vent':
+      noiseLayer({ type: 'highpass', f1: 1400, f2: 3200, dur: 0.5, gain: 0.22, rev: 0.2 });
+      break;
     case 'hit': noiseLayer({ type: 'lowpass', f1: 1100, f2: 420, dur: 0.06, gain: 0.32 }); thump({ f1: 200, f2: 90, dur: 0.05, gain: 0.22 }); break;
     case 'hurt': noiseLayer({ type: 'bandpass', f1: 520, q: 0.9, dur: 0.2, gain: 0.55 }); thump({ f1: 165, f2: 52, dur: 0.22, gain: 0.4 }); break;
     case 'shieldHit': noiseLayer({ type: 'bandpass', f1: 2700, q: 7, dur: 0.13, gain: 0.35, rev: 0.3 }); noiseLayer({ type: 'highpass', f1: 5200, dur: 0.05, gain: 0.16 }); break;
@@ -11958,33 +12047,51 @@ function victoryFanfare() {
 const fx = [];
 /* Tracers are pooled: building a geometry and a material per shot is what made
    automatic weapons hitch. */
+/* Laser beams are pooled: each shot grabs a free additive cylinder pair and
+   stretches it between the muzzle and the impact point. */
 const tracerPool = [];
 function tracerFX(from, to, color) {
-  let line = null;
+  const tint = color || 0x9dffd8;
+  let seg = null;
   for (let i = 0; i < tracerPool.length; i++) {
-    if (!tracerPool[i].active) { line = tracerPool[i]; break; }
+    if (!tracerPool[i].active) { seg = tracerPool[i]; break; }
   }
-  if (!line) {
-    if (tracerPool.length >= 36) return;
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
-    const m = new THREE.LineBasicMaterial({ color: color || 0xfff2a8, transparent: true, opacity: 0.85, depthWrite: false });
-    line = new THREE.Line(geo, m);
-    line.frustumCulled = false;
-    line.active = false;
-    line.life = 0;
-    fxGroup.add(line);
-    tracerPool.push(line);
+  if (!seg) {
+    if (tracerPool.length >= 40) return;
+    const group = new THREE.Group();
+    const core = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.022, 1, 5),
+      new THREE.MeshBasicMaterial({ color: tint, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    const glow = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.075, 0.075, 1, 6),
+      new THREE.MeshBasicMaterial({ color: tint, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    group.add(core, glow);
+    group.frustumCulled = false;
+    group.visible = false;
+    group.active = false;
+    group.life = 0;
+    group.core = core;
+    group.glow = glow;
+    fxGroup.add(group);
+    tracerPool.push(group);
+    seg = group;
   }
-  const arr = line.geometry.attributes.position.array;
-  arr[0] = from.x; arr[1] = from.y; arr[2] = from.z;
-  arr[3] = to.x; arr[4] = to.y; arr[5] = to.z;
-  line.geometry.attributes.position.needsUpdate = true;
-  line.material.color.set(color || 0xfff2a8);
-  line.material.opacity = 0.85;
-  line.visible = true;
-  line.active = true;
-  line.life = 0.06;
+  const dir = to.clone().sub(from);
+  const len = dir.length();
+  if (len < 0.001) return;
+  dir.normalize();
+  seg.position.copy(from).addScaledVector(dir, len * 0.5);
+  seg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  seg.scale.set(1, len, 1);
+  seg.core.material.color.set(tint);
+  seg.glow.material.color.set(tint);
+  seg.core.material.opacity = 0.95;
+  seg.glow.material.opacity = 0.32;
+  seg.visible = true;
+  seg.active = true;
+  seg.life = 0.085;
 }
 
 /* Long guns fire a round that travels. The round is laid along the ray you
@@ -11999,20 +12106,24 @@ function spawnTravelBullet(from, to, speed, onLand, color, resolve) {
     if (onLand) onLand(resolve ? resolve() : null);
   };
   if (bullets.length > 24 || dist < 1) { settle(); return; }
-  const mesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.09, 5, 4),
-    new THREE.MeshBasicMaterial({ color: color || 0xd8ffe0, transparent: true, opacity: 0.95, depthWrite: false })
+  const dir = to.clone().sub(from);
+  if (dir.lengthSq() < 1e-6) { settle(); return; }
+  dir.normalize();
+  const bolt = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 3.2, 6),
+    new THREE.MeshBasicMaterial({ color: color || 0x9dffd8, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
   );
-  mesh.position.copy(from);
-  fxGroup.add(mesh);
-  bullets.push({ mesh, from: from.clone(), to: to.clone(), t: 0, travel: Math.max(0.02, dist / Math.max(1, speed)), onLand: settle });
+  bolt.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  bolt.position.copy(from);
+  fxGroup.add(bolt);
+  bullets.push({ mesh: bolt, dir, half: 1.6, from: from.clone(), to: to.clone(), t: 0, travel: Math.max(0.02, dist / Math.max(1, speed)), onLand: settle });
 }
 
 function impactFX(p) {
   if (fx.length > 90) return;
   const m = new THREE.Mesh(
     new THREE.SphereGeometry(0.16, 6, 4),
-    new THREE.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.9, depthWrite: false })
+    new THREE.MeshBasicMaterial({ color: 0xbfffe0, transparent: true, opacity: 0.9, depthWrite: false })
   );
   m.position.copy(p);
   fxGroup.add(m);
@@ -12028,14 +12139,16 @@ function updateFX(dt) {
       t.active = false;
       t.visible = false;
     } else {
-      t.material.opacity = clamp(t.life / 0.06, 0, 1) * 0.85;
+      const k = clamp(t.life / 0.085, 0, 1);
+      if (t.core) t.core.material.opacity = k * 0.95;
+      if (t.glow) t.glow.material.opacity = k * 0.32;
     }
   }
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     b.t += dt;
     const k = clamp(b.t / b.travel, 0, 1);
-    b.mesh.position.lerpVectors(b.from, b.to, k);
+    b.mesh.position.lerpVectors(b.from, b.to, k).addScaledVector(b.dir, -b.half);
     if (k >= 1) {
       if (b.mesh.parent) b.mesh.parent.remove(b.mesh);
       if (b.mesh.geometry) b.mesh.geometry.dispose();
@@ -12403,6 +12516,13 @@ function updatePlayer(dt) {
   }
 
   player.pocketCd = Math.max(0, (player.pocketCd || 0) - dt);
+
+  // Emitter heat: vents fast while R is held, steadily when you stop firing,
+  // and barely at all while you keep the trigger down.
+  const venting = !!(player.ventEnd && state.time < player.ventEnd);
+  const heatIdle = state.time - (player.lastShotAt || -99) > 0.35;
+  player.heat = clamp((player.heat || 0) - (venting ? 0.95 : heatIdle ? 0.42 : 0.05) * dt, 0, 1);
+  if (player.overheated && player.heat <= 0.25) player.overheated = false;
 
   if (player.reloading && state.time >= player.reloadEnd) finishReload();
   if (player.using && state.time >= player.useEnd) finishUse();
@@ -12858,7 +12978,7 @@ function refreshHotbar() {
       ic.innerHTML = itemIconHTML(it);
       ic.style.color = itemColor(it);
       rar.style.background = itemColor(it);
-      if (it.kind === 'weapon') cnt.textContent = it.mag;
+      if (it.kind === 'weapon') cnt.textContent = '∞';
       else if (it.count !== undefined) cnt.textContent = 'x' + it.count;
       else cnt.textContent = '';
     }
@@ -12879,8 +12999,8 @@ function refreshHotbar() {
   const it = currentItem();
   if (it && it.kind === 'weapon') {
     const w = WEAPONS[it.type];
-    ammoMagEl.textContent = player.reloading ? '—' : it.mag;
-    ammoResEl.textContent = ' | ' + player.ammo[w.ammo];
+    ammoMagEl.textContent = player.reloading ? '—' : '∞';
+    ammoResEl.textContent = player.overheated ? ' | OVERHEATED' : ' | HEAT ' + Math.round(clamp(player.heat || 0, 0, 1) * 100) + '%';
     weaponNameEl.textContent = RARITY[it.rarity].name + ' ' + w.name;
     weaponNameEl.style.color = RARITY[it.rarity].color;
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
@@ -12902,9 +13022,8 @@ function refreshHotbar() {
 function updateAmmoReadout() {
   const it = currentItem();
   if (it && it.kind === 'weapon') {
-    const w = WEAPONS[it.type];
-    if (ammoMagEl) ammoMagEl.textContent = player.reloading ? '—' : it.mag;
-    if (ammoResEl) ammoResEl.textContent = ' | ' + player.ammo[w.ammo];
+    if (ammoMagEl) ammoMagEl.textContent = player.reloading ? '—' : '∞';
+    if (ammoResEl) ammoResEl.textContent = player.overheated ? ' | OVERHEATED' : ' | HEAT ' + Math.round(clamp(player.heat || 0, 0, 1) * 100) + '%';
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
     if (ammoMagEl) ammoMagEl.textContent = 'x' + it.count;
     if (ammoResEl) ammoResEl.textContent = '';
@@ -12915,21 +13034,20 @@ function updateAmmoReadout() {
   const el = elHotbar ? elHotbar.children[player.slot] : null;
   if (el) {
     const cnt = el.querySelector('.cnt');
-    if (cnt) cnt.textContent = (it && it.kind === 'weapon') ? it.mag : '';
+    if (cnt) cnt.textContent = (it && it.kind === 'weapon') ? '∞' : '';
   }
 }
 
-/* Quarter-circle magazine dial around the crosshair: white while you have
-   rounds, gold when low, red when nearly dry, dimmed while reloading. */
+/* Coolant dial around the crosshair: full when the emitter is cold, gold as it
+   heats, coral when it is close to a lockout, dimmed while venting. */
 function updateAmmoDial() {
   if (!ammoGaugeEl || !ammoArcFillEl) return;
   const it = currentItem();
   let show = false;
   let pct = 0;
   if (it && it.kind === 'weapon') {
-    const w = WEAPONS[it.type];
     show = true;
-    pct = clamp((it.mag || 0) / Math.max(1, w.mag), 0, 1);
+    pct = clamp(1 - (player.heat || 0), 0, 1);
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
     show = true;
     pct = clamp((it.count || 0) / 5, 0, 1);
@@ -13976,6 +14094,9 @@ function startMatch() {
 
   const botCount = plannedBotCount();
 
+  bullets.length = 0;
+  tracerPool.length = 0;
+  fx.length = 0;
   clearWorld();
   populateWorld();
   scatterLoot(Math.random);
@@ -14334,8 +14455,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 6, patch: 4 };
-const VERSION_PREV = '7.6.3';
+const VERSION = { major: 7, minor: 7, patch: 0 };
+const VERSION_PREV = '7.6.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
