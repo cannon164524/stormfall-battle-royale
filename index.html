@@ -6037,9 +6037,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>TRAVELLING ROUNDS CAN MISS NOW</b> — before, a scoped shot worked out who it hit the moment you pulled the trigger, flew out to them, and the damage landed a beat later. That is not travel, that is a delay. Every travelling round now carries its line through the air and only checks what is on that line <i>when it arrives</i>. If the target strafed out of it while the round was flying, it sails past and hits nothing.</div></li>
-      <li><span class="wnTag">02</span><div><b>LEAD THE SHOT</b> — the flight time is real, so the lead is real. Snipers are the slowest (Reaper 430 m/s, Rail Lance 460), marksman and scoped rifles are much faster (Gauss 660, Specter 680, Helix Beam 700), and everything unscoped is still instant. At two hundred metres that is nearly half a second of movement to lead, and the shots that win are the ones aimed where they are going.</div></li>
-      <li><span class="wnTag">03</span><div><b>BOTS LEAD TOO</b> — bots now aim ahead of where you are moving, by an amount that scales with their skill, and their travelling shots resolve the same way yours do. Strafe out of their line and their round misses; hold a straight line and it will not. The same rule is live in every mode, and Aim Mechanic Testing runs the whole arsenal on it.</div></li>
+      <li><span class="wnTag">01</span><div><b>LONG GUNS ACTUALLY SHOW UP</b> — the Helix Beam, Rail Lance and Reaper Sniper were the rarest things in the table. All three are now two and a half times as likely to drop, which puts them level with the Pulse Carbine as the most common weapons on the island, in chests and on the floor alike.</div></li>
+      <li><span class="wnTag">02</span><div><b>BOTS CARRY THEM TOO</b> — bot loadouts are weighted the same way, so the scoped rifle and both snipers turn up in enemy hands far more often. Expect to be traded at range in the first few fights instead of only at the end.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7692,7 +7691,9 @@ const SPECIAL_BASE = {
 
 /* Weighted loot pool — Season 6 replaced the island's guns wholesale. Nothing
    here is a hitscan spray gun: the close range is dispersers and repeaters,
-   the mid range is pulse and coil, and the long range is scoped and travelling. */
+   the mid range is pulse and coil, and the long range is scoped and travelling.
+   The Helix Beam and both snipers are the headline hardware this season, so
+   they carry the heaviest weight in the table. */
 const LOOT_WEAPON_POOL = [
   // sidearms and close range
   'pulsepistol', 'pulsepistol',
@@ -7705,12 +7706,12 @@ const LOOT_WEAPON_POOL = [
   'pulse', 'pulse', 'pulse',
   'nova', 'nova',
   'cycler',
-  // scoped rifles and long range
-  'beam', 'beam',
+  // scoped rifles and long range — the common long guns now
+  'beam', 'beam', 'beam', 'beam', 'beam',
   'gauss', 'gauss',
   'specter', 'specter',
-  'rail', 'rail',
-  'reaper', 'reaper',
+  'rail', 'rail', 'rail', 'rail', 'rail',
+  'reaper', 'reaper', 'reaper', 'reaper', 'reaper',
 ];
 
 const GUN_ICONS = {
@@ -10848,7 +10849,8 @@ function botWeaponType(level) {
   if (mod('snipers')) return pick(['gauss', 'specter', 'rail', 'rail', 'reaper']);
   if (mod('shotguns')) return pick(['scatter', 'prism']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler', 'beam', 'gauss', 'specter', 'rail', 'reaper']);
+  return pick(['pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler',
+    'beam', 'beam', 'gauss', 'specter', 'rail', 'rail', 'reaper', 'reaper']);
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -14236,8 +14238,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 6, patch: 1 };
-const VERSION_PREV = '7.6.0';
+const VERSION = { major: 7, minor: 6, patch: 2 };
+const VERSION_PREV = '7.6.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
