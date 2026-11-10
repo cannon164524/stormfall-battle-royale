@@ -6528,7 +6528,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MESSAGE OF THE DAY</b> — the lobby now fetches <b>announcement.json</b> when the game opens and shows it as a card in the top-left corner. Edit that file and tap Run, or paste a raw JSON URL into <b>MOTD_URL</b>, and every player sees the new message the next time they open the game. Each message is dismissed once per player by its id, and a new id shows a new card.</div></li>
+      <li><span class="wnTag">01</span><div><b>MESSAGE OF THE DAY</b> — the game is still one HTML file: the lobby shows a message that ships inside index.html. Edit the <b>MOTD_DEFAULT</b> block near the bottom of the file and tap Run to change it for everyone. Each message is dismissed once per player by its id. Optionally paste a public JSON URL into <b>MOTD_URL</b> to update it without a new build.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15310,8 +15310,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 9 };
-const VERSION_PREV = '7.8.8';
+const VERSION = { major: 7, minor: 8, patch: 10 };
+const VERSION_PREV = '7.8.9';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18404,12 +18404,19 @@ function boot() {
   setTimeout(finishBoot, 12000);
 }
 /* ---------------- message of the day ----------------
-   Fetched when the game opens so a note can be changed without shipping a new
-   build. Leave MOTD_URL blank to read ./announcement.json from the site, or
-   paste a public raw JSON URL (a Gist, for example) to edit it remotely.
+   The game stays one HTML file: the message below is what ships. Edit it and
+   tap Run to change it. If you paste a public raw JSON URL into MOTD_URL, the
+   game tries that instead, falling back to this message (or the last one it
+   fetched) when the request fails.
    Schema: { id, tag, title, body, link, linkText, minVersion, maxVersion }. */
-const MOTD_URL = ''; // e.g. 'https://gist.githubusercontent.com/<user>/<id>/raw/announcement.json'
-const MOTD_LOCAL = './announcement.json';
+const MOTD_URL = ''; // optional: 'https://.../announcement.json'
+const MOTD_DEFAULT = {
+  id: 's6-charged-basin',
+  tag: 'MESSAGE OF THE DAY',
+  title: 'THE CHARGED BASIN',
+  body: 'Season 6 has resurfaced the island. Every gun is an emitter now: watch the heat, lead your long shots, and vent with R before the cells refuse another shot.',
+  link: ''
+};
 const MOTD_CACHE_KEY = 'stormfall.motd.last';
 const MOTD_DISMISS_KEY = 'stormfall.motd.dismissed';
 
@@ -18461,14 +18468,18 @@ function motdShow(data) {
 }
 
 async function loadMotd() {
-  let data = null;
+  if (!MOTD_URL) {
+    motdShow(MOTD_DEFAULT);
+    return;
+  }
+  let data = MOTD_DEFAULT;
   try {
     const raw = localStorage.getItem(MOTD_CACHE_KEY);
     if (raw) data = JSON.parse(raw);
-  } catch (e) { data = null; }
+  } catch (e) { /* ignore */ }
 
-  const base = MOTD_URL || MOTD_LOCAL;
   try {
+    const base = MOTD_URL;
     const res = await fetch(base + (base.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
     if (res.ok) {
       const parsed = JSON.parse(await res.text());
