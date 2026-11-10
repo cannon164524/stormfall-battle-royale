@@ -5572,6 +5572,22 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .mapName { font-size:9px; }
   #ammoGauge { width:6px; }
 }
+
+/* ---- the current season sits directly under the wordmark ---- */
+.brand {
+  display:flex; flex-direction:column; align-items:flex-start;
+  gap:2px; padding:0; text-align:left;
+}
+.brand .tagline {
+  display:block; margin:0;
+  font-family:var(--label); font-size:7px; font-weight:800;
+  letter-spacing:.26em; line-height:1; color:var(--ink-dim);
+}
+.brand .tagline b { color:var(--lime); font-weight:800; }
+@media (max-width: 760px) {
+  .brand { gap:1px; }
+  .brand .tagline { font-size:6px; letter-spacing:.2em; }
+}
 </style>
 </head>
 <body>
@@ -5764,7 +5780,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div class="menuTop">
     <div class="brand">
       <div class="logo">STORMFALL</div>
-      <div class="tagline">BATTLE ROYALE · SEASON 6</div>
+      <div class="tagline">SEASON <b>6</b></div>
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="play">PLAY</button>
@@ -6452,8 +6468,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOTS FIGHT EACH OTHER</b> — bots now pick a rival bot over you unless you are clearly closer, turn on whoever shoots them for six seconds, and only three to six of them can have you as their target at once. The whole lobby no longer converges on one player.</div></li>
-      <li><span class="wnTag">02</span><div><b>CHESTS, SPELLED OUT</b> — every chest is the same deal: one weapon, then either a heal or a boon (50/50, never both), a grappler one time in four, and fifty gold. The items are laid out in a ring around the chest so you can see the whole drop at a glance.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON ON THE WORDMARK</b> — the lobby header now shows the current season directly under STORMFALL, so you can see which season you are dropping into before you queue.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15195,8 +15210,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 6 };
-const VERSION_PREV = '7.8.5';
+const VERSION = { major: 7, minor: 8, patch: 7 };
+const VERSION_PREV = '7.8.6';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
