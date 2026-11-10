@@ -6143,9 +6143,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>EVERY MACHINE HAS A SHELF</b> — each of the twelve vending machines now stocks three different Season 6 guns instead of one, each rolled at Epic, Legendary or Ascendant and priced at 250 gold. Buy one and that slot reads SOLD while the rest stay live; the kiosk's display swaps to the next gun still on the shelf.</div></li>
-      <li><span class="wnTag">02</span><div><b>A PANEL, NOT A SCREEN</b> — pressing E at a machine opens a compact card pinned to the right of the screen, not a full-screen menu: three rows, each with the weapon icon, rarity, name and price, plus your gold total in the header. Click a row or press 1–3 to buy; E or Esc closes it and hands the mouse back to the game.</div></li>
-      <li><span class="wnTag">03</span><div><b>GOLD STILL BUYS THEM</b> — 50 gold per chest and 50 per elimination, auto-collected as before, 250 a gun, reset each match. Five chests is still one gun, but now there are three to pick from at every machine, so the stop is worth planning around.</div></li>
+      <li><span class="wnTag">01</span><div><b>HEAT TAKES ITS TIME</b> — the emitter no longer starts cooling the instant you stop shooting. It waits at least 1.15 s after your last shot, longer on slow guns (a Reaper waits 1.7 s), and then bleeds at 0.30 per second instead of 0.42. Holding the trigger still almost stops the sink.</div></li>
+      <li><span class="wnTag">02</span><div><b>SNIPERS AND SHOTGUNS CAN'T BE SPAMMED</b> — slow weapons now build heat per trigger pull rather than per second, so their downtime between shots is not enough to cool them. A Reaper overheats in about three shots, the Rail Lance in four or five, and a scattergun in five pulls. You can no longer fire a sniper forever.</div></li>
+      <li><span class="wnTag">03</span><div><b>AMMO IS OUT OF THE LOOT</b> — with every gun running on cells, ammo drops did nothing, so they are gone: no ammo on the floor, none in chests, none on bodies. Their share of the loot table went to heals and small gold piles instead. Ammo comes back in a later season.</div></li>
 
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -7366,6 +7366,7 @@ function refreshVendingDisplay(vm) {
 
 function buildVendingMachines(rng) {
   vendingMachines.length = 0;
+  if (isGunGame()) return;
   let tries = 0;
   while (vendingMachines.length < 12 && tries < 500) {
     tries++;
@@ -9355,11 +9356,12 @@ function rollLootItem(rng, bonus) {
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
   }
-  if (r < 0.70) return makeAmmo(pick(['light', 'medium', 'medium', 'medium', 'shells', 'heavy']), randInt(30, 72));
-  if (r < 0.82) return makeGrenade(pick(['shockwave', 'shockwave', 'impulse', 'frag']), 1);
-  if (r < 0.90) return makeHeal(pick(['bandage', 'mini', 'shield']), 1);
-  if (r < 0.96) return makeHeal(pick(['mini', 'bandage']), 2);
-  return makeHeal(pick(['slurp', 'chug']), 1);
+  // ammo is out of the loot table this season — guns feed themselves
+  if (r < 0.60) return makeHeal(pick(['bandage', 'mini', 'shield']), 1);
+  if (r < 0.72) return makeGrenade(pick(['shockwave', 'shockwave', 'impulse', 'frag']), 1);
+  if (r < 0.84) return makeHeal(pick(['mini', 'shield']), 2);
+  if (r < 0.94) return makeHeal(pick(['slurp', 'chug']), 1);
+  return makeGold(25);
 }
 
 function scatterLoot(rng) {
@@ -9514,7 +9516,7 @@ function openChest(c) {
       showRareFind(it, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
     }
   }
-  spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
+  spawnLoot(c.x + rand(-1, 1), c.y + 0.6, c.z + rand(-1, 1), makeHeal(pick(['bandage', 'mini', 'shield']), 1));
   spawnLoot(c.x + rand(-1.2, 1.2), c.y + 0.6, c.z + rand(-1.2, 1.2), makeGold(50));
   if (Math.random() < 0.12) {
     const id = Math.random() < 0.5 ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
@@ -9744,10 +9746,18 @@ function weaponSpecial(w, hit, dir, dmg) {
 const SHOTGUN_FAMILY = ['shotgun', 'tacshot', 'combat', 'doublebarrel', 'scatter', 'prism'];
 
 /* Season 6 runs on cells, not cartridges. Every shot pushes the emitter closer
-   to a lockout; the only cost of firing is the vent that follows. Five seconds
-   of held trigger reaches the limit on any weapon. */
+   to a lockout, and the sink only starts after you actually stop firing: a
+   sniper's heat has to survive the two seconds between its shots, and a
+   scattergun heats hard enough per pull that it cannot be spammed forever. */
 function heatPerShot(w) {
-  return 12 / Math.max(40, w.rpm || 100);
+  const perShot = 12 / Math.max(20, w.rpm || 100);
+  return Math.max(perShot, (w.pellets || 1) > 1 ? 0.20 : 0);
+}
+
+/* Seconds after a shot before the emitter begins to cool at all. Tied to the
+   weapon's cadence so slow, heavy guns do not cool down between their shots. */
+function heatDelayFor(w) {
+  return Math.max(1.15, 51 / Math.max(20, w.rpm || 100));
 }
 
 /* One beam colour per role, so a shotgun reads pink and a sniper green. */
@@ -10877,7 +10887,7 @@ function damageBot(b, amount, attackerName, head, point) {
 }
 
 function dropBotLoot(b) {
-  const items = [b.weapon, makeAmmo(WEAPONS[b.weapon.type].ammo, randInt(40, 80)), makeGold(50)];
+  const items = [b.weapon, makeGold(50)];
   if (Math.random() < 0.6) items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   for (const it of items) {
     spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
@@ -11387,6 +11397,7 @@ function botFire(b, target) {
   const d = b.pos.distanceTo(target.pos);
   if (d > def.range) return;
 
+  b.lastShotAt = state.time;
   b.heat = (b.heat || 0) + heatPerShot(def) * (def.burst || 1);
   if (b.heat >= 1) { b.heat = 0.5; b.heatLock = state.time + 1.8; }
   b.nextFire = state.time + (60 / def.rpm) * (1 + rand(0, 0.35));
@@ -11472,7 +11483,10 @@ function botBuild(b) {
 
 function updateBot(b, dt) {
   if (!b.alive || b.out) return;
-  b.heat = Math.max(0, (b.heat || 0) - dt * 0.4);
+  const bDef = WEAPONS[b.weapon ? b.weapon.type : ''] || { rpm: 100 };
+  if (state.time - (b.lastShotAt || -99) > heatDelayFor(bDef)) {
+    b.heat = Math.max(0, (b.heat || 0) - dt * 0.30);
+  }
   if (b.knocked) { updateBotCrawl(b, dt); return; }
 
   if (b.dropping) {
@@ -12788,11 +12802,14 @@ function updatePlayer(dt) {
 
   player.pocketCd = Math.max(0, (player.pocketCd || 0) - dt);
 
-  // Emitter heat: vents fast while R is held, steadily when you stop firing,
-  // and barely at all while you keep the trigger down.
+  // Emitter heat: vents fast while R is held, slowly and only after a weapon-
+  // specific idle delay, and barely at all while you keep the trigger down.
   const venting = !!(player.ventEnd && state.time < player.ventEnd);
-  const heatIdle = state.time - (player.lastShotAt || -99) > 0.35;
-  player.heat = clamp((player.heat || 0) - (venting ? 0.95 : heatIdle ? 0.42 : 0.05) * dt, 0, 1);
+  const heldIt = currentItem();
+  const heldW = (heldIt && heldIt.kind === 'weapon') ? WEAPONS[heldIt.type] : null;
+  const idleDelay = heldW ? heatDelayFor(heldW) : 1.15;
+  const heatIdle = state.time - (player.lastShotAt || -99) > idleDelay;
+  player.heat = clamp((player.heat || 0) - (venting ? 0.95 : heatIdle ? 0.30 : 0.04) * dt, 0, 1);
   if (player.overheated && player.heat <= 0.25) player.overheated = false;
 
   if (player.reloading && state.time >= player.reloadEnd) finishReload();
@@ -14788,8 +14805,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 1 };
-const VERSION_PREV = '7.8.0';
+const VERSION = { major: 7, minor: 8, patch: 2 };
+const VERSION_PREV = '7.8.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
