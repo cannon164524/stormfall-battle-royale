@@ -5263,6 +5263,315 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   #vend { align-items:flex-end; justify-content:center; }
   .vendCard { width:100%; margin:0; max-height:56vh; }
 }
+
+/* ==========================================================================
+   SEASON 6 — IN-GAME HUD
+
+   The island is a charged-mineral basin, so the overlay reads like a survey
+   instrument: hairline frames, chamfered plates, tick rails, tabular numerals,
+   teal for shields and instruments, lime for the player, coral for danger.
+   Flat only — no gradients, glows, radii or blur. The lobby is untouched.
+   ========================================================================== */
+#hud {
+  --hudPanel:rgba(7,15,16,.78);
+  --hudLine:rgba(194,255,61,.20);
+  --hudLine2:rgba(231,245,236,.13);
+  --hudDim:rgba(231,245,236,.45);
+  --hudLime:#c2ff3d;
+  --hudTeal:#3fe0c5;
+  --hudCoral:#ff6a4d;
+  font-variant-numeric:tabular-nums;
+}
+
+/* the left edge carries a scale of ticks, like a survey rail */
+#hud::before {
+  content:''; position:absolute; left:6px; top:34%; width:6px; height:32vh;
+  background:repeating-linear-gradient(180deg, rgba(194,255,61,.34) 0 1px, transparent 1px 9px);
+  opacity:.5; pointer-events:none;
+}
+
+/* --- top left: sector, leave, objective --- */
+#modeBadge {
+  display:flex; align-items:center; gap:7px;
+  padding:5px 11px 5px 12px;
+  border:1px solid var(--hudLine2); border-left:0;
+  background:var(--hudPanel); border-radius:0;
+  color:var(--hudLime);
+  font-family:var(--label); font-size:8px; font-weight:800;
+  letter-spacing:.28em; line-height:1;
+  clip-path:polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+}
+#modeBadge::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:3px; height:auto; border-radius:0; box-shadow:none;
+  background:var(--hudLime);
+}
+#modeBadge::after {
+  content:'S6'; margin-left:2px; padding-left:9px;
+  border-left:1px solid var(--hudLine);
+  color:var(--hudDim); letter-spacing:.16em;
+}
+#quitBtn {
+  top:40px;
+  padding:4px 10px; border-radius:0;
+  border:1px solid var(--hudLine2); border-left:2px solid rgba(231,245,236,.26);
+  background:transparent; color:var(--hudDim);
+  font-family:var(--label); font-size:7px; font-weight:800; letter-spacing:.24em;
+}
+#quitBtn:hover { color:var(--hudCoral); border-left-color:var(--hudCoral); background:rgba(255,106,77,.06); }
+#questLine { top:66px; gap:8px; }
+#questLine .qGlyph {
+  width:14px; height:14px; border-radius:0;
+  border:1px solid var(--hudLime); background:transparent;
+  color:var(--hudLime); font-family:var(--label); font-size:8px; font-weight:800;
+}
+#questLine .qText {
+  font-family:var(--label); font-size:8px; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase; color:rgba(231,245,236,.82);
+}
+#questLine .qText b { color:var(--hudLime); }
+
+/* --- compass --- */
+#compass { background:none; }
+#compass .cWin { border-left:1px solid var(--hudLine2); border-right:1px solid var(--hudLine2); }
+#compass .cTick { background:rgba(231,245,236,.24); }
+#compass .cTick.major { background:var(--hudTeal); }
+#compass .cLbl { font-family:var(--label); font-size:7px; font-weight:700; letter-spacing:.12em; color:var(--hudDim); }
+#compass .cLbl.card { color:var(--hudLime); }
+#compass .cMark { border-bottom-color:var(--hudLime); }
+
+/* --- storm --- */
+#stormInfo {
+  top:34px; width:clamp(150px, 20vw, 210px); padding:7px 16px 8px;
+  background:var(--hudPanel); border-radius:0;
+  border:1px solid var(--hudLine2); border-top:1px solid var(--hudLine);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px));
+}
+#stormLabel {
+  font-family:var(--label); font-size:7px; font-weight:800;
+  letter-spacing:.3em; color:var(--hudDim);
+}
+#stormBar {
+  height:3px; margin:6px 0 5px; overflow:hidden;
+  background:repeating-linear-gradient(90deg, rgba(231,245,236,.16) 0 3px, transparent 3px 6px);
+}
+#stormBarFill { background:var(--hudCoral); }
+#stormTime { font-family:var(--display); font-weight:800; font-size:18px; letter-spacing:.06em; color:var(--ink); }
+#stormTag {
+  border-radius:0; border:1px solid rgba(255,106,77,.42);
+  background:rgba(255,106,77,.10); color:#ffd6cc;
+  font-family:var(--label); font-size:7px; letter-spacing:.22em;
+}
+#stormTag::before { border-radius:0; background:var(--hudCoral); width:4px; height:4px; box-shadow:none; }
+#stormWarn {
+  border-radius:0; border:1px solid rgba(255,106,77,.5);
+  background:rgba(42,15,10,.86);
+  font-family:var(--label); font-size:8px; letter-spacing:.24em;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+}
+
+/* --- minimap: instrument frame with corner brackets and a joined readout --- */
+.mapFrame {
+  padding:0; background:var(--hudPanel); border-radius:0;
+  border:1px solid var(--hudLine2); border-top:1px solid var(--hudLine);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+}
+.mapFrame::before, .mapFrame::after {
+  content:''; position:absolute; width:9px; height:9px; z-index:2;
+  border:1px solid var(--hudTeal); pointer-events:none;
+}
+.mapFrame::before { left:4px; top:4px; border-right:0; border-bottom:0; }
+.mapFrame::after { right:4px; top:4px; border-left:0; border-bottom:0; }
+#minimap { background:#06120f; }
+.mapName { font-family:var(--label); font-weight:800; font-size:7px; letter-spacing:.26em; color:var(--hudLime); }
+.mapCmp { font-family:var(--label); font-weight:800; font-size:7px; letter-spacing:0; color:var(--hudDim); }
+.mapReport { border-radius:0; border:1px solid var(--hudLine2); background:rgba(7,15,16,.8); color:var(--hudDim); }
+#mapMeta { gap:0; border-top:1px solid var(--hudLine2); }
+.metaCell { background:var(--hudPanel); border:0; border-left:1px solid var(--hudLine2); padding:5px 4px; }
+.metaCell:first-child { border-left:0; }
+.metaCell b { font-family:var(--display); font-weight:800; font-size:16px; color:var(--hudLime); }
+.metaCell span { font-family:var(--label); font-size:7px; font-weight:800; letter-spacing:.24em; color:var(--hudDim); }
+
+/* --- eliminations feed --- */
+.feedRow {
+  background:rgba(7,15,16,.72); border-left:2px solid var(--hudTeal); border-radius:0;
+  padding:3px 9px;
+  font-family:var(--label); font-weight:600; font-size:10px; letter-spacing:.03em;
+  color:rgba(231,245,236,.88);
+}
+.feedRow b { color:var(--hudLime); }
+
+/* --- vitals: a status plate with a tick rail and a header --- */
+#vitals {
+  padding:7px 10px 8px; gap:3px;
+  background:var(--hudPanel); border:1px solid var(--hudLine2);
+  border-left:2px solid var(--hudLime);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+}
+#vitals::before {
+  content:''; order:-3; align-self:stretch; height:3px; margin:-1px 0 1px;
+  background:repeating-linear-gradient(90deg, var(--hudLine) 0 2px, transparent 2px 7px);
+}
+#pvName {
+  order:-2; margin:0 0 1px;
+  font-family:var(--label); font-size:7px; font-weight:800;
+  letter-spacing:.26em; color:var(--hudDim);
+}
+#pvName::before {
+  content:''; display:inline-block; width:4px; height:4px; margin-right:5px;
+  background:var(--hudLime); vertical-align:middle;
+}
+.bar { height:7px; border-radius:0; background:rgba(231,245,236,.08); box-shadow:none; }
+.bar::after { background:repeating-linear-gradient(90deg, transparent 0 6px, rgba(4,10,8,.85) 6px 7px); }
+.bar > b { left:6px; font-family:var(--display); font-weight:800; font-size:7px; line-height:7px; color:#04110a; }
+.bar.shield > i { background:var(--hudTeal); }
+.bar.health > i { background:var(--hudLime); }
+.bar.health.low > i { background:var(--hudCoral); }
+#livesRow i { border-radius:0; }
+
+/* --- weapon cluster --- */
+#ammoBox { text-align:right; padding-right:2px; }
+#ammoBox::before {
+  content:'IN HAND'; display:block; margin-bottom:2px;
+  font-family:var(--label); font-weight:800; font-size:6.5px;
+  letter-spacing:.3em; color:var(--hudDim);
+}
+#ammoBox b { font-family:var(--display); font-weight:800; font-size:26px; line-height:1; letter-spacing:.02em; color:var(--hudLime); }
+#ammoBox span { font-family:var(--label); font-weight:700; font-size:8px; letter-spacing:.12em; color:var(--hudDim); margin-left:5px; }
+#ammoBox i { font-family:var(--label); font-style:normal; font-weight:700; font-size:9px; letter-spacing:.16em; color:rgba(231,245,236,.62); margin-top:3px; }
+
+#slotRow { gap:6px; }
+.slot {
+  border:1px solid var(--hudLine2); background:var(--hudPanel); border-radius:0;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+}
+.slot.active { border-color:var(--hudLime); background:rgba(194,255,61,.10); box-shadow:none; }
+.slot.active::after {
+  content:''; position:absolute; left:8px; right:8px; top:0; height:2px;
+  background:var(--hudLime); pointer-events:none;
+}
+.slot .key { color:var(--hudDim); font-family:var(--label); font-weight:800; }
+.slot .cnt { color:rgba(231,245,236,.7); font-family:var(--label); font-weight:800; }
+.slot .rar { left:0; top:0; bottom:0; right:auto; width:2px; height:auto; }
+#pocketSlot {
+  border:1px solid var(--hudLine2); background:var(--hudPanel); border-radius:0;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+}
+#pocketSlot.ready { border-color:rgba(63,224,197,.6); }
+#pocketSlot .pkey { font-family:var(--label); font-weight:800; color:var(--hudTeal); }
+#pocketSlot .plabel { font-family:var(--label); font-weight:800; letter-spacing:.16em; color:var(--hudDim); }
+#matsBig { gap:8px; padding-bottom:0; }
+#matsBig .bigIc { border-radius:0; width:10px; height:10px; background:var(--hudTeal); box-shadow:none; }
+#matsBig .bigIc.gold { background:#ffc844; }
+#matsBig b { font-family:var(--display); font-weight:800; font-size:18px; color:var(--ink); text-shadow:none; }
+#padHints .pgKey { border-radius:0; border:1px solid var(--hudLine2); color:var(--hudDim); font-family:var(--label); font-size:7px; font-weight:800; }
+#padHints .pgDot { border-color:var(--hudDim); }
+
+/* --- heat gauge beside the reticle --- */
+#ammoGauge { width:5px; border:1px solid var(--hudLine2); background:rgba(6,12,13,.55); }
+#ammoGauge .agFill { background:var(--hudLime); }
+#ammoGauge .agFill::after {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(180deg, transparent 0 4px, rgba(6,12,13,.85) 4px 5px);
+}
+#ammoGauge.low .agFill { background:#ffc844; }
+#ammoGauge.crit .agFill { background:var(--hudCoral); }
+#ammoGauge .agCap { left:-3px; right:-3px; top:-5px; height:2px; background:var(--hudLime); }
+
+/* --- prompts, build, misc --- */
+#prompt {
+  border-radius:0; padding:5px 12px;
+  border:1px solid var(--hudLine2); border-left:2px solid var(--hudLime);
+  background:rgba(7,15,16,.9); color:var(--ink);
+  font-family:var(--label); font-weight:700; font-size:10px; letter-spacing:.16em;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+#prompt b { color:var(--hudLime); }
+#useBar { height:3px; border-radius:0; background:rgba(231,245,236,.12); }
+#useBar i { border-radius:0; background:var(--hudLime); }
+.buildPiece {
+  border-radius:0; border:1px solid var(--hudLine2); background:var(--hudPanel);
+  color:var(--hudDim);
+  font-family:var(--label); font-weight:800; font-size:8px; letter-spacing:.18em;
+}
+.buildPiece.sel { border-color:var(--hudLime); background:rgba(194,255,61,.10); color:var(--hudLime); }
+.tpRow, #teamPanel .tpRow {
+  background:rgba(7,15,16,.78); border:1px solid var(--hudLine2);
+  border-left:2px solid rgba(63,224,197,.55); border-radius:0;
+}
+.tpRow.knocked, #teamPanel .tpRow.knocked { border-left-color:var(--hudCoral); }
+.tpBar { background:rgba(231,245,236,.12); border-radius:0; }
+.tpShield > i { background:var(--hudTeal); }
+.tpHealth > i { background:var(--hudLime); }
+
+/* --- knock / elimination card --- */
+#resultCard .rcHead {
+  border-radius:0;
+  border:1px solid rgba(194,255,61,.5); border-left:3px solid var(--hudLime);
+  background:rgba(8,14,15,.94);
+  clip-path:polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+#resultCard.kill .rcHead {
+  border-color:rgba(255,106,77,.5); border-left-color:var(--hudCoral);
+  background:rgba(16,7,8,.94);
+}
+#resultCard .rcName {
+  border-radius:0; border:1px solid var(--hudLine2); border-top:0;
+  background:rgba(7,15,16,.94);
+  font-family:var(--label); font-size:9px; letter-spacing:.2em;
+}
+#hitmarker i { border-radius:0; box-shadow:none; }
+#hitmarker.kill i { background:var(--hudCoral); box-shadow:none; }
+.scopeLabel { font-family:var(--label); font-weight:800; letter-spacing:.24em; }
+
+/* --- spectate, timers, tournament --- */
+#spectate, #mateTimer, #tourneyHud {
+  border-radius:0; border:1px solid var(--hudLine2); background:var(--hudPanel);
+}
+#mateTimer b, #tourneyHud b { color:var(--hudLime); }
+
+/* --- vending panel --- */
+#vend .vendCard {
+  background:#08110f; border:1px solid var(--hudLine2); border-top:1px solid var(--hudLine);
+  box-shadow:none;
+}
+#vend .vendHead { color:var(--hudLime); }
+#vend .vendRow {
+  border-radius:0; border:1px solid rgba(231,245,236,.10); background:rgba(255,255,255,.02);
+}
+#vend .vendRow:hover { border-color:rgba(194,255,61,.45); background:rgba(194,255,61,.06); }
+#vend .vendRarity { font-family:var(--label); letter-spacing:.24em; }
+#vend .vendFoot { letter-spacing:.18em; }
+
+/* --- keep the compact HUD exactly as compact as it was on small screens --- */
+@media (max-width: 1000px), (max-height: 620px) {
+  #stormInfo { top:10px; width:150px; padding:6px 10px 7px; }
+  #stormTime { font-size:17px; }
+  #stormLabel { font-size:8.5px; letter-spacing:.18em; }
+  #vitals { width:148px; }
+  #vitals::before { display:none; }
+  .bar { height:10px; }
+  .bar > b { font-size:8px; line-height:10px; }
+  .metaCell b { font-size:15px; }
+  .mapCmp { font-size:8px; }
+}
+@media (max-width: 640px), (max-height: 520px) {
+  #modeBadge { padding:3px 7px 3px 8px; font-size:8px; }
+  #modeBadge::after { display:none; }
+  #quitBtn { top:32px; padding:3px 8px; }
+  #stormInfo { top:30px; width:132px; padding:4px 6px 5px; }
+  #stormTime { font-size:13px; }
+  #stormLabel { font-size:7px; letter-spacing:.14em; }
+  #vitals { width:128px; padding:6px 8px 6px; }
+  #pvName { font-size:6px; letter-spacing:.2em; }
+  .bar { height:9px; }
+  .bar > b { font-size:8px; line-height:9px; }
+  #ammoBox b { font-size:22px; }
+  #ammoBox span { font-size:12px; }
+  #matsBig b { font-size:19px; }
+  .mapName { font-size:9px; }
+  #ammoGauge { width:6px; }
+}
 </style>
 </head>
 <body>
@@ -6143,8 +6452,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>PIERCING IS NOW RICOCHET</b> — every piercing exotic has been rebuilt as a ricochet exotic. A round that lands on an enemy now bounces outward and hits every other enemy within about four metres for 25% of the weapon's damage, with a short cyan trace from the impact to each one.</div></li>
-      <li><span class="wnTag">02</span><div><b>WALLS STOP IT</b> — the ricochet only reaches enemies in the open from where the round landed. A build, a building, a rock face, terrain or a shield bubble between the impact and a target blocks it completely, so it cannot splash through cover. That means the Ricochet Burst Rifle, Ricochet Lever Rifle and Ricochet Cycler LMG reward hitting someone in the open, not shooting the wall next to a squad.</div></li>
+      <li><span class="wnTag">01</span><div><b>A SURVEY INSTRUMENT</b> — the in-game HUD now belongs to Season 6. Every panel is a flat hairline plate with chamfered corners, tick rails and tabular numerals: teal for shields and instruments, lime for you, coral for danger. No gradients, no glows, no rounded cards. The lobby is untouched.</div></li>
+      <li><span class="wnTag">02</span><div><b>NEW READOUTS</b> — vitals begin with a <b>YOU</b> header and a segmented tick rail; the weapon cluster gains an <b>IN HAND</b> label, a big lime infinity over the heat percentage, and rarity rails up the left edge of every slot; the minimap gets teal corner brackets and a joined alive/elims strip.</div></li>
+      <li><span class="wnTag">03</span><div><b>SAME PLACES</b> — nothing moved. Crosshair, heat gauge, hotbar, vitals and minimap keep their positions and sizes, including the compact values on small screens, so the game reads the same and only its skin changed.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -14839,8 +15149,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 4 };
-const VERSION_PREV = '7.8.3';
+const VERSION = { major: 7, minor: 8, patch: 5 };
+const VERSION_PREV = '7.8.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
