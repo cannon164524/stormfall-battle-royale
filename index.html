@@ -6528,7 +6528,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MESSAGE OF THE DAY</b> — the game is still one HTML file: the lobby shows a message that ships inside index.html. Edit the <b>MOTD_DEFAULT</b> block near the bottom of the file and tap Run to change it for everyone. Each message is dismissed once per player by its id. Optionally paste a public JSON URL into <b>MOTD_URL</b> to update it without a new build.</div></li>
+      <li><span class="wnTag">01</span><div><b>MESSAGE OF THE DAY IS LIVE</b> — the lobby now pulls your Gist at boot, so editing that Gist and pressing Update changes the card for every player without a new build. The message shipped in the file stays as the fallback if the fetch fails, and each message is dismissed once per player by its id.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15310,8 +15310,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 10 };
-const VERSION_PREV = '7.8.9';
+const VERSION = { major: 7, minor: 8, patch: 11 };
+const VERSION_PREV = '7.8.10';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18404,12 +18404,12 @@ function boot() {
   setTimeout(finishBoot, 12000);
 }
 /* ---------------- message of the day ----------------
-   The game stays one HTML file: the message below is what ships. Edit it and
-   tap Run to change it. If you paste a public raw JSON URL into MOTD_URL, the
-   game tries that instead, falling back to this message (or the last one it
-   fetched) when the request fails.
+   The Gist URL below is shared by every player: editing that Gist and pressing
+   Update changes the card for everyone, no new build needed. If the fetch
+   fails, the game falls back to MOTD_DEFAULT (or the last message it fetched).
+   Keep the URL on the revision-less /raw/ form, or edits will not show.
    Schema: { id, tag, title, body, link, linkText, minVersion, maxVersion }. */
-const MOTD_URL = ''; // optional: 'https://.../announcement.json'
+const MOTD_URL = 'https://gist.githubusercontent.com/cannon164524/53e30ebd0b724394a72dd6729b454936/raw/announcement.json';
 const MOTD_DEFAULT = {
   id: 's6-charged-basin',
   tag: 'MESSAGE OF THE DAY',
