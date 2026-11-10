@@ -5216,6 +5216,53 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   #weaponCluster { right:8px; bottom:22px; }
   #ammoGauge { margin-left:42px; height:60px; margin-top:-30px; width:6px; }
 }
+
+/* ---- vending panel: compact, bottom-right, never full screen ---- */
+#vend {
+  position:fixed; inset:0; z-index:36; display:flex; align-items:center; justify-content:flex-end;
+  background:rgba(3,7,9,.28);
+}
+#vend.hide { display:none; }
+.vendCard {
+  margin-right:max(16px, env(safe-area-inset-right));
+  width:min(360px, 86vw); max-height:min(72vh, 420px);
+  background:#0b1113; border:1px solid rgba(194,255,61,.28);
+  box-shadow:0 18px 40px rgba(0,0,0,.6);
+  padding:12px 12px 10px; display:flex; flex-direction:column; gap:8px;
+  font-family:var(--body);
+}
+.vendHead { display:flex; align-items:center; gap:10px; font-family:var(--display); font-size:12px; letter-spacing:.22em; color:var(--lime); }
+.vendHead b { margin-left:auto; font-family:var(--display); font-size:13px; letter-spacing:.08em; color:#ffc844; }
+#vendClose {
+  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--label); font-size:16px; line-height:1; color:var(--ink);
+  border:1px solid var(--line); background:rgba(255,255,255,.04); cursor:pointer;
+}
+#vendClose:hover { border-color:rgba(194,255,61,.5); color:var(--lime); }
+#vendList { display:flex; flex-direction:column; gap:6px; overflow:auto; }
+.vendRow {
+  display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:10px; align-items:center;
+  padding:8px 10px; text-align:left; cursor:pointer;
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.09);
+  transition:border-color .12s, background .12s;
+}
+.vendRow:hover { border-color:rgba(194,255,61,.5); background:rgba(194,255,61,.07); }
+.vendRow.sold { opacity:.38; cursor:not-allowed; }
+.vendRow .vIc { width:34px; height:34px; color:#cfe8d8; display:block; }
+.vendRow .vIc svg { width:100%; height:100%; }
+.vendName { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.vendRarity { font-family:var(--label); font-size:8px; font-weight:700; letter-spacing:.2em; }
+.vendWeapon {
+  font-family:var(--display); font-size:13px; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.vendPrice { font-family:var(--display); font-size:13px; color:#ffc844; white-space:nowrap; }
+.vendFoot { font-family:var(--label); font-size:8px; letter-spacing:.14em; color:rgba(231,245,236,.42); }
+.vendFoot kbd { margin:0 1px; }
+@media (max-width: 560px) {
+  #vend { align-items:flex-end; justify-content:center; }
+  .vendCard { width:100%; margin:0; max-height:56vh; }
+}
 </style>
 </head>
 <body>
@@ -5389,6 +5436,17 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </div>
 
   <div id="prompt"></div>
+  <div id="vend" class="hide">
+    <div class="vendCard">
+      <div class="vendHead">
+        <span>VENDING</span>
+        <b id="vendGold">0 G</b>
+        <button id="vendClose" type="button">×</button>
+      </div>
+      <div id="vendList"></div>
+      <div class="vendFoot"><kbd>1</kbd>–<kbd>3</kbd> BUY · <kbd>E</kbd> CLOSE</div>
+    </div>
+  </div>
   <div id="useBar"><i></i></div>
 </div>
 
@@ -6085,9 +6143,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>VENDING MACHINES ARE LIVE</b> — twelve of them are scattered across the island, each stocking one weapon at 250 gold. Walk up, and the prompt offers the buy; press E and the gun is yours, that machine then reads SOLD OUT. Every machine is a gold diamond on the minimap so you can plan a route to one.</div></li>
-      <li><span class="wnTag">02</span><div><b>GOLD BARS</b> — a match-only currency you cannot buy with real money. Chests hold 50 and every eliminated bot drops 50 at the body; both auto-collect when you walk within a few metres, same as coolant cells. Your total sits beside the wood counter in the HUD.</div></li>
-      <li><span class="wnTag">03</span><div><b>WHAT'S IN STOCK</b> — every machine sells a different Season 6 gun, rolled at Epic, Legendary or Ascendant, all at a flat 250 gold. That is five chests, or one chest and four eliminations, so a vending machine is a real objective rather than a vending machine in name only. Gold resets with each new match.</div></li>
+      <li><span class="wnTag">01</span><div><b>EVERY MACHINE HAS A SHELF</b> — each of the twelve vending machines now stocks three different Season 6 guns instead of one, each rolled at Epic, Legendary or Ascendant and priced at 250 gold. Buy one and that slot reads SOLD while the rest stay live; the kiosk's display swaps to the next gun still on the shelf.</div></li>
+      <li><span class="wnTag">02</span><div><b>A PANEL, NOT A SCREEN</b> — pressing E at a machine opens a compact card pinned to the right of the screen, not a full-screen menu: three rows, each with the weapon icon, rarity, name and price, plus your gold total in the header. Click a row or press 1–3 to buy; E or Esc closes it and hands the mouse back to the game.</div></li>
+      <li><span class="wnTag">03</span><div><b>GOLD STILL BUYS THEM</b> — 50 gold per chest and 50 per elimination, auto-collected as before, 250 a gun, reset each match. Five chests is still one gun, but now there are three to pick from at every machine, so the stop is worth planning around.</div></li>
 
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
@@ -7242,8 +7300,13 @@ const VEND_TYPES = ['pulse', 'ion', 'cryo', 'tesla', 'nova', 'cycler', 'beam', '
 function makeVendingMachine(x, z, rng) {
   const y = terrainHeight(x, z);
   claimSite(x, z, 2.4);
-  const type = pick(VEND_TYPES);
-  const rarity = pick([3, 3, 4, 4, 5]);
+  // three different guns per machine, each with its own rarity and price slot
+  const pool = VEND_TYPES.slice();
+  const stock = [];
+  for (let i = 0; i < 3; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    stock.push({ type: pool.splice(idx, 1)[0], rarity: pick([3, 3, 4, 4, 5]), bought: false });
+  }
   const rot = Math.floor(rng() * 4) * (Math.PI / 2);
   const g = new THREE.Group();
   g.position.set(x, y, z);
@@ -7261,11 +7324,9 @@ function makeVendingMachine(x, z, rng) {
   screen.position.set(0, 1.62, 0.47);
   g.add(screen);
 
-  const built = buildWeaponModel(type);
-  built.group.scale.setScalar(1.05);
-  built.group.rotation.y = -Math.PI / 2;
-  built.group.position.set(0, 1.55, 0.56);
-  g.add(built.group);
+  const disp = new THREE.Group();
+  disp.position.set(0, 1.55, 0.56);
+  g.add(disp);
 
   const trim = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.12, 1.0), goldMat);
   trim.position.y = 2.32;
@@ -7279,7 +7340,28 @@ function makeVendingMachine(x, z, rng) {
 
   propsGroup.add(g);
   addBox(x, y + 1.15, z, 0.85, 1.15, 0.55, body, { hp: 600, kind: 'wall' });
-  vendingMachines.push({ x, y, z, type, rarity, bought: false, mesh: g, screen });
+  const vm = { x, y, z, stock, bought: false, mesh: g, screen, disp };
+  vendingMachines.push(vm);
+  refreshVendingDisplay(vm);
+}
+
+/* Show the first gun still on the shelf; once they are all gone, dark it out. */
+function refreshVendingDisplay(vm) {
+  if (!vm || !vm.disp) return;
+  while (vm.disp.children.length) {
+    const c = vm.disp.children.pop();
+    disposeTree(c);
+  }
+  const next = vm.stock.find((s) => !s.bought);
+  vm.bought = !next;
+  if (!next) {
+    if (vm.screen) vm.screen.material.color.set(0x0d0f10);
+    return;
+  }
+  const built = buildWeaponModel(next.type);
+  built.group.scale.setScalar(1.05);
+  built.group.rotation.y = -Math.PI / 2;
+  vm.disp.add(built.group);
 }
 
 function buildVendingMachines(rng) {
@@ -7306,23 +7388,76 @@ function nearestVending(pos, range) {
   return best;
 }
 
-function buyVending(vm) {
+let vendOpen = null;
+
+function openVending(vm) {
   if (!vm) return;
-  if (vm.bought) { toast('SOLD OUT', 'sub'); sfx('reload'); return; }
-  const nm = RARITY[vm.rarity].name + ' ' + WEAPONS[vm.type].name;
+  vendOpen = vm;
+  input.fire = false;
+  input.fireJust = false;
+  aimDown = false;
+  if (document.pointerLockElement) document.exitPointerLock();
+  renderVending();
+  const el = document.getElementById('vend');
+  if (el) el.classList.remove('hide');
+}
+
+function hideVending() {
+  vendOpen = null;
+  const el = document.getElementById('vend');
+  if (el) el.classList.add('hide');
+}
+
+function closeVending() {
+  if (!vendOpen) return;
+  hideVending();
+  if (!COARSE && (state.phase === 'play' || state.phase === 'drop')) lockPointer();
+}
+
+function renderVending() {
+  const el = document.getElementById('vend');
+  if (!el) return;
+  const list = document.getElementById('vendList');
+  const goldEl = document.getElementById('vendGold');
+  if (goldEl) goldEl.textContent = (player.gold || 0) + ' G';
+  if (!vendOpen || !list) return;
+  list.innerHTML = '';
+  vendOpen.stock.forEach((slot, i) => {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'vendRow' + (slot.bought ? ' sold' : '');
+    row.dataset.i = String(i);
+    row.disabled = !!slot.bought;
+    const w = WEAPONS[slot.type];
+    row.innerHTML =
+      '<span class="vIc">' + (GUN_ICONS[slot.type] || GUN_ICONS.pulse) + '</span>' +
+      '<span class="vendName">' +
+        '<span class="vendRarity" style="color:' + RARITY[slot.rarity].color + '">' + RARITY[slot.rarity].name.toUpperCase() + '</span>' +
+        '<span class="vendWeapon">' + w.name + '</span>' +
+      '</span>' +
+      '<span class="vendPrice">' + (slot.bought ? 'SOLD' : VEND_PRICE + ' G') + '</span>';
+    list.appendChild(row);
+  });
+}
+
+function buyVending(vm, index) {
+  if (!vm || !vm.stock) return;
+  const slot = vm.stock[index];
+  if (!slot || slot.bought) return;
   if ((player.gold || 0) < VEND_PRICE) {
     toast('NEED ' + VEND_PRICE + ' GOLD', 'sub');
     sfx('reload');
     return;
   }
   player.gold -= VEND_PRICE;
-  vm.bought = true;
-  if (vm.screen) vm.screen.material.color.set(0x12200c);
-  giveItem(makeWeapon(vm.type, vm.rarity));
+  slot.bought = true;
+  giveItem(makeWeapon(slot.type, slot.rarity));
   refreshHotbar();
   updateHudGold();
+  refreshVendingDisplay(vm);
+  renderVending();
   sfx('purchase');
-  toast('BOUGHT ' + nm.toUpperCase(), 'sub');
+  toast('BOUGHT ' + (RARITY[slot.rarity].name + ' ' + WEAPONS[slot.type].name).toUpperCase(), 'sub');
 }
 
 function addChest(x, z, y) {
@@ -13051,6 +13186,10 @@ function updateHudGold() {
   const g = player.gold || 0;
   if (elMatGold) elMatGold.textContent = g;
   if (elMatGoldBig) elMatGoldBig.textContent = g;
+  if (vendOpen) {
+    const vg = document.getElementById('vendGold');
+    if (vg) vg.textContent = g + ' G';
+  }
 }
 const questCountEl = document.getElementById('questCount');
 const questTextEl = document.getElementById('questText');
@@ -13486,11 +13625,10 @@ function updateHUD() {
         const vm = nearestVending(player.pos, 3.4);
         if (vm) {
           interactTarget = { type: 'vending', obj: vm };
-          const nm = (RARITY[vm.rarity].name + ' ' + WEAPONS[vm.type].name).toUpperCase();
-          promptText = vm.bought ? '<b>SOLD OUT</b>'
-            : (player.gold || 0) >= VEND_PRICE
-              ? '<b>E</b> BUY ' + nm + ' · ' + VEND_PRICE + ' G'
-              : 'NEED ' + VEND_PRICE + ' GOLD · ' + nm;
+          const left = vm.stock.filter((s) => !s.bought).length;
+          promptText = left
+            ? '<b>E</b> BROWSE ' + left + ' GUNS · ' + VEND_PRICE + ' G EACH'
+            : 'SOLD OUT';
         } else {
           const l = nearestLoot(3.2);
           if (l) {
@@ -13787,12 +13925,13 @@ function updateMoveFromKeys() {
 
 function interact() {
   if (!player.alive || player.dropping || player.knocked) return;
+  if (vendOpen) { closeVending(); return; }
   if (interactTarget) {
     if (interactTarget.type === 'chest') openChest(interactTarget.obj);
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
     else if (interactTarget.type === 'extract') interactWithSite(interactTarget.obj);
-    else if (interactTarget.type === 'vending') buyVending(interactTarget.obj);
+    else if (interactTarget.type === 'vending') openVending(interactTarget.obj);
     return;
   }
   const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
@@ -13863,6 +14002,22 @@ window.addEventListener('keydown', (e) => {
   if (act === 'jump') e.preventDefault();
 
   if (state.phase === 'menu' || state.phase === 'over') return;
+
+  if (vendOpen) {
+    if (e.code === 'Escape' || act === 'interact') {
+      e.preventDefault();
+      closeVending();
+      return;
+    }
+    const vendDigit = ['Digit1', 'Digit2', 'Digit3'].indexOf(e.code);
+    if (vendDigit >= 0) {
+      e.preventDefault();
+      buyVending(vendOpen, vendDigit);
+      return;
+    }
+    e.preventDefault();
+    return;
+  }
 
   if (act === 'fire') { input.fire = true; input.fireJust = true; }
   if (act === 'aim') aimDown = true;
@@ -14517,6 +14672,7 @@ function endMatch(win, killerName) {
   }
   document.getElementById('respawn').classList.add('hide');
   toggleInventory(false);
+  hideVending();
   document.getElementById('touch').classList.add('hide');
   if (document.pointerLockElement) document.exitPointerLock();
   if (win) {
@@ -14557,6 +14713,7 @@ function backToMenu() {
   const quit = document.getElementById('quitBtn');
   if (quit) quit.classList.add('hide');
   toggleInventory(false);
+  hideVending();
   switchTab('play');
   if (state.tourneyReturn) {
     state.tourneyReturn = false;
@@ -14631,8 +14788,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 0 };
-const VERSION_PREV = '7.7.0';
+const VERSION = { major: 7, minor: 8, patch: 1 };
+const VERSION_PREV = '7.8.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -16266,6 +16423,24 @@ document.getElementById('inv').addEventListener('click', (e) => {
   if (e.target && e.target.id === 'inv') toggleInventory(false);
 });
 
+/* vending panel */
+const vendCloseEl = document.getElementById('vendClose');
+if (vendCloseEl) vendCloseEl.addEventListener('click', closeVending);
+const vendEl = document.getElementById('vend');
+if (vendEl) {
+  vendEl.addEventListener('click', (e) => {
+    if (e.target === vendEl) closeVending();
+  });
+}
+const vendListEl = document.getElementById('vendList');
+if (vendListEl) {
+  vendListEl.addEventListener('click', (e) => {
+    const row = e.target && e.target.closest ? e.target.closest('.vendRow') : null;
+    if (!row || !vendOpen) return;
+    buyVending(vendOpen, parseInt(row.dataset.i, 10));
+  });
+}
+
 /* ---------------- What's new ---------------- */
 function showWhatsNew() {
   const el = document.getElementById('whatsNew');
@@ -16497,7 +16672,7 @@ function autoPickup() {
 }
 
 function handleCombatInput() {
-  if (!player.alive || player.dropping || player.knocked || invOpen) { input.fireJust = false; return; }
+  if (!player.alive || player.dropping || player.knocked || invOpen || vendOpen) { input.fireJust = false; return; }
   if (buildState.active) {
     if (input.fireJust) placeBuild();
   } else if (!player.using) {
