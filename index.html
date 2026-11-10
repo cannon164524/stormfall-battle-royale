@@ -5588,6 +5588,56 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .brand { gap:1px; }
   .brand .tagline { font-size:6px; letter-spacing:.2em; }
 }
+
+/* ---- message of the day — fetched at boot, dismissible, once per id ---- */
+#motd {
+  position:absolute; left:16px; top:14px; z-index:6;
+  width:min(340px, 32vw);
+  padding:10px 12px 11px;
+  background:#0d1416; border:1px solid var(--line); border-left:2px solid var(--lime);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  animation:motdIn .28s ease-out;
+}
+@keyframes motdIn {
+  from { opacity:0; transform:translateY(-6px); }
+  to { opacity:1; transform:none; }
+}
+#motd .motdTop {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  margin-bottom:6px;
+}
+#motd .motdTag {
+  font-family:var(--label); font-size:7px; font-weight:800;
+  letter-spacing:.26em; color:var(--lime);
+}
+#motdClose {
+  width:22px; height:22px; padding:0; flex:0 0 22px;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); background:none; border-radius:0;
+  color:var(--ink-dim); font-family:var(--body); font-size:14px; line-height:1;
+  cursor:pointer;
+}
+#motdClose:hover { color:var(--ink); border-color:var(--lime); }
+#motd .motdTitle {
+  font-family:var(--display); font-weight:800; font-size:15px;
+  letter-spacing:.02em; line-height:1.15; text-transform:uppercase; color:var(--ink);
+}
+#motd .motdBody {
+  margin-top:5px; font-family:var(--body); font-size:10.5px;
+  line-height:1.5; color:var(--ink-dim); white-space:pre-wrap;
+}
+#motd .motdLink {
+  display:inline-block; margin-top:6px;
+  font-family:var(--label); font-size:8px; font-weight:800;
+  letter-spacing:.18em; color:var(--teal); text-decoration:none;
+}
+#motd .motdLink:hover { color:var(--lime); }
+#menu.modesOpen #motd { display:none; }
+@media (max-width: 760px) {
+  #motd { left:8px; top:8px; width:min(300px, calc(100vw - 16px)); padding:8px 10px 9px; }
+  #motd .motdTitle { font-size:13px; }
+  #motd .motdBody { font-size:9.5px; }
+}
 </style>
 </head>
 <body>
@@ -5805,6 +5855,16 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <div class="heroGlow"></div>
       <div class="heroFig" id="lobbyHeroFig"></div>
       <div class="heroName" id="lobbyHeroName">SPRITE RUNNER</div>
+    </div>
+
+    <div id="motd" class="hide" role="status" aria-live="polite">
+      <div class="motdTop">
+        <span class="motdTag" id="motdTag">MESSAGE OF THE DAY</span>
+        <button id="motdClose" type="button" aria-label="Dismiss message">×</button>
+      </div>
+      <div class="motdTitle" id="motdTitle"></div>
+      <div class="motdBody" id="motdBody"></div>
+      <a class="motdLink hide" id="motdLink" target="_blank" rel="noopener noreferrer"></a>
     </div>
     <div class="modeRow" id="modeRowEl">
       <div class="mpkHead">
@@ -6468,7 +6528,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ONE CELL BANK PER GUN</b> — heat is tracked on each weapon now. Swap from a red-hot shotgun to an unused SMG and the SMG fires straight away; the shotgun is still overheated when you switch back. Only the gun in your hands cools, vents or clears, while holstered weapons keep the charge they were put away with.</div></li>
+      <li><span class="wnTag">01</span><div><b>MESSAGE OF THE DAY</b> — the lobby now fetches <b>announcement.json</b> when the game opens and shows it as a card in the top-left corner. Edit that file and tap Run, or paste a raw JSON URL into <b>MOTD_URL</b>, and every player sees the new message the next time they open the game. Each message is dismissed once per player by its id, and a new id shows a new card.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15250,8 +15310,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 8 };
-const VERSION_PREV = '7.8.7';
+const VERSION = { major: 7, minor: 8, patch: 9 };
+const VERSION_PREV = '7.8.8';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18343,7 +18403,96 @@ function boot() {
   loadAssets().then(finishBoot);
   setTimeout(finishBoot, 12000);
 }
+/* ---------------- message of the day ----------------
+   Fetched when the game opens so a note can be changed without shipping a new
+   build. Leave MOTD_URL blank to read ./announcement.json from the site, or
+   paste a public raw JSON URL (a Gist, for example) to edit it remotely.
+   Schema: { id, tag, title, body, link, linkText, minVersion, maxVersion }. */
+const MOTD_URL = ''; // e.g. 'https://gist.githubusercontent.com/<user>/<id>/raw/announcement.json'
+const MOTD_LOCAL = './announcement.json';
+const MOTD_CACHE_KEY = 'stormfall.motd.last';
+const MOTD_DISMISS_KEY = 'stormfall.motd.dismissed';
+
+function motdVersionCmp(a, b) {
+  const pa = String(a || '0').split('.').map(Number);
+  const pb = String(b || '0').split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x !== y) return x - y;
+  }
+  return 0;
+}
+
+function motdShow(data) {
+  const card = document.getElementById('motd');
+  if (!card) return;
+  if (!data || typeof data !== 'object') return;
+  const title = String(data.title || '').slice(0, 90);
+  const body = String(data.body || '').slice(0, 600);
+  if (!title && !body) { card.classList.add('hide'); return; }
+  const running = versionString();
+  if (data.minVersion && motdVersionCmp(running, data.minVersion) < 0) { card.classList.add('hide'); return; }
+  if (data.maxVersion && motdVersionCmp(running, data.maxVersion) > 0) { card.classList.add('hide'); return; }
+  const id = data.id === undefined || data.id === null ? '' : String(data.id);
+  if (id) {
+    try { if (localStorage.getItem(MOTD_DISMISS_KEY) === id) { card.classList.add('hide'); return; } } catch (e) { /* ignore */ }
+  }
+
+  const tagEl = document.getElementById('motdTag');
+  const titleEl = document.getElementById('motdTitle');
+  const bodyEl = document.getElementById('motdBody');
+  const linkEl = document.getElementById('motdLink');
+  if (tagEl) tagEl.textContent = String(data.tag || 'MESSAGE OF THE DAY').slice(0, 40);
+  if (titleEl) titleEl.textContent = title;
+  if (bodyEl) bodyEl.textContent = body;
+  if (linkEl) {
+    const href = String(data.link || '');
+    if (/^https:\/\//i.test(href)) {
+      linkEl.href = href;
+      linkEl.textContent = String(data.linkText || 'OPEN LINK').slice(0, 40);
+      linkEl.classList.remove('hide');
+    } else {
+      linkEl.classList.add('hide');
+      linkEl.removeAttribute('href');
+    }
+  }
+  card.dataset.id = id;
+  card.classList.remove('hide');
+}
+
+async function loadMotd() {
+  let data = null;
+  try {
+    const raw = localStorage.getItem(MOTD_CACHE_KEY);
+    if (raw) data = JSON.parse(raw);
+  } catch (e) { data = null; }
+
+  const base = MOTD_URL || MOTD_LOCAL;
+  try {
+    const res = await fetch(base + (base.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const parsed = JSON.parse(await res.text());
+      if (parsed && typeof parsed === 'object') {
+        data = parsed;
+        try { localStorage.setItem(MOTD_CACHE_KEY, JSON.stringify(parsed)); } catch (e) { /* ignore */ }
+      }
+    }
+  } catch (e) { /* offline: keep the last good message */ }
+
+  motdShow(data);
+}
+
+const motdCloseEl = document.getElementById('motdClose');
+if (motdCloseEl) motdCloseEl.addEventListener('click', () => {
+  const card = document.getElementById('motd');
+  if (!card) return;
+  const id = card.dataset.id || '';
+  if (id) { try { localStorage.setItem(MOTD_DISMISS_KEY, id); } catch (e) { /* ignore */ } }
+  card.classList.add('hide');
+});
+
 boot();
+loadMotd();
 
 
 
