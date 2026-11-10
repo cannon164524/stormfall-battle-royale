@@ -5459,7 +5459,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <button class="modeBtn" data-mode="aimtest">
           <span class="modeKicker new">LAB</span>
           <span class="modeName">AIM TESTING</span>
-          <span class="modeFoot"><b>0</b> BLOOM · ALL ROUNDS TRAVEL</span>
+          <span class="modeFoot"><b>0</b> BLOOM · LEAD YOUR SHOTS</span>
           <span class="modeTick"></span>
         </button>
       </div>
@@ -6037,10 +6037,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE ISLAND WAS REBUILT</b> — every prop on the map was resurfaced over the off-season. Habitats are brushed alloy with charged seams and window bands, the pines are rift spires with a light running up the trunk, the boulders are shard outcrops, and eleven relay beacons stand over the POIs with halo rings and a column of light. The ground itself cooled from grass to mineral teal, the sky is a darker dusk, and the 36 map sectors are renamed to match.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE OLD ARSENAL IS VAULTED</b> — nothing from the old loot table can drop this season. Chests, floor loot, bot loadouts and the Gun Game ladder are all energy and coil hardware now: the Pulse Sidearm, Shard Scattergun, Prism Shotgun, Cycler LMG, Helix Beam Rifle and Specter Marksman join the Pulse Carbine, Ion Repeater, Cryo Projector, Tesla Arc, Nova Burster, Gauss Rifle, Rail Lance and Reaper. They come back later.</div></li>
-      <li><span class="wnTag">03</span><div><b>ROUNDS THAT ARRIVE LATE</b> — travel time now reads by role instead of by gun. Snipers (Rail Lance 460 m/s, Reaper 430) are the slowest rounds on the island, marksman rifles (Gauss 660, Specter 680) and the scoped Helix Beam (700) get there much faster, and anything you fire from the hip is still instant. The Aim Mechanic Testing lab keeps its flat 320 m/s on everything.</div></li>
-      <li><span class="wnTag">04</span><div><b>SEASON 6</b> — a new pass with five outfits built from the island's own materials, a fresh shop rotation, and the usual season reset: rank and battle pass roll over. Aim Mechanic Testing is still in the mode picker.</div></li>
+      <li><span class="wnTag">01</span><div><b>TRAVELLING ROUNDS CAN MISS NOW</b> — before, a scoped shot worked out who it hit the moment you pulled the trigger, flew out to them, and the damage landed a beat later. That is not travel, that is a delay. Every travelling round now carries its line through the air and only checks what is on that line <i>when it arrives</i>. If the target strafed out of it while the round was flying, it sails past and hits nothing.</div></li>
+      <li><span class="wnTag">02</span><div><b>LEAD THE SHOT</b> — the flight time is real, so the lead is real. Snipers are the slowest (Reaper 430 m/s, Rail Lance 460), marksman and scoped rifles are much faster (Gauss 660, Specter 680, Helix Beam 700), and everything unscoped is still instant. At two hundred metres that is nearly half a second of movement to lead, and the shots that win are the ones aimed where they are going.</div></li>
+      <li><span class="wnTag">03</span><div><b>BOTS LEAD TOO</b> — bots now aim ahead of where you are moving, by an amount that scales with their skill, and their travelling shots resolve the same way yours do. Strafe out of their line and their round misses; hold a straight line and it will not. The same rule is live in every mode, and Aim Mechanic Testing runs the whole arsenal on it.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6206,8 +6205,8 @@ const MODE_DEFS = {
   },
   aimtest: {
     name: 'AIM MECHANIC TESTING', short: 'AIM TEST', kicker: 'LAB',
-    desc: 'A pure aim lab against live opponents: zero bloom on every gun, so a shot goes exactly where the reticle is, and every round travels at one flat speed, so nothing lands the instant you pull the trigger.',
-    rules: ['<b>0</b> BLOOM', 'ALL GUNS TRAVEL', 'FULL LOOT'],
+    desc: 'A pure aim lab against live opponents: zero bloom on every gun, so the shot leaves exactly along the reticle, and every round travels. Nothing is homing — if they strafe out of your line while it is in the air, it misses. This is where you learn to lead.',
+    rules: ['<b>0</b> BLOOM', 'LEAD YOUR SHOTS', 'FULL LOOT'],
     adjustable: true,
     queue: (n) => n + ' TARGETS · EVERY ROUND TRAVELS',
   },
@@ -9235,6 +9234,45 @@ function hitTest(o, d, maxDist, shooter, shooterTeam) {
   return best;
 }
 
+/* How far a travelling round actually has to fly.
+   The obvious answer is "to whatever the line hits", but that breaks as soon
+   as you lead: aiming into the space ahead of a strafing target finds open air
+   or a hillside far behind them, and the round would spend the whole trip out
+   there. So an enemy within a body's width of the line counts for its own
+   distance, and an enemy the line merely passes close to still pulls the flight
+   in to where they are. Walls and ground keep their own, nearer distance. */
+function travelDistanceFor(origin, dir, maxDist, shooter, shooterTeam, rayDist) {
+  let best = Math.min(rayDist, maxDist);
+  let nearAlong = Infinity;
+  let nearPerp = Infinity;
+
+  function consider(px, py, pz, radius) {
+    const ax = px - origin.x, ay = py - origin.y, az = pz - origin.z;
+    const along = ax * dir.x + ay * dir.y + az * dir.z;
+    if (along <= 1 || along >= maxDist) return;
+    const perp2 = ax * ax + ay * ay + az * az - along * along;
+    if (perp2 <= radius * radius) {
+      if (along < best) best = along;
+    } else if (perp2 <= 16) {
+      const perp = Math.sqrt(perp2);
+      if (perp < nearPerp) { nearPerp = perp; nearAlong = along; }
+    }
+  }
+
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.alive || b === shooter || b.dropping) continue;
+    if (state.teamMode && shooterTeam !== undefined && shooterTeam !== null && b.team === shooterTeam) continue;
+    consider(b.pos.x, b.pos.y + 1.0, b.pos.z, 1.15);
+  }
+  if (shooter && player.alive && !player.dropping) {
+    consider(player.pos.x, player.pos.y + 1.0, player.pos.z, 1.25);
+  }
+
+  if (nearAlong < best) best = nearAlong;
+  return best;
+}
+
 function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
   let dmg = baseDmg;
   if (falloff) dmg *= clamp(1 - (dist - 10) / 90, 0.62, 1);
@@ -9407,7 +9445,10 @@ function playerFire() {
     dir.normalize();
     const hit = hitTest(origin, dir, w.range, null, player.team);
     const dmg = w.dmg * RARITY[it.rarity].mult * (adminOn('oneShot') ? 100 : 1) * spriteMul;
-    const land = () => {
+    const land = (resolved) => {
+      // A travelling round re-traces the line on arrival; a hitscan shot uses
+      // the hit it already had.
+      const h = resolved || hit;
       if (net.connected && !net.isHost) {
         netSend({
           t: 'shot',
@@ -9416,15 +9457,22 @@ function playerFire() {
           dmg: dmg,
           range: w.range,
         });
-        if (hit.kind === 'bot' && hit.bot) hitmarker(false, true);
+        if (h.kind === 'bot' && h.bot) hitmarker(false, true);
       } else {
-        applyShotDamage(hit, dmg, w.hs, 'You', hit.dist, SHOTGUN_FAMILY.indexOf(wt) >= 0);
-        weaponSpecial(w, hit, dir, dmg);
+        applyShotDamage(h, dmg, w.hs, 'You', h.dist, SHOTGUN_FAMILY.indexOf(wt) >= 0);
+        weaponSpecial(w, h, dir, dmg);
       }
     };
     const speed = w.bulletSpeed || (isAimTest() ? AIM_TEST_SPEED : 0);
     if (speed) {
-      spawnTravelBullet(muzzle, hit.point, speed, land, 0xd8ffe0);
+      // The round flies to where the lead says it should, and only lands when
+      // it gets there — re-tracing the line against everyone's position then.
+      const flight = travelDistanceFor(origin, dir, w.range, null, player.team, hit.dist);
+      const end = origin.clone().addScaledVector(dir, flight);
+      spawnTravelBullet(
+        muzzle, end, speed, land, 0xd8ffe0,
+        () => hitTest(origin, dir, w.range, null, player.team)
+      );
     } else {
       tracerFX(muzzle, hit.point, 0xfff2a8);
       land();
@@ -10939,12 +10987,21 @@ function botFire(b, target) {
   b.nextFire = state.time + (60 / def.rpm) * (1 + rand(0, 0.35));
   if (def.auto && Math.random() < 0.05) b.nextFire = state.time + 0.45 + Math.random() * 0.8;
 
+  const bSpeed = def.bulletSpeed || (isAimTest() ? AIM_TEST_SPEED : 0);
   const eye = new THREE.Vector3(b.pos.x, b.pos.y + 1.5, b.pos.z);
   const aimPoint = new THREE.Vector3(
     target.pos.x,
     target.pos.y + (Math.random() < 0.22 ? 1.7 : 0.95),
     target.pos.z
   );
+  // A travelling round needs a lead, and a good bot reads it better than a
+  // rookie. Strafing out of the line is what makes the round miss.
+  if (bSpeed && target.vel) {
+    const lead = Math.min(1.2, d / bSpeed) * (0.35 + b.skill * 0.65);
+    aimPoint.x += target.vel.x * lead;
+    aimPoint.z += target.vel.z * lead;
+    aimPoint.y += clamp(target.vel.y * lead, -1.2, 1.2);
+  }
   const err = (1 - b.skill) * 0.17 + 0.03;
   aimPoint.x += (Math.random() - 0.5) * err * d;
   aimPoint.y += (Math.random() - 0.5) * err * d * 0.6;
@@ -10953,20 +11010,26 @@ function botFire(b, target) {
   const dir = aimPoint.clone().sub(eye).normalize();
   const hit = hitTest(eye, dir, def.range, b, b.team);
   flashMuzzle(b.rig);
-  const land = () => {
-    if (hit.kind === 'player') {
+  const land = (resolved) => {
+    const h = resolved || hit;
+    if (h.kind === 'player') {
       const m = RARITY[b.weapon.rarity].mult;
-      hurtPlayer(def.dmg * m * botDmgMul() * (hit.head ? def.hs * 0.7 : 1), b.name, false, eye);
-    } else if (hit.kind === 'bot' && hit.bot) {
+      hurtPlayer(def.dmg * m * botDmgMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
+    } else if (h.kind === 'bot' && h.bot) {
       const m = RARITY[b.weapon.rarity].mult;
-      damageBot(hit.bot, def.dmg * m * botDmgMul() * (hit.head ? def.hs : 1), b.name, hit.head, hit.point);
-    } else if (hit.kind === 'world' && hit.col) {
-      damageCollider(hit.col, def.dmg * 0.55);
+      damageBot(h.bot, def.dmg * m * botDmgMul() * (h.head ? def.hs : 1), b.name, h.head, h.point);
+    } else if (h.kind === 'world' && h.col) {
+      damageCollider(h.col, def.dmg * 0.55);
     }
   };
-  const bSpeed = def.bulletSpeed || (isAimTest() ? AIM_TEST_SPEED : 0);
-  if (bSpeed) spawnTravelBullet(eye, hit.point, bSpeed, land, 0xffd0a0);
-  else { tracerFX(eye, hit.point, 0xffd0a0); land(); }
+  if (bSpeed) {
+    const flight = travelDistanceFor(eye, dir, def.range, b, b.team, hit.dist);
+    const end = eye.clone().addScaledVector(dir, flight);
+    spawnTravelBullet(
+      eye, end, bSpeed, land, 0xffd0a0,
+      () => hitTest(eye, dir, def.range, b, b.team)
+    );
+  } else { tracerFX(eye, hit.point, 0xffd0a0); land(); }
   sfxPanned(def.sfx, b.pos);
 }
 
@@ -11843,20 +11906,25 @@ function tracerFX(from, to, color) {
   line.life = 0.06;
 }
 
-/* Long guns fire a round that travels. The trajectory is worked out on the
-   trigger pull, but the hit is only resolved when the round arrives, and the
-   mark it leaves is drawn where it lands. */
+/* Long guns fire a round that travels. The round is laid along the ray you
+   fired, and the hit is only worked out when it arrives: whatever is on that
+   line at that moment is what gets hit. If the target walked out of the line
+   while the round was in the air, it is a miss — so a travelling shot has to
+   be led, not just delayed. `resolve` re-traces the ray at impact time. */
 const bullets = [];
-function spawnTravelBullet(from, to, speed, onLand, color) {
+function spawnTravelBullet(from, to, speed, onLand, color, resolve) {
   const dist = from.distanceTo(to);
-  if (bullets.length > 24 || dist < 1) { if (onLand) onLand(); return; }
+  const settle = () => {
+    if (onLand) onLand(resolve ? resolve() : null);
+  };
+  if (bullets.length > 24 || dist < 1) { settle(); return; }
   const mesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.09, 5, 4),
     new THREE.MeshBasicMaterial({ color: color || 0xd8ffe0, transparent: true, opacity: 0.95, depthWrite: false })
   );
   mesh.position.copy(from);
   fxGroup.add(mesh);
-  bullets.push({ mesh, from: from.clone(), to: to.clone(), t: 0, travel: Math.max(0.02, dist / Math.max(1, speed)), onLand });
+  bullets.push({ mesh, from: from.clone(), to: to.clone(), t: 0, travel: Math.max(0.02, dist / Math.max(1, speed)), onLand: settle });
 }
 
 function impactFX(p) {
@@ -13885,7 +13953,7 @@ function startMatch() {
     : isReloadDuos() ? 'IF YOU DIE YOUR MATE MUST SURVIVE 20s'
     : isDuos() ? 'YOUR MATE CAN REVIVE AND REBOOT YOU'
     : isSandbox() ? 'INFINITE MATS · NO STORM'
-    : isAimTest() ? 'A SHOT GOES WHERE THE RETICLE IS · EVERY ROUND TRAVELS'
+    : isAimTest() ? 'NO BLOOM · EVERY ROUND HAS TO BE LED'
     : isGunGame() ? 'NEW WEAPON ON EVERY ELIMINATION'
     : isBlitz() ? 'THE STORM IS ALREADY CLOSING'
     : isRankedReload() ? 'RELOAD RP · YOUR BR RANK IS SAFE'
@@ -14168,8 +14236,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 6, patch: 0 };
-const VERSION_PREV = '7.5.4';
+const VERSION = { major: 7, minor: 6, patch: 1 };
+const VERSION_PREV = '7.6.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
