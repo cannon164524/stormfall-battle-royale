@@ -6468,7 +6468,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEASON ON THE WORDMARK</b> — the lobby header now shows the current season directly under STORMFALL, so you can see which season you are dropping into before you queue.</div></li>
+      <li><span class="wnTag">01</span><div><b>ONE CELL BANK PER GUN</b> — heat is tracked on each weapon now. Swap from a red-hot shotgun to an unused SMG and the SMG fires straight away; the shotgun is still overheated when you switch back. Only the gun in your hands cools, vents or clears, while holstered weapons keep the charge they were put away with.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9746,6 +9746,8 @@ function giveItem(item) {
   }
   if (item.kind === 'ammo') {
     // Ammo boxes are coolant cells now: they vent the emitter instantly.
+    const held = currentItem();
+    if (held && held.kind === 'weapon') { held.heat = 0; held.overheated = false; }
     player.heat = 0;
     player.overheated = false;
     return -2;
@@ -9761,11 +9763,12 @@ function giveItem(item) {
     }
   }
   for (let i = 0; i < 5; i++) {
-    if (!player.inv[i]) { player.inv[i] = item; player.slot = i; return i; }
+    if (!player.inv[i]) { player.inv[i] = item; player.slot = i; equipHeatSync(); return i; }
   }
   const old = player.inv[player.slot];
   player.inv[player.slot] = item;
   if (old) dropItem(old);
+  equipHeatSync();
   return player.slot;
 }
 
@@ -9775,6 +9778,22 @@ function dropItem(item) {
 }
 
 function currentItem() { return player.inv[player.slot]; }
+
+/* Emitter heat belongs to the weapon, not the player: every gun keeps its own
+   cell bank, so an overheated shotgun stays hot while a fresh SMG is cold. */
+function itemHeat(it) { return (it && it.kind === 'weapon') ? clamp(it.heat || 0, 0, 1) : 0; }
+function equipHeatSync() {
+  const it = currentItem();
+  if (it && it.kind === 'weapon') {
+    player.heat = itemHeat(it);
+    player.overheated = !!it.overheated;
+    player.lastShotAt = (typeof it.lastShotAt === 'number') ? it.lastShotAt : -99;
+  } else {
+    player.heat = 0;
+    player.overheated = false;
+    player.lastShotAt = -99;
+  }
+}
 
 function nearestLoot(radius) {
   let best = null, bd = radius;
@@ -10156,8 +10175,10 @@ function playerFire() {
   if (player.ventEnd && state.time < player.ventEnd) return;
   if (player.overheated) return;
   if (!adminOn('infAmmo')) {
-    player.heat = Math.min(1, (player.heat || 0) + heatPerShot(w) * (w.burst || 1));
-    if (player.heat >= 1) {
+    it.heat = Math.min(1, itemHeat(it) + heatPerShot(w) * (w.burst || 1));
+    player.heat = it.heat;
+    if (it.heat >= 1) {
+      it.overheated = true;
       player.overheated = true;
       player.overheatWarnAt = state.time;
       sfx('overheat');
@@ -10175,6 +10196,7 @@ function playerFire() {
   // The crosshair and the bullets now read from this same number.
   const spread = aimDir ? 0 : currentSpread(w);
   player.lastShotAt = state.time;
+  it.lastShotAt = state.time;
   player.bloom = Math.min(bloomCap(w), (player.bloom || 0) + bloomGain(w));
   // Tracers leave the barrel in your hands, not the middle of the chest.
   const muzzle = new THREE.Vector3();
@@ -10285,7 +10307,7 @@ function startReload() {
   if (!it || it.kind !== 'weapon') return;
   if (!player.alive || player.knocked) return;
   if (player.reloading) return;
-  if ((player.heat || 0) < 0.02 && !player.overheated) return;
+  if (itemHeat(it) < 0.02 && !it.overheated) return;
   // R is a vent now: one second of forced cooling clears the whole cell bank.
   player.reloading = true;
   player.ventEnd = state.time + 1.1;
@@ -10299,6 +10321,8 @@ function startReload() {
 function finishReload() {
   player.reloading = false;
   player.ventEnd = 0;
+  const it = currentItem();
+  if (it && it.kind === 'weapon') { it.heat = 0; it.overheated = false; }
   player.heat = 0;
   player.overheated = false;
   refreshHotbar();
@@ -10724,6 +10748,10 @@ function respawnPlayer() {
   player.heat = 0;
   player.overheated = false;
   player.ventEnd = 0;
+  player.lastShotAt = -99;
+  for (const gi of player.inv) {
+    if (gi && gi.kind === 'weapon') { gi.heat = 0; gi.overheated = false; gi.lastShotAt = -99; }
+  }
   player.using = null;
   player.reloading = false;
   player.lastHitBy = '';
@@ -13207,15 +13235,24 @@ function updatePlayer(dt) {
 
   player.pocketCd = Math.max(0, (player.pocketCd || 0) - dt);
 
-  // Emitter heat: vents fast while R is held, slowly and only after a weapon-
-  // specific idle delay, and barely at all while you keep the trigger down.
-  const venting = !!(player.ventEnd && state.time < player.ventEnd);
+  // Emitter heat is per weapon: only the held gun cools, every other one keeps
+  // the charge it was put away with.
   const heldIt = currentItem();
   const heldW = (heldIt && heldIt.kind === 'weapon') ? WEAPONS[heldIt.type] : null;
-  const idleDelay = heldW ? heatDelayFor(heldW) : 1.15;
-  const heatIdle = state.time - (player.lastShotAt || -99) > idleDelay;
-  player.heat = clamp((player.heat || 0) - (venting ? 0.95 : heatIdle ? 0.30 : 0.04) * dt, 0, 1);
-  if (player.overheated && player.heat <= 0.25) player.overheated = false;
+  if (!heldW) {
+    player.heat = 0;
+    player.overheated = false;
+  } else {
+    player.heat = itemHeat(heldIt);
+    player.overheated = !!heldIt.overheated;
+    const venting = !!(player.ventEnd && state.time < player.ventEnd);
+    const idleDelay = heatDelayFor(heldW);
+    const heatIdle = state.time - (player.lastShotAt || -99) > idleDelay;
+    player.heat = clamp(player.heat - (venting ? 0.95 : heatIdle ? 0.30 : 0.04) * dt, 0, 1);
+    if (player.overheated && player.heat <= 0.25) player.overheated = false;
+    heldIt.heat = player.heat;
+    heldIt.overheated = player.overheated;
+  }
 
   if (player.reloading && state.time >= player.reloadEnd) finishReload();
   if (player.using && state.time >= player.useEnd) finishUse();
@@ -14380,7 +14417,10 @@ function selectSlot(i) {
   const changed = player.slot !== i;
   player.slot = i;
   player.reloading = false;
+  player.ventEnd = 0;
+  player.reloadEnd = 0;
   player.using = null;
+  equipHeatSync();
   if (changed) sfx('switch');
   refreshHotbar();
 }
@@ -15210,8 +15250,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 7 };
-const VERSION_PREV = '7.8.6';
+const VERSION = { major: 7, minor: 8, patch: 8 };
+const VERSION_PREV = '7.8.7';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
