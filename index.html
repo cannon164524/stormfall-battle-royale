@@ -6540,8 +6540,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>FLY THE GUNSHIP</b> — the plane now waits parked in a clearing near where you land, marked on the minimap. Walk up, press <b>E</b> to take the pilot seat, and fly: <b>W/S</b> throttle, <b>A/D</b> bank and steer, mouse to point the nose, <b>LMB</b> to rake the ground with the chin cannon. Hit <b>E</b> again to bail out. Yes, the cannon actually hurts: it cuts through bots and knocks down builds.</div></li>
-      <li><span class="wnTag">02</span><div><b>PLANE FEEL</b> — the camera pulls back into a chase view while you fly, the plane skids a little through turns, climbs and dives with your aim, and holds itself off the deck so you can skim the trees without clipping through them.</div></li>
+      <li><span class="wnTag">01</span><div><b>AIM DOWN AT THE GROUND</b> — the chase camera now follows the nose in full 3D, so pitching down actually shows the ground under you, and the cannon rounds burst on impact with a small splash. Strafing a running bot no longer needs a direct hit.</div></li>
+      <li><span class="wnTag">02</span><div><b>SHOOT DOWN THE GUNSHIP</b> — the plane has 3000 hull, a health bar floating above it that everyone can see, and it can be destroyed. Roughly 100 rifle rounds does it. Get shot down while flying and you are thrown clear with a sliver of health instead of dying outright.</div></li>
+      <li><span class="wnTag">03</span><div><b>BOT PILOTS</b> — more than half the time a bot reaches the plane first and takes it up, circling the island and shelling the ground below. It is marked red on your minimap. Bots also shoot back at you while you fly, so low passes over a fight are a real risk.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8544,6 +8545,7 @@ const GUNSHIP_SPEED = 62;
 const GUNSHIP_ALT = 148;
 const GUNSHIP_GUN_CD = 0.09;
 const GUNSHIP_GUN_RANGE = 260;
+const GUNSHIP_HP = 3000;
 
 function spawnGunship() {
   if (gunship) return;
@@ -8570,11 +8572,134 @@ function spawnGunship() {
   const face = Math.atan2(-spot.x, -spot.z);
   g.position.set(spot.x, spot.y + 1.8, spot.z);
   g.rotation.set(0, face, 0, 'YXZ');
+  const bar = new THREE.Group();
+  const back = new THREE.Mesh(
+    new THREE.PlaneGeometry(16, 2),
+    new THREE.MeshBasicMaterial({ color: 0x0b1214, transparent: true, opacity: 0.72, depthWrite: false })
+  );
+  const fill = new THREE.Mesh(
+    new THREE.PlaneGeometry(15.2, 1.3),
+    new THREE.MeshBasicMaterial({ color: 0xc2ff3d, transparent: true, opacity: 0.95, depthWrite: false })
+  );
+  fill.position.z = 0.02;
+  bar.add(back, fill);
+  bar.visible = false;
+  bar.renderOrder = 12;
+  dynGroup.add(bar);
+
   gunship = {
     group: g, dir: new THREE.Vector3(Math.sin(face), 0, Math.cos(face)),
     travelled: 0, fireT: 0, bank: 0, t: 0, cool: 0,
     parked: true, pilot: false, speed: 30, roll: 0,
+    hp: GUNSHIP_HP, maxHp: GUNSHIP_HP, destroyed: false,
+    bar, fill,
   };
+}
+
+/* Health bar above the plane: billboarded, so everyone on the ground and the
+   pilot see the same thing. */
+function updateGunshipBar() {
+  if (!gunship) return;
+  const bar = gunship.bar;
+  if (!bar) return;
+  bar.visible = !gunship.parked || gunship.hp < gunship.maxHp;
+  bar.position.copy(gunship.group.position);
+  bar.position.y += 8.5;
+  bar.quaternion.copy(camera.quaternion);
+  const frac = clamp(gunship.hp / gunship.maxHp, 0, 1);
+  gunship.fill.scale.x = Math.max(0.001, frac);
+  gunship.fill.position.x = -(1 - frac) * 15.2 / 2;
+  gunship.fill.material.color.setHex(frac > 0.55 ? 0xc2ff3d : frac > 0.25 ? 0xffc844 : 0xff6a4d);
+}
+
+function damageGunship(amount, source) {
+  if (!gunship || gunship.destroyed) return;
+  gunship.hp -= amount;
+  if (gunship.pilot === 'player') shake(0.015);
+  if (gunship.hp <= 0) destroyGunship(source);
+}
+
+function destroyGunship(source) {
+  if (!gunship || gunship.destroyed) return;
+  gunship.destroyed = true;
+  const pos = gunship.group.position.clone();
+  const wasPlayer = gunship.pilot === 'player';
+  const wasBot = gunship.pilot === 'bot';
+  if (gunship.bar && gunship.bar.parent) gunship.bar.parent.remove(gunship.bar);
+  const g = gunship.group;
+  if (g.parent) g.parent.remove(g);
+  disposeTree(g);
+  gunship = null;
+
+  shockwaveFX(pos, 16);
+  impactFX(pos);
+  blastDamage(pos, 9, 45, null, source || 'GUNSHIP');
+  shake(0.5);
+  sfx('death');
+  if (wasBot) addFeed(source || 'GUNSHIP', 'BOT PILOT', false);
+  if (wasPlayer) {
+    player.piloting = false;
+    player.pos.copy(pos);
+    player.vel.set(0, -8, 0);
+    player.dropping = true;
+    player.onGround = false;
+    player.hp = Math.max(12, Math.round(player.hp * 0.35));
+    if (player.rig) player.rig.group.visible = true;
+    camRig.ready = false;
+    toast('GUNSHIP DESTROYED · BAIL OUT', 'sub');
+  } else {
+    toast('GUNSHIP DESTROYED', 'sub');
+  }
+}
+
+function nearestGroundTarget(pos) {
+  let best = null, bd = 260;
+  for (const b of bots) {
+    if (!b.alive || b.out || b.dropping || b.knocked) continue;
+    const d = b.pos.distanceTo(pos);
+    if (d < bd) { bd = d; best = b.pos.clone(); }
+  }
+  if (player.alive && !player.piloting && !player.dropping && !player.knocked) {
+    const d = new THREE.Vector3(player.pos.x, player.pos.y, player.pos.z).distanceTo(pos);
+    if (d < bd) return new THREE.Vector3(player.pos.x, player.pos.y + 1, player.pos.z);
+  }
+  return best;
+}
+
+function updateBotPilot(dt) {
+  const g = gunship.group;
+  const ang = gunship.t * 0.11;
+  const r = 140;
+  g.position.set(Math.cos(ang) * r, 82 + Math.sin(gunship.t * 0.37) * 14, Math.sin(ang) * r);
+  const yaw = Math.atan2(-Math.sin(ang), Math.cos(ang));
+  g.rotation.set(0.06, yaw, 0.35, 'YXZ');
+  gunship.dir.set(Math.sin(yaw), 0, Math.cos(yaw));
+
+  gunship.fireT -= dt;
+  if (gunship.fireT <= 0) {
+    gunship.fireT = rand(1.1, 1.8);
+    const target = nearestGroundTarget(g.position);
+    if (target) {
+      const muzzle = g.userData.muzzle.clone();
+      g.localToWorld(muzzle);
+      tracerFX(muzzle, target, 0xffd451);
+      blastDamage(target, 4.5, 30, null, 'GUNSHIP');
+      sfx('shotgun');
+    }
+  }
+  updateGunshipBar();
+}
+
+function botTakesGunship() {
+  if (!gunship) return;
+  gunship.parked = false;
+  gunship.pilot = 'bot';
+  gunship.t = Math.random() * 6;
+  gunship.fireT = 1.2;
+  const g = gunship.group;
+  g.position.set(Math.cos(gunship.t * 0.11) * 140, 82, Math.sin(gunship.t * 0.11) * 140);
+  g.rotation.set(0.06, 0, 0.35, 'YXZ');
+  toast('A BOT PILOT HAS THE GUNSHIP · SHOOT IT DOWN', 'sub');
 }
 
 function nearestGunship(range) {
@@ -8587,7 +8712,7 @@ function nearestGunship(range) {
 
 function boardGunship() {
   if (!gunship || gunship.pilot) return;
-  gunship.pilot = true;
+  gunship.pilot = 'player';
   gunship.parked = false;
   gunship.travelled = 0;
   gunship.speed = 30;
@@ -8612,7 +8737,7 @@ function exitGunship() {
   if (!gunship || !gunship.pilot) { player.piloting = false; return; }
   const g = gunship.group;
   gunship.dir.set(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y)).normalize();
-  gunship.pilot = false;
+  gunship.pilot = null;
   gunship.parked = false;
   gunship.travelled = 0;
   gunship.bank = 0;
@@ -8645,7 +8770,7 @@ function updatePilotedGunship(dt) {
   player.yaw -= turn * 0.9 * dt;
   gunship.roll = lerp(gunship.roll, -turn * 0.45, 1 - Math.exp(-6 * dt));
 
-  const pitch = clamp(player.pitch * 0.55, -0.55, 0.55);
+  const pitch = clamp(player.pitch * 0.8, -1.0, 0.8);
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
   const fwd = new THREE.Vector3(Math.sin(player.yaw) * cp, sp, Math.cos(player.yaw) * cp);
   g.position.addScaledVector(fwd, gunship.speed * dt);
@@ -8672,6 +8797,7 @@ function updatePilotedGunship(dt) {
   if (input.fire) fireGunshipGun();
 
   gunship.travelled += gunship.speed * dt;
+  updateGunshipBar();
   if (gunship.travelled > 4000) exitGunship();
 }
 
@@ -8689,13 +8815,23 @@ function fireGunshipGun() {
   dir.normalize();
   const hit = hitTest(muzzle, dir, GUNSHIP_GUN_RANGE, null, player.team);
   if (hit.kind === 'bot' && hit.bot) {
-    damageBot(hit.bot, 24, 'Gunship', hit.head, hit.point);
+    damageBot(hit.bot, 26, 'Gunship', hit.head, hit.point);
     hitmarker(false, true);
   } else if (hit.kind === 'world' && hit.col) {
     damageCollider(hit.col, 45);
     impactFX(hit.point);
   } else if (hit.kind === 'terrain') {
     impactFX(hit.point);
+  }
+  // A small splash so strafing the ground still catches a running bot.
+  if (hit.point && hit.kind !== 'plane') {
+    for (let i = 0; i < bots.length; i++) {
+      const o = bots[i];
+      if (!o.alive || o.out || o.dropping || o === hit.bot) continue;
+      const d = Math.hypot(o.pos.x - hit.point.x, o.pos.z - hit.point.z);
+      if (d > 3.4) continue;
+      damageBot(o, 14 * (1 - d / 3.4), 'Gunship', false, o.pos.clone());
+    }
   }
   tracerFX(muzzle, hit.point, 0xffd451);
   camRig.recoil += 0.006;
@@ -8706,14 +8842,17 @@ function fireGunshipGun() {
 function updatePilotCamera(dt) {
   if (!gunship) return;
   const g = gunship.group;
-  const fwd = new THREE.Vector3(Math.sin(g.rotation.y), 0, Math.cos(g.rotation.y));
-  const want = g.position.clone().addScaledVector(fwd, -24).add(new THREE.Vector3(0, 9, 0));
+  // Follow the nose in 3D, so pitching down actually shows the ground you shoot.
+  const fwd3 = new THREE.Vector3(0, 0, 1).applyQuaternion(g.quaternion).normalize();
+  const want = g.position.clone()
+    .addScaledVector(fwd3, -26)
+    .add(new THREE.Vector3(0, 8, 0));
+  const floorY = Math.max(terrainHeight(want.x, want.z), TERRAIN_FLOOR) + 4;
+  if (want.y < floorY) want.y = floorY;
   if (!camRig.ready) { camRig.pos.copy(want); camRig.ready = true; }
   else camRig.pos.lerp(want, 1 - Math.exp(-7 * dt));
-  const floorY = Math.max(terrainHeight(camRig.pos.x, camRig.pos.z), TERRAIN_FLOOR) + 3;
-  if (camRig.pos.y < floorY) camRig.pos.y = floorY;
   camera.position.copy(camRig.pos);
-  camera.lookAt(g.position.clone().addScaledVector(fwd, 20).add(new THREE.Vector3(0, 2, 0)));
+  camera.lookAt(g.position.clone().addScaledVector(fwd3, 60));
   camFov = lerp(camFov, 82, 1 - Math.exp(-6 * dt));
   if (Math.abs(camera.fov - camFov) > 0.01) {
     camera.fov = camFov;
@@ -8728,9 +8867,12 @@ function updateGunship(dt) {
   gunship.t += dt;
 
   const props = g.userData.props || [];
-  const spin = gunship.pilot ? 26 : gunship.parked ? 3 : 22;
+  const spin = gunship.pilot === 'player' ? 26 : gunship.parked ? 3 : 22;
   for (let i = 0; i < props.length; i++) props[i].rotation.z += dt * spin;
-  if (gunship.parked || gunship.pilot) return;
+
+  if (gunship.pilot === 'player') { updateGunshipBar(); return; }
+  if (gunship.pilot === 'bot') { updateBotPilot(dt); return; }
+  if (gunship.parked) { updateGunshipBar(); return; }
 
   g.position.addScaledVector(gunship.dir, GUNSHIP_SPEED * dt);
   gunship.travelled += GUNSHIP_SPEED * dt;
@@ -8748,7 +8890,10 @@ function updateGunship(dt) {
     tracerFX(muzzle, new THREE.Vector3(tx, ty, tz), 0xffd451);
   }
 
-  if (gunship.travelled > 1400) {
+  updateGunshipBar();
+
+  if (gunship && gunship.travelled > 1400) {
+    if (gunship.bar && gunship.bar.parent) gunship.bar.parent.remove(gunship.bar);
     if (g.parent) g.parent.remove(g);
     disposeTree(g);
     gunship = null;
@@ -10756,6 +10901,16 @@ function hitTest(o, d, maxDist, shooter, shooterTeam) {
     }
   }
 
+  // The gunship is a target too, unless the player is flying and this is their
+  // own cannon looking for something to hit.
+  if (gunship && !gunship.destroyed && gunship.hp > 0 && (gunship.pilot !== 'player' || shooter)) {
+    const gp = gunship.group.position;
+    const tp = raySphere(o, d, gp.x, gp.y, gp.z, 9.5);
+    if (tp >= 0 && tp < best.dist) {
+      best.dist = tp; best.kind = 'plane'; best.bot = null; best.head = false; best.col = null;
+    }
+  }
+
   best.point = o.clone().addScaledVector(d, best.dist);
   return best;
 }
@@ -10812,16 +10967,20 @@ function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
     impactFX(hit.point);
   } else if (hit.kind === 'terrain') {
     impactFX(hit.point);
+  } else if (hit.kind === 'plane') {
+    damageGunship(dmg * (hit.head ? hsMult : 1), shooterName);
+    impactFX(hit.point);
   }
 }
 
-function blastDamage(pos, r, dmg, skip) {
+function blastDamage(pos, r, dmg, skip, sourceName) {
+  const who = sourceName || 'You';
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
     if (!b.alive || b === skip) continue;
     const d = Math.hypot(b.pos.x - pos.x, b.pos.z - pos.z);
     if (d > r) continue;
-    damageBot(b, dmg * (1 - d / r), 'You', false, b.pos.clone());
+    damageBot(b, dmg * (1 - d / r), who, false, b.pos.clone());
   }
   if (player.alive) {
     const d = Math.hypot(player.pos.x - pos.x, player.pos.z - pos.z);
@@ -12682,7 +12841,9 @@ function acquireTarget(b) {
   }
   if (playerOk) {
     const d = b.pos.distanceTo(player.pos);
-    const reach = onPlayer >= playerCap ? 30 : 72;
+    const reach = player.piloting
+      ? (onPlayer >= Math.max(playerCap, 8) ? 180 : 320)
+      : (onPlayer >= playerCap ? 30 : 72);
     if (d < reach) {
       // The human has to be clearly closer than any bot to be chosen.
       const score = d * 1.35 * (0.92 + Math.random() * 0.16);
@@ -12750,6 +12911,9 @@ function botFire(b, target) {
       damageBot(h.bot, def.dmg * m * botDmgMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
     } else if (h.kind === 'world' && h.col) {
       damageCollider(h.col, def.dmg * 0.55);
+    } else if (h.kind === 'plane') {
+      const m = RARITY[b.weapon.rarity].mult;
+      damageGunship(def.dmg * m * botDmgMul(), b.name);
     }
   };
   if (bSpeed) {
@@ -15208,15 +15372,15 @@ function drawMinimap() {
     ctx.stroke();
   }
 
-  // gunship — a lime triangle until you board it
-  if (gunship && !gunship.pilot) {
+  // gunship — a lime triangle until you board it, red when a bot has it
+  if (gunship && !gunship.destroyed) {
     const [gx, gy] = w2m(gunship.group.position.x, gunship.group.position.z);
     ctx.beginPath();
     ctx.moveTo(gx, gy - 5.5);
     ctx.lineTo(gx + 5, gy + 3.5);
     ctx.lineTo(gx - 5, gy + 3.5);
     ctx.closePath();
-    ctx.fillStyle = '#c2ff3d';
+    ctx.fillStyle = gunship.pilot === 'bot' ? '#ff6a4d' : '#c2ff3d';
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,.75)';
     ctx.lineWidth = 1;
@@ -15875,6 +16039,7 @@ function startMatch() {
   assignTeams();
   positionFighters();
   spawnGunship();
+  if (!isGunGame() && bots.length && Math.random() < 0.55) botTakesGunship();
   // A drop seeds its long gun when the player lands; a ground start seeds it here.
   state.landGunSeeded = false;
   if (!isGunGame()) seedPowerHourGun(player.pos);
@@ -16224,8 +16389,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 8 };
-const VERSION_PREV = '7.9.7';
+const VERSION = { major: 7, minor: 9, patch: 9 };
+const VERSION_PREV = '7.9.8';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
