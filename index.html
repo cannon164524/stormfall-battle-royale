@@ -5888,7 +5888,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <button class="modeBtn active" data-mode="br">
           <span class="modeKicker">SOLO</span>
           <span class="modeName">BATTLE ROYALE</span>
-          <span class="modeFoot"><b class="mcount">24</b> OPPONENTS</span>
+          <span class="modeFoot"><b class="mcount">20</b> OPPONENTS</span>
           <span class="modeTick"></span>
         </button>
         <button class="modeBtn" data-mode="duos">
@@ -5900,7 +5900,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <button class="modeBtn" data-mode="reload">
           <span class="modeKicker">3 LIVES</span>
           <span class="modeName">RELOAD</span>
-          <span class="modeFoot"><b>25</b> PLAYERS · <b>3</b> LIVES</span>
+          <span class="modeFoot"><b>15</b> PLAYERS · <b>3</b> LIVES</span>
           <span class="modeTick"></span>
         </button>
         <button class="modeBtn" data-mode="reloadduos">
@@ -5928,7 +5928,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <button class="modeBtn" data-mode="ranked">
           <span class="modeKicker">COMPETITIVE</span>
           <span class="modeName">RANKED</span>
-          <span class="modeFoot"><b class="mcount">24</b> OPPONENTS</span>
+          <span class="modeFoot"><b class="mcount">20</b> OPPONENTS</span>
           <span class="modeTick"></span>
         </button>
         <button class="modeBtn" data-mode="rankedduos">
@@ -5940,7 +5940,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <button class="modeBtn" data-mode="rankedreload">
           <span class="modeKicker new">SEPARATE LADDER</span>
           <span class="modeName">RANKED RELOAD</span>
-          <span class="modeFoot"><b>25</b> PLAYERS · <b>3</b> LIVES</span>
+          <span class="modeFoot"><b>15</b> PLAYERS · <b>3</b> LIVES</span>
           <span class="modeTick"></span>
         </button>
       </div>
@@ -5979,16 +5979,16 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <div class="seatLabel">LOBBY SIZE</div>
         <div class="seatRow">
           <button class="stepBtn" id="botMinus">-</button>
-          <input id="botRange" type="range" min="10" max="40" step="1" value="24">
+          <input id="botRange" type="range" min="10" max="40" step="1" value="20">
           <button class="stepBtn" id="botPlus">+</button>
         </div>
-        <div class="seatCount"><b id="botCount">24</b> BOTS</div>
+        <div class="seatCount"><b id="botCount">20</b> BOTS</div>
       </div>
 
       <div class="seatPanel hide" id="reloadInfo">
         <div class="seatLabel">MATCH RULES</div>
         <div class="reloadRules">
-          <span><b>25</b> PLAYERS</span>
+          <span><b>15</b> PLAYERS</span>
           <span><b>3</b> LIVES</span>
           <span><b>5s</b> RESPAWN</span>
         </div>
@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>OLD GUNS RUN ON AMMO</b> — in Blitz and Reload every vaulted weapon now uses magazines and reserve ammo: the HUD shows rounds in the mag and reserve, R reloads from your reserve, running dry auto-reloads or swaps you to a gun that can still shoot, and ammo packs are back in the loot pool. Season 6 emitters still run on heat.</div></li>
-      <li><span class="wnTag">02</span><div><b>DAYLIGHT ON THE OLD ISLAND</b> — Reload and Blitz drop the murky dusk filter: the dense dark fog is pulled far back, the sky and sun turn warm daylight, and the old island's grass is a vivid green. Charged pockets in Blitz keep the teal sky and terrain.</div></li>
+      <li><span class="wnTag">01</span><div><b>RELOAD SHRINKS TO 15</b> — Reload and Ranked Reload now put 15 players in a match instead of 25, with the same three lives and five-second respawns. The mode card and lobby rules read the new size.</div></li>
+      <li><span class="wnTag">02</span><div><b>PLAYTEST LOBBY AT 20</b> — Battle Royale and Ranked now open with a 20-bot lobby by default for playtesting, instead of 24. The lobby slider still goes from 10 to 40.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6600,7 +6600,7 @@ const WORLD_EDGE = 362;         // deep ocean, well past the walkable shoreline
 const state = {
   phase: 'menu',         // menu | drop | play | over
   time: 0,
-  botsWanted: 24,
+  botsWanted: 20,
   alive: 0,
   paused: false,
   ended: false,
@@ -6618,7 +6618,7 @@ const state = {
 };
 
 const RELOAD_LIVES = 3;    // 1 life + 2 respawns
-const RELOAD_TOTAL = 25;   // participants in a Reload match
+const RELOAD_TOTAL = 15;   // participants in a Reload match
 const POCKET_COOLDOWN = 15; // seconds per pocket shockwave charge
 const RUMBLE_TEAMMATES = 5;
 const RUMBLE_ENEMIES = 11;
@@ -6654,9 +6654,9 @@ const MODE_DEFS = {
   },
   rankedreload: {
     name: 'RANKED RELOAD', short: 'R-RELOAD', kicker: 'COMPETITIVE · 3 LIVES',
-    desc: 'Ranked Reload: 25 players, three lives each, and a Reload ladder that climbs on its own — your Battle Royale rank stays where it is.',
-    rules: ['<b>25</b> PLAYERS', '<b>3</b> LIVES', 'RELOAD RP'],
-    queue: () => '25 PLAYERS · 3 LIVES · RP',
+    desc: 'Ranked Reload: 15 players, three lives each, and a Reload ladder that climbs on its own — your Battle Royale rank stays where it is.',
+    rules: ['<b>15</b> PLAYERS', '<b>3</b> LIVES', 'RELOAD RP'],
+    queue: () => '15 PLAYERS · 3 LIVES · RP',
   },
   duos: {
     name: 'DUOS', short: 'DUOS', kicker: 'BOT MATE',
@@ -6667,9 +6667,9 @@ const MODE_DEFS = {
   },
   reload: {
     name: 'RELOAD', short: 'RELOAD', kicker: '3 LIVES',
-    desc: '25 players, three lives each. Die and you are back in after 5 seconds.',
-    rules: ['<b>25</b> PLAYERS', '<b>3</b> LIVES', '<b>5s</b> RESPAWN'],
-    queue: () => '25 PLAYERS · 3 LIVES',
+    desc: '15 players, three lives each. Die and you are back in after 5 seconds.',
+    rules: ['<b>15</b> PLAYERS', '<b>3</b> LIVES', '<b>5s</b> RESPAWN'],
+    queue: () => '15 PLAYERS · 3 LIVES',
   },
   reloadduos: {
     name: 'RELOAD DUOS', short: 'R-DUOS', kicker: 'SURVIVE',
@@ -15763,8 +15763,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 1 };
-const VERSION_PREV = '7.9.0';
+const VERSION = { major: 7, minor: 9, patch: 2 };
+const VERSION_PREV = '7.9.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;

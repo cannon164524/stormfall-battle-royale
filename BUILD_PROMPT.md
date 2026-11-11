@@ -116,7 +116,7 @@ Every mode shows on a compact 2-column lobby grid of cards with a kicker, name a
 1. **Battle Royale** — solo, 10–40 opponents, storm, full loot.
 2. **Ranked** — same island, bots scale with your rank, RP is earned and shown live, ends in a ranked recap.
 3. **Duos** — you + one bot partner vs 8 rival pairs; knock & reboot everywhere.
-4. **Reload** — 25 players, 3 lives each, 5-second respawn countdown.
+4. **Reload** — 15 players, 3 lives each, 5-second respawn countdown.
 5. **Gun Game** — no loot, start on a pistol, upgrade one weapon per elimination through 10 guns, win at the top.
 6. **Blitz** — no drop phase, storm already closing, ~7 minute matches, extra loot.
 7. **Team Rumble** — 6 blue (you + 5 bots) vs 12 red, endless respawns, first team to 30 eliminations, live scoreboard, no storm.
