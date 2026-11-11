@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>RELOAD SHRINKS TO 15</b> — Reload and Ranked Reload now put 15 players in a match instead of 25, with the same three lives and five-second respawns. The mode card and lobby rules read the new size.</div></li>
-      <li><span class="wnTag">02</span><div><b>PLAYTEST LOBBY AT 20</b> — Battle Royale and Ranked now open with a 20-bot lobby by default for playtesting, instead of 24. The lobby slider still goes from 10 to 40.</div></li>
+      <li><span class="wnTag">01</span><div><b>WEAPON SWITCHES</b> — weapons.json now takes a <b>disabled</b> list. Any gun named there is switched off everywhere with one edit: floor loot, chests, bot loadouts, vending stock, long-gun seeds, mythic/exotic rolls and Blitz rewards. Add it to <b>extra</b> instead and it joins the pools — the way to hold a finished gun back and release it for a power hour.</div></li>
+      <li><span class="wnTag">02</span><div><b>YOUR STARTING LOADOUT</b> — mark any weapon with <b>startingWeapon: true</b> and you spawn with it; up to five flagged guns become your opening loadout. Nothing flagged keeps the old defaults, and Gun Game still starts on its ladder.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7005,7 +7005,13 @@ const HEAT_WEAPONS = new Set([
 ]);
 
 function weaponUsesAmmo(it) {
-  return !!(it && it.kind === 'weapon' && mapTheme() !== 'future' && !HEAT_WEAPONS.has(it.type));
+  return !!(it && it.kind === 'weapon' && !HEAT_WEAPONS.has(it.type));
+}
+
+function modeHasAmmoWeapons() {
+  if (mapTheme() !== 'future') return true;
+  return WEAPON_FLAGS.extra.some((t) => !HEAT_WEAPONS.has(t)) ||
+    WEAPON_FLAGS.starting.some((t) => !HEAT_WEAPONS.has(t));
 }
 
 let waterMesh = null;
@@ -7949,7 +7955,13 @@ const VEND_TYPES_CLASSIC = ['pistol', 'smg', 'ar', 'heavyar', 'burst', 'holo', '
 
 function vendTypesForMode() {
   const t = mapTheme();
-  return t === 'classic' ? VEND_TYPES_CLASSIC : t === 'mix' ? VEND_TYPES.concat(VEND_TYPES_CLASSIC) : VEND_TYPES;
+  const base = t === 'classic' ? VEND_TYPES_CLASSIC : t === 'mix' ? VEND_TYPES.concat(VEND_TYPES_CLASSIC) : VEND_TYPES;
+  const pool = allowedOnly(base);
+  for (const id of weaponExtras()) {
+    if (id.indexOf('mythic_') === 0 || id.indexOf('exotic_') === 0) continue;
+    if (pool.indexOf(id) < 0) pool.push(id);
+  }
+  return pool;
 }
 
 function makeVendingMachine(x, z, rng) {
@@ -8721,17 +8733,54 @@ const BLITZ_WEAPON_POOL = LOOT_WEAPON_POOL.concat(CLASSIC_WEAPON_POOL);
 const CLASSIC_MYTHIC_WEAPONS = ['mythic_pistol', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_ar', 'mythic_heavyar', 'mythic_lmg', 'mythic_doublebarrel', 'mythic_lever', 'mythic_hunting'];
 const CLASSIC_EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_minigun', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_lever'];
 
+/* Remote switches from weapons.json: disable any gun everywhere, add an
+   unreleased one to the pools, or change the spawn loadout. */
+const WEAPON_FLAGS = {
+  disabled: new Set(),
+  extra: [],
+  starting: [],
+};
+
+function weaponAllowed(type) {
+  return !!(type && WEAPONS[type] && !WEAPON_FLAGS.disabled.has(type));
+}
+
+/* Keep a pool usable: if every entry is switched off, fall back to whatever
+   guns are still allowed so loot never becomes a crash. */
+function allowedOnly(list) {
+  const out = list.filter((t) => weaponAllowed(t));
+  if (out.length) return out;
+  const any = Object.keys(WEAPONS).filter((t) => weaponAllowed(t));
+  return any.length ? any : list.slice();
+}
+
+function weaponExtras() {
+  return WEAPON_FLAGS.extra.filter((t) => weaponAllowed(t));
+}
+
 function lootPoolForMode() {
   const t = mapTheme();
-  return t === 'classic' ? CLASSIC_WEAPON_POOL : t === 'mix' ? BLITZ_WEAPON_POOL : LOOT_WEAPON_POOL;
+  const base = t === 'classic' ? CLASSIC_WEAPON_POOL : t === 'mix' ? BLITZ_WEAPON_POOL : LOOT_WEAPON_POOL;
+  const pool = allowedOnly(base);
+  for (const id of weaponExtras()) {
+    if (id.indexOf('mythic_') === 0 || id.indexOf('exotic_') === 0) continue;
+    if (pool.indexOf(id) < 0) pool.push(id);
+  }
+  return pool;
 }
 function mythicPoolForMode() {
   const t = mapTheme();
-  return t === 'classic' ? CLASSIC_MYTHIC_WEAPONS : t === 'mix' ? MYTHIC_WEAPONS.concat(CLASSIC_MYTHIC_WEAPONS) : MYTHIC_WEAPONS;
+  const base = t === 'classic' ? CLASSIC_MYTHIC_WEAPONS : t === 'mix' ? MYTHIC_WEAPONS.concat(CLASSIC_MYTHIC_WEAPONS) : MYTHIC_WEAPONS;
+  const pool = allowedOnly(base);
+  for (const id of weaponExtras()) if (id.indexOf('mythic_') === 0 && pool.indexOf(id) < 0) pool.push(id);
+  return pool;
 }
 function exoticPoolForMode() {
   const t = mapTheme();
-  return t === 'classic' ? CLASSIC_EXOTIC_WEAPONS : t === 'mix' ? EXOTIC_WEAPONS.concat(CLASSIC_EXOTIC_WEAPONS) : EXOTIC_WEAPONS;
+  const base = t === 'classic' ? CLASSIC_EXOTIC_WEAPONS : t === 'mix' ? EXOTIC_WEAPONS.concat(CLASSIC_EXOTIC_WEAPONS) : EXOTIC_WEAPONS;
+  const pool = allowedOnly(base);
+  for (const id of weaponExtras()) if (id.indexOf('exotic_') === 0 && pool.indexOf(id) < 0) pool.push(id);
+  return pool;
 }
 
 const GUN_ICONS = {
@@ -10037,12 +10086,12 @@ function clearLoot() {
 
 function lootWeaponType() {
   const classic = mapTheme() === 'classic';
-  if (mod('snipers')) return pick(classic
+  if (mod('snipers')) return pick(allowedOnly(classic
     ? ['sniper', 'hunting', 'thermal', 'sniper', 'hunting']
-    : ['gauss', 'specter', 'rail', 'rail', 'reaper']);
-  if (mod('shotguns')) return pick(classic
+    : ['gauss', 'specter', 'rail', 'rail', 'reaper']));
+  if (mod('shotguns')) return pick(allowedOnly(classic
     ? ['shotgun', 'tacshot', 'doublebarrel', 'combat']
-    : ['scatter', 'prism']);
+    : ['scatter', 'prism']));
   return pick(lootPoolForMode());
 }
 
@@ -10070,7 +10119,7 @@ function rollLootItem(rng, bonus) {
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
-  if (mapTheme() !== 'future' && Math.random() < 0.18) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));
+  if (modeHasAmmoWeapons() && Math.random() < 0.18) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));
   if (Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
   if (Math.random() < 0.06) return makeSpritePod(pick(SPRITE_IDS));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
@@ -10105,9 +10154,9 @@ const SEED_LONG_GUNS = ['rail', 'reaper', 'beam', 'rail', 'reaper', 'beam', 'rai
 
 function longGunSeeds() {
   const t = mapTheme();
-  if (t === 'classic') return ['sniper', 'hunting', 'thermal', 'sniper', 'hunting', 'thermal', 'sniper', 'hunting'];
-  if (t === 'mix') return ['rail', 'reaper', 'beam', 'sniper', 'hunting', 'thermal', 'rail', 'reaper'];
-  return SEED_LONG_GUNS;
+  if (t === 'classic') return allowedOnly(['sniper', 'hunting', 'thermal', 'sniper', 'hunting', 'thermal', 'sniper', 'hunting']);
+  if (t === 'mix') return allowedOnly(['rail', 'reaper', 'beam', 'sniper', 'hunting', 'thermal', 'rail', 'reaper']);
+  return allowedOnly(SEED_LONG_GUNS);
 }
 
 function seedLongGunLoot() {
@@ -10128,11 +10177,11 @@ function seedLongGunLoot() {
 
 function seedLongGunNear(pos) {
   const t = mapTheme();
-  const type = t === 'classic'
-    ? pick(['sniper', 'hunting', 'thermal'])
+  const type = pick(allowedOnly(t === 'classic'
+    ? ['sniper', 'hunting', 'thermal']
     : t === 'mix'
-      ? pick(['rail', 'reaper', 'beam', 'sniper', 'hunting'])
-      : pick(['rail', 'reaper', 'beam']);
+      ? ['rail', 'reaper', 'beam', 'sniper', 'hunting']
+      : ['rail', 'reaper', 'beam']));
   let fallback = null;
   for (let t = 0; t < 80; t++) {
     const ang = Math.random() * TAU;
@@ -10158,7 +10207,7 @@ function giveItem(item) {
     return -4;
   }
   if (item.kind === 'ammo') {
-    if (item.ammoType && mapTheme() !== 'future') {
+    if (item.ammoType && modeHasAmmoWeapons()) {
       player.ammo[item.ammoType] = Math.min(999, (player.ammo[item.ammoType] || 0) + (item.count || 30));
       toast('+' + (item.count || 30) + ' ' + String(item.ammoType).toUpperCase(), 'sub');
       return -2;
@@ -11348,10 +11397,9 @@ function updateRespawns() {
 const rebootVans = [];
 
 function ammoKit(type) {
-  const a = { light: 0, medium: 0, heavy: 0, shells: 0 };
+  const a = { light: 60, medium: 60, heavy: 60, shells: 60 };
   const t = (WEAPONS[type] || WEAPONS.pistol).ammo;
   a[t] = 60;
-  if (mapTheme() !== 'future') { a.light = 60; a.medium = 60; a.heavy = 60; a.shells = 60; }
   return a;
 }
 
@@ -11510,8 +11558,8 @@ function rebootMate() {
   m.hp = mod('glass') ? 55 : 100;
   m.shield = 0;
   m.overshield = 50;
-  m.weapon = makeWeapon('pulsepistol', 0);
-  m.mag = WEAPONS.pulsepistol.mag;
+  m.weapon = makeWeapon(startWeaponType(), 0);
+  m.mag = m.weapon.mag;
   m.nextFire = 0;
   m.target = null;
   m.goal = null;
@@ -11541,8 +11589,8 @@ function rebootPlayerAtVan(van) {
   player.shield = 0;
   player.overshield = player.maxOvershield;
   player.lastDamage = -99;
-  player.inv = [makeWeapon('pulsepistol', 0), null, null, null, null];
-  player.ammo = ammoKit('pulsepistol');
+  player.inv = makeStartingInventory();
+  player.ammo = ammoKit(startWeaponType());
   player.slot = 0;
   player.wood = Math.max(120, player.wood);
   player.reloading = false;
@@ -12123,12 +12171,12 @@ let botPhase = 0;
 
 function botWeaponType(level) {
   const classic = mapTheme() === 'classic';
-  if (mod('snipers')) return pick(classic
+  if (mod('snipers')) return pick(allowedOnly(classic
     ? ['sniper', 'hunting', 'thermal', 'sniper', 'hunting']
-    : ['gauss', 'specter', 'rail', 'rail', 'reaper']);
-  if (mod('shotguns')) return pick(classic
+    : ['gauss', 'specter', 'rail', 'rail', 'reaper']));
+  if (mod('shotguns')) return pick(allowedOnly(classic
     ? ['shotgun', 'tacshot', 'doublebarrel', 'combat']
-    : ['scatter', 'prism']);
+    : ['scatter', 'prism']));
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
   return pick(lootPoolForMode());
 }
@@ -15190,8 +15238,7 @@ function resetPlayerForMatch() {
   player.channel = null;
   player.slot = 0;
   player.gunLevel = 0;
-  const sw = startWeaponType();
-  player.inv = [makeWeapon(sw, 0), null, null, null, null];
+  player.inv = makeStartingInventory();
   player.boons = [];
   pixelScale = 1;
   qualityDrops = 0;
@@ -15246,12 +15293,34 @@ function plannedBotCount() {
   }
 }
 
-function startWeaponType() {
+function defaultStartWeapon() {
   if (mapTheme() === 'classic') return mod('snipers') ? 'sniper' : mod('shotguns') ? 'shotgun' : 'pistol';
   if (mod('snipers')) return 'reaper';
   if (mod('shotguns')) return 'scatter';
-  if (isGunGame()) return GUN_ORDER[0];
   return 'pulsepistol';
+}
+
+/* The spawn loadout: every weapon flagged startingWeapon in weapons.json, in
+   file order, capped at five slots. Falls back to the mode's default pistol. */
+function startingLoadout() {
+  if (isGunGame()) return [GUN_ORDER[0]];
+  const chosen = WEAPON_FLAGS.starting.filter((t) => WEAPONS[t] && weaponAllowed(t));
+  const list = chosen.length ? chosen : allowedOnly([defaultStartWeapon()]);
+  const out = [];
+  for (const t of list) {
+    if (weaponAllowed(t) && out.indexOf(t) < 0) out.push(t);
+    if (out.length >= 5) break;
+  }
+  return out.length ? out : [defaultStartWeapon()];
+}
+
+function startWeaponType() { return startingLoadout()[0]; }
+
+function makeStartingInventory() {
+  const load = startingLoadout();
+  const inv = [null, null, null, null, null];
+  for (let i = 0; i < load.length && i < inv.length; i++) inv[i] = makeWeapon(load[i], 0);
+  return inv;
 }
 
 function placeOnGround(e) {
@@ -15763,8 +15832,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 2 };
-const VERSION_PREV = '7.9.1';
+const VERSION = { major: 7, minor: 9, patch: 3 };
+const VERSION_PREV = '7.9.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18988,11 +19057,28 @@ const WEAPON_TUNABLE = {
 function applyWeaponStats(data) {
   if (!data || typeof data !== 'object') return 0;
   let changed = 0;
+
+  WEAPON_FLAGS.disabled = new Set();
+  WEAPON_FLAGS.extra = [];
+  WEAPON_FLAGS.starting = [];
+
+  if (Array.isArray(data.disabled)) {
+    for (const id of data.disabled) {
+      if (WEAPONS[id]) { WEAPON_FLAGS.disabled.add(id); changed++; }
+    }
+  }
+  if (Array.isArray(data.extra)) {
+    for (const id of data.extra) {
+      if (WEAPONS[id] && WEAPON_FLAGS.extra.indexOf(id) < 0) { WEAPON_FLAGS.extra.push(id); changed++; }
+    }
+  }
+
   const list = (data.weapons && typeof data.weapons === 'object') ? data.weapons : data;
   for (const type in list) {
     if (!Object.prototype.hasOwnProperty.call(WEAPONS, type)) continue;
     const tune = list[type];
     if (!tune || typeof tune !== 'object') continue;
+    if (tune.startingWeapon === true) WEAPON_FLAGS.starting.push(type);
     const def = WEAPONS[type];
     for (const key in tune) {
       if (!Object.prototype.hasOwnProperty.call(WEAPON_TUNABLE, key)) continue;
@@ -19001,6 +19087,11 @@ function applyWeaponStats(data) {
       const [lo, hi] = WEAPON_TUNABLE[key];
       const next = Math.min(hi, Math.max(lo, v));
       if (def[key] !== next) { def[key] = next; changed++; }
+    }
+  }
+  if (!WEAPON_FLAGS.starting.length && Array.isArray(data.startingLoadout)) {
+    for (const id of data.startingLoadout) {
+      if (WEAPONS[id] && WEAPON_FLAGS.starting.indexOf(id) < 0) { WEAPON_FLAGS.starting.push(id); changed++; }
     }
   }
   if (Array.isArray(data.rarity)) {
