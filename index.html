@@ -7984,11 +7984,12 @@ function refreshVendingDisplay(vm) {
 function buildVendingMachines(rng) {
   vendingMachines.length = 0;
   if (isGunGame()) return;
+  const spread = isBlitz() ? 0.62 : 1;
   let tries = 0;
   while (vendingMachines.length < 12 && tries < 500) {
     tries++;
     const ang = rng() * TAU;
-    const rad = 45 + Math.sqrt(rng()) * 245;
+    const rad = (45 + Math.sqrt(rng()) * 245) * spread;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 2.4) continue;
     if (!siteFreeAt(x, z, 3.0)) continue;
