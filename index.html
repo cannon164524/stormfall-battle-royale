@@ -7002,6 +7002,7 @@ const HEAT_WEAPONS = new Set([
   'pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler', 'beam', 'gauss', 'specter', 'rail', 'reaper',
   'mythic_pulse', 'mythic_rail', 'mythic_tesla', 'mythic_pulsepistol', 'mythic_scatter', 'mythic_cycler', 'mythic_beam', 'mythic_gauss', 'mythic_specter',
   'exotic_nova', 'exotic_cryo', 'exotic_ion', 'exotic_scatter', 'exotic_prism', 'exotic_cycler', 'exotic_beam', 'exotic_specter',
+  'exotic_zero',
 ]);
 
 function weaponUsesAmmo(it) {
@@ -8623,6 +8624,9 @@ const WEAPONS = {
   exotic_cycler: { name: 'Ricochet Cycler LMG', ammo: 'medium', dmg: 30, rpm: 520, mag: 64, reload: 3.0, spread: 0.020, ads: 0.011, pellets: 1, hs: 1.6, range: 225, auto: true, sfx: 'lmg', ricochet: true, ricochetR: 4.2, ricochetMul: 0.25 },
   exotic_beam: { name: 'Siphoning Helix Rifle', ammo: 'medium', dmg: 32, rpm: 340, mag: 26, reload: 2.2, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 290, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'reddot', onHit: 'siphon', siphon: 5, bulletSpeed: 720 },
   exotic_specter: { name: 'Explosive Specter Marksman', ammo: 'medium', dmg: 62, rpm: 100, mag: 8, reload: 2.6, spread: 0.024, ads: 0.0001, pellets: 1, hs: 2.1, range: 340, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', onHit: 'explode', blastR: 2.4, blastDmg: 26, bulletSpeed: 700 },
+  /* Held back for power hours: not in any pool, so it can only be switched on
+     from weapons.json with "disabled": false. */
+  exotic_zero: { name: 'Zero Hour', ammo: 'medium', dmg: 52, rpm: 400, mag: 40, reload: 1.2, spread: 0.008, ads: 0.003, pellets: 1, hs: 3.0, range: 460, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 44, scope: 'reddot', bulletSpeed: 950, onHit: 'annihilate', blastR: 8, blastDmg: 110, freezeTime: 2.6, knockForce: 26, siphon: 12, pierce: true, ricochet: true, ricochetR: 7, ricochetMul: 0.5 },
 };
 
 /* Every family gets its own report: a tactical SMG should not share a voice
@@ -8687,6 +8691,7 @@ const SPECIAL_BASE = {
   exotic_nova: 'nova', exotic_cryo: 'cryo', exotic_ion: 'ion',
   exotic_scatter: 'scatter', exotic_prism: 'prism', exotic_cycler: 'cycler',
   exotic_beam: 'beam', exotic_specter: 'specter',
+  exotic_zero: 'beam',
 };
 
 /* Weighted loot pool — Season 6 replaced the island's guns wholesale. Nothing
@@ -8759,7 +8764,7 @@ function weaponAllowed(type) {
 function allowedOnly(list) {
   const out = list.filter((t) => weaponAllowed(t));
   if (out.length) return out;
-  const any = Object.keys(WEAPONS).filter((t) => weaponAllowed(t));
+  const any = Object.keys(WEAPONS).filter((t) => weaponAllowed(t) && knownWeaponIds().has(t));
   return any.length ? any : list.slice();
 }
 
@@ -8861,6 +8866,7 @@ GUN_ICONS.mythic_tesla = GUN_ICONS.tesla;
 GUN_ICONS.exotic_nova = GUN_ICONS.nova;
 GUN_ICONS.exotic_cryo = GUN_ICONS.cryo;
 GUN_ICONS.exotic_ion = GUN_ICONS.ion;
+GUN_ICONS.exotic_zero = GUN_ICONS.beam;
 
 GUN_ICONS.heavyar = GUN_ICONS.ar;
 GUN_ICONS.burst = GUN_ICONS.ar;
@@ -10139,6 +10145,9 @@ function ammoTypeForPlayer() {
 
 function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
+  // Power-hour release: Zero Hour only exists on the floor while the Gist has it
+  // switched on, and then it turns up far more often than an ordinary Exotic.
+  if (weaponExtras().indexOf('exotic_zero') >= 0 && Math.random() < 0.06) return makeWeapon('exotic_zero', R_EXOTIC);
   if (Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
   if (Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
@@ -10579,6 +10588,30 @@ function weaponSpecial(w, hit, dir, dmg) {
         tracerFX(hit.point, nearest.pos.clone().setY(nearest.pos.y + 1.2), 0x8ff6ff);
       }
     }
+  } else if (w.onHit === 'annihilate' && hit.point) {
+    // Zero Hour: the round detonates wide, freezing and throwing everyone
+    // caught in it, and the shooter drinks the damage back.
+    const src = hit.point;
+    const r = w.blastR || 8;
+    blastDamage(src, r, w.blastDmg || 110, hit.bot);
+    for (let i = 0; i < bots.length; i++) {
+      const o = bots[i];
+      if (!o.alive || o.out || o.dropping) continue;
+      if (state.teamMode && o.team === player.team) continue;
+      const d = Math.hypot(o.pos.x - src.x, o.pos.z - src.z);
+      if (d > r) continue;
+      o.frozenUntil = Math.max(o.frozenUntil || 0, state.time + (w.freezeTime || 2.6));
+      if (!o.knock) o.knock = new THREE.Vector3();
+      const len = Math.max(0.6, d);
+      o.knock.x += ((o.pos.x - src.x) / len) * (w.knockForce || 26);
+      o.knock.z += ((o.pos.z - src.z) / len) * (w.knockForce || 26);
+      o.hop = Math.max(o.hop || 0, 4.5);
+      tracerFX(src, o.pos.clone().setY(o.pos.y + 1.1), 0xffe070);
+    }
+    const heal = w.siphon || 12;
+    player.hp = Math.min(player.maxHp, player.hp + heal);
+    player.shield = Math.min(player.maxShield, player.shield + heal);
+    sfx('heal');
   }
   if (w.ricochet && hit.kind === 'bot' && hit.point) {
     const radius = w.ricochetR || 4.5;
