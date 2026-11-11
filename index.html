@@ -6540,9 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BLITZ IS A CROSSOVER</b> — the Blitz island is now a smaller mix of both worlds: half the POIs are charged basin architecture, half are the old timber town, and the terrain, trees, rocks and crates flip between the two. Its loot pool blends the Season 6 hardware with the vaulted arsenal, and everything is packed into a tighter play space.</div></li>
-      <li><span class="wnTag">02</span><div><b>RELOAD GOES HOME</b> — Reload and Reload Duos drop onto the full-size old island: green terrain, pine forests, grey boulders, wooden houses and crates, classic sector names, no relay masts. Their loot, mythics, exotics, bot guns and vending stock are the old arsenal only.</div></li>
-      <li><span class="wnTag">03</span><div><b>ONE MAP AT A TIME</b> — each match builds only the map its mode needs and clears it again on the way out, so switching modes unloads the old props, colliders, chests, loot and bots before the next island is built. Battle Royale, Ranked, Duos, Rumble, Sandbox, Gun Game and Aim Test keep the current charged basin unchanged.</div></li>
+      <li><span class="wnTag">01</span><div><b>OLD GUNS RUN ON AMMO</b> — in Blitz and Reload every vaulted weapon now uses magazines and reserve ammo: the HUD shows rounds in the mag and reserve, R reloads from your reserve, running dry auto-reloads or swaps you to a gun that can still shoot, and ammo packs are back in the loot pool. Season 6 emitters still run on heat.</div></li>
+      <li><span class="wnTag">02</span><div><b>DAYLIGHT ON THE OLD ISLAND</b> — Reload and Blitz drop the murky dusk filter: the dense dark fog is pulled far back, the sky and sun turn warm daylight, and the old island's grass is a vivid green. Charged pockets in Blitz keep the teal sky and terrain.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6910,29 +6909,36 @@ scene.add(sun);
 scene.add(sun.target);
 
 let skyMesh = null;
+let skyMat = null;
 function buildSky() {
   const geo = new THREE.SphereGeometry(1700, 32, 16);
-  const mat = new THREE.ShaderMaterial({
+  skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     depthWrite: false,
     fog: false,
+    uniforms: {
+      uTop: { value: new THREE.Color(0x050e1f) },
+      uHor: { value: new THREE.Color(0x175c61) },
+      uLow: { value: new THREE.Color(0x0d262f) },
+    },
     vertexShader: `
       varying vec3 vp;
       void main() { vp = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
     `,
     fragmentShader: `
       varying vec3 vp;
+      uniform vec3 uTop;
+      uniform vec3 uHor;
+      uniform vec3 uLow;
       void main() {
         float h = normalize(vp).y;
-        vec3 top = vec3(0.02, 0.05, 0.12);
-        vec3 hor = vec3(0.09, 0.36, 0.38);
-        vec3 col = mix(hor, top, smoothstep(-0.02, 0.55, h));
-        col = mix(vec3(0.05, 0.15, 0.20), col, smoothstep(-0.45, 0.02, h));
+        vec3 col = mix(uHor, uTop, smoothstep(-0.02, 0.55, h));
+        col = mix(uLow, col, smoothstep(-0.45, 0.02, h));
         gl_FragColor = vec4(col, 1.0);
       }
     `,
   });
-  skyMesh = new THREE.Mesh(geo, mat);
+  skyMesh = new THREE.Mesh(geo, skyMat);
   skyMesh.frustumCulled = false;
   scene.add(skyMesh);
 }
@@ -6971,13 +6977,13 @@ const COLOR = {
 
 /* The old island's palette: sand, living grass and grey stone. */
 const CLASSIC_COLOR = {
-  sandWet: new THREE.Color(0x8d9a7c),
-  sand: new THREE.Color(0xd6c79b),
-  grassA: new THREE.Color(0x4a7a3c),
-  grassB: new THREE.Color(0x6a9b4a),
-  grassC: new THREE.Color(0x33582b),
-  rock: new THREE.Color(0x767468),
-  snow: new THREE.Color(0xe9f2f4),
+  sandWet: new THREE.Color(0x9aa887),
+  sand: new THREE.Color(0xe0d2a6),
+  grassA: new THREE.Color(0x5b9e43),
+  grassB: new THREE.Color(0x7cc457),
+  grassC: new THREE.Color(0x3d7833),
+  rock: new THREE.Color(0x8a877c),
+  snow: new THREE.Color(0xf1f7f8),
 };
 
 /* Which island a mode gets: BR keeps the charged basin, Reload gets the old
@@ -6990,6 +6996,17 @@ function mapTheme() {
 
 let siteThemeMode = 'future';
 function isClassicSite() { return siteThemeMode === 'classic'; }
+
+/* Season 6 hardware runs on heat; the vaulted arsenal runs on cartridges. */
+const HEAT_WEAPONS = new Set([
+  'pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler', 'beam', 'gauss', 'specter', 'rail', 'reaper',
+  'mythic_pulse', 'mythic_rail', 'mythic_tesla', 'mythic_pulsepistol', 'mythic_scatter', 'mythic_cycler', 'mythic_beam', 'mythic_gauss', 'mythic_specter',
+  'exotic_nova', 'exotic_cryo', 'exotic_ion', 'exotic_scatter', 'exotic_prism', 'exotic_cycler', 'exotic_beam', 'exotic_specter',
+]);
+
+function weaponUsesAmmo(it) {
+  return !!(it && it.kind === 'weapon' && mapTheme() !== 'future' && !HEAT_WEAPONS.has(it.type));
+}
 
 let waterMesh = null;
 let terrainMesh = null;
@@ -7072,14 +7089,35 @@ function paintTerrain(theme) {
   attr.needsUpdate = true;
 
   if (theme === 'classic') {
-    scene.fog.color.setHex(0x9dbfd4);
+    scene.fog.color.setHex(0xcfe3f2);
     if (waterMesh) waterMesh.material.color.setHex(0x2f7fa3);
+    if (hemi) { hemi.color.setHex(0xffffff); hemi.groundColor.setHex(0x5b7a45); }
+    if (sun) sun.color.setHex(0xfff4d8);
+    if (skyMat) {
+      skyMat.uniforms.uTop.value.setHex(0x5d9bd6);
+      skyMat.uniforms.uHor.value.setHex(0xcfe3f2);
+      skyMat.uniforms.uLow.value.setHex(0x9fb9c8);
+    }
   } else if (theme === 'mix') {
-    scene.fog.color.setHex(0x2a5a62);
+    scene.fog.color.setHex(0x8fc9c9);
     if (waterMesh) waterMesh.material.color.setHex(0x1c6f80);
+    if (hemi) { hemi.color.setHex(0xd9f5f0); hemi.groundColor.setHex(0x3d6156); }
+    if (sun) sun.color.setHex(0xeaf7ff);
+    if (skyMat) {
+      skyMat.uniforms.uTop.value.setHex(0x2b6b8f);
+      skyMat.uniforms.uHor.value.setHex(0x8fc9c9);
+      skyMat.uniforms.uLow.value.setHex(0x4f7f84);
+    }
   } else {
     scene.fog.color.setHex(0x1b3c42);
     if (waterMesh) waterMesh.material.color.setHex(0x11606e);
+    if (hemi) { hemi.color.setHex(0x9ff2ff); hemi.groundColor.setHex(0x14312e); }
+    if (sun) sun.color.setHex(0xd6f7ff);
+    if (skyMat) {
+      skyMat.uniforms.uTop.value.setHex(0x050e1f);
+      skyMat.uniforms.uHor.value.setHex(0x175c61);
+      skyMat.uniforms.uLow.value.setHex(0x0d263f);
+    }
   }
 }
 
@@ -9086,7 +9124,7 @@ function itemLabel(item) {
 }
 function itemMeta(item) {
   if (!item) return '';
-  if (item.kind === 'weapon') return WEAPONS[item.type].name + ' · ∞ cells';
+  if (item.kind === 'weapon') return WEAPONS[item.type].name + (weaponUsesAmmo(item) ? ' · ' + (item.mag || 0) + ' rds' : ' · ∞ cells');
   if (item.kind === 'gold') return item.amount + ' gold bars';
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
@@ -10032,6 +10070,7 @@ function rollLootItem(rng, bonus) {
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
+  if (mapTheme() !== 'future' && Math.random() < 0.18) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));
   if (Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
   if (Math.random() < 0.06) return makeSpritePod(pick(SPRITE_IDS));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
@@ -10119,6 +10158,11 @@ function giveItem(item) {
     return -4;
   }
   if (item.kind === 'ammo') {
+    if (item.ammoType && mapTheme() !== 'future') {
+      player.ammo[item.ammoType] = Math.min(999, (player.ammo[item.ammoType] || 0) + (item.count || 30));
+      toast('+' + (item.count || 30) + ' ' + String(item.ammoType).toUpperCase(), 'sub');
+      return -2;
+    }
     // Ammo boxes are coolant cells now: they vent the emitter instantly.
     const held = currentItem();
     if (held && held.kind === 'weapon') { held.heat = 0; held.overheated = false; }
@@ -10539,26 +10583,32 @@ function bloomCap(w) {
 
 function playerFire() {
   if (!player.alive || player.dropping || player.knocked) return;
-  if (player.using) return;
+  if (player.using || player.reloading) return;
   const it = currentItem();
   if (!it || it.kind !== 'weapon') return;
   if (state.time < player.nextFire) return;
   const w = WEAPONS[it.type];
   const wt = SPECIAL_BASE[it.type] || it.type;
-  // Infinite cells: the only thing that can stop the trigger is heat.
-  if (player.ventEnd && state.time < player.ventEnd) return;
-  if (player.overheated) return;
-  if (!adminOn('infAmmo')) {
-    it.heat = Math.min(1, itemHeat(it) + heatPerShot(w) * (w.burst || 1));
-    player.heat = it.heat;
-    if (it.heat >= 1) {
-      it.overheated = true;
-      player.overheated = true;
-      player.overheatWarnAt = state.time;
-      sfx('overheat');
-      toast('OVERHEATED · R TO VENT', 'sub');
+  const usesAmmo = weaponUsesAmmo(it);
+  if (usesAmmo) {
+    if ((it.mag || 0) <= 0) { startReload(); return; }
+  } else {
+    // Infinite cells: the only thing that can stop the trigger is heat.
+    if (player.ventEnd && state.time < player.ventEnd) return;
+    if (player.overheated) return;
+    if (!adminOn('infAmmo')) {
+      it.heat = Math.min(1, itemHeat(it) + heatPerShot(w) * (w.burst || 1));
+      player.heat = it.heat;
+      if (it.heat >= 1) {
+        it.overheated = true;
+        player.overheated = true;
+        player.overheatWarnAt = state.time;
+        sfx('overheat');
+        toast('OVERHEATED · R TO VENT', 'sub');
+      }
     }
   }
+  if (usesAmmo && !adminOn('infAmmo')) it.mag = Math.max(0, (it.mag || 0) - 1);
   player.nextFire = state.time + 60 / (w.rpm * (hasSpritePower('rpm') ? 1.15 : 1));
 
   const origin = camera.position.clone();
@@ -10681,6 +10731,25 @@ function startReload() {
   if (!it || it.kind !== 'weapon') return;
   if (!player.alive || player.knocked) return;
   if (player.reloading) return;
+  if (weaponUsesAmmo(it)) {
+    const def = WEAPONS[it.type];
+    if ((it.mag || 0) >= def.mag) return;
+    const at = def.ammo;
+    if ((player.ammo[at] || 0) <= 0) {
+      toast('NO ' + at.toUpperCase() + ' AMMO', 'sub');
+      dryWeapon();
+      return;
+    }
+    player.reloading = true;
+    player.ventEnd = 0;
+    player.reloadStart = state.time;
+    player.reloadEnd = state.time + (def.reload || 2);
+    player.bloom = 0;
+    sfx('reload');
+    updateAmmoReadout();
+    refreshHotbar();
+    return;
+  }
   if (itemHeat(it) < 0.02 && !it.overheated) return;
   // R is a vent now: one second of forced cooling clears the whole cell bank.
   player.reloading = true;
@@ -10696,6 +10765,20 @@ function finishReload() {
   player.reloading = false;
   player.ventEnd = 0;
   const it = currentItem();
+  if (it && it.kind === 'weapon' && weaponUsesAmmo(it)) {
+    const def = WEAPONS[it.type];
+    const at = def.ammo;
+    const need = Math.max(0, def.mag - (it.mag || 0));
+    const take = Math.min(need, player.ammo[at] || 0);
+    it.mag = (it.mag || 0) + take;
+    player.ammo[at] = Math.max(0, (player.ammo[at] || 0) - take);
+    player.heat = 0;
+    player.overheated = false;
+    refreshHotbar();
+    updateAmmoReadout();
+    updateAmmoDial();
+    return;
+  }
   if (it && it.kind === 'weapon') { it.heat = 0; it.overheated = false; }
   player.heat = 0;
   player.overheated = false;
@@ -11268,6 +11351,7 @@ function ammoKit(type) {
   const a = { light: 0, medium: 0, heavy: 0, shells: 0 };
   const t = (WEAPONS[type] || WEAPONS.pistol).ammo;
   a[t] = 60;
+  if (mapTheme() !== 'future') { a.light = 60; a.medium = 60; a.heavy = 60; a.shells = 60; }
   return a;
 }
 
@@ -12209,8 +12293,19 @@ function botFire(b, target) {
   if (d > def.range) return;
 
   b.lastShotAt = state.time;
-  b.heat = (b.heat || 0) + heatPerShot(def) * (def.burst || 1);
-  if (b.heat >= 1) { b.heat = 0.5; b.heatLock = state.time + 1.8; }
+  const usesAmmo = weaponUsesAmmo(b.weapon);
+  if (usesAmmo) {
+    if ((b.weapon.mag || 0) <= 0) {
+      const w = WEAPONS[b.weapon.type];
+      b.weapon.mag = w.mag;
+      b.reloadEnd = state.time + (w.reload || 2);
+      return;
+    }
+    b.weapon.mag = Math.max(0, (b.weapon.mag || 0) - 1);
+  } else {
+    b.heat = (b.heat || 0) + heatPerShot(def) * (def.burst || 1);
+    if (b.heat >= 1) { b.heat = 0.5; b.heatLock = state.time + 1.8; }
+  }
   b.nextFire = state.time + (60 / def.rpm) * (1 + rand(0, 0.35));
   if (def.auto && Math.random() < 0.05) b.nextFire = state.time + 0.45 + Math.random() * 0.8;
 
@@ -13617,7 +13712,7 @@ function updatePlayer(dt) {
   // the charge it was put away with.
   const heldIt = currentItem();
   const heldW = (heldIt && heldIt.kind === 'weapon') ? WEAPONS[heldIt.type] : null;
-  if (!heldW) {
+  if (!heldW || weaponUsesAmmo(heldIt)) {
     player.heat = 0;
     player.overheated = false;
   } else {
@@ -14098,7 +14193,7 @@ function refreshHotbar() {
       ic.innerHTML = itemIconHTML(it);
       ic.style.color = itemColor(it);
       rar.style.background = itemColor(it);
-      if (it.kind === 'weapon') cnt.textContent = '∞';
+      if (it.kind === 'weapon') cnt.textContent = weaponUsesAmmo(it) ? String(it.mag || 0) : '∞';
       else if (it.count !== undefined) cnt.textContent = 'x' + it.count;
       else cnt.textContent = '';
     }
@@ -14119,8 +14214,13 @@ function refreshHotbar() {
   const it = currentItem();
   if (it && it.kind === 'weapon') {
     const w = WEAPONS[it.type];
-    ammoMagEl.textContent = player.reloading ? '—' : '∞';
-    ammoResEl.textContent = player.overheated ? ' | OVERHEATED' : ' | HEAT ' + Math.round(clamp(player.heat || 0, 0, 1) * 100) + '%';
+    if (weaponUsesAmmo(it)) {
+      ammoMagEl.textContent = String(it.mag || 0);
+      ammoResEl.textContent = player.reloading ? ' | RELOADING' : ' / ' + ((player.ammo[w.ammo] || 0));
+    } else {
+      ammoMagEl.textContent = player.reloading ? '—' : '∞';
+      ammoResEl.textContent = player.overheated ? ' | OVERHEATED' : ' | HEAT ' + Math.round(clamp(player.heat || 0, 0, 1) * 100) + '%';
+    }
     weaponNameEl.textContent = RARITY[it.rarity].name + ' ' + w.name;
     weaponNameEl.style.color = RARITY[it.rarity].color;
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
@@ -14141,7 +14241,12 @@ function refreshHotbar() {
    weapon calls this twelve times a second and the full bar is DOM work. */
 function updateAmmoReadout() {
   const it = currentItem();
-  if (it && it.kind === 'weapon') {
+  if (it && it.kind === 'weapon' && weaponUsesAmmo(it)) {
+    if (ammoMagEl) ammoMagEl.textContent = String(it.mag || 0);
+    if (ammoResEl) ammoResEl.textContent = player.reloading
+      ? ' | RELOADING'
+      : ' / ' + ((player.ammo[WEAPONS[it.type].ammo] || 0));
+  } else if (it && it.kind === 'weapon') {
     if (ammoMagEl) ammoMagEl.textContent = player.reloading ? '—' : '∞';
     if (ammoResEl) ammoResEl.textContent = player.overheated ? ' | OVERHEATED' : ' | HEAT ' + Math.round(clamp(player.heat || 0, 0, 1) * 100) + '%';
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
@@ -14154,7 +14259,9 @@ function updateAmmoReadout() {
   const el = elHotbar ? elHotbar.children[player.slot] : null;
   if (el) {
     const cnt = el.querySelector('.cnt');
-    if (cnt) cnt.textContent = (it && it.kind === 'weapon') ? '∞' : '';
+    if (cnt) cnt.textContent = (it && it.kind === 'weapon')
+      ? (weaponUsesAmmo(it) ? String(it.mag || 0) : '∞')
+      : '';
   }
 }
 
@@ -14167,7 +14274,12 @@ function updateAmmoDial() {
   let pct = 0;
   if (it && it.kind === 'weapon') {
     show = true;
-    pct = clamp(1 - (player.heat || 0), 0, 1);
+    if (weaponUsesAmmo(it)) {
+      const def = WEAPONS[it.type];
+      pct = clamp((it.mag || 0) / Math.max(1, def.mag), 0, 1);
+    } else {
+      pct = clamp(1 - (player.heat || 0), 0, 1);
+    }
   } else if (it && (it.kind === 'heal' || it.kind === 'grenade')) {
     show = true;
     pct = clamp((it.count || 0) / 5, 0, 1);
@@ -15135,6 +15247,7 @@ function plannedBotCount() {
 }
 
 function startWeaponType() {
+  if (mapTheme() === 'classic') return mod('snipers') ? 'sniper' : mod('shotguns') ? 'shotgun' : 'pistol';
   if (mod('snipers')) return 'reaper';
   if (mod('shotguns')) return 'scatter';
   if (isGunGame()) return GUN_ORDER[0];
@@ -15650,8 +15763,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 0 };
-const VERSION_PREV = '7.8.15';
+const VERSION = { major: 7, minor: 9, patch: 1 };
+const VERSION_PREV = '7.9.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -17452,8 +17565,8 @@ function updateRenderDistance(dt) {
   const center = menu ? camera.position : player.pos;
   const R = menu ? 520 : RENDER_DIST;
 
-  scene.fog.near = menu ? 300 : R * 0.62;
-  scene.fog.far = menu ? 950 : R * 1.12;
+  scene.fog.near = menu ? 300 : (mapTheme() === 'future' ? R * 0.62 : R * 4);
+  scene.fog.far = menu ? 950 : (mapTheme() === 'future' ? R * 1.12 : R * 9);
 
   rdAccum += dt;
   if (rdAccum < 0.12) return;
