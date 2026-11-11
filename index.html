@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>WEAPON SWITCHES</b> — weapons.json now takes a <b>disabled</b> list. Any gun named there is switched off everywhere with one edit: floor loot, chests, bot loadouts, vending stock, long-gun seeds, mythic/exotic rolls and Blitz rewards. Add it to <b>extra</b> instead and it joins the pools — the way to hold a finished gun back and release it for a power hour.</div></li>
-      <li><span class="wnTag">02</span><div><b>YOUR STARTING LOADOUT</b> — mark any weapon with <b>startingWeapon: true</b> and you spawn with it; up to five flagged guns become your opening loadout. Nothing flagged keeps the old defaults, and Gun Game still starts on its ladder.</div></li>
+      <li><span class="wnTag">01</span><div><b>ONE SWITCH PER GUN</b> — every weapon in weapons.json now has its own <b>disabled</b> true/false, so there is no list to keep in sync. Set it to <b>true</b> and that gun leaves floor loot, chests, bot loadouts, vending stock, long-gun seeds, mythic and exotic rolls and Blitz rewards. Set it back to <b>false</b> and it returns. A gun that belongs to no pool yet turns itself on the same way, which is how you hold a finished weapon back and release it for a power hour.</div></li>
+      <li><span class="wnTag">02</span><div><b>YOUR STARTING LOADOUT</b> — <b>startingWeapon: true</b> on a gun puts it in your spawn loadout, up to five in file order; every other gun stays false. Nothing flagged keeps the old pistol, and Gun Game still starts on its ladder.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8756,6 +8756,22 @@ function allowedOnly(list) {
 
 function weaponExtras() {
   return WEAPON_FLAGS.extra.filter((t) => weaponAllowed(t));
+}
+
+/* Every weapon that belongs to a mode pool or a fixed list. A weapon with
+   "disabled": false that is not in here is treated as a new release and is
+   added to the loot pools, which is how a power-hour gun is switched on. */
+let KNOWN_WEAPON_IDS = null;
+function knownWeaponIds() {
+  if (KNOWN_WEAPON_IDS) return KNOWN_WEAPON_IDS;
+  const set = new Set();
+  const add = (arr) => { for (const id of arr) set.add(id); };
+  add(LOOT_WEAPON_POOL); add(CLASSIC_WEAPON_POOL);
+  add(MYTHIC_WEAPONS); add(EXOTIC_WEAPONS);
+  add(CLASSIC_MYTHIC_WEAPONS); add(CLASSIC_EXOTIC_WEAPONS);
+  add(VEND_TYPES); add(VEND_TYPES_CLASSIC); add(GUN_ORDER);
+  KNOWN_WEAPON_IDS = set;
+  return set;
 }
 
 function lootPoolForMode() {
@@ -15832,8 +15848,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 3 };
-const VERSION_PREV = '7.9.2';
+const VERSION = { major: 7, minor: 9, patch: 4 };
+const VERSION_PREV = '7.9.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -19027,7 +19043,10 @@ if (motdCloseEl) motdCloseEl.addEventListener('click', () => {
 /* ---------------- weapon stats from the shared Gist ----------------
    The Gist's weapons.json overrides only the numbers it names, so a buff or
    nerf is one edit and no new build. Shape: { "rail": { "dmg": 100 }, ... }.
-   Missing weapons and fields keep the values in WEAPONS. */
+   Each gun also carries its own switches: "disabled": true hides it everywhere,
+   "disabled": false releases one that is in no pool, and "startingWeapon": true
+   puts it in the spawn loadout (five slots). Missing weapons and fields keep
+   the values in WEAPONS. */
 const WEAPON_STATS_URL = 'https://gist.githubusercontent.com/cannon164524/53e30ebd0b724394a72dd6729b454936/raw/weapons.json';
 const WEAPON_STATS_CACHE = 'stormfall.weapons.remote';
 const WEAPON_TUNABLE = {
@@ -19062,22 +19081,22 @@ function applyWeaponStats(data) {
   WEAPON_FLAGS.extra = [];
   WEAPON_FLAGS.starting = [];
 
-  if (Array.isArray(data.disabled)) {
-    for (const id of data.disabled) {
-      if (WEAPONS[id]) { WEAPON_FLAGS.disabled.add(id); changed++; }
-    }
-  }
-  if (Array.isArray(data.extra)) {
-    for (const id of data.extra) {
-      if (WEAPONS[id] && WEAPON_FLAGS.extra.indexOf(id) < 0) { WEAPON_FLAGS.extra.push(id); changed++; }
-    }
-  }
-
+  /* One boolean per gun, no lists to keep in sync. disabled: true pulls it out
+     of every pool; disabled: false on a gun that belongs to no pool puts it in,
+     which is how a finished weapon is held back and then released. */
+  const known = knownWeaponIds();
   const list = (data.weapons && typeof data.weapons === 'object') ? data.weapons : data;
   for (const type in list) {
     if (!Object.prototype.hasOwnProperty.call(WEAPONS, type)) continue;
     const tune = list[type];
     if (!tune || typeof tune !== 'object') continue;
+    if (tune.disabled === true) {
+      WEAPON_FLAGS.disabled.add(type);
+      changed++;
+    } else if (tune.disabled === false && !known.has(type) && WEAPON_FLAGS.extra.indexOf(type) < 0) {
+      WEAPON_FLAGS.extra.push(type);
+      changed++;
+    }
     if (tune.startingWeapon === true) WEAPON_FLAGS.starting.push(type);
     const def = WEAPONS[type];
     for (const key in tune) {
@@ -19087,11 +19106,6 @@ function applyWeaponStats(data) {
       const [lo, hi] = WEAPON_TUNABLE[key];
       const next = Math.min(hi, Math.max(lo, v));
       if (def[key] !== next) { def[key] = next; changed++; }
-    }
-  }
-  if (!WEAPON_FLAGS.starting.length && Array.isArray(data.startingLoadout)) {
-    for (const id of data.startingLoadout) {
-      if (WEAPONS[id] && WEAPON_FLAGS.starting.indexOf(id) < 0) { WEAPON_FLAGS.starting.push(id); changed++; }
     }
   }
   if (Array.isArray(data.rarity)) {
