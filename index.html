@@ -6540,7 +6540,9 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><div><i>Nothing new. Check back soon</i></div></li>
+      <li><span class="wnTag">01</span><div><b>BLITZ IS A CROSSOVER</b> — the Blitz island is now a smaller mix of both worlds: half the POIs are charged basin architecture, half are the old timber town, and the terrain, trees, rocks and crates flip between the two. Its loot pool blends the Season 6 hardware with the vaulted arsenal, and everything is packed into a tighter play space.</div></li>
+      <li><span class="wnTag">02</span><div><b>RELOAD GOES HOME</b> — Reload and Reload Duos drop onto the full-size old island: green terrain, pine forests, grey boulders, wooden houses and crates, classic sector names, no relay masts. Their loot, mythics, exotics, bot guns and vending stock are the old arsenal only.</div></li>
+      <li><span class="wnTag">03</span><div><b>ONE MAP AT A TIME</b> — each match builds only the map its mode needs and clears it again on the way out, so switching modes unloads the old props, colliders, chests, loot and bots before the next island is built. Battle Royale, Ranked, Duos, Rumble, Sandbox, Gun Game and Aim Test keep the current charged basin unchanged.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6967,15 +6969,49 @@ const COLOR = {
   snow: new THREE.Color(0xa8dcd6),
 };
 
+/* The old island's palette: sand, living grass and grey stone. */
+const CLASSIC_COLOR = {
+  sandWet: new THREE.Color(0x8d9a7c),
+  sand: new THREE.Color(0xd6c79b),
+  grassA: new THREE.Color(0x4a7a3c),
+  grassB: new THREE.Color(0x6a9b4a),
+  grassC: new THREE.Color(0x33582b),
+  rock: new THREE.Color(0x767468),
+  snow: new THREE.Color(0xe9f2f4),
+};
+
+/* Which island a mode gets: BR keeps the charged basin, Reload gets the old
+   overgrown island, and Blitz drops into a mix of both. */
+function mapTheme() {
+  if (isBlitz()) return 'mix';
+  if (isReload() || isReloadDuos() || isRankedReload()) return 'classic';
+  return 'future';
+}
+
+let siteThemeMode = 'future';
+function isClassicSite() { return siteThemeMode === 'classic'; }
+
 let waterMesh = null;
+let terrainMesh = null;
 
 function buildTerrain() {
   const segs = COARSE ? 140 : 200;
   const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, segs, segs);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
-  const colors = new Float32Array(pos.count * 3);
+  const colorsFuture = new Float32Array(pos.count * 3);
+  const colorsClassic = new Float32Array(pos.count * 3);
+  const colorsMix = new Float32Array(pos.count * 3);
   const c = new THREE.Color();
+  const cc = new THREE.Color();
+
+  const samplePalette = (pal, h, slope, n, out) => {
+    if (h < 0.6) out.copy(pal.sandWet).lerp(pal.sand, clamp(h / 0.6 + 0.35, 0, 1));
+    else if (h < 2.2) out.copy(pal.sand).lerp(pal.grassA, clamp((h - 0.6) / 1.6, 0, 1));
+    else if (h > 34) out.copy(pal.rock).lerp(pal.snow, clamp((h - 34) / 14, 0, 1));
+    else out.copy(pal.grassA).lerp(pal.grassB, n).lerp(pal.grassC, clamp((slope - 0.5) * 0.8, 0, 0.5));
+    if (slope > 0.9 && h > 1.4) out.lerp(pal.rock, clamp((slope - 0.9) * 0.9, 0, 0.8));
+  };
 
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
@@ -6985,21 +7021,26 @@ function buildTerrain() {
     const slope = Math.hypot(terrainHeight(x + 2.4, z) - h, terrainHeight(x, z + 2.4) - h) / 2.4;
     const n = fbm(x * 0.02 + 5, z * 0.02 - 2, 2);
 
-    if (h < 0.6) c.copy(COLOR.sandWet).lerp(COLOR.sand, clamp(h / 0.6 + 0.35, 0, 1));
-    else if (h < 2.2) c.copy(COLOR.sand).lerp(COLOR.grassA, clamp((h - 0.6) / 1.6, 0, 1));
-    else if (h > 34) c.copy(COLOR.rock).lerp(COLOR.snow, clamp((h - 34) / 14, 0, 1));
-    else c.copy(COLOR.grassA).lerp(COLOR.grassB, n).lerp(COLOR.grassC, clamp((slope - 0.5) * 0.8, 0, 0.5));
+    samplePalette(COLOR, h, slope, n, c);
+    samplePalette(CLASSIC_COLOR, h, slope, n, cc);
 
-    if (slope > 0.9 && h > 1.4) c.lerp(COLOR.rock, clamp((slope - 0.9) * 0.9, 0, 0.8));
+    colorsFuture[i * 3] = c.r; colorsFuture[i * 3 + 1] = c.g; colorsFuture[i * 3 + 2] = c.b;
+    colorsClassic[i * 3] = cc.r; colorsClassic[i * 3 + 1] = cc.g; colorsClassic[i * 3 + 2] = cc.b;
 
-    colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    // A patchwork blend: the west side keeps the old island's colours, the
+    // east side runs charged, with a wavy border between them.
+    const futureSide = Math.sin(x * 0.021) + Math.cos(z * 0.017) > 0;
+    const mc = futureSide ? c : cc;
+    colorsMix[i * 3] = mc.r; colorsMix[i * 3 + 1] = mc.g; colorsMix[i * 3 + 2] = mc.b;
   }
 
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colorsFuture, 3));
   geo.computeVertexNormals();
 
   const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
   mesh.receiveShadow = true;
+  mesh.userData.terrainColors = { future: colorsFuture, classic: colorsClassic, mix: colorsMix };
+  terrainMesh = mesh;
   terrainGroup.add(mesh);
 
   const seabed = new THREE.Mesh(
@@ -7019,6 +7060,28 @@ function buildTerrain() {
   terrainGroup.add(waterMesh);
 }
 buildTerrain();
+
+/* Swap the island's palette without rebuilding the geometry. */
+function paintTerrain(theme) {
+  if (!terrainMesh) return;
+  const palettes = terrainMesh.geometry.userData.terrainColors;
+  if (!palettes) return;
+  const arr = palettes[theme] || palettes.future;
+  const attr = terrainMesh.geometry.getAttribute('color');
+  attr.array.set(arr);
+  attr.needsUpdate = true;
+
+  if (theme === 'classic') {
+    scene.fog.color.setHex(0x9dbfd4);
+    if (waterMesh) waterMesh.material.color.setHex(0x2f7fa3);
+  } else if (theme === 'mix') {
+    scene.fog.color.setHex(0x2a5a62);
+    if (waterMesh) waterMesh.material.color.setHex(0x1c6f80);
+  } else {
+    scene.fog.color.setHex(0x1b3c42);
+    if (waterMesh) waterMesh.material.color.setHex(0x11606e);
+  }
+}
 
 /* =========================================================================
    COLLISION WORLD
@@ -7463,6 +7526,160 @@ function makeHouse(x, z, rot, rng, dims) {
   }
 }
 
+/* ---- classic island props: pine, boulder, crate and timber house ---- */
+function makeClassicTree(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const s = 0.85 + rng() * 0.55;
+  const th = 5.6 * s;
+  const g = new THREE.Group();
+
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.26 * s, 0.62 * s, th, 7), mat(0x6b4a2f, true));
+  trunk.position.y = th / 2;
+  trunk.castShadow = true;
+  g.add(trunk);
+
+  const leaf = mat(pick([0x2f633f, 0x3b7a4a, 0x2a5c38, 0x4a8a55]), true);
+  for (let i = 0; i < 3; i++) {
+    const r = (2.4 - i * 0.55) * s;
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(r, 3.4 * s, 7), leaf);
+    cone.position.y = th * (0.72 + i * 0.17);
+    cone.rotation.y = rng() * TAU;
+    cone.castShadow = true;
+    g.add(cone);
+  }
+
+  g.position.set(x, y, z);
+  g.rotation.y = rng() * TAU;
+  propsGroup.add(g);
+  addBox(x, y + th * 0.5, z, 0.36 * s, th * 0.5, 0.36 * s, g, { hp: 140, kind: 'tree' });
+}
+
+function makeClassicRock(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const s = 0.9 + rng() * 1.6;
+  const stone = mat(pick([0x7a7a72, 0x6e6e66, 0x828278, 0x8d8b80]), true);
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), stone);
+  m.position.set(x, y + s * 0.45, z);
+  m.rotation.set(rng() * 3, rng() * 3, rng() * 3);
+  m.scale.set(1, 0.72 + rng() * 0.3, 1);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  propsGroup.add(m);
+  addBox(x, y + s * 0.4, z, s * 0.85, s * 0.4, s * 0.85, m, { hp: 220, kind: 'rock' });
+
+  for (let i = 0; i < 2; i++) {
+    const r2 = s * (0.28 + rng() * 0.22);
+    const b = new THREE.Mesh(new THREE.IcosahedronGeometry(r2, 0), stone);
+    const a = rng() * TAU;
+    b.position.set(x + Math.cos(a) * s * 0.9, y + r2 * 0.6, z + Math.sin(a) * s * 0.9);
+    b.rotation.set(rng() * 3, rng() * 3, rng() * 3);
+    b.castShadow = true;
+    propsGroup.add(b);
+  }
+}
+
+function makeClassicCrate(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const w = 2.6, h = 2.2, d = 2.6;
+  const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+  const sw = Math.abs(Math.sin(rot)) > 0.5;
+  const g = new THREE.Group();
+  const wood = mat(pick([0x8a613d, 0x976b45, 0x7b5636]), true);
+  const dark = mat(0x5f4229, true);
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wood);
+  body.position.y = h / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  for (let i = 0; i < 3; i++) {
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, 0.09, d + 0.04), dark);
+    strip.position.y = h * (0.2 + i * 0.3);
+    g.add(strip);
+  }
+
+  g.position.set(x, y, z);
+  g.rotation.y = rot;
+  propsGroup.add(g);
+  addBox(x, y + h / 2, z, sw ? d / 2 : w / 2, h / 2, sw ? w / 2 : d / 2, body, { hp: 500, kind: 'wall' });
+
+  if (rng() < 0.55) {
+    const c = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wood);
+    c.position.y = h * 1.5 + 0.06;
+    c.castShadow = true;
+    g.add(c);
+    addBox(x, y + h * 1.5, z, sw ? d / 2 : w / 2, h / 2, sw ? w / 2 : d / 2, c, { hp: 500, kind: 'wall' });
+  }
+}
+
+function makeClassicHouse(x, z, rot, rng, dims) {
+  const w = (dims && dims.w) || (9 + Math.floor(rng() * 4) * 2);
+  const d = (dims && dims.d) || (8 + Math.floor(rng() * 3) * 2);
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const hw = w / 2, hd = d / 2;
+
+  let lowY = Infinity, highY = -Infinity;
+  const corners = [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd], [0, 0]];
+  for (let i = 0; i < corners.length; i++) {
+    const wx = x + corners[i][0] * cs + corners[i][1] * sn;
+    const wz = z - corners[i][0] * sn + corners[i][1] * cs;
+    const h = terrainHeight(wx, wz);
+    if (h < lowY) lowY = h;
+    if (h > highY) highY = h;
+  }
+
+  const wallH = 4.2;
+  const bottom = lowY - 1.5;
+  const top = highY + wallH;
+  const hy = (top - bottom) / 2;
+  const cy = (top + bottom) / 2;
+
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  propsGroup.add(g);
+
+  const wallMat = mat(pick([0x9c7b55, 0x8a6b4a, 0xa88760, 0x7d6042]), true);
+  const roofMat = mat(pick([0x6b3f2a, 0x5a3a28, 0x7a4a30]), true);
+  const beamMat = mat(0x4a3524, true);
+  const t = 0.18;
+  const opt = { hp: 320, kind: 'wall' };
+
+  localBox(g, x, z, 0, rot, -hw, cy, 0, t, hy, hd, wallMat, opt);
+  localBox(g, x, z, 0, rot, hw, cy, 0, t, hy, hd, wallMat, opt);
+
+  const segW = Math.max(0.8, (hw - 2.0) / 2);
+  const segCx = 2.0 + segW;
+  const doorTopY = highY + 2.9;
+  const headerHy = Math.max(0, (top - doorTopY) / 2);
+  const headerCy = (top + doorTopY) / 2;
+  for (let s = 0; s < 2; s++) {
+    const zz = s === 0 ? hd : -hd;
+    localBox(g, x, z, 0, rot, -segCx, cy, zz, segW, hy, t, wallMat, opt);
+    localBox(g, x, z, 0, rot, segCx, cy, zz, segW, hy, t, wallMat, opt);
+    if (headerHy > 0.1) localBox(g, x, z, 0, rot, 0, headerCy, zz, 2.0, headerHy, t, wallMat, opt);
+  }
+
+  // timber roof slab with a ridge beam and a chimney
+  localBox(g, x, z, 0, rot, 0, top + 0.2, 0, hw + 0.5, 0.2, hd + 0.5, roofMat, { hp: 380, kind: 'wall' });
+  localBox(g, x, z, 0, rot, 0, top + 0.62, 0, hw + 0.6, 0.16, 0.32, beamMat, {});
+  localBox(g, x, z, 0, rot, hw - 0.9, top + 1.5, hd - 0.9, 0.32, 1.3, 0.32, mat(0x7a5a48, true), {});
+
+  // window frames on the side walls
+  for (let s2 = 0; s2 < 2; s2++) {
+    const wxs = s2 === 0 ? -hw - 0.1 : hw + 0.1;
+    localDeco(g, x, z, rot, wxs, highY + 1.9, 0, new THREE.BoxGeometry(0.08, 1.0, Math.max(1.8, d * 0.4)), mat(0x3d2e22, true));
+  }
+
+  for (let i = 0; i < (rng() < 0.55 ? 2 : 1); i++) {
+    const lx = (rng() - 0.5) * (w - 5);
+    const lz = (rng() - 0.5) * (d - 5);
+    const wx = x + lx * cs + lz * sn;
+    const wz = z - lx * sn + lz * cs;
+    addChest(wx, wz, terrainHeight(wx, wz));
+  }
+}
+
 /* Two- to four-storey tower with an interior stair well in one corner. */
 function makeApartment(x, z, rot, rng, floors) {
   floors = clamp(floors || 3, 2, 4);
@@ -7690,12 +7907,18 @@ function makeBeacon(x, z, rng) {
 const VEND_PRICE = 250;
 const vendingMachines = [];
 const VEND_TYPES = ['pulse', 'ion', 'cryo', 'tesla', 'nova', 'cycler', 'beam', 'gauss', 'specter', 'rail', 'reaper', 'scatter', 'prism', 'pulsepistol'];
+const VEND_TYPES_CLASSIC = ['pistol', 'smg', 'ar', 'heavyar', 'burst', 'holo', 'lmg', 'shotgun', 'tacshot', 'combat', 'hunting', 'sniper', 'thermal', 'lever'];
+
+function vendTypesForMode() {
+  const t = mapTheme();
+  return t === 'classic' ? VEND_TYPES_CLASSIC : t === 'mix' ? VEND_TYPES.concat(VEND_TYPES_CLASSIC) : VEND_TYPES;
+}
 
 function makeVendingMachine(x, z, rng) {
   const y = terrainHeight(x, z);
   claimSite(x, z, 2.4);
   // three different guns per machine, each with its own rarity and price slot
-  const pool = VEND_TYPES.slice();
+  const pool = vendTypesForMode().slice();
   const stock = [];
   for (let i = 0; i < 3; i++) {
     const idx = Math.floor(Math.random() * pool.length);
@@ -7909,23 +8132,26 @@ const APARTMENT_R = Math.hypot(13 / 2, 12 / 2) + 0.7;
 const CONTAINER_R = Math.hypot(6.2 / 2, 2.7 / 2) + 0.4;
 
 function populateWorld() {
-  const rng = mulberry32(20240607);
+  const theme = mapTheme();
+  const shrink = isBlitz() ? 0.62 : 1;
+  const rng = mulberry32(theme === 'classic' ? 20220914 : theme === 'mix' ? 20231105 : 20240607);
   worldSites.length = 0;
 
   // POI clusters
   for (let i = 0; i < 9; i++) {
     const ang = (i / 9) * TAU + rng() * 0.5;
-    const rad = 60 + rng() * 165;
+    const rad = (60 + rng() * 165) * shrink;
     const px = Math.cos(ang) * rad;
     const pz = Math.sin(ang) * rad;
     if (terrainHeight(px, pz) < 2.5) continue;
+    const clusterClassic = theme === 'classic' || (theme === 'mix' && i % 2 === 0);
     const n = 2 + Math.floor(rng() * 4);
     for (let j = 0; j < n; j++) {
       let ox = 0, oz = 0, rad2 = 0, ok = false, apt = false, dims = null;
       for (let t = 0; t < 40; t++) {
-        ox = px + (rng() - 0.5) * 105;
-        oz = pz + (rng() - 0.5) * 105;
-        apt = rng() < 0.34;
+        ox = px + (rng() - 0.5) * 105 * shrink;
+        oz = pz + (rng() - 0.5) * 105 * shrink;
+        apt = !clusterClassic && rng() < 0.34;
         dims = apt ? null : rollHouseDims(rng);
         rad2 = apt ? APARTMENT_R : houseRadius(dims);
         if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, rad2)) { ok = true; break; }
@@ -7933,19 +8159,23 @@ function populateWorld() {
       if (!ok) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
       const swap = Math.abs(Math.sin(rot)) > 0.5;
+      siteThemeMode = clusterClassic ? 'classic' : 'future';
       if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.5 ? 4 : 3);
+      else if (clusterClassic) makeClassicHouse(ox, oz, rot, rng, dims);
       else makeHouse(ox, oz, rot, rng, dims);
       claimSite(ox, oz, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
     }
     for (let j = 0; j < 3; j++) {
       let ox = 0, oz = 0, ok = false;
       for (let t = 0; t < 24; t++) {
-        ox = px + (rng() - 0.5) * 110;
-        oz = pz + (rng() - 0.5) * 110;
+        ox = px + (rng() - 0.5) * 110 * shrink;
+        oz = pz + (rng() - 0.5) * 110 * shrink;
         if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, CONTAINER_R)) { ok = true; break; }
       }
       if (!ok) continue;
-      makeContainer(ox, oz, rng);
+      siteThemeMode = clusterClassic ? 'classic' : 'future';
+      if (clusterClassic) makeClassicCrate(ox, oz, rng);
+      else makeContainer(ox, oz, rng);
       claimSite(ox, oz, CONTAINER_R);
     }
   }
@@ -7953,11 +8183,12 @@ function populateWorld() {
   // lone houses and the odd apartment block
   for (let i = 0; i < 14; i++) {
     let x = 0, z = 0, rad2 = 0, ok = false, apt = false, dims = null;
+    const classic = theme === 'classic' || (theme === 'mix' && i % 2 === 0);
     for (let t = 0; t < 60; t++) {
       const ang = rng() * TAU;
-      const dist = rng() * 215;
+      const dist = rng() * 215 * shrink;
       x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
-      apt = i % 3 === 0;
+      apt = !classic && i % 3 === 0;
       dims = apt ? null : rollHouseDims(rng);
       rad2 = apt ? APARTMENT_R : houseRadius(dims);
       if (terrainHeight(x, z) > 3 && siteFreeAt(x, z, rad2)) { ok = true; break; }
@@ -7965,7 +8196,9 @@ function populateWorld() {
     if (!ok) continue;
     const rot = Math.floor(rng() * 4) * (Math.PI / 2);
     const swap = Math.abs(Math.sin(rot)) > 0.5;
+    siteThemeMode = classic ? 'classic' : 'future';
     if (apt) makeApartment(x, z, rot, rng, rng() < 0.55 ? 4 : 3);
+    else if (classic) makeClassicHouse(x, z, rot, rng, dims);
     else makeHouse(x, z, rot, rng, dims);
     claimSite(x, z, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
   }
@@ -7973,31 +8206,39 @@ function populateWorld() {
   // trees (kept out of buildings)
   for (let i = 0; i < 200; i++) {
     const ang = rng() * TAU;
-    const rad = Math.sqrt(rng()) * 255;
+    const rad = Math.sqrt(rng()) * 255 * shrink;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.6) continue;
     if (!siteFreeAt(x, z, 2.4)) continue;
-    makeTree(x, z, rng);
+    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'mix' ? (rng() < 0.5 ? 'classic' : 'future') : 'future';
+    if (isClassicSite()) makeClassicTree(x, z, rng);
+    else makeTree(x, z, rng);
   }
 
   // rocks
   for (let i = 0; i < 80; i++) {
     const ang = rng() * TAU;
-    const rad = Math.sqrt(rng()) * 265;
+    const rad = Math.sqrt(rng()) * 265 * shrink;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.0) continue;
     if (!siteFreeAt(x, z, 1.6)) continue;
-    makeRock(x, z, rng);
+    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'mix' ? (rng() < 0.5 ? 'classic' : 'future') : 'future';
+    if (isClassicSite()) makeClassicRock(x, z, rng);
+    else makeRock(x, z, rng);
   }
 
-  // relay beacons — charged masts you can navigate by
-  for (let i = 0; i < 11; i++) {
-    const ang = rng() * TAU;
-    const rad = 45 + Math.sqrt(rng()) * 225;
-    const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
-    if (terrainHeight(x, z) < 2.2) continue;
-    if (!siteFreeAt(x, z, 5.4)) continue;
-    makeBeacon(x, z, rng);
+  // relay beacons — charged landmarks, only on a charged island
+  if (theme !== 'classic') {
+    for (let i = 0; i < 11; i++) {
+      if (theme === 'mix' && i % 2 === 1) continue;
+      const ang = rng() * TAU;
+      const rad = 45 + Math.sqrt(rng()) * 225 * shrink;
+      const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+      if (terrainHeight(x, z) < 2.2) continue;
+      if (!siteFreeAt(x, z, 5.4)) continue;
+      siteThemeMode = 'future';
+      makeBeacon(x, z, rng);
+    }
   }
 
   buildVendingMachines(rng);
@@ -8005,7 +8246,7 @@ function populateWorld() {
   // a few open-field chests
   for (let i = 0; i < 10; i++) {
     const ang = rng() * TAU;
-    const rad = 40 + rng() * 190;
+    const rad = 40 + rng() * 190 * shrink;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     const y = terrainHeight(x, z);
     if (y < 2) continue;
@@ -8412,6 +8653,47 @@ const LOOT_WEAPON_POOL = [
   'rail', 'rail', 'rail', 'rail', 'rail', 'rail', 'rail',
   'reaper', 'reaper', 'reaper', 'reaper', 'reaper', 'reaper', 'reaper',
 ];
+
+/* The old arsenal, still defined, used again by Reload and half of Blitz. */
+const CLASSIC_WEAPON_POOL = [
+  'pistol', 'pistol',
+  'smg', 'smg', 'smg',
+  'tacsmg', 'tacsmg',
+  'drum',
+  'silenced',
+  'shotgun', 'shotgun', 'shotgun',
+  'tacshot', 'tacshot',
+  'doublebarrel',
+  'combat',
+  'ar', 'ar', 'ar',
+  'heavyar', 'heavyar',
+  'burst',
+  'holo', 'holo',
+  'lmg',
+  'minigun',
+  'hunting', 'hunting',
+  'sniper', 'sniper',
+  'thermal',
+  'lever',
+];
+
+const BLITZ_WEAPON_POOL = LOOT_WEAPON_POOL.concat(CLASSIC_WEAPON_POOL);
+
+const CLASSIC_MYTHIC_WEAPONS = ['mythic_pistol', 'mythic_shotgun', 'mythic_smg', 'mythic_tacsmg', 'mythic_sniper', 'mythic_ar', 'mythic_heavyar', 'mythic_lmg', 'mythic_doublebarrel', 'mythic_lever', 'mythic_hunting'];
+const CLASSIC_EXOTIC_WEAPONS = ['exotic_holo', 'exotic_tacshot', 'exotic_hunting', 'exotic_pistol', 'exotic_burst', 'exotic_minigun', 'exotic_sniper', 'exotic_chain', 'exotic_siphonhunt', 'exotic_lever'];
+
+function lootPoolForMode() {
+  const t = mapTheme();
+  return t === 'classic' ? CLASSIC_WEAPON_POOL : t === 'mix' ? BLITZ_WEAPON_POOL : LOOT_WEAPON_POOL;
+}
+function mythicPoolForMode() {
+  const t = mapTheme();
+  return t === 'classic' ? CLASSIC_MYTHIC_WEAPONS : t === 'mix' ? MYTHIC_WEAPONS.concat(CLASSIC_MYTHIC_WEAPONS) : MYTHIC_WEAPONS;
+}
+function exoticPoolForMode() {
+  const t = mapTheme();
+  return t === 'classic' ? CLASSIC_EXOTIC_WEAPONS : t === 'mix' ? EXOTIC_WEAPONS.concat(CLASSIC_EXOTIC_WEAPONS) : EXOTIC_WEAPONS;
+}
 
 const GUN_ICONS = {
   ar: '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="26" width="38" height="7" rx="1"/><rect x="40" y="23" width="20" height="4" rx="1"/><rect x="19" y="33" width="9" height="14" rx="1"/><rect x="7" y="19" width="13" height="7" rx="1"/><rect x="9" y="33" width="8" height="8" rx="1"/></svg>',
@@ -9715,9 +9997,14 @@ function clearLoot() {
 }
 
 function lootWeaponType() {
-  if (mod('snipers')) return pick(['gauss', 'specter', 'rail', 'rail', 'reaper']);
-  if (mod('shotguns')) return pick(['scatter', 'prism']);
-  return pick(LOOT_WEAPON_POOL);
+  const classic = mapTheme() === 'classic';
+  if (mod('snipers')) return pick(classic
+    ? ['sniper', 'hunting', 'thermal', 'sniper', 'hunting']
+    : ['gauss', 'specter', 'rail', 'rail', 'reaper']);
+  if (mod('shotguns')) return pick(classic
+    ? ['shotgun', 'tacshot', 'doublebarrel', 'combat']
+    : ['scatter', 'prism']);
+  return pick(lootPoolForMode());
 }
 
 /* Ammo the player actually needs: types of the guns they carry, then the driest. */
@@ -9739,8 +10026,8 @@ function ammoTypeForPlayer() {
 
 function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
-  if (Math.random() < 0.03) return makeWeapon(pick(MYTHIC_WEAPONS), R_MYTHIC);
-  if (Math.random() < 0.03) return makeWeapon(pick(EXOTIC_WEAPONS), R_EXOTIC);
+  if (Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
+  if (Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
@@ -9760,9 +10047,10 @@ function rollLootItem(rng, bonus) {
 
 function scatterLoot(rng) {
   const n = (isBlitz() || isSandbox()) ? 92 : 60;
+  const spread = isBlitz() ? 0.62 : 1;
   for (let i = 0; i < n; i++) {
     const ang = rng() * TAU;
-    const rad = 25 + Math.sqrt(rng()) * 300;
+    const rad = (25 + Math.sqrt(rng()) * 300) * spread;
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     const y = terrainHeight(x, z);
     if (y < 2) continue;
@@ -9775,8 +10063,16 @@ function scatterLoot(rng) {
    so a scoped rifle is never a whole-match search. */
 const SEED_LONG_GUNS = ['rail', 'reaper', 'beam', 'rail', 'reaper', 'beam', 'rail', 'reaper'];
 
+function longGunSeeds() {
+  const t = mapTheme();
+  if (t === 'classic') return ['sniper', 'hunting', 'thermal', 'sniper', 'hunting', 'thermal', 'sniper', 'hunting'];
+  if (t === 'mix') return ['rail', 'reaper', 'beam', 'sniper', 'hunting', 'thermal', 'rail', 'reaper'];
+  return SEED_LONG_GUNS;
+}
+
 function seedLongGunLoot() {
-  for (let i = 0; i < SEED_LONG_GUNS.length; i++) {
+  const seeds = longGunSeeds();
+  for (let i = 0; i < seeds.length; i++) {
     for (let t = 0; t < 50; t++) {
       const ang = Math.random() * TAU;
       const rad = 35 + Math.sqrt(Math.random()) * 290;
@@ -9784,14 +10080,19 @@ function seedLongGunLoot() {
       const y = terrainHeight(x, z);
       if (y < 2.4) continue;
       if (!siteFreeAt(x, z, 1.2)) continue;
-      spawnLoot(x, y, z, makeWeapon(SEED_LONG_GUNS[i], rarityRoll(0.1)));
+      spawnLoot(x, y, z, makeWeapon(seeds[i], rarityRoll(0.1)));
       break;
     }
   }
 }
 
 function seedLongGunNear(pos) {
-  const type = pick(['rail', 'reaper', 'beam']);
+  const t = mapTheme();
+  const type = t === 'classic'
+    ? pick(['sniper', 'hunting', 'thermal'])
+    : t === 'mix'
+      ? pick(['rail', 'reaper', 'beam', 'sniper', 'hunting'])
+      : pick(['rail', 'reaper', 'beam']);
   let fallback = null;
   for (let t = 0; t < 80; t++) {
     const ang = Math.random() * TAU;
@@ -9912,8 +10213,8 @@ function pickupLoot(l) {
 
 // A chest always holds a gun, so this rolls a weapon and never a utility item.
 function rollChestWeapon() {
-  if (Math.random() < 0.03) return makeWeapon(pick(MYTHIC_WEAPONS), R_MYTHIC);
-  if (Math.random() < 0.03) return makeWeapon(pick(EXOTIC_WEAPONS), R_EXOTIC);
+  if (Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
+  if (Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   return makeWeapon(lootWeaponType(), rarityRoll(0.18));
 }
@@ -11736,11 +12037,15 @@ let botNamePool = [];
 let botPhase = 0;
 
 function botWeaponType(level) {
-  if (mod('snipers')) return pick(['gauss', 'specter', 'rail', 'rail', 'reaper']);
-  if (mod('shotguns')) return pick(['scatter', 'prism']);
+  const classic = mapTheme() === 'classic';
+  if (mod('snipers')) return pick(classic
+    ? ['sniper', 'hunting', 'thermal', 'sniper', 'hunting']
+    : ['gauss', 'specter', 'rail', 'rail', 'reaper']);
+  if (mod('shotguns')) return pick(classic
+    ? ['shotgun', 'tacshot', 'doublebarrel', 'combat']
+    : ['scatter', 'prism']);
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
-  return pick(['pulsepistol', 'ion', 'cryo', 'scatter', 'prism', 'pulse', 'nova', 'tesla', 'cycler',
-    'beam', 'beam', 'gauss', 'specter', 'rail', 'rail', 'rail', 'reaper', 'reaper', 'reaper']);
+  return pick(lootPoolForMode());
 }
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
@@ -11764,7 +12069,7 @@ function spawnBot(i) {
   // Bots can carry the good stuff too, more often as the lobby gets harder.
   const specialChance = isGunGame() ? 0 : 0.06 + tier * 0.2;
   if (Math.random() < specialChance) {
-    w = Math.random() < 0.5 ? makeWeapon(pick(MYTHIC_WEAPONS), R_MYTHIC) : makeWeapon(pick(EXOTIC_WEAPONS), R_EXOTIC);
+    w = Math.random() < 0.5 ? makeWeapon(pick(mythicPoolForMode()), R_MYTHIC) : makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   } else {
     w = makeWeapon(type, rarityRoll(0.05 + tier * 0.12));
   }
@@ -14001,6 +14306,27 @@ const SECTOR_NAMES = [
   'SEVER BAY', 'CARBON RUN', 'FREE PORT', 'TETHER POINT', 'ZERO LINE', 'AFTERMATH',
 ];
 
+const CLASSIC_SECTOR_NAMES = [
+  'PLEASANT PARK', 'SHADY ACRES', 'MAPLE RIDGE', 'OLD TOWN', 'BLUE BARN', 'STONE CROSSING',
+  'WILLOW FARM', 'SUNSET HOLLOW', 'CLOVER FIELD', 'GRANITE PASS', 'HARBOR ROW', 'LAKESIDE',
+  'CREEK BEND', 'ASPEN WOODS', 'BRICK YARD', 'MILL ROAD', 'FOX HILL', 'SANDY COVE',
+  'WINDMILL', "TRADER'S CORNER", 'RED ROOF', 'GREEN BELT', 'COPPER GULCH', 'LONG SHORE',
+  'HICKORY DRIVE', 'ORCHARD STEPS', 'BLACKWATER', 'CLIFFSIDE', 'FAIRVIEW', 'BACKYARD',
+  'STATION ROAD', 'TANNERY', 'FROST KNOLL', 'HAY BARN', 'NORTH GATE', 'OLD QUARRY',
+];
+
+let MIXED_SECTOR_NAMES = null;
+
+function sectorNamesForMode() {
+  const t = mapTheme();
+  if (t === 'classic') return CLASSIC_SECTOR_NAMES;
+  if (t === 'future') return SECTOR_NAMES;
+  if (!MIXED_SECTOR_NAMES) {
+    MIXED_SECTOR_NAMES = SECTOR_NAMES.map((n, i) => (i % 2 ? CLASSIC_SECTOR_NAMES[i] : n));
+  }
+  return MIXED_SECTOR_NAMES;
+}
+
 function buildCompass() {
   const strip = compassStripEl;
   if (!strip || strip.dataset.built) return;
@@ -14032,7 +14358,7 @@ function updateMapName() {
   if (!mapNameEl) return;
   const cx = clamp(Math.floor((player.pos.x / WORLD_EDGE + 1) / 2 * 6), 0, 5);
   const cz = clamp(Math.floor((player.pos.z / WORLD_EDGE + 1) / 2 * 6), 0, 5);
-  const nm = SECTOR_NAMES[cz * 6 + cx];
+  const nm = sectorNamesForMode()[cz * 6 + cx];
   if (mapNameEl.dataset.sec !== nm) {
     mapNameEl.dataset.sec = nm;
     mapNameEl.textContent = nm;
@@ -14898,7 +15224,7 @@ function updateBlitzWheel() {
 
 function blitzGrantReward() {
   const mythic = Math.random() < 0.5;
-  const type = mythic ? pick(MYTHIC_WEAPONS) : pick(EXOTIC_WEAPONS);
+  const type = mythic ? pick(mythicPoolForMode()) : pick(exoticPoolForMode());
   const item = makeWeapon(type, mythic ? R_MYTHIC : R_EXOTIC);
   let free = -1;
   for (let i = 0; i < player.inv.length; i++) {
@@ -14963,6 +15289,7 @@ function startMatch() {
   tracerPool.length = 0;
   fx.length = 0;
   clearWorld();
+  paintTerrain(mapTheme());
   populateWorld();
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
@@ -15322,8 +15649,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 8, patch: 15 };
-const VERSION_PREV = '7.8.14';
+const VERSION = { major: 7, minor: 9, patch: 0 };
+const VERSION_PREV = '7.8.15';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
