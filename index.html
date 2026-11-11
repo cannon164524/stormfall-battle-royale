@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MATCHES START AGAIN</b> — the spawn loadout was leaving an old variable behind, so a match that had already been announced threw on the spawn step and put you straight back in the lobby. Every mode and both multiplayer sides start correctly now.</div></li>
-      <li><span class="wnTag">02</span><div><b>ONE SWITCH PER GUN</b> — weapons.json carries a <b>disabled</b> true/false on every weapon. <b>true</b> pulls a gun out of floor loot, chests, bot loadouts, vending stock, long-gun seeds, mythic and exotic rolls and Blitz rewards; <b>false</b> puts it back, and on a gun that belongs to no pool it releases it for a power hour. <b>startingWeapon: true</b> still sets your spawn loadout.</div></li>
+      <li><span class="wnTag">01</span><div><b>STARTING GUNS KEEP THEIR TIER</b> — a weapon flagged <b>startingWeapon</b> now arrives with the rarity it belongs to. An Exotic spawns Exotic, a Mythic spawns Mythic, and ordinary guns still start Common. No more a cyan Exotic sitting in your first slot as a grey copy.</div></li>
+      <li><span class="wnTag">02</span><div><b>AMMO IS BACK ON THE FLOOR</b> — every mode drops ammo again, BR included, so a power-hour release of an old cartridge gun has rounds waiting for it. In an all-heat BR lobby the boxes are rarer so they do not crowd out the emitters, and picking one up adds it straight to your reserve.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7008,10 +7008,19 @@ function weaponUsesAmmo(it) {
   return !!(it && it.kind === 'weapon' && !HEAT_WEAPONS.has(it.type));
 }
 
+/* Ammo is back in every mode. The energy guns run on heat, but a power-hour
+   release can put a cartridge gun in the pools at any time, so the boxes always
+   exist — just at a lower share in an all-heat lobby, where they would otherwise
+   crowd out the guns you actually fire. */
 function modeHasAmmoWeapons() {
-  if (mapTheme() !== 'future') return true;
-  return WEAPON_FLAGS.extra.some((t) => !HEAT_WEAPONS.has(t)) ||
+  return true;
+}
+
+function ammoDropChance() {
+  if (mapTheme() !== 'future') return 0.18;
+  const ammoGunInPlay = WEAPON_FLAGS.extra.some((t) => !HEAT_WEAPONS.has(t)) ||
     WEAPON_FLAGS.starting.some((t) => !HEAT_WEAPONS.has(t));
+  return ammoGunInPlay ? 0.18 : 0.08;
 }
 
 let waterMesh = null;
@@ -9181,7 +9190,7 @@ function itemLabel(item) {
   if (item.kind === 'heal') return HEALS[item.type].name;
   if (item.kind === 'grenade') return GRENADES[item.type].name;
   if (item.kind === 'grappler') return 'Grappler';
-  if (item.kind === 'ammo') return 'Coolant Cell';
+  if (item.kind === 'ammo') return item.ammoType ? String(item.ammoType).toUpperCase() + ' Ammo' : 'Ammo';
   if (item.kind === 'gold') return 'Gold Bars';
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
@@ -10135,14 +10144,14 @@ function rollLootItem(rng, bonus) {
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   if (Math.random() < 0.06) return makeGrappler();
-  if (modeHasAmmoWeapons() && Math.random() < 0.18) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));
+  if (Math.random() < ammoDropChance()) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));
   if (Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
   if (Math.random() < 0.06) return makeSpritePod(pick(SPRITE_IDS));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
   }
-  // ammo is out of the loot table this season — guns feed themselves
+  // ammo is its own roll above; this ladder is guns, heals, grenades and gold
   if (r < 0.60) return makeHeal(pick(['bandage', 'mini', 'shield']), 1);
   if (r < 0.72) return makeGrenade(pick(['shockwave', 'shockwave', 'impulse', 'frag']), 1);
   if (r < 0.84) return makeHeal(pick(['mini', 'shield']), 2);
@@ -10223,16 +10232,12 @@ function giveItem(item) {
     return -4;
   }
   if (item.kind === 'ammo') {
-    if (item.ammoType && modeHasAmmoWeapons()) {
-      player.ammo[item.ammoType] = Math.min(999, (player.ammo[item.ammoType] || 0) + (item.count || 30));
-      toast('+' + (item.count || 30) + ' ' + String(item.ammoType).toUpperCase(), 'sub');
-      return -2;
+    const count = item.count || 30;
+    const at = item.ammoType;
+    if (at) {
+      player.ammo[at] = Math.min(999, (player.ammo[at] || 0) + count);
+      toast('+' + count + ' ' + String(at).toUpperCase(), 'sub');
     }
-    // Ammo boxes are coolant cells now: they vent the emitter instantly.
-    const held = currentItem();
-    if (held && held.kind === 'weapon') { held.heat = 0; held.overheated = false; }
-    player.heat = 0;
-    player.overheated = false;
     return -2;
   }
   if (item.kind === 'weapon') {
@@ -15333,10 +15338,18 @@ function startingLoadout() {
 
 function startWeaponType() { return startingLoadout()[0]; }
 
+/* A starting gun keeps its own class: an Exotic leaves the box Exotic, not a
+   plain Common copy of itself. Ordinary guns still start at Common. */
+function startingRarity(type) {
+  if (type.indexOf('exotic_') === 0) return R_EXOTIC;
+  if (type.indexOf('mythic_') === 0) return R_MYTHIC;
+  return 0;
+}
+
 function makeStartingInventory() {
   const load = startingLoadout();
   const inv = [null, null, null, null, null];
-  for (let i = 0; i < load.length && i < inv.length; i++) inv[i] = makeWeapon(load[i], 0);
+  for (let i = 0; i < load.length && i < inv.length; i++) inv[i] = makeWeapon(load[i], startingRarity(load[i]));
   return inv;
 }
 
@@ -15849,8 +15862,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 5 };
-const VERSION_PREV = '7.9.4';
+const VERSION = { major: 7, minor: 9, patch: 6 };
+const VERSION_PREV = '7.9.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
