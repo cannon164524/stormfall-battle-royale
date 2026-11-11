@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ONE SWITCH PER GUN</b> — every weapon in weapons.json now has its own <b>disabled</b> true/false, so there is no list to keep in sync. Set it to <b>true</b> and that gun leaves floor loot, chests, bot loadouts, vending stock, long-gun seeds, mythic and exotic rolls and Blitz rewards. Set it back to <b>false</b> and it returns. A gun that belongs to no pool yet turns itself on the same way, which is how you hold a finished weapon back and release it for a power hour.</div></li>
-      <li><span class="wnTag">02</span><div><b>YOUR STARTING LOADOUT</b> — <b>startingWeapon: true</b> on a gun puts it in your spawn loadout, up to five in file order; every other gun stays false. Nothing flagged keeps the old pistol, and Gun Game still starts on its ladder.</div></li>
+      <li><span class="wnTag">01</span><div><b>MATCHES START AGAIN</b> — the spawn loadout was leaving an old variable behind, so a match that had already been announced threw on the spawn step and put you straight back in the lobby. Every mode and both multiplayer sides start correctly now.</div></li>
+      <li><span class="wnTag">02</span><div><b>ONE SWITCH PER GUN</b> — weapons.json carries a <b>disabled</b> true/false on every weapon. <b>true</b> pulls a gun out of floor loot, chests, bot loadouts, vending stock, long-gun seeds, mythic and exotic rolls and Blitz rewards; <b>false</b> puts it back, and on a gun that belongs to no pool it releases it for a power hour. <b>startingWeapon: true</b> still sets your spawn loadout.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15255,6 +15255,7 @@ function resetPlayerForMatch() {
   player.slot = 0;
   player.gunLevel = 0;
   player.inv = makeStartingInventory();
+  const sw = player.inv[0] ? player.inv[0].type : defaultStartWeapon();
   player.boons = [];
   pixelScale = 1;
   qualityDrops = 0;
@@ -15848,8 +15849,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 4 };
-const VERSION_PREV = '7.9.3';
+const VERSION = { major: 7, minor: 9, patch: 5 };
+const VERSION_PREV = '7.9.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
