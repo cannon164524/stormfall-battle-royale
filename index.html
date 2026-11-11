@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>STARTING GUNS KEEP THEIR TIER</b> — a weapon flagged <b>startingWeapon</b> now arrives with the rarity it belongs to. An Exotic spawns Exotic, a Mythic spawns Mythic, and ordinary guns still start Common. No more a cyan Exotic sitting in your first slot as a grey copy.</div></li>
-      <li><span class="wnTag">02</span><div><b>AMMO IS BACK ON THE FLOOR</b> — every mode drops ammo again, BR included, so a power-hour release of an old cartridge gun has rounds waiting for it. In an all-heat BR lobby the boxes are rarer so they do not crowd out the emitters, and picking one up adds it straight to your reserve.</div></li>
+      <li><span class="wnTag">01</span><div><b>GUNSHIP FLY-OVER</b> — a blocky transport crosses the island above every drop, props turning, banking gently on its way out. Its chin-mounted cannon strafes tracer fire at the ground below while it is over land. It is a set piece: the tracers are for the look of the thing, no damage.</div></li>
+      <li><span class="wnTag">02</span><div><b>POWER HOUR CONTROLS</b> — weapons.json still runs the show. <b>disabled</b> true/false switches any gun out of floor loot, chests, bots, vending and mythic/exotic rolls, <b>startingWeapon: true</b> sets your spawn loadout, and ammo is on the floor in every mode again.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8468,6 +8468,142 @@ function buildRebootVans() {
   }
 }
 
+/* =========================================================================
+   GUNSHIP — a blocky plane with a chin-mounted cannon. It crosses the island
+   above the drop, props turning, and strafes tracers at the ground below.
+   ========================================================================= */
+function buildGunship() {
+  const g = new THREE.Group();
+  const hull = mat(0x2b3a4a, true);
+  const dark = mat(0x151d26, true);
+  const accent = mat(0xc2ff3d, true);
+  const glass = new THREE.MeshBasicMaterial({ color: 0x8fe8ff, transparent: true, opacity: 0.75 });
+
+  const add = (mesh, x, y, z, rx, ry, rz) => {
+    mesh.position.set(x, y, z);
+    mesh.rotation.set(rx || 0, ry || 0, rz || 0);
+    g.add(mesh);
+    return mesh;
+  };
+
+  // fuselage: nose, body, tapered tail
+  add(new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.5, 3.4), hull), 0, -0.1, 2.4);
+  add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.0, 1.2), dark), 0, -0.2, 4.5);
+  add(new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.4, 7.0), hull), 0, 0, -1.0);
+  add(new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.7, 4.5), hull), 0, 0.1, -5.6);
+
+  // canopy
+  add(new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.9, 2.2), glass), 0, 1.2, 2.1);
+
+  // wings and winglets
+  const wingL = add(new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.4, 4.2), hull), -5.4, 0.2, -0.6, 0, 0, 0.05);
+  const wingR = add(new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.4, 4.2), hull), 5.4, 0.2, -0.6, 0, 0, -0.05);
+  wingL.name = 'wingL';
+  wingR.name = 'wingR';
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.4, 2.4), accent), -9.8, 0.9, -0.9);
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.4, 2.4), accent), 9.8, 0.9, -0.9);
+
+  // tail
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.6, 2.8), hull), 0, 2.2, -6.6);
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.9, 2.0), accent), 0, 4.2, -6.9);
+  add(new THREE.Mesh(new THREE.BoxGeometry(7.0, 0.3, 1.8), hull), 0, 0.6, -7.2);
+
+  // engine nacelles with four-blade props
+  const props = [];
+  for (const s of [-1, 1]) {
+    add(new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 3.4), dark), s * 4.6, 0.1, -1.2);
+    add(new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.9, 8), accent), s * 4.6, 0.1, 0.9, Math.PI / 2, 0, 0);
+    const prop = new THREE.Group();
+    prop.position.set(s * 4.6, 0.1, 0.98);
+    for (let i = 0; i < 4; i++) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.9, 0.08), dark);
+      blade.rotation.z = (i / 4) * Math.PI;
+      prop.add(blade);
+    }
+    g.add(prop);
+    props.push(prop);
+  }
+
+  // chin turret: mount, cradle, twin barrels and an ammo drum
+  add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.9, 1.1), dark), 0, -1.5, 2.3);
+  add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.5, 1.6), hull), 0, -1.7, 3.2);
+  for (const s of [-1, 1]) {
+    add(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.6, 6), dark), s * 0.3, -1.7, 3.9, Math.PI / 2, 0, 0);
+    add(new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.35, 6), accent), s * 0.3, -1.7, 5.0, Math.PI / 2, 0, 0);
+  }
+  add(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.9, 10), accent), 0, -2.05, 2.0, 0, 0, Math.PI / 2);
+
+  g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+  g.userData.props = props;
+  g.userData.muzzle = new THREE.Vector3(0, -1.7, 5.1);
+  return g;
+}
+
+let gunship = null;
+const GUNSHIP_SPEED = 62;
+const GUNSHIP_ALT = 148;
+
+function spawnGunship() {
+  if (gunship) return;
+  const g = buildGunship();
+  dynGroup.add(g);
+  const ang = Math.random() * TAU;
+  const dir = new THREE.Vector3(Math.cos(ang), 0, Math.sin(ang));
+  const side = new THREE.Vector3(-dir.z, 0, dir.x);
+  const start = side.multiplyScalar(rand(-260, 260));
+  start.addScaledVector(dir, -560);
+  g.position.set(start.x, GUNSHIP_ALT, start.z);
+  g.rotation.y = Math.atan2(dir.x, dir.z);
+  g.rotation.z = rand(-0.1, 0.1);
+  gunship = { group: g, dir, travelled: 0, fireT: 0.9, bank: g.rotation.z, t: 0 };
+}
+
+function updateGunship(dt) {
+  if (!gunship) return;
+  const g = gunship.group;
+  gunship.t += dt;
+  g.position.addScaledVector(gunship.dir, GUNSHIP_SPEED * dt);
+  gunship.travelled += GUNSHIP_SPEED * dt;
+  g.rotation.z = gunship.bank + Math.sin(gunship.t * 0.7) * 0.05;
+
+  const props = g.userData.props || [];
+  for (let i = 0; i < props.length; i++) props[i].rotation.z += dt * 22;
+
+  // The chin gun only works while the plane is over the island.
+  gunship.fireT -= dt;
+  if (gunship.fireT <= 0 && Math.hypot(g.position.x, g.position.z) < 330) {
+    gunship.fireT = rand(0.1, 0.2);
+    const muzzle = g.userData.muzzle.clone();
+    g.localToWorld(muzzle);
+    const tx = g.position.x + gunship.dir.x * rand(10, 110) + rand(-40, 40);
+    const tz = g.position.z + gunship.dir.z * rand(10, 110) + rand(-40, 40);
+    const ty = Math.max(terrainHeight(tx, tz), TERRAIN_FLOOR) + 0.5;
+    tracerFX(muzzle, new THREE.Vector3(tx, ty, tz), 0xffd451);
+  }
+
+  if (gunship.travelled > 1400) {
+    if (g.parent) g.parent.remove(g);
+    disposeTree(g);
+    gunship = null;
+  }
+}
+
+/* Guarantee the power-hour exotic is findable near where you land, so a
+   released gun is visible in the first minute rather than a lucky roll. */
+function seedPowerHourGun(pos) {
+  if (weaponExtras().indexOf('exotic_zero') < 0) return;
+  for (let t = 0; t < 60; t++) {
+    const ang = Math.random() * TAU;
+    const rad = 6 + Math.random() * 8;
+    const x = pos.x + Math.cos(ang) * rad;
+    const z = pos.z + Math.sin(ang) * rad;
+    const y = terrainHeight(x, z);
+    if (y < 2.2) continue;
+    spawnLoot(x, y, z, makeWeapon('exotic_zero', R_EXOTIC));
+    return;
+  }
+}
+
 function clearGroup(g) {
   while (g.children.length) {
     const c = g.children.pop();
@@ -8492,6 +8628,7 @@ function clearWorld() {
   mists.length = 0;
   rebootVans.length = 0;
   extractSites.length = 0;
+  gunship = null;
   clearLoot();
   clearDamageNumbers();
 }
@@ -15538,6 +15675,7 @@ function startMatch() {
   paintTerrain(mapTheme());
   populateWorld();
   scatterLoot(Math.random);
+  spawnGunship();
   if (!isGunGame()) seedLongGunLoot();
   resetStorm();
   resetPlayerForMatch();
@@ -15549,6 +15687,7 @@ function startMatch() {
   positionFighters();
   // A drop seeds its long gun when the player lands; a ground start seeds it here.
   state.landGunSeeded = false;
+  if (!isGunGame()) seedPowerHourGun(player.pos);
   if (!player.dropping && !isGunGame()) {
     seedLongGunNear(player.pos);
     state.landGunSeeded = true;
@@ -15895,8 +16034,8 @@ function setMode(m) {
    - minor goes up for a major update (x.1 -> x.2)
    - patch goes up for small updates (x.x.1 -> x.x.2)
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 9, patch: 6 };
-const VERSION_PREV = '7.9.5';
+const VERSION = { major: 7, minor: 9, patch: 7 };
+const VERSION_PREV = '7.9.6';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -17886,6 +18025,7 @@ function animate(now) {
   updateShieldRegen(dt);
   updateNet(dt);
   updateStorm(dt);
+  updateGunship(dt);
   updateGrenades(dt);
   updatePocketEffects(dt);
   updateRespawns();
@@ -19163,6 +19303,8 @@ function applyWeaponStats(data) {
       if (RARITY[i].mult !== next) { RARITY[i].mult = next; changed++; }
     }
   }
+  // Console only: confirms a Gist release reached the game without naming it on screen.
+  if (WEAPON_FLAGS.extra.length) console.log('[weapons] released: ' + WEAPON_FLAGS.extra.join(', '));
   return changed;
 }
 
@@ -19188,7 +19330,11 @@ function loadWeaponStats() {
         }, 2200);
       }
     })
-    .catch(() => { /* offline: cached values stay */ });
+    .catch((e) => {
+      // Console only, so a broken Gist does not nag players: this is your hint
+      // that the JSON itself failed to parse or fetch.
+      console.warn('[weapons] remote stats not applied: ' + (e && e.message ? e.message : e));
+    });
 }
 
 loadWeaponStats();
