@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE PLANE IS A TARGET</b> — hull is down to 1500, and bots now break off fights to shoot at it, up to nine at once, hitting it half again as hard. A bot-flown gunship is finally worth shooting at, and a player-flown one is no longer ignored.</div></li>
-      <li><span class="wnTag">02</span><div><b>HIT FEEDBACK</b> — every round you put into the gunship pops a damage number and counts toward your damage stat. Shoot a bot pilot out of the sky and it counts as an elimination: kill banner, feed line, the lot.</div></li>
+      <li><span class="wnTag">01</span><div><b>SMARTER BOT PILOT</b> — the bot in the gunship weaves its orbit instead of flying a perfect circle, hunts you ahead of where you are running, and fires two-shell volleys at more than double the old rate, with a wider blast on the first shell.</div></li>
+      <li><span class="wnTag">02</span><div><b>IT FLIES TO SURVIVE</b> — once the hull is under half, the pilot climbs out of small-arms range and banks harder, and every hit makes it jink sideways. Shooting it down now takes work rather than a steady stream of fire.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8630,6 +8630,11 @@ function damageGunship(amount, source) {
   if (!gunship || gunship.destroyed) return;
   gunship.hp -= amount;
   if (gunship.pilot === 'player') shake(0.015);
+  if (gunship.pilot === 'bot' && gunship.ai) {
+    // A good pilot jinks when the flak starts landing.
+    gunship.ai.jink = 1.3;
+    gunship.ai.jinkDir = Math.random() < 0.5 ? 1 : -1;
+  }
   if (gunship.hp <= 0) destroyGunship(source);
 }
 
@@ -8677,7 +8682,7 @@ function destroyGunship(source) {
 }
 
 function nearestGroundTarget(pos) {
-  let best = null, bd = 260;
+  let best = null, bd = 300;
   for (const b of bots) {
     if (!b.alive || b.out || b.dropping || b.knocked) continue;
     const d = b.pos.distanceTo(pos);
@@ -8685,29 +8690,60 @@ function nearestGroundTarget(pos) {
   }
   if (player.alive && !player.piloting && !player.dropping && !player.knocked) {
     const d = new THREE.Vector3(player.pos.x, player.pos.y, player.pos.z).distanceTo(pos);
-    if (d < bd) return new THREE.Vector3(player.pos.x, player.pos.y + 1, player.pos.z);
+    // The pilot hunts the human: give them a fat discount.
+    if (d * 0.6 < bd) return new THREE.Vector3(player.pos.x, player.pos.y + 1, player.pos.z);
   }
   return best;
 }
 
 function updateBotPilot(dt) {
   const g = gunship.group;
-  const ang = gunship.t * 0.11;
-  const r = 140;
-  g.position.set(Math.cos(ang) * r, 82 + Math.sin(gunship.t * 0.37) * 14, Math.sin(ang) * r);
-  const yaw = Math.atan2(-Math.sin(ang), Math.cos(ang));
-  g.rotation.set(0.06, yaw, 0.35, 'YXZ');
-  gunship.dir.set(Math.sin(yaw), 0, Math.cos(yaw));
+  if (!gunship.ai) {
+    gunship.ai = { ang: Math.random() * TAU, jink: 0, jinkDir: Math.random() < 0.5 ? 1 : -1 };
+  }
+  const ai = gunship.ai;
+  const hurt = gunship.hp < gunship.maxHp * 0.55;
 
+  ai.ang += dt * (hurt ? 0.17 : 0.13);
+  ai.jink = Math.max(0, ai.jink - dt);
+
+  // Weave the orbit and climb out of trouble when the hull is low.
+  const radius = clamp(126 + Math.sin(gunship.t * 0.23) * 18, 92, 158);
+  const altitude = (hurt ? 98 : 78) + Math.sin(gunship.t * 0.47) * 12;
+  const sway = ai.jink > 0 ? Math.sin(gunship.t * 16) * ai.jinkDir * 9 : 0;
+  g.position.set(
+    Math.cos(ai.ang) * (radius + sway),
+    altitude,
+    Math.sin(ai.ang) * (radius + sway)
+  );
+
+  const yaw = Math.atan2(-Math.sin(ai.ang), Math.cos(ai.ang));
+  g.rotation.set(0.05, yaw, hurt ? 0.45 : 0.32, 'YXZ');
+  gunship.dir.set(Math.sin(yaw), 0, Math.cos(yaw));
+  g.updateMatrixWorld(true);
+
+  // Two shells a volley, faster cadence, and a lead on the human.
   gunship.fireT -= dt;
   if (gunship.fireT <= 0) {
-    gunship.fireT = rand(1.1, 1.8);
-    const target = nearestGroundTarget(g.position);
-    if (target) {
+    gunship.fireT = rand(0.55, 0.95);
+    const aim = nearestGroundTarget(g.position);
+    if (aim) {
+      if (player.alive && !player.piloting) {
+        const nearPlayer = Math.hypot(aim.x - player.pos.x, aim.z - player.pos.z);
+        if (nearPlayer < 7) {
+          const lead = clamp(g.position.distanceTo(aim) / 320, 0.1, 0.7);
+          aim.x += player.vel.x * lead;
+          aim.z += player.vel.z * lead;
+        }
+      }
       const muzzle = g.userData.muzzle.clone();
       g.localToWorld(muzzle);
-      tracerFX(muzzle, target, 0xffd451);
-      blastDamage(target, 4.5, 30, null, 'GUNSHIP');
+      tracerFX(muzzle, aim, 0xffd451);
+      blastDamage(aim, 5, 34, null, 'GUNSHIP');
+      const aim2 = aim.clone();
+      aim2.x += rand(-3.5, 3.5);
+      aim2.z += rand(-3.5, 3.5);
+      blastDamage(aim2, 4.5, 22, null, 'GUNSHIP');
       sfx('shotgun');
     }
   }
@@ -8719,10 +8755,11 @@ function botTakesGunship() {
   gunship.parked = false;
   gunship.pilot = 'bot';
   gunship.t = Math.random() * 6;
-  gunship.fireT = 1.2;
+  gunship.fireT = 0.6;
+  gunship.ai = { ang: Math.random() * TAU, jink: 0, jinkDir: Math.random() < 0.5 ? 1 : -1 };
   const g = gunship.group;
-  g.position.set(Math.cos(gunship.t * 0.11) * 140, 82, Math.sin(gunship.t * 0.11) * 140);
-  g.rotation.set(0.06, 0, 0.35, 'YXZ');
+  g.position.set(Math.cos(gunship.ai.ang) * 126, 78, Math.sin(gunship.ai.ang) * 126);
+  g.rotation.set(0.05, 0, 0.32, 'YXZ');
   toast('A BOT PILOT HAS THE GUNSHIP · SHOOT IT DOWN', 'sub');
 }
 
@@ -16443,8 +16480,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships, so this season's updates stay on 7 and v8 waits for Season 7.
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 10, patch: 2 };
-const VERSION_PREV = '7.10.1';
+const VERSION = { major: 7, minor: 10, patch: 3 };
+const VERSION_PREV = '7.10.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
