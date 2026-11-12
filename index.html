@@ -6540,8 +6540,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SMARTER BOT PILOT</b> — the bot in the gunship weaves its orbit instead of flying a perfect circle, hunts you ahead of where you are running, and fires two-shell volleys at more than double the old rate, with a wider blast on the first shell.</div></li>
-      <li><span class="wnTag">02</span><div><b>IT FLIES TO SURVIVE</b> — once the hull is under half, the pilot climbs out of small-arms range and banks harder, and every hit makes it jink sideways. Shooting it down now takes work rather than a steady stream of fire.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE PLANE IS TOUGH AGAIN</b> — hull is back to 3000, and bot rounds no longer hit it half again as hard. Roughly 100 rifle rounds to bring it down, as before.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8557,7 +8556,7 @@ const GUNSHIP_SPEED = 62;
 const GUNSHIP_ALT = 148;
 const GUNSHIP_GUN_CD = 0.09;
 const GUNSHIP_GUN_RANGE = 260;
-const GUNSHIP_HP = 1500;
+const GUNSHIP_HP = 3000;
 
 function spawnGunship() {
   if (gunship) return;
@@ -13001,7 +13000,7 @@ function botFire(b, target) {
       damageCollider(h.col, def.dmg * 0.55);
     } else if (h.kind === 'plane') {
       const m = RARITY[b.weapon.rarity].mult;
-      damageGunship(def.dmg * m * botDmgMul() * 1.5, b.name);
+      damageGunship(def.dmg * m * botDmgMul(), b.name);
     }
   };
   if (bSpeed) {
@@ -16480,8 +16479,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships, so this season's updates stay on 7 and v8 waits for Season 7.
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 10, patch: 3 };
-const VERSION_PREV = '7.10.2';
+const VERSION = { major: 7, minor: 10, patch: 4 };
+const VERSION_PREV = '7.10.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
