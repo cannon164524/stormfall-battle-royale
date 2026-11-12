@@ -6540,8 +6540,8 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SLOWER FLIGHT</b> — the gunship is a heavy transport now. Throttle tops out at 30 m/s instead of 92, with a shift boost of only +7, so lining up a run is about pointing the nose rather than racing the island.</div></li>
-      <li><span class="wnTag">02</span><div><b>EXPLOSIVE ROUNDS</b> — every chin-cannon round detonates on impact with a 5.5 m blast for up to 22 damage on top of the direct hit. Ground fire no longer needs a pinpoint, and the blast only hurts bots, never the pilot.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE PLANE IS A TARGET</b> — hull is down to 1500, and bots now break off fights to shoot at it, up to nine at once, hitting it half again as hard. A bot-flown gunship is finally worth shooting at, and a player-flown one is no longer ignored.</div></li>
+      <li><span class="wnTag">02</span><div><b>HIT FEEDBACK</b> — every round you put into the gunship pops a damage number and counts toward your damage stat. Shoot a bot pilot out of the sky and it counts as an elimination: kill banner, feed line, the lot.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -8540,11 +8540,24 @@ function buildGunship() {
 }
 
 let gunship = null;
+
+/* Bots need something with a body to aim at while someone flies the plane. */
+const gunshipTarget = {
+  pos: new THREE.Vector3(),
+  vel: new THREE.Vector3(),
+  alive: false,
+  knocked: false,
+  out: false,
+  dropping: false,
+  team: -1,
+  name: 'GUNSHIP',
+  isPlane: true,
+};
 const GUNSHIP_SPEED = 62;
 const GUNSHIP_ALT = 148;
 const GUNSHIP_GUN_CD = 0.09;
 const GUNSHIP_GUN_RANGE = 260;
-const GUNSHIP_HP = 3000;
+const GUNSHIP_HP = 1500;
 
 function spawnGunship() {
   if (gunship) return;
@@ -8601,6 +8614,8 @@ function updateGunshipBar() {
   if (!gunship) return;
   const bar = gunship.bar;
   if (!bar) return;
+  gunshipTarget.pos.copy(gunship.group.position);
+  gunshipTarget.alive = !!gunship.pilot;
   bar.visible = !gunship.parked || gunship.hp < gunship.maxHp;
   bar.position.copy(gunship.group.position);
   bar.position.y += 8.5;
@@ -8621,9 +8636,11 @@ function damageGunship(amount, source) {
 function destroyGunship(source) {
   if (!gunship || gunship.destroyed) return;
   gunship.destroyed = true;
+  gunshipTarget.alive = false;
   const pos = gunship.group.position.clone();
   const wasPlayer = gunship.pilot === 'player';
   const wasBot = gunship.pilot === 'bot';
+  const byPlayer = source === 'You';
   if (gunship.bar && gunship.bar.parent) gunship.bar.parent.remove(gunship.bar);
   const g = gunship.group;
   if (g.parent) g.parent.remove(g);
@@ -8635,7 +8652,15 @@ function destroyGunship(source) {
   blastDamage(pos, 9, 45, null, source || 'GUNSHIP');
   shake(0.5);
   sfx('death');
-  if (wasBot) addFeed(source || 'GUNSHIP', 'BOT PILOT', false);
+  if (wasBot) addFeed(byPlayer ? 'You' : (source || 'GUNSHIP'), 'BOT PILOT', false);
+  if (byPlayer && wasBot) {
+    player.kills += 1;
+    killPulse();
+    showResultCard('kill', 'GUNSHIP PILOT');
+    sfx('elim');
+    if (typeof blitzAddXp === 'function') blitzAddXp(2);
+    toast('GUNSHIP SHOT DOWN', '');
+  }
   if (wasPlayer) {
     player.piloting = false;
     player.pos.copy(pos);
@@ -8901,6 +8926,7 @@ function updateGunship(dt) {
     if (gunship.bar && gunship.bar.parent) gunship.bar.parent.remove(gunship.bar);
     if (g.parent) g.parent.remove(g);
     disposeTree(g);
+    gunshipTarget.alive = false;
     gunship = null;
   }
 }
@@ -8945,6 +8971,7 @@ function clearWorld() {
   mists.length = 0;
   rebootVans.length = 0;
   extractSites.length = 0;
+  gunshipTarget.alive = false;
   gunship = null;
   clearLoot();
   clearDamageNumbers();
@@ -10973,8 +11000,14 @@ function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
   } else if (hit.kind === 'terrain') {
     impactFX(hit.point);
   } else if (hit.kind === 'plane') {
-    damageGunship(dmg * (hit.head ? hsMult : 1), shooterName);
+    const dealt = dmg * (hit.head ? hsMult : 1);
+    damageGunship(dealt, shooterName);
     impactFX(hit.point);
+    if (shooterName === 'You') {
+      player.damage += dealt;
+      damageNumber(hit.point.clone(), Math.round(dealt), { shield: true, dx: -0.2 });
+      hitmarker(false, true);
+    }
   }
 }
 
@@ -12855,6 +12888,19 @@ function acquireTarget(b) {
       if (score < bestScore) { bestScore = score; best = player; }
     }
   }
+  // A plane in the air pulls the lobby's attention: bots break off duels to
+  // shoot at it, capped so it is still a threat and not an instant death.
+  if (gunshipTarget.alive) {
+    let onPlane = 0;
+    for (let i = 0; i < bots.length; i++) {
+      if (bots[i] !== b && bots[i].target === gunshipTarget) onPlane++;
+    }
+    const pd = b.pos.distanceTo(gunshipTarget.pos);
+    if (pd < 300 && onPlane < 9) {
+      const score = pd * 0.15;
+      if (score < bestScore) { bestScore = score; best = gunshipTarget; }
+    }
+  }
   if (!best && b.target && b.target.alive && b.pos.distanceTo(b.target.pos) < 90) return b.target;
   return best;
 }
@@ -12918,7 +12964,7 @@ function botFire(b, target) {
       damageCollider(h.col, def.dmg * 0.55);
     } else if (h.kind === 'plane') {
       const m = RARITY[b.weapon.rarity].mult;
-      damageGunship(def.dmg * m * botDmgMul(), b.name);
+      damageGunship(def.dmg * m * botDmgMul() * 1.5, b.name);
     }
   };
   if (bSpeed) {
@@ -16397,8 +16443,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships, so this season's updates stay on 7 and v8 waits for Season 7.
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 10, patch: 1 };
-const VERSION_PREV = '7.10.0';
+const VERSION = { major: 7, minor: 10, patch: 2 };
+const VERSION_PREV = '7.10.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
