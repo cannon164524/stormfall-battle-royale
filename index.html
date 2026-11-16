@@ -6542,7 +6542,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <ul class="wnList">
       <li><span class="wnTag">01</span><div><b>SEASON 7 · THE PIRATE COAST</b> — a new island entirely. Bleached sand, jungle, turquoise shallows and thin fog. Every building, tree and rock on it was rebuilt: planked shacks with thatch, palms, jungle stone and tarred crates.</div></li>
       <li><span class="wnTag">02</span><div><b>THE GALLEON</b> — a pirate ship run aground on the beach, and the biggest POI on the map. Board it up the stern stairs, fight across a real deck, and loot three chests between the cannon. Two wrecks and a few piers sit on the rest of the coast.</div></li>
-      <li><span class="wnTag">03</span><div><b>PIRATE TOKEN</b> — one chest in five hundred holds it. Pick it up and every outfit the item shop sells is yours, free, and the battle pass unlocks with it. Big gold beam, big banner, and it will not despawn while you sprint to it.</div></li>
+      <li><span class="wnTag">03</span><div><b>PIRATE TOKEN</b> — a chest in twenty holds it. It lands in your boon slots and does nothing on its own: win that match with the token still on you and every outfit the item shop sells is yours, free, with the battle pass. Lose and you walk away with nothing.</div></li>
       <li><span class="wnTag">04</span><div><b>A NEW BATTLE PASS</b> — ten tiers of Season 7 rewards. Salt Wake, Tar Hand, Red Sail, Kraken Mark and Dead Man's Toll are the outfits, with V-Bucks between them. Ranked RP reset with the season.</div></li>
       <li><span class="wnTag">05</span><div><b>SHOP ROTATION</b> — Corsair, Galleon Warden, Powder Monkey and Bonecrown are this season's featured outfits.</div></li>
       <li><span class="wnTag">06</span><div><b>THE VAULT IS SEALED</b> — every energy and coil gun is gone. The island now runs on black powder: Flintlock Pistol, Hand Cannon, Blunderbuss, Grapeshot Swivel, Repeater Carbine, Musketoon, Swivel Gun, Chain Shot, Hand Mortar, Long Rifle, Harpoon Gun and Sea Musket, each with Mythic and Exotic bloodlines.</div></li>
@@ -9968,10 +9968,9 @@ function makeGrappler() {
   return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
 }
 
-/* One chest in five hundred holds the pirate token: every outfit the item shop
-   sells, free, and the battle pass unlocked. It is not a weapon and takes no
-   slot — picking it up redeems it on the account. */
-const PIRATE_TOKEN_CHANCE = 1 / 500;
+/* A chest in twenty holds the pirate token. Picking it up puts it in your boon
+   slots — it only pays out if you go on to win that match with it. */
+const PIRATE_TOKEN_CHANCE = 0.05;
 function makeToken() {
   return { kind: 'token', name: 'Pirate Token' };
 }
@@ -10100,8 +10099,10 @@ const BOONS = {
   plate: { name: 'Guardian Plate', color: '#c8a2ff', icon: 'plate', desc: '-15% DAMAGE TAKEN' },
   scav: { name: 'Scavenger', color: '#d8a86a', icon: 'scav', desc: '+50% WOOD FROM CHESTS' },
   synth: { name: 'Ammo Synth', color: '#8fd6ff', icon: 'synth', desc: 'RESERVE AMMO REFILLS' },
+  token: { name: 'Pirate Token', color: '#ffd451', icon: 'token', desc: 'WIN THE MATCH TO CLAIM THE WHOLE SHOP' },
 };
-const BOON_TYPES = Object.keys(BOONS);
+/* The token never rolls as a random boon — it only comes out of a chest. */
+const BOON_TYPES = ['radar', 'regen', 'boots', 'plate', 'scav', 'synth'];
 
 function makeBoon(type) {
   const key = BOONS[type] ? type : 'radar';
@@ -10222,7 +10223,7 @@ function itemMeta(item) {
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
   if (item.kind === 'sprite') return 'SPRITE · ' + SPRITES[item.spriteId].desc;
-  if (item.kind === 'token') return 'EVERYTHING IN THE SHOP, FREE';
+  if (item.kind === 'token') return 'WIN THE MATCH TO CLAIM IT';
   return '';
 }
 function itemColorHex(item) {
@@ -11340,7 +11341,13 @@ function pickupLoot(l) {
   if (l.item.kind === 'token') {
     l.dead = true;
     if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
-    redeemPirateToken();
+    if (hasBoon('token')) {
+      toast('TOKEN ALREADY HELD · WIN TO CLAIM IT', 'sub');
+    } else {
+      addBoon('token');
+      toast('PIRATE TOKEN · WIN THE MATCH TO CLAIM IT', '');
+    }
+    sfx('unlock');
     return;
   }
   if (l.item.kind === 'gold') {
@@ -11402,7 +11409,7 @@ function openChest(c) {
   }
   if (Math.random() < 0.25) drops.push(makeGrappler());
   drops.push(makeGold(50));
-  // One chest in five hundred hides the season's pirate token.
+  // One chest in twenty hides the season's pirate token.
   if (Math.random() < PIRATE_TOKEN_CHANCE) drops.push(makeToken());
 
   const a0 = Math.random() * TAU;
@@ -11416,7 +11423,7 @@ function openChest(c) {
   }
   for (let i = 0; i < drops.length; i++) {
     if (drops[i].kind === 'token') {
-      showRareFind(drops[i], 'PIRATE TOKEN', 'GRAB IT TO CLAIM THE WHOLE SHOP');
+      showRareFind(drops[i], 'PIRATE TOKEN', 'PICK IT UP AND WIN TO CLAIM THE SHOP');
       break;
     }
   }
@@ -16898,6 +16905,7 @@ function endMatch(win, killerName) {
   if (win) {
     awardBpXp(500);
     victoryFanfare();
+    if (hasBoon('token')) setTimeout(redeemPirateToken, 1500);
   }
   if (player.spriteId && (player.spriteExtracted || win)) {
     if (!ownsSprite(player.spriteId)) {
@@ -17011,8 +17019,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 1, patch: 0 };
-const VERSION_PREV = '8.0.0';
+const VERSION = { major: 8, minor: 1, patch: 1 };
+const VERSION_PREV = '8.1.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -17979,7 +17987,7 @@ function showRareFind(item, kicker, subLine) {
   const sub = document.getElementById('rfSub');
   const art = document.getElementById('rfArt');
   if (kick) kick.textContent = kicker || 'RARE CHEST FIND';
-  if (title) title.textContent = token ? '1 IN 500' : RARITY[item.rarity].name.toUpperCase() + ' FOUND';
+  if (title) title.textContent = token ? 'RARE CHEST FIND' : RARITY[item.rarity].name.toUpperCase() + ' FOUND';
   if (name) name.textContent = token ? 'PIRATE TOKEN' : (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
   if (sub) sub.textContent = subLine || (RARITY[item.rarity].name.toUpperCase() + ' · GRAB IT BEFORE IT VANISHES');
   if (art) art.innerHTML = token ? GUN_ICONS.token : (GUN_ICONS[item.type] || '');
@@ -18491,10 +18499,11 @@ function claimBpTiers() {
 }
 
 /* ---------------- pirate token ----------------
-   The 1-in-500 chest find. It buys out the entire item shop — every outfit that
-   has ever carried a price — and unlocks this season's battle pass, on the
-   account, permanently. Kept in the profile with the token flag so a second one
-   is a no-op rather than a duplicate. */
+   The chest token. Picked up it sits in your boon slots; only a win with it
+   still on you buys out the entire item shop — every outfit that has ever
+   carried a price — and unlocks this season's battle pass, permanently. Losing
+   costs you the token, so it has to be earned. Kept in the profile with the
+   token flag so a second one is a no-op. */
 function redeemPirateToken() {
   let gained = 0;
   for (let i = 0; i < SKINS.length; i++) {
@@ -18514,7 +18523,7 @@ function redeemPirateToken() {
   sfx('bpBuy');
   shake(0.3);
   playReveal({
-    kicker: 'PIRATE TOKEN · 1 IN 500',
+    kicker: 'PIRATE TOKEN · WON',
     title: 'THE WHOLE SHOP',
     name: 'UNLOCKED',
     sub: gained + ' OUTFITS AND THE BATTLE PASS, FREE',
@@ -20162,7 +20171,7 @@ const MOTD_DEFAULT = {
   id: 's7-pirate-coast',
   tag: 'MESSAGE OF THE DAY',
   title: 'THE PIRATE COAST',
-  body: 'Season 7 has beached a fleet on a new island. Board the galleon, loot its deck, and watch the chests: one in five hundred hides the pirate token, and it pays out the whole item shop.',
+  body: 'Season 7 has beached a fleet on a new island. Board the galleon, loot its deck, and watch the chests: one in twenty hides the pirate token, and only a win with it in your boons pays out the whole item shop.',
   link: ''
 };
 const MOTD_CACHE_KEY = 'stormfall.motd.last';
