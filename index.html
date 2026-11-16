@@ -5842,7 +5842,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <div class="menuTop">
     <div class="brand">
       <div class="logo">STORMFALL</div>
-      <div class="tagline">SEASON <b>6</b></div>
+      <div class="tagline">SEASON <b>7</b></div>
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="play">PLAY</button>
@@ -6075,7 +6075,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
         <div class="mpKicker">STORE</div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
-      <div class="mpMeta">SEASON 6 · NEW ROTATION</div>
+      <div class="mpMeta">SEASON 7 · NEW ISLAND</div>
     </div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -6096,7 +6096,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 6</div>
+        <div class="mpKicker">SEASON 7</div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -6540,7 +6540,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE PLANE IS TOUGH AGAIN</b> — hull is back to 3000, and bot rounds no longer hit it half again as hard. Roughly 100 rifle rounds to bring it down, as before.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON 7 · THE PIRATE COAST</b> — a new island entirely. Bleached sand, jungle, turquoise shallows and thin fog. Every building, tree and rock on it was rebuilt: planked shacks with thatch, palms, jungle stone and tarred crates.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE GALLEON</b> — a pirate ship run aground on the beach, and the biggest POI on the map. Board it up the stern stairs, fight across a real deck, and loot three chests between the cannon. Two wrecks and a few piers sit on the rest of the coast.</div></li>
+      <li><span class="wnTag">03</span><div><b>PIRATE TOKEN</b> — one chest in five hundred holds it. Pick it up and every outfit the item shop sells is yours, free, and the battle pass unlocks with it. Big gold beam, big banner, and it will not despawn while you sprint to it.</div></li>
+      <li><span class="wnTag">04</span><div><b>A NEW BATTLE PASS</b> — ten tiers of Season 7 rewards. Salt Wake, Tar Hand, Red Sail, Kraken Mark and Dead Man's Toll are the outfits, with V-Bucks between them. Ranked RP reset with the season.</div></li>
+      <li><span class="wnTag">05</span><div><b>SHOP ROTATION</b> — Corsair, Galleon Warden, Powder Monkey and Bonecrown are this season's featured outfits.</div></li>
+      <li><span class="wnTag">06</span><div><b>THE GUNS DID NOT MOVE</b> — same arsenal as last season. Reload still runs the old island, Blitz still runs a mix, and this season's island is what Battle Royale, Ranked, Duos and Sandbox get.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6679,7 +6684,7 @@ const MODE_DEFS = {
   },
   gungame: {
     name: 'GUN GAME', short: 'GUN GAME', kicker: 'ARMS RACE',
-    desc: 'No loot. Start on the Pulse Sidearm and climb the whole Season 6 ladder, one elimination per rung.',
+    desc: 'No loot. Start on the Pulse Sidearm and climb the whole Season 7 ladder, one elimination per rung.',
     rules: ['<b>13</b> WEAPONS', 'NO LOOT', 'NO STORM', 'UPGRADE ON ELIM'],
     adjustable: true,
     queue: (n) => n + ' OPPONENTS · 13 WEAPONS',
@@ -6985,16 +6990,29 @@ const CLASSIC_COLOR = {
   snow: new THREE.Color(0xf1f7f8),
 };
 
-/* Which island a mode gets: BR keeps the charged basin, Reload gets the old
-   overgrown island, and Blitz drops into a mix of both. */
+/* Season 7's island: bleached sand over turquoise shallows, jungle greens and
+   warm grey stone. It replaces the charged basin outright. */
+const PIRATE_COLOR = {
+  sandWet: new THREE.Color(0xc6b98d),
+  sand: new THREE.Color(0xefe4bb),
+  grassA: new THREE.Color(0x4f9243),
+  grassB: new THREE.Color(0x76bc58),
+  grassC: new THREE.Color(0x2e6b35),
+  rock: new THREE.Color(0x8f8a76),
+  snow: new THREE.Color(0xf2ecd8),
+};
+
+/* Which island a mode gets: the season ships the pirate coast, Reload keeps the
+   old overgrown island, and Blitz drops into a mix of both. */
 function mapTheme() {
   if (isBlitz()) return 'mix';
   if (isReload() || isReloadDuos() || isRankedReload()) return 'classic';
-  return 'future';
+  return 'pirate';
 }
 
 let siteThemeMode = 'future';
 function isClassicSite() { return siteThemeMode === 'classic'; }
+function isPirateSite() { return siteThemeMode === 'pirate'; }
 
 /* Season 6 hardware runs on heat; the vaulted arsenal runs on cartridges. */
 const HEAT_WEAPONS = new Set([
@@ -7033,9 +7051,11 @@ function buildTerrain() {
   const pos = geo.attributes.position;
   const colorsFuture = new Float32Array(pos.count * 3);
   const colorsClassic = new Float32Array(pos.count * 3);
+  const colorsPirate = new Float32Array(pos.count * 3);
   const colorsMix = new Float32Array(pos.count * 3);
   const c = new THREE.Color();
   const cc = new THREE.Color();
+  const cp = new THREE.Color();
 
   const samplePalette = (pal, h, slope, n, out) => {
     if (h < 0.6) out.copy(pal.sandWet).lerp(pal.sand, clamp(h / 0.6 + 0.35, 0, 1));
@@ -7055,14 +7075,16 @@ function buildTerrain() {
 
     samplePalette(COLOR, h, slope, n, c);
     samplePalette(CLASSIC_COLOR, h, slope, n, cc);
+    samplePalette(PIRATE_COLOR, h, slope, n, cp);
 
     colorsFuture[i * 3] = c.r; colorsFuture[i * 3 + 1] = c.g; colorsFuture[i * 3 + 2] = c.b;
     colorsClassic[i * 3] = cc.r; colorsClassic[i * 3 + 1] = cc.g; colorsClassic[i * 3 + 2] = cc.b;
+    colorsPirate[i * 3] = cp.r; colorsPirate[i * 3 + 1] = cp.g; colorsPirate[i * 3 + 2] = cp.b;
 
     // A patchwork blend: the west side keeps the old island's colours, the
-    // east side runs charged, with a wavy border between them.
+    // east side runs tropical, with a wavy border between them.
     const futureSide = Math.sin(x * 0.021) + Math.cos(z * 0.017) > 0;
-    const mc = futureSide ? c : cc;
+    const mc = futureSide ? cp : cc;
     colorsMix[i * 3] = mc.r; colorsMix[i * 3 + 1] = mc.g; colorsMix[i * 3 + 2] = mc.b;
   }
 
@@ -7071,7 +7093,7 @@ function buildTerrain() {
 
   const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
   mesh.receiveShadow = true;
-  mesh.userData.terrainColors = { future: colorsFuture, classic: colorsClassic, mix: colorsMix };
+  mesh.userData.terrainColors = { future: colorsFuture, classic: colorsClassic, pirate: colorsPirate, mix: colorsMix };
   terrainMesh = mesh;
   terrainGroup.add(mesh);
 
@@ -7122,6 +7144,16 @@ function paintTerrain(theme) {
       skyMat.uniforms.uTop.value.setHex(0x2b6b8f);
       skyMat.uniforms.uHor.value.setHex(0x8fc9c9);
       skyMat.uniforms.uLow.value.setHex(0x4f7f84);
+    }
+  } else if (theme === 'pirate') {
+    scene.fog.color.setHex(0xd2e8ef);
+    if (waterMesh) waterMesh.material.color.setHex(0x2ba7b8);
+    if (hemi) { hemi.color.setHex(0xffffff); hemi.groundColor.setHex(0x4c7a3a); }
+    if (sun) sun.color.setHex(0xfff3d6);
+    if (skyMat) {
+      skyMat.uniforms.uTop.value.setHex(0x2f8ad0);
+      skyMat.uniforms.uHor.value.setHex(0xd2e8ef);
+      skyMat.uniforms.uLow.value.setHex(0x9dc6cf);
     }
   } else {
     scene.fog.color.setHex(0x1b3c42);
@@ -7733,6 +7765,462 @@ function makeClassicHouse(x, z, rot, rng, dims) {
   }
 }
 
+/* -------------------------------------------------------------------------
+   SEASON 7 — THE PIRATE COAST
+   The basin gave way to salt water: palms, jungle stone, tarred timber and the
+   hulls that put it there. Same primitives, warmer materials.
+   ------------------------------------------------------------------------- */
+/* A rotated, positioned child so local geometry (masts, yards, cannons) can be
+   built in the building's own frame instead of world space. */
+function localHolder(g, x, z, rot, lx, ly, lz) {
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const h = new THREE.Group();
+  h.position.set(lx * cs + lz * sn, ly, -lx * sn + lz * cs);
+  h.rotation.y = rot;
+  g.add(h);
+  return h;
+}
+
+function makePalm(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const s = 0.85 + rng() * 0.55;
+  const th = 7.4 * s;
+  const lean = (rng() - 0.5) * 0.3;
+  const g = new THREE.Group();
+  g.position.set(x, y, z);
+  g.rotation.y = rng() * TAU;
+
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * s, 0.44 * s, th, 7), mat(pick([0x8a6b45, 0x9c7d55, 0x75583a]), true));
+  trunk.position.y = th / 2;
+  trunk.rotation.z = lean;
+  trunk.castShadow = true;
+  g.add(trunk);
+
+  const cx = -Math.sin(lean) * th * 0.5;
+  const cy = Math.cos(lean) * th;
+  const frondMat = mat(pick([0x2f7a3a, 0x3c8f42, 0x276b34]), true);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU + rng() * 0.34;
+    const droop = 0.45 + rng() * 0.42;
+    const holder = new THREE.Group();
+    holder.position.set(cx, cy, 0);
+    holder.rotation.y = Math.PI / 2 - a;
+    const frond = new THREE.Mesh(new THREE.BoxGeometry(0.62 * s, 0.08, 3.1 * s), frondMat);
+    frond.position.set(0, -Math.sin(droop) * 1.5 * s + 0.16, 1.5 * s * Math.cos(droop));
+    frond.rotation.x = droop;
+    frond.castShadow = true;
+    holder.add(frond);
+    g.add(holder);
+  }
+  for (let i = 0; i < 2; i++) {
+    const nut = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 6, 5), mat(0x5a4a2a, true));
+    const a = rng() * TAU;
+    nut.position.set(cx + Math.cos(a) * 0.42 * s, cy - 0.34 * s, Math.sin(a) * 0.42 * s);
+    g.add(nut);
+  }
+
+  propsGroup.add(g);
+  addBox(x, y + th * 0.5, z, 0.44 * s, th * 0.5, 0.44 * s, g, { hp: 130, kind: 'tree' });
+}
+
+function makeJungleRock(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const s = 0.9 + rng() * 1.5;
+  const stone = mat(pick([0x8d8a7c, 0x7d7a6c, 0x9a9788]), true);
+  const moss = mat(pick([0x3f7a3a, 0x4b8a42]), true);
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), stone);
+  m.position.set(x, y + s * 0.42, z);
+  m.rotation.set(rng() * 3, rng() * 3, rng() * 3);
+  m.scale.set(1, 0.68 + rng() * 0.3, 1);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  propsGroup.add(m);
+  const cap = new THREE.Mesh(new THREE.IcosahedronGeometry(s * 0.72, 0), moss);
+  cap.position.set(x, y + s * 0.74, z);
+  cap.rotation.set(rng() * 3, rng() * 3, rng() * 3);
+  cap.scale.set(1, 0.4, 1);
+  propsGroup.add(cap);
+  addBox(x, y + s * 0.4, z, s * 0.8, s * 0.4, s * 0.8, m, { hp: 220, kind: 'rock' });
+}
+
+function makePirateCrate(x, z, rng) {
+  const y = terrainHeight(x, z);
+  const w = 2.5, h = 2.1, d = 2.5;
+  const rot = Math.floor(rng() * 4) * (Math.PI / 2);
+  const sw = Math.abs(Math.sin(rot)) > 0.5;
+  const g = new THREE.Group();
+  const plank = mat(pick([0xa8794a, 0x9a6b3f, 0xb3855a]), true);
+  const rope = mat(0x6d5433, true);
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), plank);
+  body.position.y = h / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  for (let i = 0; i < 2; i++) {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(w + 0.05, 0.13, d + 0.05), rope);
+    band.position.y = h * (0.28 + i * 0.42);
+    g.add(band);
+  }
+  for (let i = 0; i < 2; i++) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, h + 0.06, 0.16), rope);
+    post.position.set((i ? 1 : -1) * (w / 2 - 0.05), h / 2, d / 2);
+    g.add(post);
+  }
+
+  g.position.set(x, y, z);
+  g.rotation.y = rot;
+  propsGroup.add(g);
+  addBox(x, y + h / 2, z, sw ? d / 2 : w / 2, h / 2, sw ? w / 2 : d / 2, body, { hp: 500, kind: 'wall' });
+
+  if (rng() < 0.45) {
+    const c = new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, h * 0.7, d * 0.8), plank);
+    c.position.set((rng() - 0.5) * 0.5, h + h * 0.35 + 0.04, (rng() - 0.5) * 0.5);
+    c.rotation.y = (rng() - 0.5) * 0.5;
+    c.castShadow = true;
+    g.add(c);
+    addBox(x, y + h * 1.35, z, sw ? d * 0.4 : w * 0.4, h * 0.35, sw ? w * 0.4 : d * 0.4, c, { hp: 400, kind: 'wall' });
+  }
+}
+
+/* A planked shack with a thatched pyramid roof — the island's housing stock. */
+function makePirateHut(x, z, rot, rng, dims) {
+  const w = (dims && dims.w) || (9 + Math.floor(rng() * 4) * 2);
+  const d = (dims && dims.d) || (8 + Math.floor(rng() * 3) * 2);
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const hw = w / 2, hd = d / 2;
+
+  let lowY = Infinity, highY = -Infinity;
+  const corners = [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd], [0, 0]];
+  for (let i = 0; i < corners.length; i++) {
+    const wx = x + corners[i][0] * cs + corners[i][1] * sn;
+    const wz = z - corners[i][0] * sn + corners[i][1] * cs;
+    const h = terrainHeight(wx, wz);
+    if (h < lowY) lowY = h;
+    if (h > highY) highY = h;
+  }
+
+  const wallH = 4.0;
+  const bottom = lowY - 1.5;
+  const top = highY + wallH;
+  const hy = (top - bottom) / 2;
+  const cy = (top + bottom) / 2;
+
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  propsGroup.add(g);
+
+  const plankMat = mat(pick([0x9a7048, 0x8a6038, 0xa87c52]), true);
+  const trimMat = mat(0x5f3f24, true);
+  const t = 0.2;
+  const opt = { hp: 300, kind: 'wall' };
+
+  localBox(g, x, z, 0, rot, -hw, cy, 0, t, hy, hd, plankMat, opt);
+  localBox(g, x, z, 0, rot, hw, cy, 0, t, hy, hd, plankMat, opt);
+
+  const segW = Math.max(0.8, (hw - 1.9) / 2);
+  const segCx = 1.9 + segW;
+  const doorTopY = highY + 2.8;
+  const headerHy = Math.max(0, (top - doorTopY) / 2);
+  const headerCy = (top + doorTopY) / 2;
+  for (let s = 0; s < 2; s++) {
+    const zz = s === 0 ? hd : -hd;
+    localBox(g, x, z, 0, rot, -segCx, cy, zz, segW, hy, t, plankMat, opt);
+    localBox(g, x, z, 0, rot, segCx, cy, zz, segW, hy, t, plankMat, opt);
+    if (headerHy > 0.1) localBox(g, x, z, 0, rot, 0, headerCy, zz, 1.9, headerHy, t, plankMat, opt);
+  }
+
+  // corner posts, so it reads as built rather than extruded
+  const cornersL = [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd]];
+  for (let i = 0; i < cornersL.length; i++) {
+    localDeco(g, x, z, rot, cornersL[i][0], cy, cornersL[i][1], new THREE.BoxGeometry(t * 1.5, hy * 2, t * 1.5), trimMat);
+  }
+
+  // thatch: a low four-sided pyramid, overhanging the walls
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(Math.hypot(hw, hd) + 1.1, 2.8, 4),
+    mat(pick([0x8a6a3a, 0x97753f, 0x7d5f33]), true)
+  );
+  roof.position.set(0, top + 1.4, 0);
+  roof.rotation.y = rot + Math.PI / 4;
+  roof.castShadow = true;
+  g.add(roof);
+
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 3.0, 5), trimMat);
+  pole.position.set(0, top + 2.8 + 1.5, 0);
+  g.add(pole);
+  const flag = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.05), mat(pick([0x2b2b30, 0x8a2f2f, 0x2f4a6b]), true));
+  flag.position.set(0.8, top + 2.8 + 2.6, 0);
+  flag.rotation.y = rot;
+  g.add(flag);
+
+  for (let i = 0; i < (rng() < 0.6 ? 2 : 1); i++) {
+    const lx = (rng() - 0.5) * (w - 5);
+    const lz = (rng() - 0.5) * (d - 5);
+    const wx = x + lx * cs + lz * sn;
+    const wz = z - lx * sn + lz * cs;
+    addChest(wx, wz, terrainHeight(wx, wz));
+  }
+}
+
+/* A pier out into the shallows: planks on posts, and a chest at the end. */
+function makeDock(x, z, rot, rng) {
+  const y = Math.max(terrainHeight(x, z), WATER_Y);
+  const len = 16 + rng() * 8;
+  const deckY = y + 0.4;
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  propsGroup.add(g);
+
+  const plankMat = mat(pick([0x9a7048, 0x8a6038, 0xa87c52]), true);
+  const postMat = mat(0x5f4229, true);
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+
+  localBox(g, x, z, 0, rot, len / 2 - 2, deckY, 0, len / 2 + 1, 0.16, 1.6, plankMat, { hp: 400, kind: 'walk' });
+
+  for (let i = 0; i < 4; i++) {
+    const lx = -2 + (i / 3) * len;
+    localDeco(g, x, z, rot, lx, (deckY - 3.2) / 2, 1.4, new THREE.BoxGeometry(0.22, deckY + 3.2, 0.22), postMat);
+    localDeco(g, x, z, rot, lx, (deckY - 3.2) / 2, -1.4, new THREE.BoxGeometry(0.22, deckY + 3.2, 0.22), postMat);
+  }
+
+  const ex = x + (len - 1) * cs;
+  const ez = z - (len - 1) * sn;
+  addChest(ex, ez, deckY + 0.18);
+
+  // a lantern on the last post
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.34), GLOW.amber);
+  lamp.position.set(ex - x, deckY + 2.4, 0);
+  g.add(lamp);
+}
+
+/* Coastal furniture: one galleon run aground, two wrecks and a few piers. */
+function coastalSpot(rng, lo, hi) {
+  const rMax = isBlitz() ? 268 : 322;
+  for (let t = 0; t < 120; t++) {
+    const ang = rng() * TAU;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    for (let r = rMax; r > 140; r -= 3) {
+      const h = terrainHeight(ca * r, sa * r);
+      if (h >= lo && h <= hi) return { x: ca * r, z: sa * r, ang };
+    }
+  }
+  return null;
+}
+
+/* Pick the cardinal heading that puts the bow out to sea and the stern — and so
+   the boarding stairs — on dry sand. A hull only turns in quarter circles, so
+   the coast is sampled at both ends of each candidate axis. */
+function seawardRot(x, z) {
+  let best = 0, bestScore = -1e9;
+  for (let i = 0; i < 4; i++) {
+    const rot = i * Math.PI / 2;
+    const dx = Math.cos(rot), dz = -Math.sin(rot);
+    const bowH = terrainHeight(x + dx * 15, z + dz * 15);
+    const sternH = terrainHeight(x - dx * 17, z - dz * 17);
+    const score = (sternH > 0.4 ? 60 : 0) + (bowH < sternH ? 25 : 0) - Math.abs(sternH - 0.9) * 4 + Math.min(bowH, 0.2) * 20;
+    if (score > bestScore) { bestScore = score; best = rot; }
+  }
+  return best;
+}
+
+/* The galleon itself. Walkable: hull walls, a standable deck, a stern castle,
+   masts and sails, cannon along both sides, and boarding stairs off the stern
+   that step down to the sand. With `wreck` set it is a broken hulk instead. */
+function makeGalleon(x, z, rot, rng, wreck) {
+  const base = Math.max(terrainHeight(x, z), WATER_Y) - (wreck ? 1.4 : 0.5);
+  const hw = 11, hb = 4;
+  const deckY = base + (wreck ? 3.4 : 4.0);
+  const cs = Math.cos(rot), sn = Math.sin(rot);
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  propsGroup.add(g);
+
+  const hullMat = mat(wreck ? 0x5d5246 : 0x6b4a2e, true);
+  const hullDark = mat(wreck ? 0x453c33 : 0x4e3520, true);
+  const deckMat = mat(wreck ? 0x6e6558 : 0x9a7048, true);
+  const sailMat = new THREE.MeshLambertMaterial({ color: wreck ? 0xa8a094 : 0xe8e2cf, side: THREE.DoubleSide });
+  const opt = { hp: 600, kind: 'wall' };
+
+  // ---- hull
+  const hullBottom = base - 1.8;
+  const hy = (deckY - 0.5 - hullBottom) / 2;
+  const cy = (deckY - 0.5 + hullBottom) / 2;
+  localBox(g, x, z, 0, rot, -hw, cy, 0, 0.5, hy, hb, hullMat, opt);
+  localBox(g, x, z, 0, rot, 0, cy, hb, hw, hy, 0.45, hullMat, opt);
+  localBox(g, x, z, 0, rot, 0, cy, -hb, hw, hy, 0.45, hullMat, opt);
+  localBox(g, x, z, 0, rot, hw + 0.7, cy + 0.5, 0, 1.3, hy * 0.8, hb * 0.55, hullMat, opt);
+
+  // tarred bands along the waterline
+  for (let i = 0; i < 2; i++) {
+    localDeco(g, x, z, rot, 0, base + 0.4 + i * 0.9, hb + 0.06, new THREE.BoxGeometry(22, 0.14, 0.06), hullDark);
+    localDeco(g, x, z, rot, 0, base + 0.4 + i * 0.9, -hb - 0.06, new THREE.BoxGeometry(22, 0.14, 0.06), hullDark);
+  }
+
+  // ---- deck (the floor you fight on) and rails
+  localBox(g, x, z, 0, rot, 0, deckY - 0.3, 0, hw - 0.4, 0.3, hb - 0.4, deckMat, { hp: 500, kind: 'walk' });
+  for (let s = 0; s < 2; s++) {
+    const zz = (s ? 1 : -1) * (hb - 0.3);
+    localBox(g, x, z, 0, rot, 0, deckY + 0.55, zz, hw - 0.6, 0.55, 0.14, hullDark, { hp: 200, kind: 'wall', noStand: true });
+  }
+  // stern rail, split for the boarding stairs (the gap in the middle is the way off)
+  for (let s = 0; s < 2; s++) {
+    const xx = -(hw - 0.5);
+    const zz = (s ? 1 : -1) * 2.0;
+    localBox(g, x, z, 0, rot, xx, deckY + 0.55, zz, 0.14, 0.55, 1.4, hullDark, { hp: 200, kind: 'wall', noStand: true });
+  }
+
+  // ---- stern castle
+  const castleTop = deckY + 2.6;
+  localBox(g, x, z, 0, rot, -(hw - 3.2), castleTop - 0.22, 0, 3.0, 0.22, hb - 0.35, deckMat, { hp: 420, kind: 'walk' });
+  // steps up to it, five rises of 0.52 from the main deck
+  for (let i = 0; i < 5; i++) {
+    const topY = castleTop - 0.52 * i;
+    const lx = -(hw - 3.2) + 3.0 + 0.4 + i * 0.8;
+    const baseY = deckY - 0.2;
+    localBox(g, x, z, 0, rot, lx, (topY + baseY) / 2, 0, 0.4, (topY - baseY) / 2, 1.7, deckMat, { hp: 320, kind: 'walk' });
+  }
+
+  // the wheel
+  const wheelHolder = localHolder(g, x, z, rot, -(hw - 4.4), castleTop + 1.0, 0);
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.09, 6, 16), hullDark);
+  wheel.rotation.y = Math.PI / 2;
+  wheelHolder.add(wheel);
+  for (let i = 0; i < 4; i++) {
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.3, 0.07), hullDark);
+    spoke.rotation.x = (i / 4) * Math.PI;
+    wheelHolder.add(spoke);
+  }
+  const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 1.0, 6), hullDark);
+  stand.position.y = -0.6;
+  wheelHolder.add(stand);
+
+  // ---- masts, yards and sails
+  const masts = wreck ? 1 : 3;
+  for (let i = 0; i < masts; i++) {
+    const mx = wreck ? 1.5 : hw * (0.55 - i * 0.55);
+    const mh = wreck ? 6.5 : 15 - i * 2.5;
+    localBox(g, x, z, 0, rot, mx, deckY + mh / 2, 0, 0.28, mh / 2, 0.28, hullDark, { hp: 260, kind: 'wall' });
+    const holder = localHolder(g, x, z, rot, mx, deckY, 0);
+    if (!wreck) {
+      for (let s = 0; s < 2; s++) {
+        const yardLen = 8.4 - i * 1.4 - s * 1.2;
+        const yAt = mh * (s ? 0.46 : 0.8);
+        const yard = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, yardLen, 6), hullDark);
+        yard.rotation.x = Math.PI / 2;
+        yard.position.y = yAt;
+        holder.add(yard);
+        const sailH = mh * (s ? 0.3 : 0.34);
+        const sail = new THREE.Mesh(new THREE.BoxGeometry(0.14, sailH, yardLen * 0.92), sailMat);
+        sail.position.set(0, yAt - sailH / 2 - 0.1, 0);
+        sail.castShadow = true;
+        holder.add(sail);
+      }
+      const pennant = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 1.6), mat(0x2b2b30, true));
+      pennant.position.set(0, mh + 0.2, 0.8);
+      holder.add(pennant);
+    } else {
+      // a snapped stump
+      const stump = new THREE.Mesh(new THREE.ConeGeometry(0.34, 2.4, 5), hullDark);
+      stump.position.set(0, mh + 0.9, 0);
+      stump.rotation.z = 0.4;
+      holder.add(stump);
+    }
+  }
+
+  // ---- cannon along both sides
+  for (let i = 0; i < 4; i++) {
+    for (let s = 0; s < 2; s++) {
+      const lx = -hw * 0.55 + i * (hw * 0.36);
+      const holder = localHolder(g, x, z, rot, lx, deckY + 0.3, (s ? 1 : -1) * (hb - 0.2));
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.26, 1.7, 8), hullDark);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.z = (s ? 1 : -1) * 0.45;
+      holder.add(barrel);
+      const breech = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 6), hullDark);
+      breech.position.z = (s ? -1 : 1) * 0.35;
+      holder.add(breech);
+    }
+  }
+
+  // ---- boarding stairs off the stern, stepping down to the sand
+  const steps = 9;
+  for (let i = 0; i < steps; i++) {
+    const lx = -(hw - 0.5 + i * 0.95);
+    const topY = deckY - 0.05 - i * 0.5;
+    const lo = topY - 1.8;
+    localBox(g, x, z, 0, rot, lx, (topY + lo) / 2, 0, 0.48, (topY - lo) / 2, 1.9, deckMat, { hp: 320, kind: 'walk' });
+  }
+
+  // ---- chests on the deck
+  const chestsOnDeck = wreck ? 1 : 3;
+  for (let i = 0; i < chestsOnDeck; i++) {
+    const lx = (rng() - 0.5) * (hw * 1.5);
+    const lz = (rng() - 0.5) * (hb - 1.6);
+    const wx = x + lx * cs + lz * sn;
+    const wz = z - lx * sn + lz * cs;
+    addChest(wx, wz, deckY + 0.02);
+  }
+
+  // a cargo crate at the bow, and gold trim at the prow
+  const bowWx = x + (hw - 1.4) * cs;
+  const bowWz = z - (hw - 1.4) * sn;
+  addBox(bowWx, deckY + 0.7, bowWz, 0.9, 0.7, 0.9, null, { hp: 400, kind: 'wall' });
+  const crate = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.4, 1.8), deckMat);
+  crate.position.set(bowWx - x, deckY + 0.7, bowWz - z);
+  crate.rotation.y = rot;
+  crate.castShadow = true;
+  g.add(crate);
+  if (!wreck) {
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), GLOW.amber);
+    trim.position.set(bowWx - x, deckY + 1.6, bowWz - z);
+    g.add(trim);
+  }
+}
+
+function placeCoastalProps(rng, theme) {
+  // the old island stays as it was; the fleet only beached on this season's coast
+  if (theme === 'classic') return;
+
+  // one galleon, run aground on a beach
+  for (let t = 0; t < 40; t++) {
+    const spot = coastalSpot(rng, 0.5, 2.2);
+    if (!spot) break;
+    if (!siteFreeAt(spot.x, spot.z, 16)) continue;
+    const rot = seawardRot(spot.x, spot.z);
+    makeGalleon(spot.x, spot.z, rot, rng, false);
+    claimSite(spot.x, spot.z, 16);
+    break;
+  }
+
+  // two wrecks elsewhere on the coast
+  for (let i = 0; i < 2; i++) {
+    for (let t = 0; t < 30; t++) {
+      const spot = coastalSpot(rng, 0.2, 2.4);
+      if (!spot) break;
+      if (!siteFreeAt(spot.x, spot.z, 12)) continue;
+      const rot = seawardRot(spot.x, spot.z);
+      makeGalleon(spot.x, spot.z, rot, rng, true);
+      claimSite(spot.x, spot.z, 12);
+      break;
+    }
+  }
+
+  // piers
+  for (let i = 0; i < 3; i++) {
+    for (let t = 0; t < 30; t++) {
+      const spot = coastalSpot(rng, 0.4, 1.8);
+      if (!spot) break;
+      if (!siteFreeAt(spot.x, spot.z, 8)) continue;
+      const rot = seawardRot(spot.x, spot.z);
+      makeDock(spot.x, spot.z, rot, rng);
+      claimSite(spot.x, spot.z, 8);
+      break;
+    }
+  }
+}
+
 /* Two- to four-storey tower with an interior stair well in one corner. */
 function makeApartment(x, z, rot, rng, floors) {
   floors = clamp(floors || 3, 2, 4);
@@ -8194,7 +8682,7 @@ const CONTAINER_R = Math.hypot(6.2 / 2, 2.7 / 2) + 0.4;
 function populateWorld() {
   const theme = mapTheme();
   const shrink = isBlitz() ? 0.62 : 1;
-  const rng = mulberry32(theme === 'classic' ? 20220914 : theme === 'mix' ? 20231105 : 20240607);
+  const rng = mulberry32(theme === 'classic' ? 20220914 : theme === 'mix' ? 20231105 : theme === 'pirate' ? 20270107 : 20240607);
   worldSites.length = 0;
 
   // POI clusters
@@ -8211,7 +8699,7 @@ function populateWorld() {
       for (let t = 0; t < 40; t++) {
         ox = px + (rng() - 0.5) * 105 * shrink;
         oz = pz + (rng() - 0.5) * 105 * shrink;
-        apt = !clusterClassic && rng() < 0.34;
+        apt = theme === 'future' && !clusterClassic && rng() < 0.34;
         dims = apt ? null : rollHouseDims(rng);
         rad2 = apt ? APARTMENT_R : houseRadius(dims);
         if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, rad2)) { ok = true; break; }
@@ -8219,10 +8707,11 @@ function populateWorld() {
       if (!ok) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
       const swap = Math.abs(Math.sin(rot)) > 0.5;
-      siteThemeMode = clusterClassic ? 'classic' : 'future';
+      siteThemeMode = clusterClassic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
       if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.5 ? 4 : 3);
       else if (clusterClassic) makeClassicHouse(ox, oz, rot, rng, dims);
-      else makeHouse(ox, oz, rot, rng, dims);
+      else if (theme === 'future') makeHouse(ox, oz, rot, rng, dims);
+      else makePirateHut(ox, oz, rot, rng, dims);
       claimSite(ox, oz, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
     }
     for (let j = 0; j < 3; j++) {
@@ -8233,9 +8722,10 @@ function populateWorld() {
         if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, CONTAINER_R)) { ok = true; break; }
       }
       if (!ok) continue;
-      siteThemeMode = clusterClassic ? 'classic' : 'future';
+      siteThemeMode = clusterClassic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
       if (clusterClassic) makeClassicCrate(ox, oz, rng);
-      else makeContainer(ox, oz, rng);
+      else if (theme === 'future') makeContainer(ox, oz, rng);
+      else makePirateCrate(ox, oz, rng);
       claimSite(ox, oz, CONTAINER_R);
     }
   }
@@ -8248,7 +8738,7 @@ function populateWorld() {
       const ang = rng() * TAU;
       const dist = rng() * 215 * shrink;
       x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
-      apt = !classic && i % 3 === 0;
+      apt = theme === 'future' && !classic && i % 3 === 0;
       dims = apt ? null : rollHouseDims(rng);
       rad2 = apt ? APARTMENT_R : houseRadius(dims);
       if (terrainHeight(x, z) > 3 && siteFreeAt(x, z, rad2)) { ok = true; break; }
@@ -8256,10 +8746,11 @@ function populateWorld() {
     if (!ok) continue;
     const rot = Math.floor(rng() * 4) * (Math.PI / 2);
     const swap = Math.abs(Math.sin(rot)) > 0.5;
-    siteThemeMode = classic ? 'classic' : 'future';
+    siteThemeMode = classic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
     if (apt) makeApartment(x, z, rot, rng, rng() < 0.55 ? 4 : 3);
     else if (classic) makeClassicHouse(x, z, rot, rng, dims);
-    else makeHouse(x, z, rot, rng, dims);
+    else if (theme === 'future') makeHouse(x, z, rot, rng, dims);
+    else makePirateHut(x, z, rot, rng, dims);
     claimSite(x, z, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
   }
 
@@ -8270,8 +8761,9 @@ function populateWorld() {
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.6) continue;
     if (!siteFreeAt(x, z, 2.4)) continue;
-    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'mix' ? (rng() < 0.5 ? 'classic' : 'future') : 'future';
+    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'mix' ? (rng() < 0.5 ? 'classic' : 'pirate') : theme === 'future' ? 'future' : 'pirate';
     if (isClassicSite()) makeClassicTree(x, z, rng);
+    else if (isPirateSite()) makePalm(x, z, rng);
     else makeTree(x, z, rng);
   }
 
@@ -8282,13 +8774,14 @@ function populateWorld() {
     const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
     if (terrainHeight(x, z) < 1.0) continue;
     if (!siteFreeAt(x, z, 1.6)) continue;
-    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'mix' ? (rng() < 0.5 ? 'classic' : 'future') : 'future';
+    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'mix' ? (rng() < 0.5 ? 'classic' : 'pirate') : theme === 'future' ? 'future' : 'pirate';
     if (isClassicSite()) makeClassicRock(x, z, rng);
+    else if (isPirateSite()) makeJungleRock(x, z, rng);
     else makeRock(x, z, rng);
   }
 
   // relay beacons — charged landmarks, only on a charged island
-  if (theme !== 'classic') {
+  if (theme === 'future' || theme === 'mix') {
     for (let i = 0; i < 11; i++) {
       if (theme === 'mix' && i % 2 === 1) continue;
       const ang = rng() * TAU;
@@ -8300,6 +8793,8 @@ function populateWorld() {
       makeBeacon(x, z, rng);
     }
   }
+
+  placeCoastalProps(rng, theme);
 
   buildVendingMachines(rng);
 
@@ -9384,6 +9879,7 @@ GUN_ICONS.exotic_nova = GUN_ICONS.nova;
 GUN_ICONS.exotic_cryo = GUN_ICONS.cryo;
 GUN_ICONS.exotic_ion = GUN_ICONS.ion;
 GUN_ICONS.exotic_zero = GUN_ICONS.beam;
+GUN_ICONS.token = '<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="32" r="25"/><circle cx="32" cy="32" r="18" fill="#0b1a2b"/><circle cx="32" cy="27" r="8.5"/><rect x="28.4" y="34" width="7.2" height="6" rx="2"/><circle cx="28.6" cy="26.4" r="2.4" fill="#0b1a2b"/><circle cx="35.4" cy="26.4" r="2.4" fill="#0b1a2b"/><rect x="30.6" y="45" width="2.8" height="4.4"/></svg>';
 
 GUN_ICONS.heavyar = GUN_ICONS.ar;
 GUN_ICONS.burst = GUN_ICONS.ar;
@@ -9481,6 +9977,14 @@ const GRAPPLER_USES = 15;
 const GRAPPLER_RANGE = 70;
 function makeGrappler() {
   return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
+}
+
+/* One chest in five hundred holds the pirate token: every outfit the item shop
+   sells, free, and the battle pass unlocked. It is not a weapon and takes no
+   slot — picking it up redeems it on the account. */
+const PIRATE_TOKEN_CHANCE = 1 / 500;
+function makeToken() {
+  return { kind: 'token', name: 'Pirate Token' };
 }
 
 /* -------------------------------------------------------------------------
@@ -9694,6 +10198,7 @@ function itemIconHTML(item) {
   if (item.kind === 'grappler') return GUN_ICONS.grappler;
   if (item.kind === 'boon') return GUN_ICONS[BOONS[item.type].icon] || GUN_ICONS.ammo;
   if (item.kind === 'sprite') return spriteArt(item.spriteId, false);
+  if (item.kind === 'token') return GUN_ICONS.token;
   return GUN_ICONS.ammo;
 }
 function itemColor(item) {
@@ -9705,6 +10210,7 @@ function itemColor(item) {
   if (item.kind === 'gold') return '#ffc844';
   if (item.kind === 'boon') return BOONS[item.type].color;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].color;
+  if (item.kind === 'token') return '#ffd451';
   return '#c9c9c9';
 }
 function itemLabel(item) {
@@ -9717,6 +10223,7 @@ function itemLabel(item) {
   if (item.kind === 'gold') return 'Gold Bars';
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
+  if (item.kind === 'token') return 'Pirate Token';
   return 'Item';
 }
 function itemMeta(item) {
@@ -9726,6 +10233,7 @@ function itemMeta(item) {
   if (item.kind === 'heal' || item.kind === 'grenade' || item.kind === 'grappler') return 'x' + item.count;
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
   if (item.kind === 'sprite') return 'SPRITE · ' + SPRITES[item.spriteId].desc;
+  if (item.kind === 'token') return 'EVERYTHING IN THE SHOP, FREE';
   return '';
 }
 function itemColorHex(item) {
@@ -10569,6 +11077,22 @@ function buildLootModel(item) {
     );
     shine.position.y = 0.4;
     g.add(shine);
+  } else if (item.kind === 'token') {
+    // a doubloon standing on edge, skull-side out
+    const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.08, 20), mat(0xffd451, true));
+    coin.rotation.x = Math.PI / 2;
+    coin.rotation.z = 0.3;
+    g.add(coin);
+    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.1, 20), mat(0xd8a828, true));
+    face.rotation.x = Math.PI / 2;
+    face.rotation.z = 0.3;
+    g.add(face);
+    for (let i = 0; i < 2; i++) {
+      const bone = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.07, 0.1), mat(0x3a2a10, true));
+      bone.position.z = 0.07;
+      bone.rotation.z = 0.3 + (i ? -0.75 : 0.75);
+      g.add(bone);
+    }
   } else {
     const box = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.24, 0.3), mat(0x4a5568, true));
     g.add(box);
@@ -10589,7 +11113,7 @@ function spawnLoot(x, y, z, item) {
   model.position.y = 0.45;
   g.add(model);
 
-  const special = item.kind === 'weapon' && item.rarity >= R_ASCENDANT;
+  const special = item.kind === 'token' || (item.kind === 'weapon' && item.rarity >= R_ASCENDANT);
   let halo = null;
 
   const ring = new THREE.Mesh(
@@ -10619,7 +11143,7 @@ function spawnLoot(x, y, z, item) {
 
   g.position.set(x, y, z);
   dynGroup.add(g);
-  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: LOOT_LIFE + rand(0, 8), dead: false });
+  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: item.kind === 'token' ? 900 : LOOT_LIFE + rand(0, 8), dead: false });
   while (loot.length > LOOT_MAX) {
     const old = loot.shift();
     if (!old) break;
@@ -10822,6 +11346,12 @@ function nearestLoot(radius) {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
+  if (l.item.kind === 'token') {
+    l.dead = true;
+    if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+    redeemPirateToken();
+    return;
+  }
   if (l.item.kind === 'gold') {
     l.dead = true;
     if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
@@ -10881,6 +11411,8 @@ function openChest(c) {
   }
   if (Math.random() < 0.25) drops.push(makeGrappler());
   drops.push(makeGold(50));
+  // One chest in five hundred hides the season's pirate token.
+  if (Math.random() < PIRATE_TOKEN_CHANCE) drops.push(makeToken());
 
   const a0 = Math.random() * TAU;
   for (let i = 0; i < drops.length; i++) {
@@ -10890,6 +11422,12 @@ function openChest(c) {
   }
   if (gun.rarity >= R_ASCENDANT) {
     showRareFind(gun, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
+  }
+  for (let i = 0; i < drops.length; i++) {
+    if (drops[i].kind === 'token') {
+      showRareFind(drops[i], 'PIRATE TOKEN', 'GRAB IT TO CLAIM THE WHOLE SHOP');
+      break;
+    }
   }
 
   const woodMul = hasBoon('scav') ? 1.5 : 1;
@@ -15090,14 +15628,24 @@ const CLASSIC_SECTOR_NAMES = [
   'STATION ROAD', 'TANNERY', 'FROST KNOLL', 'HAY BARN', 'NORTH GATE', 'OLD QUARRY',
 ];
 
+const PIRATE_SECTOR_NAMES = [
+  'SALT WAKE', 'GULL POINT', 'BLACK TIDE', 'CANNON BAY', 'RUM ROW', 'ANCHOR DROP',
+  'KRAKEN REACH', 'DEAD MAN COVE', 'BONE HARBOR', 'RED SAIL', 'TREASURE PIKE', 'LAGOON FLATS',
+  'SUNKEN JEWEL', 'WRECK WARD', 'MAROON RIDGE', 'CUTLASS CUT', 'PALM GROVE', 'TIDE MILL',
+  'HALF MOON', 'CORSAIR NECK', 'SMUGGLER RUN', 'BRINE FIELDS', 'GOLD SANDS', 'SPYGLASS HILL',
+  'PORT SORROW', 'ROPE WALK', 'BARREL BAR', 'PLANK END', 'DOUBLOON BAY', 'IRON CAPE',
+  'LUCKLESS SHORE', 'JUNGLE VEIL', 'STORM ANCHOR', 'TALLOW CREEK', 'DRY DOCK', 'LAST LIGHT',
+];
+
 let MIXED_SECTOR_NAMES = null;
 
 function sectorNamesForMode() {
   const t = mapTheme();
   if (t === 'classic') return CLASSIC_SECTOR_NAMES;
+  if (t === 'pirate') return PIRATE_SECTOR_NAMES;
   if (t === 'future') return SECTOR_NAMES;
   if (!MIXED_SECTOR_NAMES) {
-    MIXED_SECTOR_NAMES = SECTOR_NAMES.map((n, i) => (i % 2 ? CLASSIC_SECTOR_NAMES[i] : n));
+    MIXED_SECTOR_NAMES = PIRATE_SECTOR_NAMES.map((n, i) => (i % 2 ? CLASSIC_SECTOR_NAMES[i] : n));
   }
   return MIXED_SECTOR_NAMES;
 }
@@ -16477,10 +17025,10 @@ function setMode(m) {
    - patch goes up for small updates (x.x.9 -> x.x.10)
    The numbers are plain, never padded or rolled over: the minor keeps
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
-   ships, so this season's updates stay on 7 and v8 waits for Season 7.
+   ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 7, minor: 10, patch: 4 };
-const VERSION_PREV = '7.10.3';
+const VERSION = { major: 8, minor: 0, patch: 0 };
+const VERSION_PREV = '7.10.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -16536,6 +17084,16 @@ const SKINS = [
   { id: 's6c', name: 'Helix Runner', shirt: 0x1f4b45, pants: 0x0e2020, skin: 0xb07a4a, accent: 0xc6ff4a, rarity: 3 },
   { id: 's6d', name: 'Prism Warden', shirt: 0x5e4a8e, pants: 0x17122a, skin: 0xf0c9a0, accent: 0xff5ea8, rarity: 4 },
   { id: 's6e', name: 'Zero Signal', shirt: 0x111820, pants: 0x0a0e13, skin: 0xd8a878, accent: 0x6dffd8, rarity: 4 },
+  { id: 's7a', name: 'Salt Wake', shirt: 0x2f8f9a, pants: 0x123236, skin: 0xe8b98a, accent: 0x5fe0d0, rarity: 2 },
+  { id: 's7b', name: 'Tar Hand', shirt: 0x3a3a44, pants: 0x16161c, skin: 0xb07a4a, accent: 0xffc844, rarity: 3 },
+  { id: 's7c', name: 'Red Sail', shirt: 0xb03a34, pants: 0x2b1210, skin: 0xf0c9a0, accent: 0xe8dcc0, rarity: 3 },
+  { id: 's7d', name: 'Kraken Mark', shirt: 0x1f5a6b, pants: 0x0d2530, skin: 0x9fd8c0, accent: 0xc6ff4a, rarity: 4 },
+  { id: 's7e', name: "Dead Man's Toll", shirt: 0x14181c, pants: 0x0a0c0f, skin: 0xd8cbb0, accent: 0xffc844, rarity: 4 },
+  // Season 7 item shop rotation
+  { id: 'shop_corsair', name: 'Corsair', shirt: 0x2b4a6b, pants: 0x101c2b, skin: 0xe8b98a, accent: 0xffc844, rarity: 3, price: 1200, fresh: true },
+  { id: 'shop_galleon', name: 'Galleon Warden', shirt: 0x6b4a2e, pants: 0x2b1c10, skin: 0xd8a878, accent: 0xe8dcc0, rarity: 3, price: 1200, fresh: true },
+  { id: 'shop_powder', name: 'Powder Monkey', shirt: 0xffa63d, pants: 0x3a2208, skin: 0xb07a4a, accent: 0x8a2f2f, rarity: 2, price: 800, fresh: true },
+  { id: 'shop_bonecoin', name: 'Bonecrown', shirt: 0xe8e2cf, pants: 0x2a2a2e, skin: 0x9fd8c0, accent: 0xffc844, rarity: 4, price: 1500, fresh: true },
   // Season 5 item shop rotation
   { id: 'shop_rift', name: 'Riftwalker', shirt: 0x7b6bff, pants: 0x161228, skin: 0xe8b98a, accent: 0x3a2a7a, rarity: 3, price: 1200, fresh: true },
   { id: 'shop_tide', name: 'Tide Breaker', shirt: 0x39c6c0, pants: 0x0f2a2a, skin: 0xf0c9a0, accent: 0x1a4a48, rarity: 3, price: 1200, fresh: true },
@@ -16557,20 +17115,20 @@ const SHOP_ITEMS = SKINS.filter((s) => s.price && s.fresh);
 
 const BP_TIERS = [
   { xp: 250, type: 'vb', amount: 100, name: '100 V-BUCKS' },
-  { xp: 500, type: 'skin', id: 's6a', name: 'Null Courier' },
+  { xp: 500, type: 'skin', id: 's7a', name: 'Salt Wake' },
   { xp: 800, type: 'vb', amount: 150, name: '150 V-BUCKS' },
-  { xp: 1100, type: 'skin', id: 's6b', name: 'Circuit Fold' },
+  { xp: 1100, type: 'skin', id: 's7b', name: 'Tar Hand' },
   { xp: 1450, type: 'vb', amount: 200, name: '200 V-BUCKS' },
-  { xp: 1800, type: 'skin', id: 's6c', name: 'Helix Runner' },
+  { xp: 1800, type: 'skin', id: 's7c', name: 'Red Sail' },
   { xp: 2200, type: 'vb', amount: 250, name: '250 V-BUCKS' },
-  { xp: 2600, type: 'skin', id: 's6d', name: 'Prism Warden' },
+  { xp: 2600, type: 'skin', id: 's7d', name: 'Kraken Mark' },
   { xp: 3000, type: 'vb', amount: 300, name: '300 V-BUCKS' },
-  { xp: 3500, type: 'skin', id: 's6e', name: 'Zero Signal' },
+  { xp: 3500, type: 'skin', id: 's7e', name: "Dead Man's Toll" },
 ];
 const BP_COST = 1000;
 const PROFILE_KEY = 'stormfall.profile.v1';
 
-const SEASON = 6;
+const SEASON = 7;
 
 const TOURNEY_GAMES = 3;
 
@@ -16607,7 +17165,7 @@ const VB_RESET_ID = 'wipe-6.5.3';
 function defaultProfile() {
   return {
     vbucks: 0, vbReset: VB_RESET_ID, owned: ['default'], equipped: 'default',
-    battlePass: false, bpXp: 0, claimed: [],
+    battlePass: false, bpXp: 0, claimed: [], pirateToken: false,
     sprites: {}, sprite: '', spritePicked: false,
     pocket: 'shock',
     rankRp: 0,
@@ -16647,6 +17205,7 @@ function loadProfile() {
         base.sprites = (p.sprites && typeof p.sprites === 'object') ? p.sprites : {};
         base.sprite = typeof p.sprite === 'string' ? p.sprite : '';
         base.spritePicked = !!p.spritePicked;
+        base.pirateToken = !!p.pirateToken;
         if (p.season === SEASON) {
           base.battlePass = !!p.battlePass;
           base.bpXp = Math.max(0, p.bpXp || 0);
@@ -17424,9 +17983,10 @@ let rareFindTimer = 0;
 function showRareFind(item, kicker, subLine) {
   const el = document.getElementById('rareFind');
   if (!el) return;
-  const mythic = item.rarity >= R_MYTHIC;
-  const ascendant = !mythic && item.rarity >= R_ASCENDANT;
-  el.dataset.tier = mythic ? 'mythic' : ascendant ? 'ascendant' : 'exotic';
+  const token = item.kind === 'token';
+  const mythic = !token && item.rarity >= R_MYTHIC;
+  const ascendant = !mythic && !token && item.rarity >= R_ASCENDANT;
+  el.dataset.tier = token || mythic ? 'mythic' : ascendant ? 'ascendant' : 'exotic';
   el.classList.toggle('noDim', isBlitz());
 
   const kick = document.getElementById('rfKicker');
@@ -17435,10 +17995,10 @@ function showRareFind(item, kicker, subLine) {
   const sub = document.getElementById('rfSub');
   const art = document.getElementById('rfArt');
   if (kick) kick.textContent = kicker || 'RARE CHEST FIND';
-  if (title) title.textContent = RARITY[item.rarity].name.toUpperCase() + ' FOUND';
-  if (name) name.textContent = (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
+  if (title) title.textContent = token ? '1 IN 500' : RARITY[item.rarity].name.toUpperCase() + ' FOUND';
+  if (name) name.textContent = token ? 'PIRATE TOKEN' : (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
   if (sub) sub.textContent = subLine || (RARITY[item.rarity].name.toUpperCase() + ' · GRAB IT BEFORE IT VANISHES');
-  if (art) art.innerHTML = GUN_ICONS[item.type] || '';
+  if (art) art.innerHTML = token ? GUN_ICONS.token : (GUN_ICONS[item.type] || '');
 
   el.classList.remove('hide');
   el.classList.remove('on');
@@ -17903,7 +18463,7 @@ function buyBattlePass() {
   renderLocker();
   sfx('bpBuy');
   playReveal({
-    kicker: 'SEASON 6',
+    kicker: 'SEASON 7',
     title: 'BATTLE PASS',
     name: 'UNLOCKED',
     sub: 'ALL REWARDS ARE NOW YOURS TO EARN',
@@ -17944,6 +18504,39 @@ function claimBpTiers() {
     renderLocker();
   }
   renderPass();
+}
+
+/* ---------------- pirate token ----------------
+   The 1-in-500 chest find. It buys out the entire item shop — every outfit that
+   has ever carried a price — and unlocks this season's battle pass, on the
+   account, permanently. Kept in the profile with the token flag so a second one
+   is a no-op rather than a duplicate. */
+function redeemPirateToken() {
+  let gained = 0;
+  for (let i = 0; i < SKINS.length; i++) {
+    const sk = SKINS[i];
+    if (!sk.price || ownsSkin(sk.id)) continue;
+    profile.owned.push(sk.id);
+    gained++;
+  }
+  profile.pirateToken = true;
+  profile.battlePass = true;
+  saveProfile();
+  refreshWallet();
+  renderShop();
+  renderLocker();
+  renderPass();
+  claimBpTiers();
+  sfx('bpBuy');
+  shake(0.3);
+  playReveal({
+    kicker: 'PIRATE TOKEN · 1 IN 500',
+    title: 'THE WHOLE SHOP',
+    name: 'UNLOCKED',
+    sub: gained + ' OUTFITS AND THE BATTLE PASS, FREE',
+    art: GUN_ICONS.token,
+  });
+  toast('PIRATE TOKEN REDEEMED · ' + gained + ' OUTFITS', 'sub');
 }
 
 function selectPocket(type) {
@@ -19526,6 +20119,7 @@ function boot() {
   buildHotbarDOM();
   setBotCount(state.botsWanted);
   setMode(state.mode);
+  paintTerrain('pirate');   // the menu backdrop is this season's island
   populateWorld();
   resetStorm();
   refreshHotbar();
@@ -19581,10 +20175,10 @@ function boot() {
    Schema: { id, tag, title, body, link, linkText, minVersion, maxVersion }. */
 const MOTD_URL = 'https://gist.githubusercontent.com/cannon164524/53e30ebd0b724394a72dd6729b454936/raw/announcement.json';
 const MOTD_DEFAULT = {
-  id: 's6-charged-basin',
+  id: 's7-pirate-coast',
   tag: 'MESSAGE OF THE DAY',
-  title: 'THE CHARGED BASIN',
-  body: 'Season 6 has resurfaced the island. Every gun is an emitter now: watch the heat, lead your long shots, and vent with R before the cells refuse another shot.',
+  title: 'THE PIRATE COAST',
+  body: 'Season 7 has beached a fleet on a new island. Board the galleon, loot its deck, and watch the chests: one in five hundred hides the pirate token, and it pays out the whole item shop.',
   link: ''
 };
 const MOTD_CACHE_KEY = 'stormfall.motd.last';
