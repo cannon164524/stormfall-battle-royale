@@ -6626,12 +6626,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SIGN IN, KEEP YOUR PROGRESS</b> — make an account with a username and a password of 6 characters or more, no email. Your V-Bucks, skins, battle pass, sprites, cash and ranks follow you to any device or browser. <b>PLAY OFFLINE</b> still works and keeps progress on that device only.</div></li>
-      <li><span class="wnTag">02</span><div><b>SAVED WHILE YOU PLAY</b> — every change is written to your account a couple of seconds after it happens. If the connection drops, the game keeps running on local progress and retries.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE PIRATE TOKEN</b> — a chest in twenty holds it. It lands in your boon slots: win that match with it still on you and every outfit the item shop sells is yours, free, with the battle pass.</div></li>
-      <li><span class="wnTag">04</span><div><b>THE PIRATE COAST</b> — the island with the galleon run aground on its beach, two wrecks and three piers. Board the ship up the stern stairs and loot its deck.</div></li>
-      <li><span class="wnTag">05</span><div><b>A NEW BATTLE PASS</b> — ten tiers of Season 7 rewards. Salt Wake, Tar Hand, Red Sail, Kraken Mark and Dead Man's Toll are the outfits, with V-Bucks between them.</div></li>
-      <li><span class="wnTag">06</span><div><b>THE ARSENAL IS ALL BLACK POWDER</b> — Flintlock Pistol, Hand Cannon, Blunderbuss, Grapeshot Swivel, Repeater Carbine, Musketoon, Swivel Gun, Chain Shot, Hand Mortar, Long Rifle, Harpoon Gun and Sea Musket, each with Mythic and Exotic bloodlines. Every gun loads a magazine and feeds from your reserve.</div></li>
+      <li><span class="wnTag">01</span><div><b>EVERY GUN HITS HARDER</b> — the whole powder arsenal was retuned upward. Flintlock 78, Hand Cannon 68, Blunderbuss 26×12 pellets, Repeater 28 at 660 rpm, Musketoon 44, Swivel Gun 38, Chain Shot 58, Hand Mortar 80, Long Rifle 88, Harpoon 105, Sea Musket 135. Mythics and Exotics scaled with them.</div></li>
+      <li><span class="wnTag">02</span><div><b>SHOTGUNS RELOAD TOO</b> — the Blunderbuss and Flintlock now hold two shots instead of one, and the Grapeshot Swivel holds seven, so a close fight is not a reload contest.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE GUNSHIP IS YOUR WEAPON</b> — every round that lands from your seat pops damage numbers and marks the hit, and every kill is yours: the kill banner, RP, tournament points, battle pass XP and the Siphon all fire as they would from a rifle. The feed says you did it.</div></li>
+      <li><span class="wnTag">04</span><div><b>THE PLANE DOES NOT GLITCH BOTS</b> — bots shooting at a piloted gunship now hold their ground and fire upward instead of walking toward a target 80 m in the air. No more stuttering across the map.</div></li>
+      <li><span class="wnTag">05</span><div><b>LESS OF THE LOBBY ON YOU</b> — at most two or three bots will target you at once, the reach before they turn on you is shorter, and only three will ever break off to shoot the plane. The rest fight each other.</div></li>
+      <li><span class="wnTag">06</span><div><b>ACCOUNTS</b> — sign in with a username and a password of 6 characters or more, and your V-Bucks, skins, battle pass and ranks follow you to any device.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9117,7 +9117,9 @@ function buildGunship() {
 
 let gunship = null;
 
-/* Bots need something with a body to aim at while someone flies the plane. */
+/* Bots need something with a body to aim at while someone flies the plane. It
+   carries every field the bot code reads off a target, so aiming at the plane
+   never trips over a missing bot property. */
 const gunshipTarget = {
   pos: new THREE.Vector3(),
   vel: new THREE.Vector3(),
@@ -9128,6 +9130,12 @@ const gunshipTarget = {
   team: -1,
   name: 'GUNSHIP',
   isPlane: true,
+  hp: 1,
+  shield: 0,
+  overshield: 0,
+  skill: 1,
+  rig: null,
+  weapon: null,
 };
 const GUNSHIP_SPEED = 62;
 const GUNSHIP_ALT = 148;
@@ -9214,6 +9222,22 @@ function damageGunship(amount, source) {
   if (gunship.hp <= 0) destroyGunship(source);
 }
 
+/* The crash blast. Credit follows the shooter, so a player's downed plane pops
+   its own damage numbers instead of handing the kill to the plane. */
+function gunshipCrashBlast(pos, r, dmg, who) {
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.alive || b.out || b.dropping) continue;
+    const d = Math.hypot(b.pos.x - pos.x, b.pos.z - pos.z);
+    if (d > r) continue;
+    damageBot(b, dmg * (1 - d / r), who, false, b.pos.clone(), null);
+  }
+  if (player.alive && !player.piloting) {
+    const d = Math.hypot(player.pos.x - pos.x, player.pos.z - pos.z);
+    if (d > 0.6 && d < r) hurtPlayer(dmg * 0.3 * (1 - d / r), who === 'You' ? 'Explosion' : who, false, pos.clone());
+  }
+}
+
 function destroyGunship(source) {
   if (!gunship || gunship.destroyed) return;
   gunship.destroyed = true;
@@ -9230,16 +9254,22 @@ function destroyGunship(source) {
 
   shockwaveFX(pos, 16);
   impactFX(pos);
-  blastDamage(pos, 9, 45, null, source || 'GUNSHIP');
+  gunshipCrashBlast(pos, 9, 45, byPlayer ? 'You' : (source || 'GUNSHIP'));
   shake(0.5);
   sfx('death');
   if (wasBot) addFeed(byPlayer ? 'You' : (source || 'GUNSHIP'), 'BOT PILOT', false);
   if (byPlayer && wasBot) {
+    // A shot-down pilot counts as a real elimination, so RP, tournament points,
+    // battle pass XP and the kill feed all land the same as a gunfight.
     player.kills += 1;
     killPulse();
     showResultCard('kill', 'GUNSHIP PILOT');
     sfx('elim');
-    if (typeof blitzAddXp === 'function') blitzAddXp(2);
+    awardBpXp(100);
+    awardTourPoints(3, 'ELIMINATION', 'GUNSHIP PILOT');
+    awardRankPoints(isRankedReload() ? 10 : 12, 'ELIMINATION', 'GUNSHIP PILOT');
+    blitzAddXp(2);
+    if (siphonActive()) applySiphon();
     toast('GUNSHIP SHOT DOWN', '');
   }
   if (wasPlayer) {
@@ -9255,6 +9285,24 @@ function destroyGunship(source) {
   } else {
     toast('GUNSHIP DESTROYED', 'sub');
   }
+}
+
+/* The bot pilot's shells. Same falloff as a blast, but the credit stays with
+   the plane so a bot kill reads "GUNSHIP", not the human. */
+function planeBlast(pos, r, dmg) {
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.alive || b.out || b.dropping) continue;
+    const d = Math.hypot(b.pos.x - pos.x, b.pos.z - pos.z);
+    if (d > r) continue;
+    damageBot(b, dmg * (1 - d / r), 'GUNSHIP', false, b.pos.clone(), null);
+  }
+  if (player.alive && !player.piloting) {
+    const d = Math.hypot(player.pos.x - pos.x, player.pos.z - pos.z);
+    if (d > 0.6 && d < r) hurtPlayer(dmg * 0.3 * (1 - d / r), 'GUNSHIP', false, pos.clone());
+  }
+  shockwaveFX(pos, r);
+  impactFX(pos);
 }
 
 function nearestGroundTarget(pos) {
@@ -9315,11 +9363,12 @@ function updateBotPilot(dt) {
       const muzzle = g.userData.muzzle.clone();
       g.localToWorld(muzzle);
       tracerFX(muzzle, aim, 0xffd451);
-      blastDamage(aim, 5, 34, null, 'GUNSHIP');
+      // A bot at the controls is credited as the plane, never as the player.
+      planeBlast(aim, 5, 34);
       const aim2 = aim.clone();
       aim2.x += rand(-3.5, 3.5);
       aim2.z += rand(-3.5, 3.5);
-      blastDamage(aim2, 4.5, 22, null, 'GUNSHIP');
+      planeBlast(aim2, 4.5, 22);
       sfx('shotgun');
     }
   }
@@ -9441,16 +9490,20 @@ function updatePilotedGunship(dt) {
 
 const GUNSHIP_BLAST_R = 5.5;
 const GUNSHIP_BLAST_DMG = 22;
+const GUNSHIP_HIT_DMG = 26;
 
-/* Every chin-cannon round is explosive. Bots only, so a low pass never hurts
-   the pilot with their own blast. */
+/* A piloted gunship is the player's weapon, so everything it does is credited
+   to "You": damage numbers pop, hits mark, and the kill runs the ordinary
+   elimination path. Bots only, so a low pass never hurts the pilot. */
 function gunshipBlast(pos) {
+  const mine = !!(gunship && gunship.pilot === 'player');
   for (let i = 0; i < bots.length; i++) {
     const o = bots[i];
     if (!o.alive || o.out || o.dropping) continue;
     const d = Math.hypot(o.pos.x - pos.x, o.pos.z - pos.z);
     if (d > GUNSHIP_BLAST_R) continue;
-    damageBot(o, GUNSHIP_BLAST_DMG * (1 - d / GUNSHIP_BLAST_R), 'Gunship', false, o.pos.clone());
+    const dmg = GUNSHIP_BLAST_DMG * (1 - d / GUNSHIP_BLAST_R);
+    damageBot(o, dmg, mine ? 'You' : 'GUNSHIP', false, o.pos.clone(), null);
   }
   shockwaveFX(pos, GUNSHIP_BLAST_R);
   impactFX(pos);
@@ -9468,10 +9521,11 @@ function fireGunshipGun() {
   dir.y += rand(-1, 1) * 0.012;
   dir.z += rand(-1, 1) * 0.012;
   dir.normalize();
+  const mine = gunship.pilot === 'player';
   const hit = hitTest(muzzle, dir, GUNSHIP_GUN_RANGE, null, player.team);
   if (hit.kind === 'bot' && hit.bot) {
-    damageBot(hit.bot, 26, 'Gunship', hit.head, hit.point);
-    hitmarker(false, true);
+    damageBot(hit.bot, GUNSHIP_HIT_DMG, mine ? 'You' : 'GUNSHIP', hit.head, hit.point, null);
+    if (mine) hitmarker(false, true);
   } else if (hit.kind === 'world' && hit.col) {
     damageCollider(hit.col, 45);
   }
@@ -9715,35 +9769,35 @@ const VAULTED_WEAPONS = {
    every weapon loads a magazine and draws from the reserve.
    ========================================================================= */
 const WEAPONS = {
-  // sidearms
-  flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 55, rpm: 75, mag: 1, reload: 1.4, spread: 0.010, ads: 0.004, pellets: 1, hs: 2.2, range: 210, auto: false, sfx: 'pistol' },
-  handcannon: { name: 'Hand Cannon', ammo: 'heavy', dmg: 48, rpm: 110, mag: 4, reload: 2.2, spread: 0.020, ads: 0.008, pellets: 1, hs: 1.9, range: 200, auto: false, sfx: 'heavyar' },
+  // sidearms — a flintlock has one shot, so that shot has to be worth carrying.
+  flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 78, rpm: 95, mag: 2, reload: 1.3, spread: 0.010, ads: 0.004, pellets: 1, hs: 2.2, range: 220, auto: false, sfx: 'pistol' },
+  handcannon: { name: 'Hand Cannon', ammo: 'heavy', dmg: 68, rpm: 130, mag: 5, reload: 2.1, spread: 0.020, ads: 0.008, pellets: 1, hs: 1.9, range: 210, auto: false, sfx: 'heavyar' },
   // close range
-  blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 18, rpm: 65, mag: 1, reload: 2.8, spread: 0.055, ads: 0.038, pellets: 12, hs: 1.6, range: 62, auto: false, sfx: 'shotgun' },
-  grapeshot: { name: 'Grapeshot Swivel', ammo: 'shells', dmg: 12, rpm: 150, mag: 6, reload: 2.7, spread: 0.045, ads: 0.030, pellets: 9, hs: 1.7, range: 76, auto: true, sfx: 'tacshot' },
-  repeater: { name: 'Repeater Carbine', ammo: 'light', dmg: 19, rpm: 620, mag: 12, reload: 2.0, spread: 0.022, ads: 0.009, pellets: 1, hs: 1.6, range: 152, auto: true, sfx: 'smg' },
+  blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 26, rpm: 72, mag: 2, reload: 2.5, spread: 0.055, ads: 0.038, pellets: 12, hs: 1.6, range: 70, auto: false, sfx: 'shotgun' },
+  grapeshot: { name: 'Grapeshot Swivel', ammo: 'shells', dmg: 18, rpm: 170, mag: 7, reload: 2.6, spread: 0.045, ads: 0.030, pellets: 9, hs: 1.7, range: 84, auto: true, sfx: 'tacshot' },
+  repeater: { name: 'Repeater Carbine', ammo: 'light', dmg: 28, rpm: 660, mag: 14, reload: 1.9, spread: 0.022, ads: 0.009, pellets: 1, hs: 1.7, range: 165, auto: true, sfx: 'smg' },
   // mid range
-  musketoon: { name: 'Musketoon', ammo: 'medium', dmg: 30, rpm: 300, mag: 8, reload: 2.4, spread: 0.034, ads: 0.013, pellets: 1, hs: 1.8, range: 220, auto: false, sfx: 'ar' },
-  swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 26, rpm: 420, mag: 40, reload: 3.6, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 210, auto: true, sfx: 'lmg' },
-  chainshot: { name: 'Chain Shot', ammo: 'medium', dmg: 40, rpm: 150, mag: 6, reload: 2.6, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 260, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.35 },
-  mortar: { name: 'Hand Mortar', ammo: 'medium', dmg: 55, rpm: 45, mag: 2, reload: 3.2, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 240, auto: false, sfx: 'ar', onHit: 'explode', blastR: 3.6, blastDmg: 40, bulletSpeed: 260 },
+  musketoon: { name: 'Musketoon', ammo: 'medium', dmg: 44, rpm: 320, mag: 9, reload: 2.3, spread: 0.034, ads: 0.013, pellets: 1, hs: 1.8, range: 235, auto: false, sfx: 'ar' },
+  swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 38, rpm: 450, mag: 45, reload: 3.4, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
+  chainshot: { name: 'Chain Shot', ammo: 'medium', dmg: 58, rpm: 165, mag: 7, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
+  mortar: { name: 'Hand Mortar', ammo: 'medium', dmg: 80, rpm: 55, mag: 2, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
   // long range
-  longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 62, rpm: 90, mag: 5, reload: 2.9, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.1, range: 330, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', bulletSpeed: 480 },
-  harpoon: { name: 'Harpoon Gun', ammo: 'medium', dmg: 70, rpm: 55, mag: 3, reload: 2.8, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 300, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 320 },
-  musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 95, rpm: 40, mag: 1, reload: 2.8, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.4, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'sniper', bulletSpeed: 520 },
+  longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 88, rpm: 105, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', bulletSpeed: 520 },
+  harpoon: { name: 'Harpoon Gun', ammo: 'medium', dmg: 105, rpm: 62, mag: 3, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 320, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 340 },
+  musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 135, rpm: 48, mag: 1, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 440, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'sniper', bulletSpeed: 560 },
   // Mythic — the captain's own hardware.
-  mythic_flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 72, rpm: 90, mag: 1, reload: 1.2, spread: 0.008, ads: 0.003, pellets: 1, hs: 2.4, range: 230, auto: false, sfx: 'pistol' },
-  mythic_blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 22, rpm: 75, mag: 2, reload: 2.4, spread: 0.050, ads: 0.034, pellets: 13, hs: 1.8, range: 70, auto: false, sfx: 'shotgun' },
-  mythic_swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 32, rpm: 460, mag: 50, reload: 3.2, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.7, range: 230, auto: true, sfx: 'lmg' },
-  mythic_longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 78, rpm: 100, mag: 6, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 350, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', bulletSpeed: 520 },
-  mythic_musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 130, rpm: 45, mag: 1, reload: 2.4, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.6, range: 430, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', bulletSpeed: 560 },
+  mythic_flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 100, rpm: 110, mag: 2, reload: 1.1, spread: 0.008, ads: 0.003, pellets: 1, hs: 2.5, range: 245, auto: false, sfx: 'pistol' },
+  mythic_blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 32, rpm: 82, mag: 2, reload: 2.2, spread: 0.050, ads: 0.034, pellets: 13, hs: 1.8, range: 78, auto: false, sfx: 'shotgun' },
+  mythic_swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 46, rpm: 480, mag: 55, reload: 3.1, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 245, auto: true, sfx: 'lmg' },
+  mythic_longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 112, rpm: 115, mag: 6, reload: 2.5, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.3, range: 385, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', bulletSpeed: 540 },
+  mythic_musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 180, rpm: 52, mag: 1, reload: 2.3, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.7, range: 470, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', bulletSpeed: 580 },
   // Exotic — ordinary pirate guns with a curse on them.
-  exotic_flintlock: { name: 'Siphoning Flintlock', ammo: 'light', dmg: 60, rpm: 85, mag: 1, reload: 1.3, spread: 0.009, ads: 0.004, pellets: 1, hs: 2.2, range: 220, auto: false, sfx: 'pistol', onHit: 'siphon', siphon: 10 },
-  exotic_blunderbuss: { name: 'Shoving Blunderbuss', ammo: 'shells', dmg: 17, rpm: 70, mag: 2, reload: 2.6, spread: 0.052, ads: 0.036, pellets: 12, hs: 1.75, range: 68, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 20 },
-  exotic_mortar: { name: 'Detonating Mortar', ammo: 'medium', dmg: 58, rpm: 50, mag: 2, reload: 3.0, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 250, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.4, blastDmg: 52, bulletSpeed: 280 },
-  exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 100, rpm: 42, mag: 1, reload: 2.6, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 410, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 540 },
-  exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 28, rpm: 440, mag: 44, reload: 3.0, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.7, range: 220, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.55 },
-  exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 66, rpm: 95, mag: 5, reload: 2.7, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 340, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.3, bulletSpeed: 500 },
+  exotic_flintlock: { name: 'Siphoning Flintlock', ammo: 'light', dmg: 86, rpm: 100, mag: 2, reload: 1.2, spread: 0.009, ads: 0.003, pellets: 1, hs: 2.3, range: 230, auto: false, sfx: 'pistol', onHit: 'siphon', siphon: 14 },
+  exotic_blunderbuss: { name: 'Shoving Blunderbuss', ammo: 'shells', dmg: 25, rpm: 78, mag: 2, reload: 2.5, spread: 0.052, ads: 0.036, pellets: 12, hs: 1.75, range: 74, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 22 },
+  exotic_mortar: { name: 'Detonating Mortar', ammo: 'medium', dmg: 86, rpm: 60, mag: 2, reload: 2.9, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 265, auto: false, sfx: 'ar', onHit: 'explode', blastR: 5.0, blastDmg: 72, bulletSpeed: 280 },
+  exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 142, rpm: 50, mag: 1, reload: 2.5, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 450, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 560 },
+  exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 40, rpm: 460, mag: 50, reload: 2.9, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 235, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.6 },
+  exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 94, rpm: 110, mag: 5, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.35, bulletSpeed: 520 },
 };
 
 /* No emitters survived the vault: every gun uses cartridges again. */
@@ -13508,13 +13562,13 @@ function acquireTarget(b) {
   const playerOk = player.alive && !player.dropping && !player.knocked && !player.out &&
     (!state.teamMode || player.team !== b.team);
 
-  // The human should not be the whole lobby's target. Once enough bots are
-  // already on them, the rest look for a rival bot unless the player is close.
+  // The human should not be the whole lobby's target. The cap is deliberately
+  // low: a couple of bots can pressure you, the rest fight each other.
   let onPlayer = 0;
   for (let i = 0; i < bots.length; i++) {
     if (bots[i] !== b && bots[i].target === player) onPlayer++;
   }
-  const playerCap = 3 + Math.round((state.botTier || 0) * 3);
+  const playerCap = 2 + Math.round((state.botTier || 0) * 2);
 
   let best = null, bestScore = Infinity;
   for (let i = 0; i < bots.length; i++) {
@@ -13531,24 +13585,24 @@ function acquireTarget(b) {
   if (playerOk) {
     const d = b.pos.distanceTo(player.pos);
     const reach = player.piloting
-      ? (onPlayer >= Math.max(playerCap, 8) ? 180 : 320)
-      : (onPlayer >= playerCap ? 30 : 72);
+      ? (onPlayer >= 2 ? 150 : 260)
+      : (onPlayer >= playerCap ? 22 : 58);
     if (d < reach) {
       // The human has to be clearly closer than any bot to be chosen.
-      const score = d * 1.35 * (0.92 + Math.random() * 0.16);
+      const score = d * 1.18 * (0.92 + Math.random() * 0.16);
       if (score < bestScore) { bestScore = score; best = player; }
     }
   }
-  // A plane in the air pulls the lobby's attention: bots break off duels to
-  // shoot at it, capped so it is still a threat and not an instant death.
+  // A plane in the air pulls some attention, but not the whole lobby: three
+  // shooters at most, and only within a sensible reach.
   if (gunshipTarget.alive) {
     let onPlane = 0;
     for (let i = 0; i < bots.length; i++) {
       if (bots[i] !== b && bots[i].target === gunshipTarget) onPlane++;
     }
     const pd = b.pos.distanceTo(gunshipTarget.pos);
-    if (pd < 300 && onPlane < 9) {
-      const score = pd * 0.15;
+    if (pd < 240 && onPlane < 3) {
+      const score = pd * 0.34;
       if (score < bestScore) { bestScore = score; best = gunshipTarget; }
     }
   }
@@ -13716,7 +13770,20 @@ function updateBot(b, dt) {
   const target = b.target && b.target.alive ? b.target : null;
   let moveX = 0, moveZ = 0, speed = 5.6;
 
-  if (target) {
+  // A bot shooting at the gunship holds its ground and fires upward. Without
+  // this it walks toward a point 80 m in the air, thinks it is stuck, and
+  // stutters around the map — the glitching that came with the plane target.
+  if (target && target.isPlane) {
+    const dx = target.pos.x - b.pos.x, dz = target.pos.z - b.pos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    b.yaw = Math.atan2(dx, dz);
+    b.strafeT -= dt;
+    if (b.strafeT <= 0) { b.strafeT = 1.1 + Math.random() * 1.4; b.strafe = Math.random() < 0.5 ? 1 : -1; }
+    if (d < 34) { moveX = -dx / d; moveZ = -dz / d; speed = 4.2; }
+    else if (d > 120) { moveX = dx / d; moveZ = dz / d; speed = 5.0; }
+    else { moveX = (-dz / d) * b.strafe * 0.6; moveZ = (dx / d) * b.strafe * 0.6; speed = 3.2; }
+    if (b.pos.distanceTo(target.pos) < 340) botFire(b, target);
+  } else if (target) {
     const dx = target.pos.x - b.pos.x, dz = target.pos.z - b.pos.z;
     const d = Math.hypot(dx, dz) || 1;
     b.yaw = Math.atan2(dx, dz);
@@ -17103,8 +17170,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 2, patch: 0 };
-const VERSION_PREV = '8.1.1';
+const VERSION = { major: 8, minor: 3, patch: 0 };
+const VERSION_PREV = '8.2.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
