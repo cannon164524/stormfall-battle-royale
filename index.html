@@ -6400,7 +6400,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
       <button type="button" class="accGhost" id="accPlay">PLAY OFFLINE</button>
       <button type="button" class="accGo" id="accSubmit">SIGN IN</button>
     </div>
-    <div class="accFoot">Playing offline keeps progress on this device only.<span id="accStatus"></span></div>
+    <div class="accFoot">Playing offline keeps only the default outfit — sign in to hold items.<span id="accStatus"></span></div>
   </div>
 </div>
 
@@ -6626,12 +6626,10 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>EVERY GUN HITS HARDER</b> — the whole powder arsenal was retuned upward. Flintlock 78, Hand Cannon 68, Blunderbuss 26×12 pellets, Repeater 28 at 660 rpm, Musketoon 44, Swivel Gun 38, Chain Shot 58, Hand Mortar 80, Long Rifle 88, Harpoon 105, Sea Musket 135. Mythics and Exotics scaled with them.</div></li>
-      <li><span class="wnTag">02</span><div><b>SHOTGUNS RELOAD TOO</b> — the Blunderbuss and Flintlock now hold two shots instead of one, and the Grapeshot Swivel holds seven, so a close fight is not a reload contest.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE GUNSHIP IS YOUR WEAPON</b> — every round that lands from your seat pops damage numbers and marks the hit, and every kill is yours: the kill banner, RP, tournament points, battle pass XP and the Siphon all fire as they would from a rifle. The feed says you did it.</div></li>
-      <li><span class="wnTag">04</span><div><b>THE PLANE DOES NOT GLITCH BOTS</b> — bots shooting at a piloted gunship now hold their ground and fire upward instead of walking toward a target 80 m in the air. No more stuttering across the map.</div></li>
-      <li><span class="wnTag">05</span><div><b>LESS OF THE LOBBY ON YOU</b> — at most two or three bots will target you at once, the reach before they turn on you is shorter, and only three will ever break off to shoot the plane. The rest fight each other.</div></li>
-      <li><span class="wnTag">06</span><div><b>ACCOUNTS</b> — sign in with a username and a password of 6 characters or more, and your V-Bucks, skins, battle pass and ranks follow you to any device.</div></li>
+      <li><span class="wnTag">01</span><div><b>GUNS THAT LOOK LIKE GUNS</b> — every pirate weapon in the hotbar and the inventory now has a drawn silhouette instead of stacked rectangles: curved stocks, hammers, muzzle flares, drum feeds, the harpoon's line coil. Mythics and Exotics carry the art of their base gun.</div></li>
+      <li><span class="wnTag">02</span><div><b>NO SIGN-IN, NO ITEMS</b> — the lobby hands a guest the Recruit outfit and nothing else. Buying and the pirate token payout now need an account; sign in and everything the account holds comes straight back.</div></li>
+      <li><span class="wnTag">03</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
+      <li><span class="wnTag">04</span><div><b>GUESTS CAN'T BUY</b> — the item shop and the battle pass check for a sign-in before they touch your V-Bucks.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9854,7 +9852,8 @@ const PIRATE_WEAPON_POOL = [
 
 const LOOT_WEAPON_POOL = PIRATE_WEAPON_POOL;
 
-/* Reload and Blitz draw from the same pirate arsenal. */
+/* Reload and Blitz both run the mixed pool: the whole arsenal blended
+   together, plus anything released through weapons.json. */
 const CLASSIC_WEAPON_POOL = PIRATE_WEAPON_POOL.slice();
 
 const BLITZ_WEAPON_POOL = LOOT_WEAPON_POOL.concat(CLASSIC_WEAPON_POOL);
@@ -9905,7 +9904,9 @@ function knownWeaponIds() {
 
 function lootPoolForMode() {
   const t = mapTheme();
-  const base = t === 'classic' ? CLASSIC_WEAPON_POOL : t === 'mix' ? BLITZ_WEAPON_POOL : LOOT_WEAPON_POOL;
+  // Reload runs the mixed pool, same as Blitz: the whole arsenal blended
+  // together, plus anything released through weapons.json.
+  const base = t === 'mix' || t === 'classic' ? BLITZ_WEAPON_POOL : LOOT_WEAPON_POOL;
   const pool = allowedOnly(base);
   for (const id of weaponExtras()) {
     if (id.indexOf('mythic_') === 0 || id.indexOf('exotic_') === 0) continue;
@@ -10019,30 +10020,33 @@ GUN_ICONS.exotic_siphonhunt = GUN_ICONS.sniper;
 GUN_ICONS.exotic_minigun = GUN_ICONS.ar;
 GUN_ICONS.exotic_lever = GUN_ICONS.marksman;
 
-/* Season 7 pirate hardware. */
-GUN_ICONS.flintlock = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="46" height="7" rx="1"/><rect x="50" y="27" width="10" height="5" rx="1"/><path d="M12 33h12l-4 18H10z"/><rect x="14" y="20" width="4" height="7" rx="1"/><rect x="6" y="36" width="10" height="4" rx="1" opacity=".7"/><circle cx="26" cy="29.5" r="2" fill="#0b1a2b"/></svg>';
-GUN_ICONS.blunderbuss = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="27" width="40" height="8" rx="1"/><path d="M44 24l14 3v10l-14 3z"/><rect x="14" y="35" width="12" height="14" rx="2"/><rect x="6" y="20" width="16" height="6" rx="2" opacity=".8"/></svg>';
-GUN_ICONS.handcannon = GUN_ICONS.flintlock;
-GUN_ICONS.repeater = GUN_ICONS.smg;
-GUN_ICONS.grapeshot = GUN_ICONS.tactical;
-GUN_ICONS.musketoon = GUN_ICONS.ar;
-GUN_ICONS.swivelgun = GUN_ICONS.lmg;
-GUN_ICONS.chainshot = GUN_ICONS.burst;
-GUN_ICONS.mortar = GUN_ICONS.nova;
-GUN_ICONS.longrifle = GUN_ICONS.marksman;
-GUN_ICONS.harpoon = GUN_ICONS.rail;
-GUN_ICONS.musket = GUN_ICONS.sniper;
+/* Season 7 pirate hardware — every gun gets a drawn silhouette instead of a
+   stand-in: curved stock, hammer, muzzle flare, drum or tube, and the small
+   details that make it read as the weapon it is. Mythic and Exotic versions
+   share the base art further down. */
+GUN_ICONS.flintlock = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="22" y="26" width="34" height="4.5" rx="1"/><rect x="53" y="25" width="7" height="6.5" rx="1.5"/><path d="M22 24h-5.5c-2.5 9-8.5 17-15 22.5l3.5 4.5C14 45.5 20 36 23.5 26.5z"/><path d="M25 18.5l7.5 2.5-1.5 5-7-2.5z"/><rect x="33" y="17.5" width="5" height="6.5" rx="1"/><path d="M25 31.5c5.5.5 8 3.5 8 8.5l-3.5 1c-.5-4-2.5-6-6-7z"/><circle cx="26.5" cy="28.5" r="1.8" fill="#0b1a2b"/></svg>';
+GUN_ICONS.blunderbuss = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="34" height="7" rx="1.5"/><path d="M42 21.5l17 5.5v10l-17 5.5z"/><path d="M16 33h-5c-1.5 7-5 13-9 17.5l3.5 3.5C10 50 14.5 42 16 35z"/><rect x="16" y="17.5" width="6.5" height="6.5" rx="1"/><path d="M16 33.5c5 .5 7.5 3.5 7.5 8l-3.5 1c-.5-3.5-2-5.5-5-6.5z"/><circle cx="24" cy="29.5" r="1.8" fill="#0b1a2b"/><circle cx="48" cy="32" r="2" fill="#0b1a2b"/></svg>';
+GUN_ICONS.handcannon = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="16" y="23" width="38" height="9" rx="2"/><rect x="52" y="20" width="6" height="15" rx="2"/><rect x="45" y="32" width="5" height="5" rx="1"/><path d="M18 23h-7c-2 9-7 15-10.5 20l4 3.5C8.5 41.5 13 33 15.5 25z"/><rect x="22" y="16" width="7" height="7" rx="1.5"/><path d="M20 32.5c5.5.5 8 3.5 8 9l-4 1c-.5-4-2.5-6.5-6-7.5z"/><circle cx="30" cy="27.5" r="2" fill="#0b1a2b"/></svg>';
+GUN_ICONS.repeater = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="6" y="26" width="42" height="6" rx="1"/><rect x="48" y="27" width="12" height="4" rx="1"/><rect x="10" y="32" width="32" height="3.5" rx="1"/><path d="M10 26H5c-.5 7-2.5 12-5 15.5l3.5 3C6.5 40 9 33.5 10 28z"/><path d="M30 35.5c6.5 1 9.5 5.5 9.5 12" fill="none" stroke="currentColor" stroke-width="3"/><rect x="16" y="34" width="7" height="13" rx="2"/></svg>';
+GUN_ICONS.grapeshot = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="12" y="26" width="32" height="8" rx="2"/><path d="M44 24l14 5v6l-14 5z"/><rect x="18" y="17" width="15" height="7" rx="2"/><rect x="23" y="24" width="4" height="3"/><path d="M16 34h14v5H16z"/><rect x="18" y="39" width="10" height="12" rx="1.5"/><rect x="8" y="51" width="42" height="4" rx="1.5" opacity=".75"/></svg>';
+GUN_ICONS.musketoon = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="26" width="44" height="5" rx="1"/><rect x="52" y="25" width="8" height="7" rx="1"/><rect x="20" y="23.5" width="4" height="10"/><rect x="34" y="23.5" width="4" height="10"/><path d="M14 31H9c-1.5 7-5 13-9 17.5l3.5 3.5C8 47.5 12.5 39.5 14 33z"/><rect x="16" y="31" width="20" height="4.5"/><rect x="38" y="31" width="8" height="11" rx="2"/><path d="M44 33.5c4.5 1 6.5 4 6.5 8.5l-3 .8c-.5-3.5-2-5.5-4.5-6.5z"/></svg>';
+GUN_ICONS.swivelgun = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="10" y="24" width="42" height="7" rx="2"/><path d="M52 22.5l8 3v7l-8 3z"/><circle cx="8" cy="27.5" r="4"/><circle cx="30" cy="27.5" r="2" fill="#0b1a2b"/><circle cx="40" cy="17" r="5.5"/><circle cx="40" cy="17" r="2" fill="#0b1a2b"/><path d="M20 31h20l-2.5 6H22.5z"/><rect x="27" y="37" width="6" height="13" rx="1"/><rect x="14" y="50" width="32" height="4.5" rx="1.5" opacity=".8"/></svg>';
+GUN_ICONS.chainshot = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="22.5" width="36" height="5" rx="1"/><rect x="8" y="30.5" width="36" height="5" rx="1"/><circle cx="50" cy="25" r="4.5"/><circle cx="56" cy="34" r="4.5"/><path d="M47.5 29c2 1.5 3.5 2.5 6 3.5" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M14 35.5H9c-1.5 7-5 13-9 17.5l3.5 3.5C8 52 12.5 43.5 14 37.5z"/><rect x="26" y="35.5" width="8" height="3.5"/><rect x="18" y="35.5" width="7" height="12" rx="2"/></svg>';
+GUN_ICONS.mortar = '<svg viewBox="0 0 64 64" fill="currentColor"><g transform="rotate(-34 26 40)"><rect x="8" y="35" width="34" height="9" rx="3"/><path d="M6 33c-4.5 5-4.5 12 0 17l4-3c-2.5-3.5-2.5-7.5 0-11z"/><circle cx="48" cy="39.5" r="6"/><path d="M52 34.5l4-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></g><rect x="34" y="54" width="18" height="4" rx="1.5" opacity=".7"/></svg>';
+GUN_ICONS.longrifle = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="3" y="27" width="50" height="4" rx="1"/><rect x="50" y="25.5" width="8" height="7" rx="1"/><rect x="12" y="23.5" width="3.5" height="3.5"/><path d="M10 31H5c-.5 6.5-2.5 11-4.5 14.5l3.5 3C6.5 44.5 9 38 10 33z"/><rect x="12" y="31" width="24" height="4.5"/><rect x="17" y="35.5" width="12" height="3" opacity=".65"/><rect x="37" y="31" width="8" height="12" rx="2"/><path d="M44 33.5c4.5 1 6.5 4 6.5 8.5l-3 .8c-.5-3.5-2-5.5-4.5-6.5z"/></svg>';
+GUN_ICONS.harpoon = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="6" y="26" width="38" height="6" rx="1"/><path d="M44 25l16 4-7 2.5 7 2.5-16 4z"/><path d="M14 26H9c-1.5 7-5 12.5-9 17l3.5 3.5C8.5 42 12.5 34.5 14 28z"/><rect x="16" y="32" width="8" height="13" rx="2"/><path d="M28 32.5c8 2 12.5 6.5 12.5 13.5" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="40" cy="47" r="3.5"/><circle cx="40" cy="47" r="1.4" fill="#0b1a2b"/></svg>';
+GUN_ICONS.musket = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="2" y="28" width="56" height="4" rx="1"/><rect x="14" y="19" width="20" height="5" rx="2"/><circle cx="17.5" cy="21.5" r="1.8" fill="#0b1a2b"/><rect x="20" y="24" width="4.5" height="4"/><rect x="30" y="24" width="4.5" height="4"/><path d="M10 32H5c-.5 6.5-2.5 11-4.5 14.5l3.5 3C6.5 45.5 9 38 10 34z"/><rect x="12" y="32" width="22" height="4.5"/><rect x="35" y="32" width="8" height="12" rx="2"/><rect x="54" y="26.5" width="6" height="7" rx="1.5"/></svg>';
 GUN_ICONS.mythic_flintlock = GUN_ICONS.flintlock;
 GUN_ICONS.mythic_blunderbuss = GUN_ICONS.blunderbuss;
-GUN_ICONS.mythic_swivelgun = GUN_ICONS.lmg;
-GUN_ICONS.mythic_longrifle = GUN_ICONS.marksman;
-GUN_ICONS.mythic_musket = GUN_ICONS.sniper;
+GUN_ICONS.mythic_swivelgun = GUN_ICONS.swivelgun;
+GUN_ICONS.mythic_longrifle = GUN_ICONS.longrifle;
+GUN_ICONS.mythic_musket = GUN_ICONS.musket;
 GUN_ICONS.exotic_flintlock = GUN_ICONS.flintlock;
 GUN_ICONS.exotic_blunderbuss = GUN_ICONS.blunderbuss;
-GUN_ICONS.exotic_mortar = GUN_ICONS.nova;
-GUN_ICONS.exotic_musket = GUN_ICONS.sniper;
-GUN_ICONS.exotic_swivelgun = GUN_ICONS.lmg;
-GUN_ICONS.exotic_longrifle = GUN_ICONS.marksman;
+GUN_ICONS.exotic_mortar = GUN_ICONS.mortar;
+GUN_ICONS.exotic_musket = GUN_ICONS.musket;
+GUN_ICONS.exotic_swivelgun = GUN_ICONS.swivelgun;
+GUN_ICONS.exotic_longrifle = GUN_ICONS.longrifle;
 GUN_ICONS.radar = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><circle cx="32" cy="34" r="21" stroke-width="4"/><circle cx="32" cy="34" r="11" stroke-width="2.5" opacity=".55"/><path d="M32 34L47 21" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="34" r="4" fill="currentColor" stroke="none"/><circle cx="45" cy="27" r="2.4" fill="currentColor" stroke="none"/></svg>';
 GUN_ICONS.regen = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="16" y="16" width="32" height="40" rx="7"/><rect x="25" y="9" width="14" height="8" rx="3"/><rect x="29" y="26" width="6" height="22" fill="#0b1a2b"/><rect x="21" y="34" width="22" height="6" fill="#0b1a2b"/><rect x="20" y="22" width="24" height="3" opacity=".35"/></svg>';
 GUN_ICONS.boots = '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M22 8h14v24h9c8 0 13 6 13 14v10H22z"/><rect x="16" y="50" width="40" height="6" rx="3" opacity=".6"/><rect x="26" y="14" width="6" height="3" rx="1.5" fill="#0b1a2b" opacity=".5"/></svg>';
@@ -17170,8 +17174,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 0 };
-const VERSION_PREV = '8.2.0';
+const VERSION = { major: 8, minor: 3, patch: 1 };
+const VERSION_PREV = '8.3.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18579,6 +18583,7 @@ function renderPass() {
 function buySkin(id) {
   const sk = skinById(id);
   if (!sk.price || ownsSkin(id)) return;
+  if (!account.signedIn) { toast('SIGN IN TO BUY', 'sub'); sfx('reload'); openAccountGate('in'); return; }
   if (profile.vbucks < sk.price) { toast('NOT ENOUGH V-BUCKS', 'sub'); sfx('reload'); return; }
   profile.vbucks -= sk.price;
   profile.owned.push(id);
@@ -18607,6 +18612,7 @@ function equipSkin(id) {
 
 function buyBattlePass() {
   if (profile.battlePass) return;
+  if (!account.signedIn) { toast('SIGN IN TO BUY THE PASS', 'sub'); sfx('reload'); openAccountGate('in'); return; }
   if (profile.vbucks < BP_COST) { toast('NEED 1000 V-BUCKS', 'sub'); sfx('reload'); return; }
   profile.vbucks -= BP_COST;
   profile.battlePass = true;
@@ -18666,6 +18672,7 @@ function claimBpTiers() {
    costs you the token, so it has to be earned. Kept in the profile with the
    token flag so a second one is a no-op. */
 function redeemPirateToken() {
+  if (!account.signedIn) { toast('SIGN IN TO REDEEM THE TOKEN', 'sub'); return; }
   let gained = 0;
   for (let i = 0; i < SKINS.length; i++) {
     const sk = SKINS[i];
@@ -20437,6 +20444,16 @@ function finishSignIn(username, pass, fromServer, remote) {
   toast('SIGNED IN · ' + username.toUpperCase(), 'sub');
 }
 
+/* No sign-in, no items: the lobby hands a guest the default outfit and
+   nothing else. The account keeps everything server-side, so signing back in
+   brings it all back. */
+function applyGuestLimits() {
+  if (account.signedIn) return;
+  profile.owned = ['default'];
+  profile.equipped = 'default';
+  profile.battlePass = false;
+}
+
 function accountSignOut() {
   clearTimeout(account.saveTimer);
   account.name = '';
@@ -20444,7 +20461,13 @@ function accountSignOut() {
   account.signedIn = false;
   accountForget();
   accountStatus('');
-  toast('SIGNED OUT · PROGRESS STAYS ON THIS DEVICE', 'sub');
+  applyGuestLimits();
+  saveProfile();
+  refreshWallet();
+  renderLocker();
+  renderShop();
+  renderPass();
+  toast('SIGNED OUT · ITEMS NEED AN ACCOUNT', 'sub');
 }
 
 /* On boot: if a saved login exists, sign back in quietly and pull the account
@@ -20454,14 +20477,16 @@ async function accountBoot() {
   if (!saved) { openAccountGate('in'); return; }
   try {
     const out = await accountRpc('sf_login', { p_username: saved.name, p_secret: saved.pass });
-    if (!out.ok) { accountForget(); openAccountGate('in'); return; }
+    if (!out.ok) { accountForget(); applyGuestLimits(); saveProfile(); openAccountGate('in'); return; }
     account.name = out.username;
     account.pass = saved.pass;
     account.signedIn = true;
     adoptProfile(out.profile);
     accountStatus('SIGNED IN');
   } catch (e) {
-    accountStatus('OFFLINE · PROGRESS STAYS ON THIS DEVICE');
+    applyGuestLimits();
+    saveProfile();
+    accountStatus('OFFLINE · SIGN IN TO UNLOCK YOUR ITEMS');
   }
 }
 
@@ -20507,6 +20532,9 @@ const TEST_QUICK_START = /[?&]test\b/.test(location.search);
 function boot() {
   window.__sfBooted = true;
   wireAccountUI();
+  // No sign-in, no items: guests get the default outfit only. A saved login
+  // keeps everything on screen until the sign-in settles.
+  if (!accountSaved()) applyGuestLimits();
   buildHotbarDOM();
   setBotCount(state.botsWanted);
   setMode(state.mode);
