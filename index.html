@@ -2393,8 +2393,66 @@ kbd { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.16); colo
   .modeGroupLabel { font-size:7.5px; letter-spacing:.2em; margin-bottom:3px; }
 }
 
-/* ============================== ADMIN ============================== */
-#adminEntry {
+/* ============================== ACCOUNTS ============================== */
+#accEntry {
+  padding:5px 10px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.2em;
+  color:rgba(194,255,61,.72); border:1px solid rgba(194,255,61,.24); background:transparent;
+  transition:color .15s, border-color .15s, background .15s;
+}
+#accEntry:hover { color:#fff; border-color:rgba(194,255,61,.62); background:rgba(194,255,61,.1); }
+#accEntry.on { color:#0b1214; border-color:var(--lime); background:var(--lime); }
+
+#accountGate {
+  position:fixed; inset:0; z-index:72; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:rgba(3,7,9,.72);
+}
+#accountGate.hide { display:none; }
+.accBox {
+  width:min(392px, 94vw); max-height:92vh; overflow:auto;
+  background:#0b1113; border:1px solid rgba(194,255,61,.3);
+  box-shadow:0 22px 56px rgba(0,0,0,.7);
+  padding:20px 20px 16px; display:flex; flex-direction:column; gap:11px;
+  font-family:var(--body);
+}
+.accKicker { font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.36em; color:var(--lime); }
+.accTitle { font-family:var(--display); font-size:26px; line-height:1; color:#fff; letter-spacing:-.01em; }
+.accNote { font-family:var(--body); font-size:11.5px; line-height:1.5; color:rgba(231,245,236,.56); margin:0; }
+.accTabs { display:flex; gap:6px; }
+.accTab {
+  flex:1; padding:9px 8px; font-family:var(--label); font-size:9.5px; font-weight:700; letter-spacing:.18em;
+  color:rgba(231,245,236,.5); background:transparent; border:1px solid rgba(255,255,255,.1);
+  transition:color .15s, border-color .15s, background .15s;
+}
+.accTab.active { color:#0b1214; background:var(--lime); border-color:var(--lime); }
+.accField { display:flex; flex-direction:column; gap:5px; }
+.accLabel { font-family:var(--label); font-size:8.5px; font-weight:700; letter-spacing:.22em; color:rgba(231,245,236,.42); }
+.accInput {
+  width:100%; padding:11px 12px; box-sizing:border-box;
+  font-family:var(--body); font-size:14px; letter-spacing:.04em; color:#fff;
+  background:rgba(4,9,11,.92); border:1px solid rgba(255,255,255,.13); outline:none;
+  transition:border-color .15s;
+}
+.accInput::placeholder { color:rgba(231,245,236,.24); }
+.accInput:focus { border-color:rgba(194,255,61,.62); }
+.accErr {
+  min-height:15px; font-family:var(--label); font-size:9px; font-weight:700; letter-spacing:.14em;
+  color:#ff8c96;
+}
+.accRow { display:flex; gap:8px; }
+.accRow button { flex:1; padding:11px 8px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.18em; }
+.accGhost { color:rgba(231,245,236,.6); background:transparent; border:1px solid rgba(255,255,255,.14); }
+.accGo { color:#0b1214; background:var(--lime); border:1px solid var(--lime); }
+.accGo:disabled { opacity:.45; }
+.accOut { display:flex; flex-direction:column; gap:10px; }
+.accWho { font-family:var(--display); font-size:22px; color:#fff; letter-spacing:-.01em; }
+.accMeta { font-family:var(--body); font-size:11px; letter-spacing:.1em; color:var(--lime); }
+.accFoot { font-family:var(--label); font-size:8px; letter-spacing:.14em; line-height:1.6; color:rgba(231,245,236,.34); }
+.accSep { height:1px; background:rgba(255,255,255,.08); margin:2px 0; }
+@media (max-width: 560px) {
+  #accEntry { padding:5px 7px; font-size:9px; letter-spacing:.12em; }
+}
+
+
   padding:5px 10px; font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.2em;
   color:rgba(234,243,255,.32); border:1px solid rgba(234,243,255,.12); background:transparent;
   transition:color .15s, border-color .15s, background .15s;
@@ -5857,6 +5915,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     <div class="topRight">
       <div class="cashTag"><i class="cashCoin">$</i><b id="cashAmount">0</b></div>
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
+      <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="verTag" id="verTag">v2.2.0</div>
     </div>
@@ -6318,7 +6377,34 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   </section>
 </div>
 
-<!-- ============================== ADMIN GATE ============================== -->
+<!-- ============================== ACCOUNT ============================== -->
+<div id="accountGate" class="hide" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+  <div class="accBox">
+    <div class="accKicker">STORMFALL ACCOUNT</div>
+    <div class="accTitle" id="accTitle">SIGN IN</div>
+    <p class="accNote">Keep your V-Bucks, skins, battle pass and ranks on every device. Usernames are 3 to 16 letters, numbers or underscores. Passwords are at least 6 characters.</p>
+    <div class="accTabs">
+      <button type="button" class="accTab active" id="accTabIn" data-acc="in">SIGN IN</button>
+      <button type="button" class="accTab" id="accTabUp" data-acc="up">CREATE ACCOUNT</button>
+    </div>
+    <div class="accField">
+      <span class="accLabel">USERNAME</span>
+      <input id="accUser" class="accInput" type="text" maxlength="16" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="yourname">
+    </div>
+    <div class="accField">
+      <span class="accLabel">PASSWORD</span>
+      <input id="accPass" class="accInput" type="password" maxlength="72" autocomplete="current-password" placeholder="at least 6 characters">
+    </div>
+    <div class="accErr" id="accErr"></div>
+    <div class="accRow">
+      <button type="button" class="accGhost" id="accPlay">PLAY OFFLINE</button>
+      <button type="button" class="accGo" id="accSubmit">SIGN IN</button>
+    </div>
+    <div class="accFoot">Playing offline keeps progress on this device only.<span id="accStatus"></span></div>
+  </div>
+</div>
+
+
 <div id="adminGate" class="hide">
   <div class="gateBox">
     <div class="gateKicker">RESTRICTED</div>
@@ -6540,14 +6626,12 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEASON 7 · THE PIRATE COAST</b> — a new island entirely. Bleached sand, jungle, turquoise shallows and thin fog. Every building, tree and rock on it was rebuilt: planked shacks with thatch, palms, jungle stone and tarred crates.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE GALLEON</b> — a pirate ship run aground on the beach, and the biggest POI on the map. Board it up the stern stairs, fight across a real deck, and loot three chests between the cannon. Two wrecks and a few piers sit on the rest of the coast.</div></li>
-      <li><span class="wnTag">03</span><div><b>PIRATE TOKEN</b> — a chest in twenty holds it. It lands in your boon slots and does nothing on its own: win that match with the token still on you and every outfit the item shop sells is yours, free, with the battle pass. Lose and you walk away with nothing.</div></li>
-      <li><span class="wnTag">04</span><div><b>A NEW BATTLE PASS</b> — ten tiers of Season 7 rewards. Salt Wake, Tar Hand, Red Sail, Kraken Mark and Dead Man's Toll are the outfits, with V-Bucks between them. Ranked RP reset with the season.</div></li>
-      <li><span class="wnTag">05</span><div><b>SHOP ROTATION</b> — Corsair, Galleon Warden, Powder Monkey and Bonecrown are this season's featured outfits.</div></li>
-      <li><span class="wnTag">06</span><div><b>THE VAULT IS SEALED</b> — every energy and coil gun is gone. The island now runs on black powder: Flintlock Pistol, Hand Cannon, Blunderbuss, Grapeshot Swivel, Repeater Carbine, Musketoon, Swivel Gun, Chain Shot, Hand Mortar, Long Rifle, Harpoon Gun and Sea Musket, each with Mythic and Exotic bloodlines.</div></li>
-      <li><span class="wnTag">07</span><div><b>NO MORE HEAT</b> — with no emitters left there is no heat bank. Every gun loads a magazine and feeds from your reserve, so R reloads normally and ammo boxes matter from the first drop.</div></li>
-      <li><span class="wnTag">08</span><div><b>NEW LOOT EVERYWHERE</b> — floor loot, chests, bot loadouts, vending stock, long-gun seeds and the Gun Game ladder all run the pirate arsenal. Zero Hour retired with the old guns.</div></li>
+      <li><span class="wnTag">01</span><div><b>SIGN IN, KEEP YOUR PROGRESS</b> — make an account with a username and a password of 6 characters or more, no email. Your V-Bucks, skins, battle pass, sprites, cash and ranks follow you to any device or browser. <b>PLAY OFFLINE</b> still works and keeps progress on that device only.</div></li>
+      <li><span class="wnTag">02</span><div><b>SAVED WHILE YOU PLAY</b> — every change is written to your account a couple of seconds after it happens. If the connection drops, the game keeps running on local progress and retries.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE PIRATE TOKEN</b> — a chest in twenty holds it. It lands in your boon slots: win that match with it still on you and every outfit the item shop sells is yours, free, with the battle pass.</div></li>
+      <li><span class="wnTag">04</span><div><b>THE PIRATE COAST</b> — the island with the galleon run aground on its beach, two wrecks and three piers. Board the ship up the stern stairs and loot its deck.</div></li>
+      <li><span class="wnTag">05</span><div><b>A NEW BATTLE PASS</b> — ten tiers of Season 7 rewards. Salt Wake, Tar Hand, Red Sail, Kraken Mark and Dead Man's Toll are the outfits, with V-Bucks between them.</div></li>
+      <li><span class="wnTag">06</span><div><b>THE ARSENAL IS ALL BLACK POWDER</b> — Flintlock Pistol, Hand Cannon, Blunderbuss, Grapeshot Swivel, Repeater Carbine, Musketoon, Swivel Gun, Chain Shot, Hand Mortar, Long Rifle, Harpoon Gun and Sea Musket, each with Mythic and Exotic bloodlines. Every gun loads a magazine and feeds from your reserve.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -17019,8 +17103,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 1, patch: 1 };
-const VERSION_PREV = '8.1.0';
+const VERSION = { major: 8, minor: 2, patch: 0 };
+const VERSION_PREV = '8.1.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -17174,12 +17258,20 @@ function defaultProfile() {
 }
 
 function loadProfile() {
-  const base = defaultProfile();
+  let p = null;
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
-    if (raw) {
-      const p = JSON.parse(raw);
-      if (p && typeof p === 'object') {
+    if (raw) p = JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+  return loadProfileFrom(p);
+}
+
+/* Builds a profile from any saved object: this device's, or the account's. */
+function loadProfileFrom(p) {
+  const base = defaultProfile();
+  try {
+    if (p && typeof p === 'object') {
+      {
         base.vbucks = Math.max(0, Math.floor(p.vbucks || 0));
         base.owned = Array.isArray(p.owned) ? p.owned : ['default'];
         base.equipped = p.equipped || 'default';
@@ -17224,6 +17316,8 @@ if (profile.vbReset !== VB_RESET_ID) {
 
 function saveProfile() {
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) { /* ignore */ }
+  // the account block is declared further down the module; skip until it exists
+  if (typeof scheduleAccountSave === 'function') scheduleAccountSave();
 }
 
 function skinById(id) {
@@ -20100,6 +20194,242 @@ window.addEventListener('keydown', (e) => {
 });
 
 /* =========================================================================
+   ACCOUNTS — sign in on any device
+   Progress lives in a Supabase table, reached only through three database
+   functions (sf_register, sf_login, sf_save). The page holds the project URL
+   and the PUBLIC anon key, which is safe to ship: the table itself is locked
+   and passwords are hashed on the server with bcrypt. Setup SQL: see the
+   project's supabase-setup.sql.
+   ========================================================================= */
+const SUPABASE_URL = 'https://jvihxqhfczbiaoasdjrb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_K9EujgFCkHfmbidCQ1EaBw_R7c40FQF';
+const ACCOUNT_KEY = 'stormfall.account.v1';
+const ACCOUNT_USER_RE = /^[A-Za-z0-9_]{3,16}$/;
+const ACCOUNT_PASS_MIN = 6;
+
+const account = { name: '', pass: '', signedIn: false, busy: false, mode: 'in', saveTimer: 0 };
+
+function accountSaved() {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_KEY);
+    if (!raw) return null;
+    const a = JSON.parse(raw);
+    return a && typeof a.name === 'string' && typeof a.pass === 'string' ? a : null;
+  } catch (e) { return null; }
+}
+
+function accountRemember(name, pass) {
+  try { localStorage.setItem(ACCOUNT_KEY, JSON.stringify({ name, pass })); } catch (e) { /* ignore */ }
+}
+
+function accountForget() {
+  try { localStorage.removeItem(ACCOUNT_KEY); } catch (e) { /* ignore */ }
+}
+
+/* Calls one of the database functions. Resolves to the function's JSON. */
+async function accountRpc(fn, body) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+/* The profile the server keeps: the local profile, minus anything that is
+   per-device (the sprite pick flag and motd dismissal stay on the device). */
+function accountProfilePayload() {
+  const copy = Object.assign({}, profile);
+  delete copy.spritePicked;
+  return copy;
+}
+
+/* Saves are batched: a burst of changes becomes one write about two seconds later. */
+function scheduleAccountSave() {
+  if (!account.signedIn) return;
+  clearTimeout(account.saveTimer);
+  account.saveTimer = setTimeout(pushAccountSave, 2000);
+}
+
+async function pushAccountSave() {
+  if (!account.signedIn) return;
+  try {
+    await accountRpc('sf_save', { p_username: account.name, p_secret: account.pass, p_profile: accountProfilePayload() });
+    accountStatus('SAVED TO ACCOUNT');
+  } catch (e) {
+    accountStatus('COULD NOT SAVE · WILL RETRY');
+    clearTimeout(account.saveTimer);
+    account.saveTimer = setTimeout(pushAccountSave, 15000);
+  }
+}
+
+/* Replaces the local profile with the one the account holds. */
+function adoptProfile(remote) {
+  if (!remote || typeof remote !== 'object' || !Object.keys(remote).length) return false;
+  profile = loadProfileFrom(remote);
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) { /* ignore */ }
+  refreshWallet();
+  refreshRank();
+  renderLocker();
+  renderShop();
+  renderPass();
+  renderSprites();
+  return true;
+}
+
+function accountStatus(text) {
+  const el = document.getElementById('accEntry');
+  if (el) el.textContent = account.signedIn ? account.name.toUpperCase() : 'SIGN IN';
+  const note = document.getElementById('accStatus');
+  if (note) note.textContent = text || '';
+}
+
+function accountSetMode(mode) {
+  account.mode = mode;
+  document.getElementById('accTabIn').classList.toggle('active', mode === 'in');
+  document.getElementById('accTabUp').classList.toggle('active', mode === 'up');
+  document.getElementById('accTitle').textContent = mode === 'in' ? 'SIGN IN' : 'CREATE ACCOUNT';
+  document.getElementById('accSubmit').textContent = mode === 'in' ? 'SIGN IN' : 'CREATE';
+  document.getElementById('accPass').setAttribute('autocomplete', mode === 'in' ? 'current-password' : 'new-password');
+  document.getElementById('accErr').textContent = '';
+}
+
+function openAccountGate(mode) {
+  const gate = document.getElementById('accountGate');
+  if (!gate) return;
+  accountSetMode(mode || 'in');
+  gate.classList.remove('hide');
+  setTimeout(() => { const u = document.getElementById('accUser'); if (u && !u.value) u.focus(); }, 60);
+}
+
+function closeAccountGate() {
+  const gate = document.getElementById('accountGate');
+  if (gate) gate.classList.add('hide');
+}
+
+/* Checks the username and password on this device before anything is sent. */
+function accountValidate(name, pass, mode) {
+  if (!ACCOUNT_USER_RE.test(name)) return 'USE 3 TO 16 LETTERS, NUMBERS OR _';
+  if (pass.length < ACCOUNT_PASS_MIN) return 'PASSWORD NEEDS AT LEAST 6 CHARACTERS';
+  if (mode === 'up' && pass.length > 72) return 'PASSWORD IS TOO LONG';
+  return '';
+}
+
+async function accountSubmit() {
+  if (account.busy) return;
+  const nameEl = document.getElementById('accUser');
+  const passEl = document.getElementById('accPass');
+  const errEl = document.getElementById('accErr');
+  const name = (nameEl.value || '').trim();
+  const pass = passEl.value || '';
+  const bad = accountValidate(name, pass, account.mode);
+  if (bad) { errEl.textContent = bad; sfx('reload'); return; }
+
+  account.busy = true;
+  errEl.textContent = account.mode === 'in' ? 'SIGNING IN…' : 'CREATING…';
+  try {
+    if (account.mode === 'up') {
+      const out = await accountRpc('sf_register', { p_username: name, p_secret: pass, p_profile: accountProfilePayload() });
+      if (!out.ok) {
+        errEl.textContent = out.error === 'TAKEN' ? 'THAT USERNAME IS TAKEN' : 'COULD NOT CREATE · CHECK THE USERNAME';
+        return;
+      }
+      finishSignIn(out.username, pass, false);
+    } else {
+      const out = await accountRpc('sf_login', { p_username: name, p_secret: pass });
+      if (!out.ok) { errEl.textContent = 'WRONG USERNAME OR PASSWORD'; sfx('reload'); return; }
+      finishSignIn(out.username, pass, true, out.profile);
+    }
+  } catch (e) {
+    errEl.textContent = 'NO CONNECTION · TRY AGAIN';
+  } finally {
+    account.busy = false;
+  }
+}
+
+function finishSignIn(username, pass, fromServer, remote) {
+  account.name = username;
+  account.pass = pass;
+  account.signedIn = true;
+  accountRemember(username, pass);
+  // Signing in pulls the account's profile; only push back if it was empty.
+  if (fromServer) {
+    const used = adoptProfile(remote);
+    if (!used) scheduleAccountSave();
+  } else {
+    scheduleAccountSave();
+  }
+  accountStatus('SIGNED IN');
+  closeAccountGate();
+  sfx('unlock');
+  toast('SIGNED IN · ' + username.toUpperCase(), 'sub');
+}
+
+function accountSignOut() {
+  clearTimeout(account.saveTimer);
+  account.name = '';
+  account.pass = '';
+  account.signedIn = false;
+  accountForget();
+  accountStatus('');
+  toast('SIGNED OUT · PROGRESS STAYS ON THIS DEVICE', 'sub');
+}
+
+/* On boot: if a saved login exists, sign back in quietly and pull the account
+   profile. Otherwise show the gate. */
+async function accountBoot() {
+  const saved = accountSaved();
+  if (!saved) { openAccountGate('in'); return; }
+  try {
+    const out = await accountRpc('sf_login', { p_username: saved.name, p_secret: saved.pass });
+    if (!out.ok) { accountForget(); openAccountGate('in'); return; }
+    account.name = out.username;
+    account.pass = saved.pass;
+    account.signedIn = true;
+    adoptProfile(out.profile);
+    accountStatus('SIGNED IN');
+  } catch (e) {
+    accountStatus('OFFLINE · PROGRESS STAYS ON THIS DEVICE');
+  }
+}
+
+function wireAccountUI() {
+  const entry = document.getElementById('accEntry');
+  if (entry) entry.addEventListener('click', () => {
+    if (account.signedIn) {
+      if (confirm('Sign out of ' + account.name + ' on this device?')) accountSignOut();
+    } else {
+      openAccountGate('in');
+    }
+  });
+  document.getElementById('accTabIn').addEventListener('click', () => accountSetMode('in'));
+  document.getElementById('accTabUp').addEventListener('click', () => accountSetMode('up'));
+  document.getElementById('accSubmit').addEventListener('click', accountSubmit);
+  document.getElementById('accPlay').addEventListener('click', closeAccountGate);
+  const pass = document.getElementById('accPass');
+  const user = document.getElementById('accUser');
+  const onKey = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); accountSubmit(); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeAccountGate(); }
+    e.stopPropagation();
+  };
+  pass.addEventListener('keydown', onKey);
+  user.addEventListener('keydown', onKey);
+}
+
+/* Typing in the account fields must not move or fire the player. */
+window.addEventListener('keydown', (e) => {
+  const t = e.target;
+  if (!t || (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA' && !t.isContentEditable)) return;
+  if (e.target.id && e.target.id.indexOf('acc') === 0) e.stopImmediatePropagation();
+}, true);
+
+/* =========================================================================
    BOOT
    ========================================================================= */
 /* quick test hook: load the page with ?test in the URL and it skips the lobby
@@ -20109,6 +20439,7 @@ const TEST_QUICK_START = /[?&]test\b/.test(location.search);
 
 function boot() {
   window.__sfBooted = true;
+  wireAccountUI();
   buildHotbarDOM();
   setBotCount(state.botsWanted);
   setMode(state.mode);
@@ -20153,6 +20484,7 @@ function boot() {
     } else {
       showWhatsNew();
     }
+    accountBoot();
     lastT = performance.now();
     requestAnimationFrame(animate);
   }
