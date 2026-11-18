@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230b1214'/%3E%3Cpath%20d='M8%208h16'%20stroke='%233fe0c5'%20stroke-width='2'/%3E%3Cpath%20d='M40%206%2016%2036h13l-5%2022%2024-32H34z'%20fill='%23c2ff3d'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Anton&family=Barlow+Condensed:wght@600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 :root{--bg:#050b14;--panel:#0b1626;--line:rgba(122,178,255,.16);--ink:#eaf3ff;--ink-dim:rgba(234,243,255,.56);--accent:#4fc3ff;--gold:#ffc844;--danger:#ff4d5e;--display:'Anton',Impact,sans-serif;--label:'Barlow Condensed','Barlow Semi Condensed',Arial,sans-serif;--body:'Barlow Semi Condensed','Helvetica Neue',Arial,sans-serif}
@@ -5743,6 +5743,57 @@ img.gunIc {
   font-family:var(--label); font-weight:700; font-size:10px; letter-spacing:.12em;
   color:rgba(231,245,236,.62); white-space:nowrap;
 }
+
+/* ============================== OG PLAYTEST BUILD ==============================
+   The OG mode dresses the whole interface in the navy day-one look: the
+   original palette, the Anton and Barlow type, gradient accents on the logo,
+   the play button and the storm, and the scanlines over the menu. */
+body.og-ui {
+  --lime:#4fc3ff;
+  --teal:#9fd6ff;
+  --coral:#ff4d5e;
+  --ink:#eaf3ff;
+  --bg:#050b14;
+  --display:'Anton',Impact,sans-serif;
+  --label:'Barlow Condensed','Barlow Semi Condensed',Arial,sans-serif;
+  --body:'Barlow Semi Condensed','Helvetica Neue',Arial,sans-serif;
+}
+body.og-ui #menu {
+  background:radial-gradient(120% 90% at 8% 0%,rgba(28,90,190,.55),transparent 55%),radial-gradient(90% 70% at 100% 100%,rgba(110,40,180,.45),transparent 60%),linear-gradient(160deg,rgba(5,13,26,.9),rgba(6,6,20,.94));
+}
+body.og-ui #menu::before {
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.35;
+  background:repeating-linear-gradient(118deg,rgba(255,255,255,.05) 0 1px,transparent 1px 52px);
+}
+body.og-ui .logo {
+  font-style:italic;
+  background:linear-gradient(180deg,#fff 30%,#9fd6ff);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 4px 16px rgba(70,170,255,.6));
+}
+body.og-ui #playBtn {
+  background:linear-gradient(180deg,#63d6ff,#1466dd);
+  box-shadow:0 16px 36px rgba(20,120,220,.5),inset 0 -5px 0 rgba(0,20,50,.35),inset 0 1px 0 rgba(255,255,255,.55);
+  text-shadow:0 2px 8px rgba(0,20,60,.55);
+}
+body.og-ui #hud {
+  --hudLime:#4fc3ff;
+  --hudTeal:#5bdcff;
+  --hudCoral:#ff4d5e;
+  --hudPanel:rgba(9,17,30,.78);
+  --hudLine:rgba(122,178,255,.22);
+  --hudLine2:rgba(122,178,255,.16);
+}
+body.og-ui #hud::after {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:-1;
+  background:radial-gradient(125% 105% at 50% 50%, transparent 58%, rgba(2,6,14,.34) 100%);
+}
+body.og-ui #stormInfo {
+  background:linear-gradient(180deg, rgba(26,12,46,.84), rgba(8,6,20,.88));
+  border-color:rgba(168,120,255,.32);
+}
+body.og-ui #stormBarFill { background:linear-gradient(90deg,#8a5bff,#e05bff); }
+body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
 </style>
 </head>
 <body>
@@ -6677,6 +6728,7 @@ img.gunIc {
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
       <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — the first storm phase always opens with one, inside the first minute, and every phase after that rolls an 80% chance. Each event lasts until its own storm phase closes, everything marked on the map and announced with a banner. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of weapons, where the headline drop sometimes turns out to be a super broken relic from seasons past: the Mythic Reaper Sniper, the power-hour Heavy Assault Rifle, or Zero Hour. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
+      <li><span class="wnTag">11</span><div><b>OG — PLAYTEST THE DAY-ONE BUILD</b> — a limited mode that feels like loading a whole different game: the navy interface is back with Anton and Barlow type, the original thirteen hitscan guns (scoped rifles everywhere, nothing past Legendary), the green island, chests that give a gun, a heal, ammo and wood — and none of this season's systems. No sprites, boons, vending machines, gold, gunship or anomalies. Drop, loot, outlast.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6847,6 +6899,13 @@ const MODE_DEFS = {
     adjustable: true,
     queue: (n) => n + ' TARGETS · EVERY ROUND TRAVELS',
   },
+  og: {
+    name: 'OG', short: 'OG', kicker: 'PLAYTEST',
+    desc: 'The game as it first shipped: the navy day-one build, the original thirteen guns on the green island, hitscan marksman rifles and all. No sprites, boons, vending machines or gunship. Drop, loot, outlast.',
+    rules: ['<b>13</b> OG GUNS', 'STORM', 'NAVY BUILD'],
+    adjustable: true,
+    queue: (n) => n + ' OPPONENTS · OG RULES',
+  },
 };
 const MODE_KEYS = Object.keys(MODE_DEFS);
 
@@ -6854,6 +6913,7 @@ function modeDef() { return MODE_DEFS[state.mode] || MODE_DEFS.br; }
 function isReload() { return state.mode === 'reload' || state.mode === 'rankedreload'; }
 function isReloadDuos() { return state.mode === 'reloadduos'; }
 function isRumble() { return state.mode === 'rumble'; }
+function isOG() { return state.mode === 'og'; }
 function isDuos() { return state.mode === 'duos' || state.mode === 'rankedduos' || state.mode === 'reloadduos'; }
 function isKnockMode() { return state.mode === 'duos' || state.mode === 'rankedduos'; }
 function isGunGame() { return state.mode === 'gungame'; }
@@ -7144,6 +7204,7 @@ const PIRATE_COLOR = {
    old overgrown island, and Blitz drops into a mix of both. */
 function mapTheme() {
   if (isBlitz()) return 'mix';
+  if (isOG()) return 'classic';
   if (isReload() || isReloadDuos() || isRankedReload()) return 'classic';
   return 'pirate';
 }
@@ -8664,7 +8725,7 @@ function refreshVendingDisplay(vm) {
 
 function buildVendingMachines(rng) {
   vendingMachines.length = 0;
-  if (isGunGame()) return;
+  if (isGunGame() || isOG()) return;
   const spread = isBlitz() ? 0.62 : 1;
   let tries = 0;
   while (vendingMachines.length < 12 && tries < 500) {
@@ -9887,6 +9948,21 @@ const WEAPONS = {
   exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 142, rpm: 50, mag: 4, reload: 2.5, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 450, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 560 },
   exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 40, rpm: 460, mag: 65, reload: 2.9, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 235, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.6 },
   exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 94, rpm: 110, mag: 9, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.35, bulletSpeed: 520 },
+  /* OG ARSENAL — the original thirteen, exactly as the first build shipped them.
+     Only the OG mode loots them (unless a power hour releases one). */
+  pistol: { name: 'Pistol', ammo: 'light', dmg: 25, rpm: 380, mag: 16, reload: 1.6, spread: 0.016, ads: 0.006, pellets: 1, hs: 1.9, range: 160, auto: true, sfx: 'pistol' },
+  ar: { name: 'Assault Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.4, spread: 0.046, ads: 0.016, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
+  scopedar: { name: 'Scoped Assault Rifle', ammo: 'medium', dmg: 29, rpm: 300, mag: 20, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.7, range: 320, auto: true, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman' },
+  redeye: { name: 'Red-Eye Rifle', ammo: 'medium', dmg: 34, rpm: 420, mag: 25, reload: 2.5, spread: 0.040, ads: 0.0001, pellets: 1, hs: 1.7, range: 260, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 42, scope: 'reddot' },
+  tactical: { name: 'Tactical Scoped Rifle', ammo: 'medium', dmg: 30, rpm: 220, mag: 20, reload: 2.8, spread: 0.026, ads: 0.0001, pellets: 1, hs: 1.8, range: 330, auto: false, sfx: 'ar', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman' },
+  marksman: { name: 'Marksman Rifle', ammo: 'medium', dmg: 46, rpm: 150, mag: 12, reload: 3.0, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.0, range: 380, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'marksman' },
+  revolver: { name: 'Scoped Revolver', ammo: 'light', dmg: 62, rpm: 110, mag: 6, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 1.9, range: 220, auto: true, sfx: 'pistol', scoped: true, zoom: '2X', scopedFov: 40, scope: 'reddot' },
+  smg: { name: 'SMG', ammo: 'light', dmg: 17, rpm: 750, mag: 30, reload: 2.0, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 120, auto: true, sfx: 'smg' },
+  shotgun: { name: 'Pump Shotgun', ammo: 'shells', dmg: 13, rpm: 80, mag: 5, reload: 3.1, spread: 0.062, ads: 0.048, pellets: 10, hs: 1.75, range: 62, auto: false, sfx: 'shotgun' },
+  sniper: { name: 'Bolt Sniper', ammo: 'heavy', dmg: 105, rpm: 40, mag: 1, reload: 2.8, spread: 0.052, ads: 0.0001, pellets: 1, hs: 2.5, range: 400, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 22, scope: 'sniper' },
+  heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 38, rpm: 260, mag: 25, reload: 2.9, spread: 0.050, ads: 0.018, pellets: 1, hs: 1.7, range: 270, auto: true, sfx: 'ar' },
+  doublebarrel: { name: 'Double Barrel', ammo: 'shells', dmg: 12, rpm: 150, mag: 2, reload: 2.6, spread: 0.070, ads: 0.055, pellets: 8, hs: 1.7, range: 48, auto: false, sfx: 'shotgun' },
+  railgun: { name: 'Railgun', ammo: 'heavy', dmg: 150, rpm: 22, mag: 1, reload: 3.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 1.5, range: 520, auto: false, sfx: 'rail', scoped: true, zoom: '8X', scopedFov: 20, scope: 'sniper' },
   /* Rift vault re-issues — the super broken hardware from earlier seasons.
      They belong to no pool, so the only way to hold one is to stabilise a
      rift vault... unless a power hour releases them through weapons.json. */
@@ -9918,6 +9994,12 @@ const SPECIAL_BASE = {
   mythic_reaper: 'reaper',
   mythic_heavyar: 'heavyar',
   exotic_zero: 'pulse',
+  /* the OG scoped guns reuse the day-one bodies their scopes sat on */
+  scopedar: 'ar',
+  redeye: 'ar',
+  tactical: 'ar',
+  marksman: 'sniper',
+  railgun: 'rail',
   mythic_flintlock: 'flintlock',
   mythic_blunderbuss: 'blunderbuss',
   mythic_sawedoff: 'doublebarrel',
@@ -9970,6 +10052,11 @@ const BLITZ_WEAPON_POOL = LOOT_WEAPON_POOL.concat(CLASSIC_WEAPON_POOL);
 const CLASSIC_MYTHIC_WEAPONS = MYTHIC_WEAPONS.slice();
 const CLASSIC_EXOTIC_WEAPONS = EXOTIC_WEAPONS.slice();
 
+/* OG mode: the original thirteen guns from day one. Hitscan, scoped rifles
+   weighted up in the loot, and nothing above Legendary rarity. */
+const OG_SCOPED = ['scopedar', 'redeye', 'tactical', 'marksman', 'revolver', 'sniper', 'railgun'];
+const OG_FLAT = ['pistol', 'ar', 'smg', 'shotgun', 'heavyar', 'doublebarrel'];
+
 /* Remote switches from weapons.json: disable any gun everywhere, add an
    unreleased one to the pools, or change the spawn loadout. */
 const WEAPON_FLAGS = {
@@ -10012,6 +10099,8 @@ function knownWeaponIds() {
 }
 
 function lootPoolForMode() {
+  // OG mode loots the original thirteen: scoped rifles weighted up.
+  if (isOG()) return allowedOnly(OG_FLAT.concat(OG_SCOPED, OG_SCOPED));
   const t = mapTheme();
   // Reload runs the mixed pool, same as Blitz: the whole arsenal blended
   // together, plus anything released through weapons.json.
@@ -10024,6 +10113,7 @@ function lootPoolForMode() {
   return pool;
 }
 function mythicPoolForMode() {
+  if (isOG()) return [];   // Season 1 had no mythics
   const t = mapTheme();
   const base = t === 'classic' ? CLASSIC_MYTHIC_WEAPONS : t === 'mix' ? MYTHIC_WEAPONS.concat(CLASSIC_MYTHIC_WEAPONS) : MYTHIC_WEAPONS;
   const pool = allowedOnly(base);
@@ -10031,6 +10121,7 @@ function mythicPoolForMode() {
   return pool;
 }
 function exoticPoolForMode() {
+  if (isOG()) return [];   // Season 1 had no exotics
   const t = mapTheme();
   const base = t === 'classic' ? CLASSIC_EXOTIC_WEAPONS : t === 'mix' ? EXOTIC_WEAPONS.concat(CLASSIC_EXOTIC_WEAPONS) : EXOTIC_WEAPONS;
   const pool = allowedOnly(base);
@@ -12051,14 +12142,14 @@ function ammoTypeForPlayer() {
 
 function rollLootItem(rng, bonus) {
   if (isGunGame()) return makeAmmo(pick(['light', 'medium', 'shells', 'heavy']), randInt(40, 90));
-  if (Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
-  if (Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
+  if (!isOG() && Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
+  if (!isOG() && Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   // Ascendant sits between Legendary and Mythic: a high roll on an ordinary gun.
-  if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
-  if (Math.random() < 0.06) return makeGrappler();
+  if (!isOG() && Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
+  if (!isOG() && Math.random() < 0.06) return makeGrappler();
   if (Math.random() < ammoDropChance()) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));
-  if (Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
-  if (Math.random() < 0.06) return makeSpritePod(pick(SPRITE_IDS));
+  if (!isOG() && Math.random() < 0.18) return makeBoon(pick(BOON_TYPES));
+  if (!isOG() && Math.random() < 0.06) return makeSpritePod(pick(SPRITE_IDS));
   const r = (rng ? rng() : Math.random()) + (bonus || 0);
   if (r < 0.40) {
     return makeWeapon(lootWeaponType(), rarityRoll(bonus));
@@ -12068,6 +12159,7 @@ function rollLootItem(rng, bonus) {
   if (r < 0.72) return makeGrenade(pick(['shockwave', 'shockwave', 'impulse', 'frag']), 1);
   if (r < 0.84) return makeHeal(pick(['mini', 'shield']), 2);
   if (r < 0.94) return makeHeal(pick(['slurp', 'chug']), 1);
+  if (isOG()) return makeAmmo(ammoTypeForPlayer(), randInt(30, 60));   // no gold in OG
   return makeGold(25);
 }
 
@@ -12244,8 +12336,8 @@ function pickupLoot(l) {
 
 // A chest always holds a gun, so this rolls a weapon and never a utility item.
 function rollChestWeapon() {
-  if (Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
-  if (Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
+  if (!isOG() && Math.random() < 0.03) return makeWeapon(pick(mythicPoolForMode()), R_MYTHIC);
+  if (!isOG() && Math.random() < 0.03) return makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   if (Math.random() < 0.05) return makeWeapon(lootWeaponType(), R_ASCENDANT);
   return makeWeapon(lootWeaponType(), rarityRoll(0.18));
 }
@@ -12263,15 +12355,20 @@ function openChest(c) {
   // both), a grappler 25%, and fifty gold. Nothing else is dropped.
   const gun = rollChestWeapon();
   const drops = [gun];
-  if (Math.random() < 0.5) {
+  if (isOG()) {
+    // Season 1 chests: a gun, a heal and plenty of ammo. No boons, grapplers,
+    // gold or tokens — the wood burst stays.
+    drops.push(makeHeal(pick(['bandage', 'mini', 'shield']), 1));
+    drops.push(makeAmmo(ammoTypeForPlayer(), randInt(45, 90)));
+  } else if (Math.random() < 0.5) {
     drops.push(makeHeal(pick(['bandage', 'mini', 'shield']), 1));
   } else {
     drops.push(makeBoon(pick(BOON_TYPES)));
   }
-  if (Math.random() < 0.25) drops.push(makeGrappler());
-  drops.push(makeGold(50));
+  if (!isOG() && Math.random() < 0.25) drops.push(makeGrappler());
+  if (!isOG()) drops.push(makeGold(50));
   // One chest in twenty hides the season's pirate token.
-  if (Math.random() < PIRATE_TOKEN_CHANCE) drops.push(makeToken());
+  if (!isOG() && Math.random() < PIRATE_TOKEN_CHANCE) drops.push(makeToken());
 
   const a0 = Math.random() * TAU;
   for (let i = 0; i < drops.length; i++) {
@@ -12576,7 +12673,7 @@ function weaponSpecial(w, hit, dir, dmg) {
 /* The shotguns, by the body they wear (SPECIAL_BASE maps a gun to one of these).
    They share a bloom model, a recoil kick and a damage falloff, so none of them
    can quietly fall behind the others. */
-const SHOTGUN_FAMILY = ['blunderbuss', 'grapeshot', 'tacshot', 'sawedoff', 'doublebarrel', 'revolver'];
+const SHOTGUN_FAMILY = ['blunderbuss', 'grapeshot', 'tacshot', 'sawedoff', 'doublebarrel', 'revolver', 'shotgun'];
 
 /* Season 6 runs on cells, not cartridges. Every shot pushes the emitter closer
    to a lockout, and the sink only starts after you actually stop firing: a
@@ -14212,7 +14309,7 @@ function spawnBot(i) {
   const type = botWeaponType(gunLevel);
   let w;
   // Bots can carry the good stuff too, more often as the lobby gets harder.
-  const specialChance = isGunGame() ? 0 : 0.06 + tier * 0.2;
+  const specialChance = isGunGame() || isOG() ? 0 : 0.06 + tier * 0.2;
   if (Math.random() < specialChance) {
     w = Math.random() < 0.5 ? makeWeapon(pick(mythicPoolForMode()), R_MYTHIC) : makeWeapon(pick(exoticPoolForMode()), R_EXOTIC);
   } else {
@@ -17134,7 +17231,7 @@ function drawMinimap() {
 
   // ---- town names, printed across the map in big type. Drawn after the storm
   // shade so they stay white against the purple.
-  if (worldPOIs.length) {
+  if (worldPOIs.length && !isOG()) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -17696,6 +17793,7 @@ function plannedBotCount() {
 }
 
 function defaultStartWeapon() {
+  if (isOG()) return 'pistol';   // OG drops you in with the day-one sidearm
   if (mod('snipers')) return 'musket';
   if (mod('shotguns')) return 'blunderbuss';
   return 'flintlock';
@@ -17715,7 +17813,7 @@ function startingLoadout() {
   return out.length ? out : [defaultStartWeapon()];
 }
 
-function startWeaponType() { return startingLoadout()[0]; }
+function startWeaponType() { return isOG() ? 'pistol' : startingLoadout()[0]; }
 
 /* A starting gun keeps its own class: an Exotic leaves the box Exotic, not a
    plain Common copy of itself. Ordinary guns still start at Common. */
@@ -17726,6 +17824,8 @@ function startingRarity(type) {
 }
 
 function makeStartingInventory() {
+  // OG drops you in with the original day-one sidearm.
+  if (isOG()) return [makeWeapon('pistol', 0), null, null, null, null];
   const load = startingLoadout();
   const inv = [null, null, null, null, null];
   for (let i = 0; i < load.length && i < inv.length; i++) inv[i] = makeWeapon(load[i], startingRarity(load[i]));
@@ -17893,8 +17993,8 @@ function startMatch() {
   spawnBots(botCount);
   assignTeams();
   positionFighters();
-  spawnGunship();
-  if (!isGunGame() && bots.length && Math.random() < 0.55) botTakesGunship();
+  if (!isOG()) spawnGunship();
+  if (!isOG() && !isGunGame() && bots.length && Math.random() < 0.55) botTakesGunship();
   // A drop seeds its long gun when the player lands; a ground start seeds it here.
   state.landGunSeeded = false;
   if (!player.dropping && !isGunGame()) {
@@ -18213,6 +18313,10 @@ document.getElementById('botPlus').addEventListener('click', () => { setBotCount
 /* ---------------- game mode selection ---------------- */
 function setMode(m) {
   state.mode = MODE_KEYS.indexOf(m) >= 0 ? m : 'br';
+  // OG mode reskins the whole interface to the navy day-one build.
+  document.body.classList.toggle('og-ui', state.mode === 'og');
+  const tag = document.querySelector('.tagline');
+  if (tag) tag.innerHTML = state.mode === 'og' ? 'OG BUILD · <b>v1.0.0</b>' : 'SEASON <b>7</b>';
   const def = modeDef();
   document.querySelectorAll('.modeBtn').forEach((b) => {
     b.classList.toggle('active', b.dataset.mode === state.mode);
@@ -18247,8 +18351,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 14 };
-const VERSION_PREV = '8.3.13';
+const VERSION = { major: 8, minor: 4, patch: 0 };
+const VERSION_PREV = '8.3.14';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
