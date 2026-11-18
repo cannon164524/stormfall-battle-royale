@@ -6723,18 +6723,9 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THREE TOWNS ON THE MAP</b> — Cannon Bay, Black Tide and Salt Wake are the three named drop spots, each a tight ring of buildings packed together, with their names printed across the minimap in big type. The middle of town stays open, so you land in a street rather than on a roof. Everywhere else there are a few lone houses.</div></li>
-      <li><span class="wnTag">02</span><div><b>THREE NEW SPRAY GUNS</b> — the Pepperbox fires four barrels at 240 rpm, the Sawed-off throws fourteen pellets with nothing gentle about it, and the Flak Cannon feeds a drum into a wide flared mouth. A Mythic Sawed-off and the Exotic Storm Flak join them, and all five carry the new picture icons.</div></li>
-      <li><span class="wnTag">03</span><div><b>BIGGER MAGAZINES</b> — every gun holds more. Flintlock 6, Hand Cannon 8, Blunderbuss 6, Grapeshot 12, Repeater 24, Musketoon 18, Swivel Gun 60, Chain Shot 12, Mortar 4, Long Rifle 8, Harpoon 5, Sea Musket 3, with the Mythic and Exotic versions scaled to match.</div></li>
-      <li><span class="wnTag">04</span><div><b>TRAVEL AND THE BAG</b> — the compass readout now names the town you are standing in, and the Gun Game ladder runs thirteen guns including the new spray.</div></li>
-      <li><span class="wnTag">05</span><div><b>NO SIGN-IN, NO ITEMS</b> — the lobby hands a guest the Recruit outfit and nothing else. Buying and the pirate token payout need an account; sign in and everything the account holds comes straight back.</div></li>
-      <li><span class="wnTag">06</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
-      <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
-      <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
-      <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
-      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — the first storm phase always opens with one, inside the first minute, and every phase after that rolls an 80% chance. Each event lasts through its own storm close and the countdown after it — two phases technically — fading when the second close begins, everything marked on the map and announced with a banner. Stabilize the Rift comes up half the time: drones ring a beacon — shoot every one down and the beacon bursts open into a vault of weapons, where the headline drop sometimes turns out to be a super broken relic from seasons past: the Mythic Reaper Sniper, the power-hour Heavy Assault Rifle, or Zero Hour. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
-      <li><span class="wnTag">11</span><div><b>OG — PLAYTEST THE DAY-ONE BUILD</b> — a limited mode that feels like loading a whole different game: the navy interface is back with Anton and Barlow type, the original thirteen hitscan guns (scoped rifles everywhere, nothing past Legendary), the green island, chests that give a gun, a heal, ammo and wood — and none of this season's systems. No sprites, boons, vending machines, gold, gunship or anomalies. Drop, loot, outlast.</div></li>
-      <li><span class="wnTag">12</span><div><b>PLAY AGAIN IS GONE</b> — the instant-rematch button on the end screen skipped rift anomalies and didn't advance tournament games, so it's removed. The end screen now sends you to the main menu, where everything queues up fresh.</div></li>
+      <li><span class="wnTag">01</span><div><b>ANOMALIES LAST TWO PHASES</b> — a rift anomaly now opens when a phase begins closing, rides out that close, keeps running through the next countdown, and fades only when the second close begins. Two phases technically.</div></li>
+      <li><span class="wnTag">02</span><div><b>STABILIZE THE RIFT IS THE HEADLINE</b> — the drone-and-vault event now comes up half the time, with the other five anomalies sharing the rest.</div></li>
+      <li><span class="wnTag">03</span><div><b>THREE NEW ANOMALIES</b> — GOLD RUSH: every gold payout doubles and six big caches land on the map, marked with gold dots. BOUNTY MARK: one bot wears the mark, live on your map — cash the bounty and a Mythic weapon plus 200 gold drops where they fell, then a new mark is set. MOON GRAVITY: the whole island runs at 45% gravity until the anomaly fades — hops soar and fights go airborne. Six events in the rotation now.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6935,7 +6926,7 @@ function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble
 const SIPHON_AMOUNT = 100;
 function siphonActive() { return isRanked() || !!state.tourneyId; }
 function mod(key) { return !!state.mods[key]; }
-function gravityNow() { return GRAVITY * (mod('lowgrav') ? 0.45 : 1); }
+function gravityNow() { return GRAVITY * ((mod('lowgrav') || anomaly.type === 'moongrav') ? 0.45 : 1); }
 /* The storm clock. The big-lobby battle royale stretches every wait and
    every close so a full lobby has room to breathe; Reload and Blitz keep
    their quick tempo, and the faststorm modifier overrides it all. */
@@ -12372,7 +12363,7 @@ function openChest(c) {
     drops.push(makeBoon(pick(BOON_TYPES)));
   }
   if (!isOG() && Math.random() < 0.25) drops.push(makeGrappler());
-  if (!isOG()) drops.push(makeGold(50));
+  if (!isOG()) drops.push(makeGold(Math.round(50 * anomalyGoldMul())));
   // One chest in twenty hides the season's pirate token.
   if (!isOG() && Math.random() < PIRATE_TOKEN_CHANCE) drops.push(makeToken());
 
@@ -13146,6 +13137,16 @@ function playerDie(killer) {
 
 function killBot(b, killerName) {
   if (!b.alive) return;
+  // BOUNTY MARK: the marked bot pays out wherever it falls, then a new
+  // bounty is marked while the event runs.
+  if (anomaly.type === 'bounty' && b === bountyBot) {
+    spawnLoot(b.pos.x, b.pos.y + 0.6, b.pos.z, makeWeapon(pick(mythicPoolForMode()), R_MYTHIC));
+    spawnLoot(b.pos.x + rand(-0.8, 0.8), b.pos.y + 0.5, b.pos.z + rand(-0.8, 0.8), makeGold(200));
+    bountyBot = null;
+    toast('BOUNTY CASHED · MYTHIC + GOLD', 'sub');
+    showEventBanner('BOUNTY CASHED', 'THE VAULT-GRADE DROP IS ON THE GROUND', GUN_ICONS.token);
+    pickBounty();
+  }
   b.alive = false;
   b.knocked = false;
   if (b.rig) {
@@ -13904,7 +13905,7 @@ function dropBotLoot(b) {
   // to the magazine the weapon ships with, so a pickup never lands half empty
   // and forces a reload the moment you take it.
   if (w && w.kind === 'weapon' && weaponUsesAmmo(w)) w.mag = WEAPONS[w.type].mag;
-  const items = [w, makeGold(50)];
+  const items = [w, makeGold(Math.round(50 * anomalyGoldMul()))];
   if (Math.random() < 0.6) items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   for (const it of items) {
     spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
@@ -15230,14 +15231,19 @@ function audioInit() {
 /* ============================== RIFT ANOMALIES ==============================
    Match-wide events rolled after each storm phase OPENS on the big island —
    battle royale only, omitted from ranked, Blitz, Reload and Gun Game. Most
-   effects last until that phase closes, and what they spawn is marked on the
-   map. Our rotation of three:
+   effects last until their two-phase window ends, and what they spawn is
+   marked on the map. Our rotation of six:
    - SPRITE HUNT: buried X-marked chests across the island; dig each one for a
      sprite pod, a jolt of sprite XP and gold.
    - STABILIZE THE RIFT: drones ring a sealed beacon. Shoot every one down and
      the beacon bursts open into a vault drop.
    - FEELING UNSTOPPABLE: everyone sprints 25% faster and every landed hit
-     shoves the target flying. */
+     shoves the target flying.
+   - GOLD RUSH: all gold pays double, and six marked caches land on the island.
+   - BOUNTY MARK: one bot is marked live on the map — cash the bounty for a
+     Mythic drop plus gold, then a new mark is set.
+   - MOON GRAVITY: the whole island runs at 45% gravity until the anomaly fades.
+   */
 const anomaly = { type: '', data: null, age: 0 };
 const ANOMALY_CHANCE = 0.8;
 const DIG_COUNT = 8;
@@ -15432,14 +15438,61 @@ function startUnstoppable() {
   sfx('unlock');
 }
 
+/* ---- GOLD RUSH ----
+   All gold pays double, and marked caches land across the island. */
+function anomalyGoldMul() { return anomaly.type === 'goldrush' ? 2 : 1; }
+
+function startGoldRush() {
+  anomaly.data = [];
+  let placed = 0;
+  for (let i = 0; i < 20 && placed < 6; i++) {
+    const spot = anomalySpot();
+    if (!spot) continue;
+    spawnLoot(spot.x, terrainHeight(spot.x, spot.z) + 0.4, spot.z, makeGold(randInt(100, 200)));
+    anomaly.data.push({ x: spot.x, z: spot.z });
+    placed++;
+  }
+  if (placed) showEventBanner('RIFT ANOMALY · GOLD RUSH', placed + ' CACHES ON THE MAP · ALL GOLD DOUBLED', GUN_ICONS.token);
+}
+
+/* ---- BOUNTY MARK ----
+   One bot wears the mark — shown live on the map. Cash the bounty and a
+   Mythic weapon plus gold drops where they fell, then a new mark is set. */
+let bountyBot = null;
+
+function pickBounty() {
+  const alive = bots.filter((b) => b.alive && !b.out && !b.dropping && b !== bountyBot);
+  if (!alive.length) return;
+  bountyBot = alive[Math.floor(Math.random() * alive.length)];
+}
+
+function startBounty() {
+  pickBounty();
+  if (bountyBot) showEventBanner('RIFT ANOMALY · BOUNTY MARK', bountyBot.name + ' IS MARKED · CUT THEM DOWN FOR A MYTHIC DROP', GUN_ICONS.token);
+}
+
+/* ---- MOON GRAVITY ----
+   The whole island at 45% gravity until the anomaly fades. */
+function startMoonGravity() {
+  showEventBanner('RIFT ANOMALY · MOON GRAVITY', 'THE WHOLE ISLAND AT 45% GRAVITY', GUN_ICONS.shockwave);
+  sfx('unlock');
+}
+
 /* ---- EVENT LIFECYCLE ---- */
 function startAnomaly() {
-  // Stabilize the Rift is the headline event, so it comes up half the time.
-  anomaly.type = pick(['stabilize', 'stabilize', 'stabilize', 'stabilize', 'spritehunt', 'spritehunt', 'unstoppable', 'unstoppable']);
+  // Stabilize the Rift is the headline event, so it comes up half the time;
+  // the other five share the rest evenly.
+  anomaly.type = pick([
+    'stabilize', 'stabilize', 'stabilize', 'stabilize', 'stabilize',
+    'spritehunt', 'goldrush', 'bounty', 'unstoppable', 'moongrav',
+  ]);
   anomaly.data = null;
   anomaly.age = 0;
   if (anomaly.type === 'spritehunt') startSpriteHunt();
   else if (anomaly.type === 'stabilize') startStabilize();
+  else if (anomaly.type === 'goldrush') startGoldRush();
+  else if (anomaly.type === 'bounty') startBounty();
+  else if (anomaly.type === 'moongrav') startMoonGravity();
   else startUnstoppable();
 }
 
@@ -15447,6 +15500,7 @@ function endAnomaly() {
   if (!anomaly.type) return;
   if (anomaly.type === 'spritehunt') endSpriteHunt();
   else if (anomaly.type === 'stabilize') endStabilize();
+  else if (anomaly.type === 'bounty') bountyBot = null;
   if (state.phase === 'play') toast('RIFT ANOMALY FADED', 'sub');
   anomaly.type = '';
   anomaly.data = null;
@@ -17285,6 +17339,25 @@ function drawMinimap() {
     ctx.fillStyle = '#d08bff';
     ctx.fillRect(-3.4, -3.4, 6.8, 6.8);
     ctx.restore();
+  } else if (anomaly.type === 'goldrush' && anomaly.data) {
+    ctx.fillStyle = '#ffc844';
+    for (const m of anomaly.data) {
+      const [gx, gy] = w2m(m.x, m.z);
+      ctx.beginPath();
+      ctx.arc(gx, gy, 2.8, 0, TAU);
+      ctx.fill();
+    }
+  } else if (anomaly.type === 'bounty' && bountyBot && bountyBot.alive && !bountyBot.dropping) {
+    const [bx, by] = w2m(bountyBot.pos.x, bountyBot.pos.z);
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#ffc844';
+    ctx.fillRect(-3.4, -3.4, 6.8, 6.8);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(-3.4, -3.4, 6.8, 6.8);
+    ctx.restore();
   }
 
   // bots — a Rift Radar in your bag puts every one of them on the map
@@ -18359,8 +18432,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 2 };
-const VERSION_PREV = '8.4.1';
+const VERSION = { major: 8, minor: 4, patch: 3 };
+const VERSION_PREV = '8.4.2';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
