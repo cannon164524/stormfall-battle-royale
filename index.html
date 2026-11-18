@@ -5720,6 +5720,29 @@ img.gunIc {
   pointer-events:none;
   -webkit-user-select:none; user-select:none;
 }
+/* ---- rift anomaly event banner, top centre ---- */
+#eventBanner {
+  position:absolute; left:50%; top:12%; transform:translateX(-50%) translateY(-14px);
+  display:flex; align-items:center; gap:12px;
+  padding:10px 18px 10px 14px;
+  background:rgba(9,14,16,.94);
+  border:1px solid rgba(208,139,255,.55);
+  border-left:3px solid #d08bff;
+  opacity:0; pointer-events:none;
+  transition:opacity .28s, transform .28s;
+  z-index:30;
+}
+#eventBanner.on { opacity:1; transform:translateX(-50%) translateY(0); }
+#eventBanner .evIcon { width:26px; height:26px; color:#d08bff; display:flex; align-items:center; justify-content:center; }
+#eventBanner .evIcon svg { width:100%; height:100%; }
+#eventBanner b {
+  font-family:var(--display); font-weight:800; font-size:clamp(15px, 2vw, 21px);
+  letter-spacing:.04em; color:#e9d5ff; white-space:nowrap;
+}
+#eventBanner span {
+  font-family:var(--label); font-weight:700; font-size:10px; letter-spacing:.12em;
+  color:rgba(231,245,236,.62); white-space:nowrap;
+}
 </style>
 </head>
 <body>
@@ -5772,6 +5795,12 @@ img.gunIc {
       <span class="rcSweep"></span>
     </div>
     <div class="rcName" id="rcName">PLAYER</div>
+  </div>
+
+  <div id="eventBanner">
+    <span class="evIcon" id="evIcon"></span>
+    <b id="evTitle">RIFT ANOMALY</b>
+    <span id="evSub"></span>
   </div>
 
   <div id="stormWarn" class="hide">OUTSIDE THE STORM · <b id="stormDps">1</b> DPS</div>
@@ -6647,7 +6676,7 @@ img.gunIc {
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
-      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting across two storm phases, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of Mythic-tier weapons. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
+      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting across two storm phases and announced with a banner when it begins, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of Mythic-tier weapons. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15101,6 +15130,24 @@ function anomalyAllowed() {
 }
 function anomalyUnstoppable() { return anomaly.type === 'unstoppable'; }
 
+/* The announcement card: a flat banner drops in at the top of the screen and
+   holds for a few seconds, so an anomaly opening reads as an event, not a
+   whisper in the toast corner. */
+let evBannerTimer = 0;
+function showEventBanner(title, sub, icon) {
+  const el = document.getElementById('eventBanner');
+  if (!el) return;
+  clearTimeout(evBannerTimer);
+  el.classList.add('on');
+  const t = document.getElementById('evTitle');
+  const s = document.getElementById('evSub');
+  const ic = document.getElementById('evIcon');
+  if (t) t.textContent = title;
+  if (s) s.textContent = sub || '';
+  if (ic) ic.innerHTML = icon || '';
+  evBannerTimer = setTimeout(() => el.classList.remove('on'), 4500);
+}
+
 function riftColumn(x, y, z, sealed) {
   const g = new THREE.Group();
   const beamMat = new THREE.MeshBasicMaterial({ color: 0xb45cf0, transparent: true, opacity: sealed ? 0.16 : 0.3, depthWrite: false, side: THREE.DoubleSide });
@@ -15154,7 +15201,7 @@ function startSpriteHunt() {
     anomaly.data.push({ x: spot.x, z: spot.z, y, group: g, opened: false });
     placed++;
   }
-  if (placed) toast('RIFT ANOMALY · SPRITE HUNT · ' + placed + ' X MARKS ON THE MAP', 'sub');
+  if (placed) showEventBanner('RIFT ANOMALY · SPRITE HUNT', placed + ' X MARKS ON THE MAP · DIG FOR SPRITES', spriteArt(pick(SPRITE_IDS), false));
 }
 
 function endSpriteHunt() {
@@ -15216,7 +15263,7 @@ function startStabilize() {
     drones.push({ x: dx, y: y + 4.5, z: dz, group: g, col, done: false });
   }
   anomaly.data = { x: spot.x, y, z: spot.z, vis, drones, left: DRONE_COUNT, opened: false };
-  toast('RIFT ANOMALY · STABILIZE THE RIFT · DESTROY THE DRONES', 'sub');
+  showEventBanner('RIFT ANOMALY · STABILIZE THE RIFT', 'DESTROY THE DRONES · VAULT UNDER THE BEACON', GUN_ICONS.radar);
 }
 
 function endStabilize() {
@@ -15245,12 +15292,13 @@ function stabilizeOpenVault(s) {
   }
   spawnLoot(s.x, s.y + 0.6, s.z, makeGold(150));
   toast('RIFT STABILIZED · THE VAULT IS OPEN', 'sub');
+  showEventBanner('RIFT STABILIZED', 'THE VAULT IS OPEN · MYTHIC LOOT INSIDE', GUN_ICONS.token);
   sfx('unlock');
 }
 
 /* ---- FEELING UNSTOPPABLE ---- */
 function startUnstoppable() {
-  toast('RIFT ANOMALY · FEELING UNSTOPPABLE · EVERYONE SPRINTS HARDER AND HITS HARDER', 'sub');
+  showEventBanner('RIFT ANOMALY · FEELING UNSTOPPABLE', 'EVERYONE SPRINTS HARDER · HITS SEND PEOPLE FLYING', GUN_ICONS.boots);
   sfx('unlock');
 }
 
@@ -15268,6 +15316,7 @@ function endAnomaly() {
   if (!anomaly.type) return;
   if (anomaly.type === 'spritehunt') endSpriteHunt();
   else if (anomaly.type === 'stabilize') endStabilize();
+  if (state.phase === 'play') toast('RIFT ANOMALY FADED', 'sub');
   anomaly.type = '';
   anomaly.data = null;
 }
@@ -18177,8 +18226,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 10 };
-const VERSION_PREV = '8.3.9';
+const VERSION = { major: 8, minor: 3, patch: 11 };
+const VERSION_PREV = '8.3.10';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
