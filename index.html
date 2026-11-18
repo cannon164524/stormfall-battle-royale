@@ -6676,7 +6676,7 @@ img.gunIc {
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
-      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting across two storm phases and announced with a banner when it begins, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of Mythic-tier weapons. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
+      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting across two storm phases and announced with a banner when it begins, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of weapons, where the headline drop sometimes turns out to be a super broken relic from seasons past: the Mythic Reaper Sniper, the power-hour Heavy Assault Rifle, or Zero Hour. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9887,6 +9887,12 @@ const WEAPONS = {
   exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 142, rpm: 50, mag: 4, reload: 2.5, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 450, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 560 },
   exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 40, rpm: 460, mag: 65, reload: 2.9, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 235, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.6 },
   exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 94, rpm: 110, mag: 9, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.35, bulletSpeed: 520 },
+  /* Rift vault re-issues — the super broken hardware from earlier seasons.
+     They belong to no pool, so the only way to hold one is to stabilise a
+     rift vault... unless a power hour releases them through weapons.json. */
+  mythic_reaper: { name: 'Reaper Sniper', ammo: 'heavy', dmg: 150, rpm: 30, mag: 3, reload: 3.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 480, auto: false, sfx: 'sniper', scoped: true, zoom: '8X', scopedFov: 20, scope: 'sniper', pierce: true, bulletSpeed: 430 },
+  mythic_heavyar: { name: 'Heavy Assault Rifle', ammo: 'medium', dmg: 46, rpm: 400, mag: 30, reload: 2.2, spread: 0.038, ads: 0.012, pellets: 1, hs: 1.8, range: 300, auto: true, sfx: 'ar' },
+  exotic_zero: { name: 'Zero Hour', ammo: 'medium', dmg: 52, rpm: 400, mag: 40, reload: 1.2, spread: 0.008, ads: 0.003, pellets: 1, hs: 3.0, range: 460, auto: true, sfx: 'ar', scoped: true, zoom: '2X', scopedFov: 44, scope: 'reddot', bulletSpeed: 950, onHit: 'annihilate', blastR: 8, blastDmg: 110, freezeTime: 2.6, knockForce: 26, siphon: 12, pierce: true, ricochet: true, ricochetR: 7, ricochetMul: 0.5 },
 };
 
 /* No emitters survived the vault: every gun uses cartridges again. */
@@ -9908,6 +9914,10 @@ const SPECIAL_BASE = {
   longrifle: 'hunting',
   harpoon: 'rail',
   musket: 'sniper',
+  /* the vault relics ride the Season 6 bodies they came in on */
+  mythic_reaper: 'reaper',
+  mythic_heavyar: 'heavyar',
+  exotic_zero: 'pulse',
   mythic_flintlock: 'flintlock',
   mythic_blunderbuss: 'blunderbuss',
   mythic_sawedoff: 'doublebarrel',
@@ -10140,6 +10150,9 @@ GUN_ICONS.mythic_blunderbuss = GUN_ICONS.blunderbuss;
 GUN_ICONS.mythic_swivelgun = GUN_ICONS.swivelgun;
 GUN_ICONS.mythic_longrifle = GUN_ICONS.longrifle;
 GUN_ICONS.mythic_musket = GUN_ICONS.musket;
+/* the vault relics keep their old art */
+GUN_ICONS.mythic_reaper = GUN_ICONS.reaper;
+GUN_ICONS.exotic_zero = GUN_ICONS.pulse;
 GUN_ICONS.exotic_flintlock = GUN_ICONS.flintlock;
 GUN_ICONS.exotic_blunderbuss = GUN_ICONS.blunderbuss;
 GUN_ICONS.exotic_mortar = GUN_ICONS.mortar;
@@ -15124,6 +15137,10 @@ const ANOMALY_CHANCE = 0.65;
 const DIG_COUNT = 8;
 const DRONE_COUNT = 5;
 const DRONE_HP = 150;
+/* The vault's headline prize: usually a fresh Mythic roll, but one time in
+   three a super broken relic rides out of the rift instead. */
+const VAULT_RELICS = ['mythic_reaper', 'mythic_heavyar', 'exotic_zero'];
+const VAULT_RELIC_CHANCE = 0.35;
 
 function anomalyAllowed() {
   return storm.active && mapTheme() === 'pirate' && !isGunGame() && !isRanked() && !isBlitz();
@@ -15286,9 +15303,16 @@ function stabilizeOpenVault(s) {
   shockwaveFX(new THREE.Vector3(s.x, s.y + 1, s.z), 5);
   for (let i = 0; i < 3; i++) {
     const a = (i / 3) * TAU;
-    const rarity = i === 0 ? R_MYTHIC : i === 1 ? R_EXOTIC : R_LEGENDARY;
+    let rarity = i === 0 ? R_MYTHIC : i === 1 ? R_EXOTIC : R_LEGENDARY;
     const pool = rarity === R_MYTHIC ? mythicPoolForMode() : rarity === R_EXOTIC ? exoticPoolForMode() : allowedOnly(lootPoolForMode());
-    spawnLoot(s.x + Math.cos(a) * 2.4, s.y + 0.6, s.z + Math.sin(a) * 2.4, makeWeapon(pick(pool), rarity));
+    let type = pick(pool);
+    // The headline slot: sometimes the rift pays out a vault relic instead —
+    // the Mythic Reaper Sniper, the power-hour Heavy AR, or Zero Hour.
+    if (i === 0 && Math.random() < VAULT_RELIC_CHANCE) {
+      type = pick(VAULT_RELICS);
+      rarity = type.indexOf('exotic_') === 0 ? R_EXOTIC : R_MYTHIC;
+    }
+    spawnLoot(s.x + Math.cos(a) * 2.4, s.y + 0.6, s.z + Math.sin(a) * 2.4, makeWeapon(type, rarity));
   }
   spawnLoot(s.x, s.y + 0.6, s.z, makeGold(150));
   toast('RIFT STABILIZED · THE VAULT IS OPEN', 'sub');
@@ -18226,8 +18250,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 11 };
-const VERSION_PREV = '8.3.10';
+const VERSION = { major: 8, minor: 3, patch: 12 };
+const VERSION_PREV = '8.3.11';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
