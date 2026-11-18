@@ -5869,6 +5869,32 @@ body.death-ui #questLine, body.death-ui #modeBadge, body.death-ui #teamPanel,
 body.death-ui #tourneyHud, body.death-ui #spectate {
   display:none !important;
 }
+
+/* The win runs the same cinematic, in gold: the crown crest, confetti and the
+   warm gradient veil, with the middle of the screen left open on the island. */
+#deathCine.win .dcTop b {
+  background:linear-gradient(180deg,#fff8dd,#ffc93c 60%,#f08b1f);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 6px 26px rgba(255,180,40,.5));
+}
+#deathCine .dcCrest { display:none; width:44px; height:44px; margin:0 auto 2px; color:var(--gold); }
+#deathCine .dcCrest svg { width:100%; height:100%; }
+#deathCine.win .dcCrest {
+  display:block;
+  animation:crownPop 2.2s .5s ease-in-out infinite alternate;
+}
+#deathCine.win .dcKiller { color:rgba(255,222,150,.8); }
+#deathVeil.gold {
+  background:
+    linear-gradient(180deg, rgba(120,80,10,0) 0%, rgba(130,90,14,.4) 42%, rgba(150,100,16,.72) 100%),
+    radial-gradient(120% 90% at 50% 50%, rgba(150,105,20,0) 46%, rgba(120,82,14,.55) 100%);
+}
+#deathCine .endConfetti i { box-shadow:0 0 8px rgba(255,220,120,.55); }
+#deathCine.win .dcStats b { color:#ffe9a8; }
+#deathCine.win .dcStats button {
+  background:linear-gradient(180deg,#ffd76a,#e08a12); color:#2a1a00;
+}
+#deathCine.win .dcStats button:hover { filter:brightness(1.1); }
 </style>
 </head>
 <body>
@@ -5931,8 +5957,10 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
 
   <div id="deathVeil"></div>
   <div id="deathCine">
+    <div class="endConfetti" id="dcConfetti"></div>
     <div class="dcTop">
-      <b>ELIMINATED</b>
+      <span class="dcCrest" id="dcCrest"></span>
+      <b id="dcTitle">ELIMINATED</b>
       <span id="dcKiller">BY THE STORM</span>
     </div>
     <div class="dcControls">
@@ -5942,7 +5970,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div><b id="dcPlace">#1</b><span>PLACED</span></div>
         <div><b id="dcTime">0:00</b><span>SURVIVED</span></div>
         <button id="dcMenu" type="button">MAIN MENU</button>
-        <span class="dcHint">WATCHING THE LOBBY · BOTS KEEP FIGHTING</span>
+        <span class="dcHint" id="dcHint">WATCHING THE LOBBY · BOTS KEEP FIGHTING</span>
       </div>
     </div>
   </div>
@@ -6816,7 +6844,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>A CLEANER DEATH SCREEN</b> — when you die, your HUD gets out of the way: the crosshair, hotbar, ammo, health bars, materials, build menu and badges all hide during the death cinematic. You're left with the minimap, storm panel, kill feed and the death controls over the lobby still fighting around your body.</div></li>
+      <li><span class="wnTag">01</span><div><b>A CELEBRATORY VICTORY</b> — winning now plays the same cinematic as the death screen, in gold: the crown crest and confetti over the island, a warm gradient wash, your stats counting up, and the controls sliding in at the edges while the middle stays open on the calm island. Your HUD hides for the show, and the ranked recap and token reveal arrive after the controls settle.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18404,7 +18432,7 @@ function endMatch(win, killerName) {
       kind: 'good', kicker: 'VICTORY', title: 'STORM CLEARED',
       sub: 'LAST ONE STANDING', icon: CREST_CROWN, dur: 3200,
     });
-    setTimeout(() => showEndScreen(true), 950);
+    setTimeout(() => startVictoryCine(sub, placement, bots.length + 1), 950);
   } else {
     startDeathCine(String(killerName || 'The Storm'), placement, bots.length + 1);
   }
@@ -18426,26 +18454,21 @@ function endMatch(win, killerName) {
     spriteGainXP(player.spriteId, player.kills * 40 + (win ? 150 : 0) + (placement <= 5 ? 60 : 0));
   }
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
-  const recapDelay = win ? 750 : (state.deathCine ? 2600 : 750);
+  const recapDelay = state.deathCine ? 2600 : 750;
   if (rankRecap) setTimeout(() => showRankedRecap(rankRecap), recapDelay);
   else setTimeout(processRevealQueue, recapDelay + 200);
 }
 
 /* The death cinematic: a second of the kill itself, a red gradient wash,
    then the controls slide in at the edges while the middle of the screen
-   stays open on the lobby still fighting around your body. */
+   stays open on the lobby still fighting around your body. The win runs the
+   same shape in gold — crown, confetti and a slow count-up. */
 let dcTimers = [];
-function startDeathCine(killerName, placement, total) {
-  state.deathCine = true;
+
+function beginCine() {
   const cine = document.getElementById('deathCine');
-  if (!cine) { showEndScreen(false); return; }
-  document.getElementById('dcKiller').textContent =
-    'BY ' + killerName.toUpperCase() + ' — PLACED #' + placement + ' OF ' + total;
-  document.getElementById('dcKills').textContent = player.kills;
-  document.getElementById('dcDmg').textContent = Math.round(player.damage);
-  document.getElementById('dcPlace').textContent = '#' + placement;
-  document.getElementById('dcTime').textContent = fmtTime(state.time);
-  cine.classList.remove('on', 'controls');
+  if (!cine) return false;
+  cine.classList.remove('on', 'controls', 'win');
   void cine.offsetWidth;
   cine.classList.add('on');
   document.body.classList.add('death-ui');
@@ -18455,14 +18478,70 @@ function startDeathCine(killerName, placement, total) {
     document.getElementById('deathVeil').classList.add('soft');
     cine.classList.add('controls');
   }, 1800));
+  return true;
+}
+
+function startDeathCine(killerName, placement, total) {
+  state.deathCine = true;
+  document.getElementById('dcTitle').textContent = 'ELIMINATED';
+  document.getElementById('dcCrest').innerHTML = '';
+  document.getElementById('dcConfetti').innerHTML = '';
+  document.getElementById('dcHint').textContent = 'WATCHING THE LOBBY · BOTS KEEP FIGHTING';
+  document.getElementById('dcKiller').textContent =
+    'BY ' + killerName.toUpperCase() + ' — PLACED #' + placement + ' OF ' + total;
+  document.getElementById('dcKills').textContent = player.kills;
+  document.getElementById('dcDmg').textContent = Math.round(player.damage);
+  document.getElementById('dcPlace').textContent = '#' + placement;
+  document.getElementById('dcTime').textContent = fmtTime(state.time);
+  if (!beginCine()) { showEndScreen(false); return; }
+}
+
+function startVictoryCine(subText, placement, total) {
+  state.deathCine = true;
+  document.getElementById('dcTitle').textContent = 'STORM CLEARED';
+  document.getElementById('dcCrest').innerHTML = CREST_CROWN;
+  document.getElementById('dcKiller').textContent =
+    String(subText || 'LAST ONE STANDING').toUpperCase() + ' — PLACED #' + placement + ' OF ' + total;
+  document.getElementById('dcHint').textContent = 'WATCHING THE ISLAND · THE STORM HAS PASSED';
+  document.getElementById('deathVeil').classList.add('gold');
+  const cf = document.getElementById('dcConfetti');
+  cf.innerHTML = '';
+  const colors = ['#ffd166', '#ff8a1e', '#ffe9a8', '#7fe3ff', '#ffffff', '#ffb347'];
+  for (let i = 0; i < 80; i++) {
+    const c = document.createElement('i');
+    c.style.left = rand(1, 99).toFixed(1) + '%';
+    c.style.background = pick(colors);
+    c.style.width = (5 + Math.random() * 6).toFixed(1) + 'px';
+    c.style.height = (8 + Math.random() * 10).toFixed(1) + 'px';
+    c.style.animationDuration = (2.2 + Math.random() * 3.4).toFixed(2) + 's';
+    c.style.animationDelay = (Math.random() * 2.6).toFixed(2) + 's';
+    cf.appendChild(c);
+  }
+  if (!beginCine()) { showEndScreen(true); return; }
+  // the stats count up under the crown, like the old card did
+  const kEl = document.getElementById('dcKills');
+  const dEl = document.getElementById('dcDmg');
+  const kTo = player.kills;
+  const dTo = Math.round(player.damage);
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / 900);
+    const e = 1 - Math.pow(1 - t, 3);
+    kEl.textContent = String(Math.round(kTo * e));
+    dEl.textContent = String(Math.round(dTo * e));
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  kEl.textContent = '0';
+  dEl.textContent = '0';
+  requestAnimationFrame(tick);
 }
 
 function resetDeathCine() {
   state.deathCine = false;
   dcTimers.forEach(clearTimeout);
   dcTimers = [];
-  document.getElementById('deathCine').classList.remove('on', 'controls');
-  document.getElementById('deathVeil').classList.remove('on', 'soft');
+  document.getElementById('deathCine').classList.remove('on', 'controls', 'win');
+  document.getElementById('deathVeil').classList.remove('on', 'soft', 'gold');
   document.body.classList.remove('death-ui');
 }
 document.getElementById('dcMenu').addEventListener('click', () => { audioInit(); backToMenu(); });
@@ -18567,8 +18646,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 6 };
-const VERSION_PREV = '8.4.5';
+const VERSION = { major: 8, minor: 4, patch: 7 };
+const VERSION_PREV = '8.4.6';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
