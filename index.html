@@ -6557,7 +6557,6 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
       <div><b id="statTime">0:00</b><span>SURVIVED</span></div>
     </div>
     <button id="againBtn">MAIN MENU</button>
-    <button id="playAgainBtn">PLAY AGAIN</button>
   </div>
 </div>
 
@@ -6729,6 +6728,7 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
       <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — the first storm phase always opens with one, inside the first minute, and every phase after that rolls an 80% chance. Each event lasts until its own storm phase closes, everything marked on the map and announced with a banner. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of weapons, where the headline drop sometimes turns out to be a super broken relic from seasons past: the Mythic Reaper Sniper, the power-hour Heavy Assault Rifle, or Zero Hour. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
       <li><span class="wnTag">11</span><div><b>OG — PLAYTEST THE DAY-ONE BUILD</b> — a limited mode that feels like loading a whole different game: the navy interface is back with Anton and Barlow type, the original thirteen hitscan guns (scoped rifles everywhere, nothing past Legendary), the green island, chests that give a gun, a heal, ammo and wood — and none of this season's systems. No sprites, boons, vending machines, gold, gunship or anomalies. Drop, loot, outlast.</div></li>
+      <li><span class="wnTag">12</span><div><b>PLAY AGAIN IS GONE</b> — the instant-rematch button on the end screen skipped rift anomalies and didn't advance tournament games, so it's removed. The end screen now sends you to the main menu, where everything queues up fresh.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18243,11 +18243,6 @@ function endMatch(win, killerName) {
     spriteGainXP(player.spriteId, player.kills * 40 + (win ? 150 : 0) + (placement <= 5 ? 60 : 0));
   }
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
-  const againPlay = document.getElementById('playAgainBtn');
-  if (againPlay) {
-    againPlay.disabled = false;
-    againPlay.classList.toggle('hide', !!state.netGuest);
-  }
   if (rankRecap) setTimeout(() => showRankedRecap(rankRecap), 750);
   else setTimeout(processRevealQueue, 900);
 }
@@ -18351,8 +18346,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 0 };
-const VERSION_PREV = '8.3.14';
+const VERSION = { major: 8, minor: 4, patch: 1 };
+const VERSION_PREV = '8.4.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -20183,13 +20178,6 @@ document.getElementById('playBtn').addEventListener('click', () => {
   });
 });
 document.getElementById('againBtn').addEventListener('click', () => backToMenu());
-document.getElementById('playAgainBtn').addEventListener('click', () => {
-  audioInit();
-  hideRankedRecap();
-  hideRareFind();
-  closeReport();
-  startMatch();
-});
 document.getElementById('quitBtn').addEventListener('click', () => {
   if (state.phase === 'play' || state.phase === 'drop') backToMenu();
 });
