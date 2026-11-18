@@ -6676,7 +6676,7 @@ img.gunIc {
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
-      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — the first storm phase always opens with one, inside the first minute, and every phase after that rolls an 80% chance. Each event lasts across two storm phases, fading as the second close begins, everything marked on the map and announced with a banner. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of weapons, where the headline drop sometimes turns out to be a super broken relic from seasons past: the Mythic Reaper Sniper, the power-hour Heavy Assault Rifle, or Zero Hour. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
+      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — the first storm phase always opens with one, inside the first minute, and every phase after that rolls an 80% chance. Each event lasts until its own storm phase closes, everything marked on the map and announced with a banner. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of weapons, where the headline drop sometimes turns out to be a super broken relic from seasons past: the Mythic Reaper Sniper, the power-hour Heavy Assault Rifle, or Zero Hour. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15013,12 +15013,7 @@ function nextStormPhase() {
   sfx('storm');
   // A rift anomaly may flip the script the moment the phase opens. The first
   // phase always gets one, so a match opens with an event inside the first
-  // minute. An event rides out the first close and fades when the next one
-  // opens — no second anomaly rolls while it runs.
-  if (anomaly.type) {
-    if (anomaly.age >= 1) endAnomaly();
-    else anomaly.age++;
-  }
+  // minute. Each anomaly lasts until its own phase closes.
   if (!anomaly.type && anomalyAllowed() && (storm.phase === 0 || Math.random() < ANOMALY_CHANCE)) startAnomaly();
 }
 
@@ -15056,7 +15051,7 @@ function updateStorm(dt) {
       const nxt = STORM_PHASES[storm.phase];
       if (nxt) { storm.state = 'waiting'; storm.timer = nxt.wait * stormScale(); }
       else { storm.state = 'done'; }
-      // anomalies keep running through the close; they fade at the next open
+      endAnomaly();   // an anomaly lasts until its own phase closes
     }
   }
 
@@ -18252,8 +18247,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 13 };
-const VERSION_PREV = '8.3.12';
+const VERSION = { major: 8, minor: 3, patch: 14 };
+const VERSION_PREV = '8.3.13';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
