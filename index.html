@@ -6723,9 +6723,7 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ANOMALIES LAST TWO PHASES</b> — a rift anomaly now opens when a phase begins closing, rides out that close, keeps running through the next countdown, and fades only when the second close begins. Two phases technically.</div></li>
-      <li><span class="wnTag">02</span><div><b>STABILIZE THE RIFT IS THE HEADLINE</b> — the drone-and-vault event now comes up half the time, with the other five anomalies sharing the rest.</div></li>
-      <li><span class="wnTag">03</span><div><b>THREE NEW ANOMALIES</b> — GOLD RUSH: every gold payout doubles and six big caches land on the map, marked with gold dots. BOUNTY MARK: one bot wears the mark, live on your map — cash the bounty and a Mythic weapon plus 200 gold drops where they fell, then a new mark is set. MOON GRAVITY: the whole island runs at 45% gravity until the anomaly fades — hops soar and fights go airborne. Six events in the rotation now.</div></li>
+      <li><span class="wnTag">01</span><div><b>ANOMALY CEASEFIRE</b> — while any rift anomaly is running, all damage dealt by every player and bot is cut in half, so fights grind on instead of ending and the match stretches out for the whole event.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9643,7 +9641,7 @@ function gunshipBlast(pos) {
     if (!o.alive || o.out || o.dropping) continue;
     const d = Math.hypot(o.pos.x - pos.x, o.pos.z - pos.z);
     if (d > GUNSHIP_BLAST_R) continue;
-    const dmg = GUNSHIP_BLAST_DMG * (1 - d / GUNSHIP_BLAST_R);
+    const dmg = GUNSHIP_BLAST_DMG * (1 - d / GUNSHIP_BLAST_R) * anomalyDamageMul();
     damageBot(o, dmg, mine ? 'You' : 'GUNSHIP', false, o.pos.clone(), null);
   }
   shockwaveFX(pos, GUNSHIP_BLAST_R);
@@ -9665,10 +9663,10 @@ function fireGunshipGun() {
   const mine = gunship.pilot === 'player';
   const hit = hitTest(muzzle, dir, GUNSHIP_GUN_RANGE, null, player.team);
   if (hit.kind === 'bot' && hit.bot) {
-    damageBot(hit.bot, GUNSHIP_HIT_DMG, mine ? 'You' : 'GUNSHIP', hit.head, hit.point, null);
+    damageBot(hit.bot, GUNSHIP_HIT_DMG * anomalyDamageMul(), mine ? 'You' : 'GUNSHIP', hit.head, hit.point, null);
     if (mine) hitmarker(false, true);
   } else if (hit.kind === 'world' && hit.col) {
-    damageCollider(hit.col, 45);
+    damageCollider(hit.col, 45 * anomalyDamageMul());
   }
   if (hit.point && hit.kind !== 'plane') gunshipBlast(hit.point);
   tracerFX(muzzle, hit.point, 0xffd451);
@@ -12514,7 +12512,7 @@ function travelDistanceFor(origin, dir, maxDist, shooter, shooterTeam, rayDist) 
 }
 
 function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
-  let dmg = baseDmg;
+  let dmg = baseDmg * anomalyDamageMul();
   if (falloff) dmg *= clamp(1 - (dist - 10) / 90, 0.62, 1);
   if (hit.kind === 'bot' && hit.bot) {
     const m = hit.head ? hsMult : 1;
@@ -12539,6 +12537,7 @@ function applyShotDamage(hit, baseDmg, hsMult, shooterName, dist, falloff) {
 }
 
 function blastDamage(pos, r, dmg, skip, sourceName) {
+  dmg *= anomalyDamageMul();
   const who = sourceName || 'You';
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
@@ -14218,8 +14217,8 @@ function detonateShockwave(pos, def) {
     const nz = d > 0.001 ? dz / d : rand(-1, 1);
 
     if (def.dmg) {
-      if (t === player) hurtPlayer(def.dmg * fall, def.name || 'Frag Grenade', false, pos.clone());
-      else damageBot(t, def.dmg * fall, 'You', false, t.pos.clone());
+      if (t === player) hurtPlayer(def.dmg * fall * anomalyDamageMul(), def.name || 'Frag Grenade', false, pos.clone());
+      else damageBot(t, def.dmg * fall * anomalyDamageMul(), 'You', false, t.pos.clone());
     }
 
     if (t === player) {
@@ -14529,15 +14528,15 @@ function botFire(b, target) {
     const h = resolved || hit;
     if (h.kind === 'player') {
       const m = RARITY[b.weapon.rarity].mult;
-      hurtPlayer(def.dmg * m * botDmgMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
+      hurtPlayer(def.dmg * m * botDmgMul() * anomalyDamageMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
     } else if (h.kind === 'bot' && h.bot) {
       const m = RARITY[b.weapon.rarity].mult;
-      damageBot(h.bot, def.dmg * m * botDmgMul() * botFightMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
+      damageBot(h.bot, def.dmg * m * botDmgMul() * botFightMul() * anomalyDamageMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
     } else if (h.kind === 'world' && h.col) {
-      damageCollider(h.col, def.dmg * 0.55);
+      damageCollider(h.col, def.dmg * 0.55 * anomalyDamageMul());
     } else if (h.kind === 'plane') {
       const m = RARITY[b.weapon.rarity].mult;
-      damageGunship(def.dmg * m * botDmgMul(), b.name);
+      damageGunship(def.dmg * m * botDmgMul() * anomalyDamageMul(), b.name);
     }
   };
   if (bSpeed) {
@@ -15441,6 +15440,10 @@ function startUnstoppable() {
 /* ---- GOLD RUSH ----
    All gold pays double, and marked caches land across the island. */
 function anomalyGoldMul() { return anomaly.type === 'goldrush' ? 2 : 1; }
+
+/* Anomaly ceasefire: while any rift anomaly runs, all damage dealt by every
+   player and bot is cut in half, so fights grind on and the match stretches. */
+function anomalyDamageMul() { return anomaly.type ? 0.5 : 1; }
 
 function startGoldRush() {
   anomaly.data = [];
@@ -18432,8 +18435,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 3 };
-const VERSION_PREV = '8.4.2';
+const VERSION = { major: 8, minor: 4, patch: 4 };
+const VERSION_PREV = '8.4.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
