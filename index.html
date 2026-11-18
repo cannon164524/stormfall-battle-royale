@@ -6647,7 +6647,7 @@ img.gunIc {
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
-      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting until that phase closes, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of Mythic-tier weapons. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
+      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting across two storm phases, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of Mythic-tier weapons. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -14969,9 +14969,9 @@ function nextStormPhase() {
   blitzAddXp(2);
   toast('STORM CLOSING', 'sub');
   sfx('storm');
-  // A rift anomaly may flip the script the moment the phase opens.
-  endAnomaly();
-  if (anomalyAllowed() && Math.random() < ANOMALY_CHANCE) startAnomaly();
+  // A rift anomaly may flip the script the moment the phase opens. One stays
+  // up across two storm phases, so no second rolls while it runs.
+  if (!anomaly.type && anomalyAllowed() && Math.random() < ANOMALY_CHANCE) startAnomaly();
 }
 
 function outsideStorm(x, z) {
@@ -15008,7 +15008,11 @@ function updateStorm(dt) {
       const nxt = STORM_PHASES[storm.phase];
       if (nxt) { storm.state = 'waiting'; storm.timer = nxt.wait * stormScale(); }
       else { storm.state = 'done'; }
-      endAnomaly();   // anomaly effects last until this phase closes
+      // Anomalies last for two storm phases: they ride out the first close.
+      if (anomaly.type) {
+        anomaly.age++;
+        if (anomaly.age >= 2) endAnomaly();
+      }
     }
   }
 
@@ -15086,7 +15090,7 @@ function audioInit() {
      the beacon bursts open into a vault drop.
    - FEELING UNSTOPPABLE: everyone sprints 25% faster and every landed hit
      shoves the target flying. */
-const anomaly = { type: '', data: null };
+const anomaly = { type: '', data: null, age: 0 };
 const ANOMALY_CHANCE = 0.65;
 const DIG_COUNT = 8;
 const DRONE_COUNT = 5;
@@ -15254,6 +15258,7 @@ function startUnstoppable() {
 function startAnomaly() {
   anomaly.type = pick(['spritehunt', 'stabilize', 'unstoppable']);
   anomaly.data = null;
+  anomaly.age = 0;
   if (anomaly.type === 'spritehunt') startSpriteHunt();
   else if (anomaly.type === 'stabilize') startStabilize();
   else startUnstoppable();
@@ -18172,8 +18177,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 9 };
-const VERSION_PREV = '8.3.8';
+const VERSION = { major: 8, minor: 3, patch: 10 };
+const VERSION_PREV = '8.3.9';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
