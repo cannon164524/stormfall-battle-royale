@@ -6647,6 +6647,7 @@ img.gunIc {
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
+      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — every couple of minutes on the big island, two rifts tear open inside the storm circle, each with a cache of good loot at its base. They show as purple diamonds on the map. Step into one and it throws you sky-high for a free redeploy — then collapses seconds later. Rotate fast or contest the cache; the rift fits anyone standing there.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9677,6 +9678,8 @@ function clearWorld() {
   extractSites.length = 0;
   gunshipTarget.alive = false;
   gunship = null;
+  rifts.length = 0;
+  riftTimer = 95;
   clearLoot();
   clearDamageNumbers();
 }
@@ -15060,6 +15063,136 @@ function audioInit() {
   } catch (e) { actx = null; revIn = null; }
 }
 
+/* ============================== RIFT ANOMALIES ==============================
+   Our own take on the portal anomaly. During a battle royale on the big
+   island an anomaly opens every so often: two rifts at random points inside
+   the current storm circle, each with a small cache of loot at its base.
+   Step into a rift and it throws you high into the sky for a free redeploy —
+   a fast rotation across the map, and a fight over a valuable landing. The
+   rift collapses a few seconds after the first person goes through. */
+const rifts = [];
+let riftTimer = 95;
+const RIFT_LAUNCH_Y = 150;
+const RIFT_LIFE = 42;
+const RIFT_FADE_AFTER_USE = 3.5;
+const ANOMALY_EVERY = 95;
+
+function buildRiftVisual(x, y, z) {
+  const g = new THREE.Group();
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xb45cf0, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide });
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.7, 55, 12, 1, true), beamMat);
+  beam.position.set(x, y + 27, z);
+  g.add(beam);
+  const cryMat = new THREE.MeshBasicMaterial({ color: 0xd08bff });
+  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(1.6), cryMat);
+  crystal.position.set(x, y + 7, z);
+  g.add(crystal);
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0xd08bff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.9, 40), ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(x, y + 0.18, z);
+  g.add(ring);
+  dynGroup.add(g);
+  return { group: g, beam, crystal, ring };
+}
+
+/* The anomaly: two rifts inside the circle, and a cache under each one. */
+function openRiftAnomaly() {
+  let opened = 0;
+  for (let i = 0; i < 6 && opened < 2; i++) {
+    const ang = Math.random() * TAU;
+    const rad = Math.sqrt(Math.random()) * Math.max(40, storm.radius * 0.78);
+    const x = storm.center.x + Math.cos(ang) * rad;
+    const z = storm.center.z + Math.sin(ang) * rad;
+    const g = terrainHeight(x, z);
+    if (g < 1.2) continue;   // not in the water
+    if (rifts.some((r) => Math.hypot(r.x - x, r.z - z) < 60)) continue;
+    const vis = buildRiftVisual(x, g, z);
+    rifts.push({ x, y: g, z, vis, born: state.time, usedAt: 0 });
+    opened++;
+    for (let k = 0; k < 2; k++) {
+      const a = Math.random() * TAU;
+      spawnLoot(x + Math.cos(a) * 2.2, g + 0.4, z + Math.sin(a) * 2.2, rollLootItem(Math.random, 0.35));
+    }
+  }
+  if (opened) {
+    toast('RIFT ANOMALY · ' + opened + ' RIFTS INSIDE THE CIRCLE', 'sub');
+    sfx('storm');
+  }
+}
+
+/* One person goes through and the rift holds a few seconds, then closes. */
+function closeRift(r) {
+  const i = rifts.indexOf(r);
+  if (i >= 0) rifts.splice(i, 1);
+  if (r.vis && r.vis.group.parent) r.vis.group.parent.remove(r.vis.group);
+  try { disposeTree(r.vis.group); } catch (e) { /* ignore */ }
+  shockwaveFX(new THREE.Vector3(r.x, r.y + 1, r.z), 3.4);
+}
+
+function riftLaunchPlayer(r) {
+  player.pos.set(r.x, r.y + RIFT_LAUNCH_Y, r.z);
+  player.vel.set(0, -4, 0);
+  player.dropping = true;
+  player.onGround = false;
+  player.pitch = -0.6;
+  r.usedAt = state.time;
+  shake(0.25);
+  sfx('unlock');
+  shockwaveFX(new THREE.Vector3(r.x, r.y + 1, r.z), 4);
+  toast('RIFT · REDEPLOY', 'sub');
+}
+
+function riftLaunchBot(b, r) {
+  b.pos.set(r.x, r.y + RIFT_LAUNCH_Y, r.z);
+  b.vel.set(0, -6, 0);
+  b.dropping = true;
+  b.target = null;
+  b.goal = null;
+  r.usedAt = state.time;
+  if (b.rig) b.rig.group.position.copy(b.pos);
+}
+
+function updateRiftAnomalies(dt) {
+  if (state.phase !== 'play') return;
+  const longMatch = storm.active && !isBlitz() && mapTheme() === 'pirate' && !isGunGame();
+
+  riftTimer -= dt;
+  if (longMatch && riftTimer <= 0) {
+    openRiftAnomaly();
+    riftTimer = ANOMALY_EVERY + Math.random() * 25;
+  }
+
+  for (let i = rifts.length - 1; i >= 0; i--) {
+    const r = rifts[i];
+    if (state.time - r.born > RIFT_LIFE || (r.usedAt && state.time - r.usedAt > RIFT_FADE_AFTER_USE)) {
+      closeRift(r);
+      continue;
+    }
+    // The crack breathes: the beam pulses and the crystal turns over it.
+    const pulse = 0.22 + Math.abs(Math.sin(state.time * 2.1 + r.born)) * 0.16;
+    r.vis.beam.material.opacity = pulse;
+    r.vis.crystal.rotation.y += dt * 1.6;
+    r.vis.crystal.position.y = r.y + 7 + Math.sin(state.time * 1.3 + r.born) * 0.7;
+    r.vis.ring.rotation.z += dt * 0.5;
+
+    if (r.usedAt) continue;
+    if (player.alive && !player.dropping && !player.knocked && !player.piloting &&
+        Math.hypot(player.pos.x - r.x, player.pos.z - r.z) < 3.2 &&
+        player.pos.y - r.y < 4.5) {
+      riftLaunchPlayer(r);
+      continue;
+    }
+    for (const b of bots) {
+      if (!b.alive || b.out || b.dropping || b.knocked) continue;
+      if (Math.hypot(b.pos.x - r.x, b.pos.z - r.z) < 3.2 && b.pos.y - r.y < 4.5) {
+        riftLaunchBot(b, r);
+        break;
+      }
+    }
+  }
+}
+
 function sfx(kind) { playSound(kind, 1); }
 
 let lastPanned = 0;
@@ -16840,6 +16973,21 @@ function drawMinimap() {
     ctx.restore();
   }
 
+  // rift anomalies — a purple diamond wherever a rift is standing
+  if (rifts.length) {
+    ctx.save();
+    ctx.fillStyle = '#d08bff';
+    for (let i = 0; i < rifts.length; i++) {
+      const [rx, ry] = w2m(rifts[i].x, rifts[i].z);
+      ctx.save();
+      ctx.translate(rx, ry);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillRect(-3.4, -3.4, 6.8, 6.8);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   // bots — a Rift Radar in your bag puts every one of them on the map
   const radar = hasBoon('radar');
   for (const b of bots) {
@@ -17909,8 +18057,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 7 };
-const VERSION_PREV = '8.3.6';
+const VERSION = { major: 8, minor: 3, patch: 8 };
+const VERSION_PREV = '8.3.7';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -19959,6 +20107,7 @@ function animate(now) {
   updateShieldRegen(dt);
   updateNet(dt);
   updateStorm(dt);
+  updateRiftAnomalies(dt);
   updateGunship(dt);
   updateGrenades(dt);
   updatePocketEffects(dt);
