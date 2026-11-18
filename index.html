@@ -5810,7 +5810,8 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
 #deathVeil.on { opacity:1; }
 #deathVeil.soft { opacity:.42; transition:opacity 1.1s ease; }
 
-#deathCine { position:fixed; inset:0; z-index:27; pointer-events:none; }
+#deathCine { position:fixed; inset:0; z-index:27; pointer-events:none; visibility:hidden; }
+#deathCine.on { visibility:visible; }
 #deathCine .dcTop {
   position:absolute; top:9%; left:50%; transform:translateX(-50%) translateY(-26px);
   text-align:center; opacity:0;
@@ -5889,7 +5890,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     linear-gradient(180deg, rgba(120,80,10,0) 0%, rgba(130,90,14,.4) 42%, rgba(150,100,16,.72) 100%),
     radial-gradient(120% 90% at 50% 50%, rgba(150,105,20,0) 46%, rgba(120,82,14,.55) 100%);
 }
-#deathCine .endConfetti i { box-shadow:0 0 8px rgba(255,220,120,.55); }
+#deathCine .endConfetti i { box-shadow:0 0 8px rgba(255,220,120,.55); animation-name:confettiFallDeep; }
+@keyframes confettiFallDeep {
+  0% { opacity:1; transform:translateY(0) rotate(0deg); }
+  100% { opacity:0; transform:translateY(115vh) rotate(540deg); }
+}
+#deathCine.win .dcCrest svg {
+  filter:drop-shadow(0 0 12px rgba(255,200,80,.95)) drop-shadow(0 0 32px rgba(255,180,60,.5));
+}
 #deathCine.win .dcStats b { color:#ffe9a8; }
 #deathCine.win .dcStats button {
   background:linear-gradient(180deg,#ffd76a,#e08a12); color:#2a1a00;
@@ -18518,7 +18526,7 @@ function startVictoryCine(subText, placement, total) {
     cf.appendChild(c);
   }
   if (!beginCine()) { showEndScreen(true); return; }
-  // the stats count up under the crown, like the old card did
+  document.getElementById('deathCine').classList.add('win');
   const kEl = document.getElementById('dcKills');
   const dEl = document.getElementById('dcDmg');
   const kTo = player.kills;
@@ -18542,6 +18550,7 @@ function resetDeathCine() {
   dcTimers = [];
   document.getElementById('deathCine').classList.remove('on', 'controls', 'win');
   document.getElementById('deathVeil').classList.remove('on', 'soft', 'gold');
+  document.getElementById('dcConfetti').innerHTML = '';
   document.body.classList.remove('death-ui');
 }
 document.getElementById('dcMenu').addEventListener('click', () => { audioInit(); backToMenu(); });
