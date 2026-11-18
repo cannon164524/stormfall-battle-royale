@@ -5794,6 +5794,71 @@ body.og-ui #stormInfo {
 }
 body.og-ui #stormBarFill { background:linear-gradient(90deg,#8a5bff,#e05bff); }
 body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
+
+/* ============================== DEATH CINEMATIC ==============================
+   The old end card covered the match the instant you died. Now the death
+   plays out: a kill banner over your body, a red gradient that fades in,
+   then the controls slide in at the top and bottom edges — leaving the middle
+   clear so you can watch the lobby keep fighting around your body. */
+#deathVeil {
+  position:fixed; inset:0; z-index:26; pointer-events:none; opacity:0;
+  background:
+    linear-gradient(180deg, rgba(90,10,18,0) 0%, rgba(96,10,18,.38) 42%, rgba(130,12,20,.78) 100%),
+    radial-gradient(120% 90% at 50% 50%, rgba(140,12,22,0) 46%, rgba(110,8,16,.6) 100%);
+  transition:opacity .65s ease;
+}
+#deathVeil.on { opacity:1; }
+#deathVeil.soft { opacity:.42; transition:opacity 1.1s ease; }
+
+#deathCine { position:fixed; inset:0; z-index:27; pointer-events:none; }
+#deathCine .dcTop {
+  position:absolute; top:9%; left:50%; transform:translateX(-50%) translateY(-26px);
+  text-align:center; opacity:0;
+  transition:opacity .3s ease, transform .3s ease;
+}
+#deathCine.on .dcTop { opacity:1; transform:translateX(-50%) translateY(0); }
+#deathCine .dcTop b {
+  display:block; font-family:var(--display); font-weight:800; font-style:italic;
+  font-size:clamp(30px,5vw,52px); letter-spacing:.02em; color:#ff5a6e;
+  text-shadow:0 2px 0 #2a060b, 0 8px 30px rgba(120,10,20,.55);
+}
+#deathCine .dcTop span {
+  display:block; margin-top:4px; font-family:var(--label); font-weight:700;
+  font-size:11px; letter-spacing:.24em; color:rgba(234,243,255,.66);
+}
+#deathCine .dcControls {
+  position:absolute; left:50%; bottom:3.5%; transform:translateX(-50%) translateY(130%);
+  opacity:0; transition:opacity .7s cubic-bezier(.2,.9,.3,1), transform .7s cubic-bezier(.2,.9,.3,1);
+}
+#deathCine.controls .dcControls { opacity:1; transform:translateX(-50%) translateY(0); }
+#deathCine .dcStats {
+  display:flex; align-items:center; gap:0;
+  background:rgba(8,10,14,.72);
+  border:1px solid rgba(255,90,110,.30);
+  border-left:3px solid #ff5a6e;
+}
+#deathCine .dcStats > div {
+  padding:10px 18px; border-right:1px solid rgba(255,90,110,.18);
+}
+#deathCine .dcStats b {
+  display:block; font-family:var(--display); font-weight:800; font-size:22px;
+  line-height:1.1; color:#fff; letter-spacing:.02em;
+}
+#deathCine .dcStats span {
+  display:block; font-family:var(--label); font-weight:700; font-size:8px;
+  letter-spacing:.22em; color:rgba(234,243,255,.5);
+}
+#deathCine .dcStats button {
+  padding:10px 26px; margin-left:14px; margin-right:14px;
+  font-family:var(--display); font-weight:800; font-size:15px; letter-spacing:.06em;
+  background:#ff5a6e; color:#1c0409; border:0; pointer-events:auto;
+}
+#deathCine .dcStats button:hover { background:#ff7484; }
+#deathCine .dcHint {
+  display:block; padding:6px 10px 8px; text-align:center;
+  font-family:var(--label); font-weight:700; font-size:8.5px; letter-spacing:.22em;
+  color:rgba(255,150,165,.55);
+}
 </style>
 </head>
 <body>
@@ -5852,6 +5917,24 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
     <span class="evIcon" id="evIcon"></span>
     <b id="evTitle">RIFT ANOMALY</b>
     <span id="evSub"></span>
+  </div>
+
+  <div id="deathVeil"></div>
+  <div id="deathCine">
+    <div class="dcTop">
+      <b>ELIMINATED</b>
+      <span id="dcKiller">BY THE STORM</span>
+    </div>
+    <div class="dcControls">
+      <div class="dcStats">
+        <div><b id="dcKills">0</b><span>ELIMS</span></div>
+        <div><b id="dcDmg">0</b><span>DAMAGE</span></div>
+        <div><b id="dcPlace">#1</b><span>PLACED</span></div>
+        <div><b id="dcTime">0:00</b><span>SURVIVED</span></div>
+        <button id="dcMenu" type="button">MAIN MENU</button>
+        <span class="dcHint">WATCHING THE LOBBY · BOTS KEEP FIGHTING</span>
+      </div>
+    </div>
   </div>
 
   <div id="stormWarn" class="hide">OUTSIDE THE STORM · <b id="stormDps">1</b> DPS</div>
@@ -6723,7 +6806,8 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ANOMALY CEASEFIRE</b> — while any rift anomaly is running, all damage dealt by every player and bot is cut in half, so fights grind on instead of ending and the match stretches out for the whole event.</div></li>
+      <li><span class="wnTag">01</span><div><b>A REAL DEATH SCREEN</b> — when you die the kill plays out for a second over your body, then a red gradient fades in, then your placement, stats and the menu button slide in at the top and bottom edges — the middle of the screen stays open so you can watch the lobby keep fighting around your body. The ranked recap and unlock reveals arrive after the controls settle.</div></li>
+      <li><span class="wnTag">02</span><div><b>ANOMALY CEASEFIRE</b> — while any rift anomaly is running, all damage dealt by every player and bot is cut in half, so fights grind on instead of ending and the match stretches out for the whole event.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18070,6 +18154,7 @@ function startMatch() {
   tracerPool.length = 0;
   fx.length = 0;
   clearWorld();
+  resetDeathCine();
   paintTerrain(mapTheme());
   populateWorld();
   scatterLoot(Math.random);
@@ -18312,7 +18397,7 @@ function endMatch(win, killerName) {
     });
     setTimeout(() => showEndScreen(true), 950);
   } else {
-    showEndScreen(false);
+    startDeathCine(String(killerName || 'The Storm'), placement, bots.length + 1);
   }
   document.getElementById('respawn').classList.add('hide');
   toggleInventory(false);
@@ -18332,11 +18417,47 @@ function endMatch(win, killerName) {
     spriteGainXP(player.spriteId, player.kills * 40 + (win ? 150 : 0) + (placement <= 5 ? 60 : 0));
   }
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
-  if (rankRecap) setTimeout(() => showRankedRecap(rankRecap), 750);
-  else setTimeout(processRevealQueue, 900);
+  const recapDelay = win ? 750 : (state.deathCine ? 2600 : 750);
+  if (rankRecap) setTimeout(() => showRankedRecap(rankRecap), recapDelay);
+  else setTimeout(processRevealQueue, recapDelay + 200);
 }
 
+/* The death cinematic: a second of the kill itself, a red gradient wash,
+   then the controls slide in at the edges while the middle of the screen
+   stays open on the lobby still fighting around your body. */
+let dcTimers = [];
+function startDeathCine(killerName, placement, total) {
+  state.deathCine = true;
+  const cine = document.getElementById('deathCine');
+  if (!cine) { showEndScreen(false); return; }
+  document.getElementById('dcKiller').textContent =
+    'BY ' + killerName.toUpperCase() + ' — PLACED #' + placement + ' OF ' + total;
+  document.getElementById('dcKills').textContent = player.kills;
+  document.getElementById('dcDmg').textContent = Math.round(player.damage);
+  document.getElementById('dcPlace').textContent = '#' + placement;
+  document.getElementById('dcTime').textContent = fmtTime(state.time);
+  cine.classList.remove('on', 'controls');
+  void cine.offsetWidth;
+  cine.classList.add('on');
+  shake(0.25);
+  dcTimers.push(setTimeout(() => document.getElementById('deathVeil').classList.add('on'), 1000));
+  dcTimers.push(setTimeout(() => {
+    document.getElementById('deathVeil').classList.add('soft');
+    cine.classList.add('controls');
+  }, 1800));
+}
+
+function resetDeathCine() {
+  state.deathCine = false;
+  dcTimers.forEach(clearTimeout);
+  dcTimers = [];
+  document.getElementById('deathCine').classList.remove('on', 'controls');
+  document.getElementById('deathVeil').classList.remove('on', 'soft');
+}
+document.getElementById('dcMenu').addEventListener('click', () => { audioInit(); backToMenu(); });
+
 function backToMenu() {
+  resetDeathCine();
   document.getElementById('end').classList.add('hide');
   document.getElementById('respawn').classList.add('hide');
   document.getElementById('menu').classList.remove('hide');
@@ -18435,8 +18556,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 4 };
-const VERSION_PREV = '8.4.3';
+const VERSION = { major: 8, minor: 4, patch: 5 };
+const VERSION_PREV = '8.4.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
