@@ -6644,6 +6644,7 @@ img.gunIc {
       <li><span class="wnTag">04</span><div><b>TRAVEL AND THE BAG</b> — the compass readout now names the town you are standing in, and the Gun Game ladder runs thirteen guns including the new spray.</div></li>
       <li><span class="wnTag">05</span><div><b>NO SIGN-IN, NO ITEMS</b> — the lobby hands a guest the Recruit outfit and nothing else. Buying and the pirate token payout need an account; sign in and everything the account holds comes straight back.</div></li>
       <li><span class="wnTag">06</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
+      <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9468,6 +9469,7 @@ function exitGunship() {
   gunship.pilot = null;
   gunship.parked = false;
   gunship.travelled = 0;
+  gunshipTarget.alive = false;   // nobody is flying it any more
   gunship.bank = 0;
   player.piloting = false;
   if (player.alive) {
@@ -14264,17 +14266,26 @@ function acquireTarget(b) {
       if (score < bestScore) { bestScore = score; best = player; }
     }
   }
-  // A plane in the air pulls some attention, but not the whole lobby: three
-  // shooters at most, and only within a sensible reach.
+  // A piloted plane draws fire — but who gets it depends on who is flying.
+  // A bot pilot shells the whole map and has to die fast, so the entire lobby
+  // turns on it: no shooter cap, no short reach, and the plane beats almost
+  // any ground target. When the player flies, only three shooters break off,
+  // as before.
   if (gunshipTarget.alive) {
-    let onPlane = 0;
-    for (let i = 0; i < bots.length; i++) {
-      if (bots[i] !== b && bots[i].target === gunshipTarget) onPlane++;
-    }
+    const botPilot = !!(gunship && gunship.pilot === 'bot');
     const pd = b.pos.distanceTo(gunshipTarget.pos);
-    if (pd < 240 && onPlane < 3) {
-      const score = pd * 0.34;
+    if (botPilot) {
+      const score = 2 + pd * 0.02;
       if (score < bestScore) { bestScore = score; best = gunshipTarget; }
+    } else {
+      let onPlane = 0;
+      for (let i = 0; i < bots.length; i++) {
+        if (bots[i] !== b && bots[i].target === gunshipTarget) onPlane++;
+      }
+      if (pd < 240 && onPlane < 3) {
+        const score = pd * 0.34;
+        if (score < bestScore) { bestScore = score; best = gunshipTarget; }
+      }
     }
   }
   if (!best && b.target && b.target.alive && b.pos.distanceTo(b.target.pos) < 90) return b.target;
@@ -14286,7 +14297,12 @@ function botFire(b, target) {
   const def = WEAPONS[b.weapon.type];
   if (state.time < (b.heatLock || 0)) return;
   const d = b.pos.distanceTo(target.pos);
-  if (d > def.range) return;
+  // Against a bot pilot the lobby swarms the plane, so even a short-range gun
+  // gets to reach up at it. Against everything else the weapon's own range
+  // applies. A player-piloted plane keeps the old, tighter reach.
+  const plane = target.isPlane && !!(gunship && gunship.pilot === 'bot');
+  const reach = plane ? Math.max(def.range, 260) : def.range;
+  if (d > reach) return;
 
   b.lastShotAt = state.time;
   const usesAmmo = weaponUsesAmmo(b.weapon);
@@ -14326,7 +14342,7 @@ function botFire(b, target) {
   aimPoint.z += (Math.random() - 0.5) * err * d;
 
   const dir = aimPoint.clone().sub(eye).normalize();
-  const hit = hitTest(eye, dir, def.range, b, b.team);
+  const hit = hitTest(eye, dir, reach, b, b.team);
   flashMuzzle(b.rig);
   const land = (resolved) => {
     const h = resolved || hit;
@@ -14344,11 +14360,11 @@ function botFire(b, target) {
     }
   };
   if (bSpeed) {
-    const flight = travelDistanceFor(eye, dir, def.range, b, b.team, hit.dist);
+    const flight = travelDistanceFor(eye, dir, reach, b, b.team, hit.dist);
     const end = eye.clone().addScaledVector(dir, flight);
     spawnTravelBullet(
       eye, end, bSpeed, land, laserTint(b.weapon.type),
-      () => hitTest(eye, dir, def.range, b, b.team)
+      () => hitTest(eye, dir, reach, b, b.team)
     );
   } else { tracerFX(eye, hit.point, laserTint(b.weapon.type)); land(); }
   sfxPanned(def.sfx, b.pos);
@@ -17868,8 +17884,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 4 };
-const VERSION_PREV = '8.3.3';
+const VERSION = { major: 8, minor: 3, patch: 5 };
+const VERSION_PREV = '8.3.4';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
