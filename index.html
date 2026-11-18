@@ -6646,6 +6646,7 @@ img.gunIc {
       <li><span class="wnTag">06</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
+      <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6839,7 +6840,14 @@ const SIPHON_AMOUNT = 100;
 function siphonActive() { return isRanked() || !!state.tourneyId; }
 function mod(key) { return !!state.mods[key]; }
 function gravityNow() { return GRAVITY * (mod('lowgrav') ? 0.45 : 1); }
-function stormScale() { return mod('faststorm') ? 0.5 : 1; }
+/* The storm clock. The big-lobby battle royale stretches every wait and
+   every close so a full lobby has room to breathe; Reload and Blitz keep
+   their quick tempo, and the faststorm modifier overrides it all. */
+function stormScale() {
+  let s = mod('faststorm') ? 0.5 : 1;
+  if (!mod('faststorm') && !isBlitz() && mapTheme() !== 'classic' && !isGunGame()) s *= 1.5;
+  return s;
+}
 
 /* Ranked: RP ladder, Bronze III up to Unreal. */
 const RANKS = [
@@ -14124,6 +14132,17 @@ function botWeaponType(level) {
 
 function botDmgMul() { return 0.42 + state.botTier * 0.42; }
 
+/* Bots on the big island hit each other more gently, so the lobby thins at a
+   steady pace instead of collapsing in the first minutes. The bigger the
+   lobby, the softer each hit lands — 40 players means twice the fights going
+   at once, so each fight lasts longer and the match keeps its length.
+   Reload, Blitz and Gun Game keep their quick tempo. */
+function botFightMul() {
+  if (isBlitz() || mapTheme() !== 'pirate' || isGunGame()) return 1;
+  const n = Math.max(1, state.botsWanted || 20);
+  return clamp(0.7 * Math.sqrt(20 / n), 0.42, 0.7);
+}
+
 function spawnBot(i) {
   const name = botNamePool[i % botNamePool.length] || ('Bot' + i);
   const ang = Math.random() * TAU;
@@ -14357,7 +14376,7 @@ function botFire(b, target) {
       hurtPlayer(def.dmg * m * botDmgMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
     } else if (h.kind === 'bot' && h.bot) {
       const m = RARITY[b.weapon.rarity].mult;
-      damageBot(h.bot, def.dmg * m * botDmgMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
+      damageBot(h.bot, def.dmg * m * botDmgMul() * botFightMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
     } else if (h.kind === 'world' && h.col) {
       damageCollider(h.col, def.dmg * 0.55);
     } else if (h.kind === 'plane') {
@@ -16603,7 +16622,7 @@ function updateHUD() {
   } else if (storm.state === 'waiting') {
     stormLabelEl.textContent = 'STORM CLOSING IN';
     const ph = STORM_PHASES[storm.phase];
-    const total = (ph && ph.wait) || Math.max(1, storm.timer);
+    const total = ((ph && ph.wait) || Math.max(1, storm.timer)) * stormScale();
     stormBarEl.style.width = clamp(storm.timer / total, 0, 1) * 100 + '%';
   } else if (storm.state === 'closing') {
     stormLabelEl.textContent = 'STORM SHRINKING';
@@ -17890,8 +17909,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 6 };
-const VERSION_PREV = '8.3.5';
+const VERSION = { major: 8, minor: 3, patch: 7 };
+const VERSION_PREV = '8.3.6';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
