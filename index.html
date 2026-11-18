@@ -5859,6 +5859,16 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
   font-family:var(--label); font-weight:700; font-size:8.5px; letter-spacing:.22em;
   color:rgba(255,150,165,.55);
 }
+
+/* While the death cinematic runs, your gameplay HUD gets out of the way: the
+   spectator view keeps the map, storm, compass and kill feed, and nothing else. */
+body.death-ui #weaponCluster, body.death-ui #vitals, body.death-ui #mats,
+body.death-ui #matsBig, body.death-ui #crosshair, body.death-ui #hitmarker,
+body.death-ui #buildHud, body.death-ui #prompt, body.death-ui #useBar,
+body.death-ui #questLine, body.death-ui #modeBadge, body.death-ui #teamPanel,
+body.death-ui #tourneyHud, body.death-ui #spectate {
+  display:none !important;
+}
 </style>
 </head>
 <body>
@@ -6806,8 +6816,7 @@ body.og-ui #modeBadge::after { content:'OG'; color:#4fc3ff; }
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>A REAL DEATH SCREEN</b> — when you die the kill plays out for a second over your body, then a red gradient fades in, then your placement, stats and the menu button slide in at the top and bottom edges — the middle of the screen stays open so you can watch the lobby keep fighting around your body. The ranked recap and unlock reveals arrive after the controls settle.</div></li>
-      <li><span class="wnTag">02</span><div><b>ANOMALY CEASEFIRE</b> — while any rift anomaly is running, all damage dealt by every player and bot is cut in half, so fights grind on instead of ending and the match stretches out for the whole event.</div></li>
+      <li><span class="wnTag">01</span><div><b>A CLEANER DEATH SCREEN</b> — when you die, your HUD gets out of the way: the crosshair, hotbar, ammo, health bars, materials, build menu and badges all hide during the death cinematic. You're left with the minimap, storm panel, kill feed and the death controls over the lobby still fighting around your body.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18439,6 +18448,7 @@ function startDeathCine(killerName, placement, total) {
   cine.classList.remove('on', 'controls');
   void cine.offsetWidth;
   cine.classList.add('on');
+  document.body.classList.add('death-ui');
   shake(0.25);
   dcTimers.push(setTimeout(() => document.getElementById('deathVeil').classList.add('on'), 1000));
   dcTimers.push(setTimeout(() => {
@@ -18453,6 +18463,7 @@ function resetDeathCine() {
   dcTimers = [];
   document.getElementById('deathCine').classList.remove('on', 'controls');
   document.getElementById('deathVeil').classList.remove('on', 'soft');
+  document.body.classList.remove('death-ui');
 }
 document.getElementById('dcMenu').addEventListener('click', () => { audioInit(); backToMenu(); });
 
@@ -18556,8 +18567,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 5 };
-const VERSION_PREV = '8.4.4';
+const VERSION = { major: 8, minor: 4, patch: 6 };
+const VERSION_PREV = '8.4.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
