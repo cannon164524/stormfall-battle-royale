@@ -6647,7 +6647,7 @@ img.gunIc {
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
       <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
       <li><span class="wnTag">09</span><div><b>LONGER BATTLE ROYALE</b> — the lobby now thins at a steady pace instead of collapsing early. Bots hit each other more softly on the big island — and softer still in a 40-player lobby — and the storm takes half again as long between closes. Reload and Blitz keep their quick tempo.</div></li>
-      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — every couple of minutes on the big island, two rifts tear open inside the storm circle, each with a cache of good loot at its base. They show as purple diamonds on the map. Step into one and it throws you sky-high for a free redeploy — then collapses seconds later. Rotate fast or contest the cache; the rift fits anyone standing there.</div></li>
+      <li><span class="wnTag">10</span><div><b>RIFT ANOMALIES</b> — after every storm phase on the big island, one of three events may flip the whole lobby, each lasting until that phase closes, everything marked on the map. SPRITE HUNT buries X-marked chests that hold sprite pods, XP and gold. STABILIZE THE RIFT rings a beacon with drones — shoot every one down and the beacon bursts open into a vault of Mythic-tier weapons. FEELING UNSTOPPABLE sends everyone sprinting 25% faster, with every landed hit shoving people flying.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9678,8 +9678,7 @@ function clearWorld() {
   extractSites.length = 0;
   gunshipTarget.alive = false;
   gunship = null;
-  rifts.length = 0;
-  riftTimer = 95;
+  endAnomaly();
   clearLoot();
   clearDamageNumbers();
 }
@@ -12680,6 +12679,14 @@ function playerFire() {
       } else {
         applyShotDamage(h, dmg, w.hs, 'You', h.dist, SHOTGUN_FAMILY.indexOf(wt) >= 0);
         weaponSpecial(w, h, dir, dmg);
+        // Feeling Unstoppable: any hit shoves the target flying.
+        if (anomalyUnstoppable() && h.kind === 'bot' && h.bot) {
+          const b = h.bot;
+          if (!b.knock) b.knock = new THREE.Vector3();
+          b.knock.x += dir.x * 9;
+          b.knock.z += dir.z * 9;
+          b.hop = Math.max(b.hop || 0, 2.5);
+        }
       }
     };
     const speed = w.bulletSpeed || (isAimTest() ? AIM_TEST_SPEED : 0);
@@ -14571,8 +14578,9 @@ function updateBot(b, dt) {
       moveZ /= ml;
     }
 
-    b.pos.x += moveX * speed * dt;
-    b.pos.z += moveZ * speed * dt;
+    const sp = speed * (anomalyUnstoppable() ? 1.25 : 1);
+    b.pos.x += moveX * sp * dt;
+    b.pos.z += moveZ * sp * dt;
     resolveCollisions(b.pos, b.pos.y, 0.45, 1.7);
     b.moveT += dt;
 
@@ -14961,6 +14969,9 @@ function nextStormPhase() {
   blitzAddXp(2);
   toast('STORM CLOSING', 'sub');
   sfx('storm');
+  // A rift anomaly may flip the script the moment the phase opens.
+  endAnomaly();
+  if (anomalyAllowed() && Math.random() < ANOMALY_CHANCE) startAnomaly();
 }
 
 function outsideStorm(x, z) {
@@ -14997,6 +15008,7 @@ function updateStorm(dt) {
       const nxt = STORM_PHASES[storm.phase];
       if (nxt) { storm.state = 'waiting'; storm.timer = nxt.wait * stormScale(); }
       else { storm.state = 'done'; }
+      endAnomaly();   // anomaly effects last until this phase closes
     }
   }
 
@@ -15064,31 +15076,37 @@ function audioInit() {
 }
 
 /* ============================== RIFT ANOMALIES ==============================
-   Our own take on the portal anomaly. During a battle royale on the big
-   island an anomaly opens every so often: two rifts at random points inside
-   the current storm circle, each with a small cache of loot at its base.
-   Step into a rift and it throws you high into the sky for a free redeploy —
-   a fast rotation across the map, and a fight over a valuable landing. The
-   rift collapses a few seconds after the first person goes through. */
-const rifts = [];
-let riftTimer = 95;
-const RIFT_LAUNCH_Y = 150;
-const RIFT_LIFE = 42;
-const RIFT_FADE_AFTER_USE = 3.5;
-const ANOMALY_EVERY = 95;
+   Match-wide events rolled after each storm phase OPENS on the big island —
+   battle royale only, omitted from ranked, Blitz, Reload and Gun Game. Most
+   effects last until that phase closes, and what they spawn is marked on the
+   map. Our rotation of three:
+   - SPRITE HUNT: buried X-marked chests across the island; dig each one for a
+     sprite pod, a jolt of sprite XP and gold.
+   - STABILIZE THE RIFT: drones ring a sealed beacon. Shoot every one down and
+     the beacon bursts open into a vault drop.
+   - FEELING UNSTOPPABLE: everyone sprints 25% faster and every landed hit
+     shoves the target flying. */
+const anomaly = { type: '', data: null };
+const ANOMALY_CHANCE = 0.65;
+const DIG_COUNT = 8;
+const DRONE_COUNT = 5;
+const DRONE_HP = 150;
 
-function buildRiftVisual(x, y, z) {
+function anomalyAllowed() {
+  return storm.active && mapTheme() === 'pirate' && !isGunGame() && !isRanked() && !isBlitz();
+}
+function anomalyUnstoppable() { return anomaly.type === 'unstoppable'; }
+
+function riftColumn(x, y, z, sealed) {
   const g = new THREE.Group();
-  const beamMat = new THREE.MeshBasicMaterial({ color: 0xb45cf0, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide });
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xb45cf0, transparent: true, opacity: sealed ? 0.16 : 0.3, depthWrite: false, side: THREE.DoubleSide });
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.7, 55, 12, 1, true), beamMat);
   beam.position.set(x, y + 27, z);
   g.add(beam);
-  const cryMat = new THREE.MeshBasicMaterial({ color: 0xd08bff });
-  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(1.6), cryMat);
+  const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(1.6), new THREE.MeshBasicMaterial({ color: 0xd08bff }));
   crystal.position.set(x, y + 7, z);
   g.add(crystal);
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0xd08bff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false });
-  const ring = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.9, 40), ringMat);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(2.1, 2.9, 40), new THREE.MeshBasicMaterial({ color: 0xd08bff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false }));
   ring.rotation.x = -Math.PI / 2;
   ring.position.set(x, y + 0.18, z);
   g.add(ring);
@@ -15096,101 +15114,178 @@ function buildRiftVisual(x, y, z) {
   return { group: g, beam, crystal, ring };
 }
 
-/* The anomaly: two rifts inside the circle, and a cache under each one. */
-function openRiftAnomaly() {
-  let opened = 0;
-  for (let i = 0; i < 6 && opened < 2; i++) {
+/* A fair spot for an event: land, inside the current circle. */
+function anomalySpot() {
+  for (let i = 0; i < 30; i++) {
     const ang = Math.random() * TAU;
-    const rad = Math.sqrt(Math.random()) * Math.max(40, storm.radius * 0.78);
+    const rad = Math.sqrt(Math.random()) * Math.max(40, storm.radius * 0.8);
     const x = storm.center.x + Math.cos(ang) * rad;
     const z = storm.center.z + Math.sin(ang) * rad;
-    const g = terrainHeight(x, z);
-    if (g < 1.2) continue;   // not in the water
-    if (rifts.some((r) => Math.hypot(r.x - x, r.z - z) < 60)) continue;
-    const vis = buildRiftVisual(x, g, z);
-    rifts.push({ x, y: g, z, vis, born: state.time, usedAt: 0 });
-    opened++;
-    for (let k = 0; k < 2; k++) {
-      const a = Math.random() * TAU;
-      spawnLoot(x + Math.cos(a) * 2.2, g + 0.4, z + Math.sin(a) * 2.2, rollLootItem(Math.random, 0.35));
-    }
+    if (terrainHeight(x, z) > 2.2) return { x, z };
   }
-  if (opened) {
-    toast('RIFT ANOMALY · ' + opened + ' RIFTS INSIDE THE CIRCLE', 'sub');
-    sfx('storm');
-  }
+  return null;
 }
 
-/* One person goes through and the rift holds a few seconds, then closes. */
-function closeRift(r) {
-  const i = rifts.indexOf(r);
-  if (i >= 0) rifts.splice(i, 1);
-  if (r.vis && r.vis.group.parent) r.vis.group.parent.remove(r.vis.group);
-  try { disposeTree(r.vis.group); } catch (e) { /* ignore */ }
-  shockwaveFX(new THREE.Vector3(r.x, r.y + 1, r.z), 3.4);
+/* ---- SPRITE HUNT ---- */
+function startSpriteHunt() {
+  anomaly.data = [];
+  let placed = 0;
+  for (let i = 0; i < DIG_COUNT * 3 && placed < DIG_COUNT; i++) {
+    const spot = anomalySpot();
+    if (!spot) continue;
+    if (anomaly.data.some((m) => Math.hypot(m.x - spot.x, m.z - spot.z) < 45)) continue;
+    const y = terrainHeight(spot.x, spot.z);
+    const g = new THREE.Group();
+    const mound = new THREE.Mesh(new THREE.SphereGeometry(1.5, 10, 6), mat(0x6b4f33, true));
+    mound.scale.set(1, 0.42, 1);
+    mound.position.set(spot.x, y + 0.15, spot.z);
+    g.add(mound);
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 2.2), mat(0xffc844, true));
+    cross.position.set(spot.x, y + 0.42, spot.z);
+    g.add(cross);
+    const cross2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.1, 0.5), cross.material);
+    cross2.position.copy(cross.position);
+    g.add(cross2);
+    dynGroup.add(g);
+    anomaly.data.push({ x: spot.x, z: spot.z, y, group: g, opened: false });
+    placed++;
+  }
+  if (placed) toast('RIFT ANOMALY · SPRITE HUNT · ' + placed + ' X MARKS ON THE MAP', 'sub');
 }
 
-function riftLaunchPlayer(r) {
-  player.pos.set(r.x, r.y + RIFT_LAUNCH_Y, r.z);
-  player.vel.set(0, -4, 0);
-  player.dropping = true;
-  player.onGround = false;
-  player.pitch = -0.6;
-  r.usedAt = state.time;
-  shake(0.25);
+function endSpriteHunt() {
+  const mounds = anomaly.data || [];
+  for (const m of mounds) {
+    if (m.group && m.group.parent) m.group.parent.remove(m.group);
+    try { disposeTree(m.group); } catch (e) { /* ignore */ }
+  }
+  anomaly.data = null;
+}
+
+function nearestDig(r) {
+  if (anomaly.type !== 'spritehunt' || !anomaly.data) return null;
+  let best = null, bd = r;
+  for (const m of anomaly.data) {
+    if (m.opened) continue;
+    const d = Math.hypot(player.pos.x - m.x, player.pos.z - m.z);
+    if (d < bd) { bd = d; best = m; }
+  }
+  return best;
+}
+
+function digSprite(m) {
+  if (!m || m.opened) return;
+  m.opened = true;
+  if (m.group && m.group.parent) m.group.parent.remove(m.group);
+  try { disposeTree(m.group); } catch (e) { /* ignore */ }
+  const id = pick(SPRITE_IDS);
+  spawnLoot(m.x, m.y + 0.6, m.z, makeSpritePod(id));
+  spawnLoot(m.x + rand(-0.8, 0.8), m.y + 0.5, m.z + rand(-0.8, 0.8), makeGold(100));
+  spriteGainXP(id, 150);
+  shake(0.2);
   sfx('unlock');
-  shockwaveFX(new THREE.Vector3(r.x, r.y + 1, r.z), 4);
-  toast('RIFT · REDEPLOY', 'sub');
+  impactFX(new THREE.Vector3(m.x, m.y + 0.5, m.z));
+  toast('SPRITE UNEARTHED · POD + XP + GOLD', 'sub');
 }
 
-function riftLaunchBot(b, r) {
-  b.pos.set(r.x, r.y + RIFT_LAUNCH_Y, r.z);
-  b.vel.set(0, -6, 0);
-  b.dropping = true;
-  b.target = null;
-  b.goal = null;
-  r.usedAt = state.time;
-  if (b.rig) b.rig.group.position.copy(b.pos);
+/* ---- STABILIZE THE RIFT ---- */
+function startStabilize() {
+  const spot = anomalySpot();
+  if (!spot) { anomaly.type = ''; return; }
+  const y = terrainHeight(spot.x, spot.z);
+  const vis = riftColumn(spot.x, y, spot.z, true);
+  const drones = [];
+  for (let i = 0; i < DRONE_COUNT; i++) {
+    const a = (i / DRONE_COUNT) * TAU;
+    const dx = spot.x + Math.cos(a) * 9;
+    const dz = spot.z + Math.sin(a) * 9;
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.62), mat(0x7b4bd0, true));
+    g.add(body);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), mat(0xff4d5e, true));
+    eye.position.set(0, 0, 0.45);
+    g.add(eye);
+    g.position.set(dx, y + 4.5, dz);
+    dynGroup.add(g);
+    const col = addBox(dx, y + 4.5, dz, 0.55, 0.55, 0.55, body, { hp: DRONE_HP, kind: 'build' });
+    registerPiece(col);
+    drones.push({ x: dx, y: y + 4.5, z: dz, group: g, col, done: false });
+  }
+  anomaly.data = { x: spot.x, y, z: spot.z, vis, drones, left: DRONE_COUNT, opened: false };
+  toast('RIFT ANOMALY · STABILIZE THE RIFT · DESTROY THE DRONES', 'sub');
 }
 
-function updateRiftAnomalies(dt) {
+function endStabilize() {
+  const s = anomaly.data;
+  if (!s) return;
+  for (const d of s.drones) {
+    if (!d.col.dead) removeCollider(d.col);
+    if (d.group.parent) d.group.parent.remove(d.group);
+    try { disposeTree(d.group); } catch (e) { /* ignore */ }
+  }
+  if (s.vis.group.parent) s.vis.group.parent.remove(s.vis.group);
+  try { disposeTree(s.vis.group); } catch (e) { /* ignore */ }
+  anomaly.data = null;
+}
+
+function stabilizeOpenVault(s) {
+  s.opened = true;
+  if (s.vis.group.parent) s.vis.group.parent.remove(s.vis.group);
+  try { disposeTree(s.vis.group); } catch (e) { /* ignore */ }
+  shockwaveFX(new THREE.Vector3(s.x, s.y + 1, s.z), 5);
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * TAU;
+    const rarity = i === 0 ? R_MYTHIC : i === 1 ? R_EXOTIC : R_LEGENDARY;
+    const pool = rarity === R_MYTHIC ? mythicPoolForMode() : rarity === R_EXOTIC ? exoticPoolForMode() : allowedOnly(lootPoolForMode());
+    spawnLoot(s.x + Math.cos(a) * 2.4, s.y + 0.6, s.z + Math.sin(a) * 2.4, makeWeapon(pick(pool), rarity));
+  }
+  spawnLoot(s.x, s.y + 0.6, s.z, makeGold(150));
+  toast('RIFT STABILIZED · THE VAULT IS OPEN', 'sub');
+  sfx('unlock');
+}
+
+/* ---- FEELING UNSTOPPABLE ---- */
+function startUnstoppable() {
+  toast('RIFT ANOMALY · FEELING UNSTOPPABLE · EVERYONE SPRINTS HARDER AND HITS HARDER', 'sub');
+  sfx('unlock');
+}
+
+/* ---- EVENT LIFECYCLE ---- */
+function startAnomaly() {
+  anomaly.type = pick(['spritehunt', 'stabilize', 'unstoppable']);
+  anomaly.data = null;
+  if (anomaly.type === 'spritehunt') startSpriteHunt();
+  else if (anomaly.type === 'stabilize') startStabilize();
+  else startUnstoppable();
+}
+
+function endAnomaly() {
+  if (!anomaly.type) return;
+  if (anomaly.type === 'spritehunt') endSpriteHunt();
+  else if (anomaly.type === 'stabilize') endStabilize();
+  anomaly.type = '';
+  anomaly.data = null;
+}
+
+/* ---- PER-FRAME ---- */
+function updateAnomaly(dt) {
   if (state.phase !== 'play') return;
-  const longMatch = storm.active && !isBlitz() && mapTheme() === 'pirate' && !isGunGame();
-
-  riftTimer -= dt;
-  if (longMatch && riftTimer <= 0) {
-    openRiftAnomaly();
-    riftTimer = ANOMALY_EVERY + Math.random() * 25;
-  }
-
-  for (let i = rifts.length - 1; i >= 0; i--) {
-    const r = rifts[i];
-    if (state.time - r.born > RIFT_LIFE || (r.usedAt && state.time - r.usedAt > RIFT_FADE_AFTER_USE)) {
-      closeRift(r);
-      continue;
-    }
-    // The crack breathes: the beam pulses and the crystal turns over it.
-    const pulse = 0.22 + Math.abs(Math.sin(state.time * 2.1 + r.born)) * 0.16;
-    r.vis.beam.material.opacity = pulse;
-    r.vis.crystal.rotation.y += dt * 1.6;
-    r.vis.crystal.position.y = r.y + 7 + Math.sin(state.time * 1.3 + r.born) * 0.7;
-    r.vis.ring.rotation.z += dt * 0.5;
-
-    if (r.usedAt) continue;
-    if (player.alive && !player.dropping && !player.knocked && !player.piloting &&
-        Math.hypot(player.pos.x - r.x, player.pos.z - r.z) < 3.2 &&
-        player.pos.y - r.y < 4.5) {
-      riftLaunchPlayer(r);
-      continue;
-    }
-    for (const b of bots) {
-      if (!b.alive || b.out || b.dropping || b.knocked) continue;
-      if (Math.hypot(b.pos.x - r.x, b.pos.z - r.z) < 3.2 && b.pos.y - r.y < 4.5) {
-        riftLaunchBot(b, r);
-        break;
-      }
+  if (anomaly.type !== 'stabilize' || !anomaly.data) return;
+  const s = anomaly.data;
+  for (const d of s.drones) {
+    if (d.done) continue;
+    d.group.rotation.y += dt * 1.2;
+    d.group.position.y = d.y + Math.sin(state.time * 1.5 + d.x) * 0.4;
+    if (d.col.dead) {
+      d.done = true;
+      s.left--;
+      impactFX(d.group.position);
+      if (d.group.parent) d.group.parent.remove(d.group);
+      try { disposeTree(d.group); } catch (e) { /* ignore */ }
     }
   }
+  if (s.vis.beam) s.vis.beam.material.opacity = 0.12 + Math.abs(Math.sin(state.time * 2)) * 0.08;
+  if (s.left <= 0 && !s.opened) stabilizeOpenVault(s);
 }
 
 function sfx(kind) { playSound(kind, 1); }
@@ -15930,6 +16025,8 @@ function updatePlayer(dt) {
   if ((input.sprint || autoSprint) && !aimDown && input.fwd > 0) speed = 8.8;
   if (aimDown) speed = 3.6;
   if (player.using) speed = 2.2;
+  // Feeling Unstoppable: the whole lobby moves faster.
+  if (anomalyUnstoppable()) speed *= 1.25;
   if (adminOn('speed')) speed *= 2.4;
   if (hasBoon('boots')) speed *= 1.12;
 
@@ -16807,12 +16904,18 @@ function updateHUD() {
             ? '<b>E</b> BROWSE ' + left + ' GUNS · ' + VEND_PRICE + ' G EACH'
             : 'SOLD OUT';
         } else {
-          const l = nearestLoot(3.2);
-          if (l) {
-            interactTarget = { type: 'loot', obj: l };
-            const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
-              : itemLabel(l.item);
-            promptText = '<b>E</b> PICK UP ' + nm.toUpperCase();
+          const dig = nearestDig(3.4);
+          if (dig) {
+            interactTarget = { type: 'dig', obj: dig };
+            promptText = '<b>E</b> DIG FOR A SPRITE';
+          } else {
+            const l = nearestLoot(3.2);
+            if (l) {
+              interactTarget = { type: 'loot', obj: l };
+              const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
+                : itemLabel(l.item);
+              promptText = '<b>E</b> PICK UP ' + nm.toUpperCase();
+            }
           }
         }
       }
@@ -16973,18 +17076,29 @@ function drawMinimap() {
     ctx.restore();
   }
 
-  // rift anomalies — a purple diamond wherever a rift is standing
-  if (rifts.length) {
+  // rift anomaly markers — what the active event has spawned
+  if (anomaly.type === 'spritehunt' && anomaly.data) {
     ctx.save();
-    ctx.fillStyle = '#d08bff';
-    for (let i = 0; i < rifts.length; i++) {
-      const [rx, ry] = w2m(rifts[i].x, rifts[i].z);
-      ctx.save();
-      ctx.translate(rx, ry);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillRect(-3.4, -3.4, 6.8, 6.8);
-      ctx.restore();
+    ctx.strokeStyle = '#ffc844';
+    ctx.lineWidth = 2;
+    for (const m of anomaly.data) {
+      if (m.opened) continue;
+      const [mx, my] = w2m(m.x, m.z);
+      ctx.beginPath();
+      ctx.moveTo(mx - 3, my - 3);
+      ctx.lineTo(mx + 3, my + 3);
+      ctx.moveTo(mx + 3, my - 3);
+      ctx.lineTo(mx - 3, my + 3);
+      ctx.stroke();
     }
+    ctx.restore();
+  } else if (anomaly.type === 'stabilize' && anomaly.data && !anomaly.data.opened) {
+    const [sx, sy] = w2m(anomaly.data.x, anomaly.data.z);
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#d08bff';
+    ctx.fillRect(-3.4, -3.4, 6.8, 6.8);
     ctx.restore();
   }
 
@@ -17157,6 +17271,7 @@ function interact() {
   if (interactTarget) {
     if (interactTarget.type === 'chest') openChest(interactTarget.obj);
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
+    else if (interactTarget.type === 'dig') digSprite(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
     else if (interactTarget.type === 'extract') interactWithSite(interactTarget.obj);
     else if (interactTarget.type === 'vending') openVending(interactTarget.obj);
@@ -18057,8 +18172,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 8 };
-const VERSION_PREV = '8.3.7';
+const VERSION = { major: 8, minor: 3, patch: 9 };
+const VERSION_PREV = '8.3.8';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -20107,7 +20222,7 @@ function animate(now) {
   updateShieldRegen(dt);
   updateNet(dt);
   updateStorm(dt);
-  updateRiftAnomalies(dt);
+  updateAnomaly(dt);
   updateGunship(dt);
   updateGrenades(dt);
   updatePocketEffects(dt);
