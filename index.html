@@ -6638,10 +6638,12 @@ img.gunIc {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>GUN ICONS ARE PICTURES NOW</b> — each weapon is drawn once at boot as a shaded bitmap and shown as an image in the hotbar, inventory, vending screens and the rare-find banner. Walnut stocks with visible grain, blued barrels with a specular highlight, brass bands and muzzle rings. Every gun has its own illustration, Mythics are gilded and Exotics run cold.</div></li>
-      <li><span class="wnTag">02</span><div><b>NO SIGN-IN, NO ITEMS</b> — the lobby hands a guest the Recruit outfit and nothing else. Buying and the pirate token payout now need an account; sign in and everything the account holds comes straight back.</div></li>
-      <li><span class="wnTag">03</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
-      <li><span class="wnTag">04</span><div><b>GUESTS CAN'T BUY</b> — the item shop and the battle pass check for a sign-in before they touch your V-Bucks.</div></li>
+      <li><span class="wnTag">01</span><div><b>THREE TOWNS ON THE MAP</b> — Cannon Bay, Black Tide and Salt Wake are the three named drop spots, each a tight ring of buildings packed together, with their names printed across the minimap in big type. The middle of town stays open, so you land in a street rather than on a roof. Everywhere else there are a few lone houses.</div></li>
+      <li><span class="wnTag">02</span><div><b>THREE NEW SPRAY GUNS</b> — the Pepperbox fires four barrels at 240 rpm, the Sawed-off throws fourteen pellets with nothing gentle about it, and the Flak Cannon feeds a drum into a wide flared mouth. A Mythic Sawed-off and the Exotic Storm Flak join them, and all five carry the new picture icons.</div></li>
+      <li><span class="wnTag">03</span><div><b>BIGGER MAGAZINES</b> — every gun holds more. Flintlock 6, Hand Cannon 8, Blunderbuss 6, Grapeshot 12, Repeater 24, Musketoon 18, Swivel Gun 60, Chain Shot 12, Mortar 4, Long Rifle 8, Harpoon 5, Sea Musket 3, with the Mythic and Exotic versions scaled to match.</div></li>
+      <li><span class="wnTag">04</span><div><b>TRAVEL AND THE BAG</b> — the compass readout now names the town you are standing in, and the Gun Game ladder runs thirteen guns including the new spray.</div></li>
+      <li><span class="wnTag">05</span><div><b>NO SIGN-IN, NO ITEMS</b> — the lobby hands a guest the Recruit outfit and nothing else. Buying and the pirate token payout need an account; sign in and everything the account holds comes straight back.</div></li>
+      <li><span class="wnTag">06</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6729,7 +6731,7 @@ const REVIVE_TIME = 3.4;
 const REVIVE_RANGE = 3.6;
 const REBOOT_TIME = 10;
 const SURVIVE_TIME = 20;   // Reload Duos: how long your mate must stay alive
-const GUN_ORDER = ['flintlock', 'repeater', 'grapeshot', 'musketoon', 'blunderbuss', 'swivelgun', 'chainshot', 'longrifle', 'harpoon', 'musket'];
+const GUN_ORDER = ['flintlock', 'repeater', 'grapeshot', 'pepperbox', 'musketoon', 'blunderbuss', 'sawedoff', 'swivelgun', 'flakgun', 'chainshot', 'longrifle', 'harpoon', 'musket'];
 
 const MODE_DEFS = {
   br: {
@@ -8539,8 +8541,8 @@ function makeBeacon(x, z, rng) {
    stocked with one weapon at a fixed price, all marked on the minimap. ---- */
 const VEND_PRICE = 250;
 const vendingMachines = [];
-const VEND_TYPES = ['flintlock', 'repeater', 'grapeshot', 'blunderbuss', 'musketoon', 'handcannon', 'swivelgun', 'chainshot'];
-const VEND_TYPES_CLASSIC = ['flintlock', 'repeater', 'grapeshot', 'blunderbuss', 'musketoon', 'handcannon', 'swivelgun', 'chainshot'];
+const VEND_TYPES = ['flintlock', 'repeater', 'grapeshot', 'blunderbuss', 'sawedoff', 'flakgun', 'pepperbox', 'musketoon', 'handcannon', 'swivelgun', 'chainshot'];
+const VEND_TYPES_CLASSIC = ['flintlock', 'repeater', 'grapeshot', 'blunderbuss', 'sawedoff', 'flakgun', 'pepperbox', 'musketoon', 'handcannon', 'swivelgun', 'chainshot'];
 
 function vendTypesForMode() {
   const t = mapTheme();
@@ -8755,6 +8757,20 @@ function addChest(x, z, y) {
 const worldSites = [];
 const SITE_GAP = 2.5;
 
+/* The three towns. Each one is a tight group of buildings with a name that is
+   printed across the minimap, Fortnite-style, so a drop has a destination. */
+const worldPOIs = [];
+const POI_NAMES = {
+  pirate: ['CANNON BAY', 'BLACK TIDE', 'SALT WAKE'],
+  classic: ['OLD TOWN', 'HARBOR ROW', 'BLUE BARN'],
+  future: ['NEON STRIP', 'RELAY NINE', 'HELIX DOCK'],
+  mix: ['BLACK TIDE', 'OLD TOWN', 'SALT WAKE'],
+};
+
+function poiNamesForTheme(theme) {
+  return POI_NAMES[theme] || POI_NAMES.pirate;
+}
+
 function siteFreeAt(x, z, r) {
   for (let i = 0; i < worldSites.length; i++) {
     const s = worldSites[i];
@@ -8776,27 +8792,39 @@ function populateWorld() {
   const shrink = isBlitz() ? 0.62 : 1;
   const rng = mulberry32(theme === 'classic' ? 20220914 : theme === 'mix' ? 20231105 : theme === 'pirate' ? 20270107 : 20240607);
   worldSites.length = 0;
+  worldPOIs.length = 0;
 
-  // POI clusters
-  for (let i = 0; i < 9; i++) {
-    const ang = (i / 9) * TAU + rng() * 0.5;
-    const rad = (60 + rng() * 165) * shrink;
-    const px = Math.cos(ang) * rad;
-    const pz = Math.sin(ang) * rad;
-    if (terrainHeight(px, pz) < 2.5) continue;
+  // ---- three named towns: a tight group of buildings each, spread evenly
+  // around the island so every drop has a landmark to aim for.
+  const townNames = poiNamesForTheme(theme);
+  const townAngles = [0.55, 2.72, 4.85];
+  for (let i = 0; i < 3; i++) {
+    let px = 0, pz = 0, ok = false;
+    for (let t = 0; t < 60; t++) {
+      const ang = townAngles[i] + (rng() - 0.5) * 0.5;
+      const rad = (95 + rng() * 95) * shrink;
+      px = Math.cos(ang) * rad;
+      pz = Math.sin(ang) * rad;
+      if (terrainHeight(px, pz) > 3.2) { ok = true; break; }
+    }
+    if (!ok) continue;
     const clusterClassic = theme === 'classic' || (theme === 'mix' && i % 2 === 0);
-    const n = 2 + Math.floor(rng() * 4);
+    // the middle of town, then a ring of buildings pressed close together
+    const n = 7 + Math.floor(rng() * 3);
     for (let j = 0; j < n; j++) {
-      let ox = 0, oz = 0, rad2 = 0, ok = false, apt = false, dims = null;
-      for (let t = 0; t < 40; t++) {
-        ox = px + (rng() - 0.5) * 105 * shrink;
-        oz = pz + (rng() - 0.5) * 105 * shrink;
+      let ox = 0, oz = 0, rad2 = 0, placed = false, apt = false, dims = null;
+      for (let t = 0; t < 50; t++) {
+        // a ring at 50-88% of the town's radius, so the middle stays open
+        const a = (j / n) * TAU + rng() * 0.55;
+        const dist = (14 + rng() * 22) * (shrink < 1 ? 0.85 : 1);
+        ox = px + Math.cos(a) * dist;
+        oz = pz + Math.sin(a) * dist;
         apt = theme === 'future' && !clusterClassic && rng() < 0.34;
         dims = apt ? null : rollHouseDims(rng);
         rad2 = apt ? APARTMENT_R : houseRadius(dims);
-        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, rad2)) { ok = true; break; }
+        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, rad2)) { placed = true; break; }
       }
-      if (!ok) continue;
+      if (!placed) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
       const swap = Math.abs(Math.sin(rot)) > 0.5;
       siteThemeMode = clusterClassic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
@@ -8806,27 +8834,31 @@ function populateWorld() {
       else makePirateHut(ox, oz, rot, rng, dims);
       claimSite(ox, oz, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
     }
-    for (let j = 0; j < 3; j++) {
-      let ox = 0, oz = 0, ok = false;
-      for (let t = 0; t < 24; t++) {
-        ox = px + (rng() - 0.5) * 110 * shrink;
-        oz = pz + (rng() - 0.5) * 110 * shrink;
-        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, CONTAINER_R)) { ok = true; break; }
+    // a few crates scattered through the town
+    for (let j = 0; j < 4; j++) {
+      let ox = 0, oz = 0, placed = false;
+      for (let t = 0; t < 30; t++) {
+        const a = rng() * TAU;
+        const dist = rng() * 30;
+        ox = px + Math.cos(a) * dist;
+        oz = pz + Math.sin(a) * dist;
+        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, CONTAINER_R)) { placed = true; break; }
       }
-      if (!ok) continue;
+      if (!placed) continue;
       siteThemeMode = clusterClassic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
       if (clusterClassic) makeClassicCrate(ox, oz, rng);
       else if (theme === 'future') makeContainer(ox, oz, rng);
       else makePirateCrate(ox, oz, rng);
       claimSite(ox, oz, CONTAINER_R);
     }
+    worldPOIs.push({ x: px, z: pz, name: townNames[i] || 'TOWN', r: 44 });
   }
 
-  // lone houses and the odd apartment block
-  for (let i = 0; i < 14; i++) {
+  // ---- everywhere else: a few lone houses, never in a town
+  for (let i = 0; i < 9; i++) {
     let x = 0, z = 0, rad2 = 0, ok = false, apt = false, dims = null;
     const classic = theme === 'classic' || (theme === 'mix' && i % 2 === 0);
-    for (let t = 0; t < 60; t++) {
+    for (let t = 0; t < 70; t++) {
       const ang = rng() * TAU;
       const dist = rng() * 215 * shrink;
       x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
@@ -9779,45 +9811,53 @@ const VAULTED_WEAPONS = {
    every weapon loads a magazine and draws from the reserve.
    ========================================================================= */
 const WEAPONS = {
-  // sidearms — a flintlock has one shot, so that shot has to be worth carrying.
-  flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 78, rpm: 95, mag: 2, reload: 1.3, spread: 0.010, ads: 0.004, pellets: 1, hs: 2.2, range: 220, auto: false, sfx: 'pistol' },
-  handcannon: { name: 'Hand Cannon', ammo: 'heavy', dmg: 68, rpm: 130, mag: 5, reload: 2.1, spread: 0.020, ads: 0.008, pellets: 1, hs: 1.9, range: 210, auto: false, sfx: 'heavyar' },
+  // sidearms
+  flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 78, rpm: 95, mag: 6, reload: 1.3, spread: 0.010, ads: 0.004, pellets: 1, hs: 2.2, range: 220, auto: false, sfx: 'pistol' },
+  handcannon: { name: 'Hand Cannon', ammo: 'heavy', dmg: 68, rpm: 130, mag: 8, reload: 2.1, spread: 0.020, ads: 0.008, pellets: 1, hs: 1.9, range: 210, auto: false, sfx: 'heavyar' },
+  pepperbox: { name: 'Pepperbox', ammo: 'light', dmg: 24, rpm: 240, mag: 18, reload: 2.0, spread: 0.072, ads: 0.050, pellets: 4, hs: 1.5, range: 96, auto: true, sfx: 'pistol' },
   // close range
-  blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 26, rpm: 72, mag: 2, reload: 2.5, spread: 0.055, ads: 0.038, pellets: 12, hs: 1.6, range: 70, auto: false, sfx: 'shotgun' },
-  grapeshot: { name: 'Grapeshot Swivel', ammo: 'shells', dmg: 18, rpm: 170, mag: 7, reload: 2.6, spread: 0.045, ads: 0.030, pellets: 9, hs: 1.7, range: 84, auto: true, sfx: 'tacshot' },
-  repeater: { name: 'Repeater Carbine', ammo: 'light', dmg: 28, rpm: 660, mag: 14, reload: 1.9, spread: 0.022, ads: 0.009, pellets: 1, hs: 1.7, range: 165, auto: true, sfx: 'smg' },
+  blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 26, rpm: 72, mag: 6, reload: 2.5, spread: 0.055, ads: 0.038, pellets: 12, hs: 1.6, range: 70, auto: false, sfx: 'shotgun' },
+  sawedoff: { name: 'Sawed-off', ammo: 'shells', dmg: 33, rpm: 92, mag: 4, reload: 2.2, spread: 0.086, ads: 0.062, pellets: 14, hs: 1.65, range: 50, auto: false, sfx: 'shotgun' },
+  grapeshot: { name: 'Grapeshot Swivel', ammo: 'shells', dmg: 18, rpm: 170, mag: 12, reload: 2.6, spread: 0.045, ads: 0.030, pellets: 9, hs: 1.7, range: 84, auto: true, sfx: 'tacshot' },
+  repeater: { name: 'Repeater Carbine', ammo: 'light', dmg: 28, rpm: 660, mag: 24, reload: 1.9, spread: 0.022, ads: 0.009, pellets: 1, hs: 1.7, range: 165, auto: true, sfx: 'smg' },
   // mid range
-  musketoon: { name: 'Musketoon', ammo: 'medium', dmg: 44, rpm: 320, mag: 9, reload: 2.3, spread: 0.034, ads: 0.013, pellets: 1, hs: 1.8, range: 235, auto: false, sfx: 'ar' },
-  swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 38, rpm: 450, mag: 45, reload: 3.4, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
-  chainshot: { name: 'Chain Shot', ammo: 'medium', dmg: 58, rpm: 165, mag: 7, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
-  mortar: { name: 'Hand Mortar', ammo: 'medium', dmg: 80, rpm: 55, mag: 2, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
+  flakgun: { name: 'Flak Cannon', ammo: 'medium', dmg: 21, rpm: 150, mag: 10, reload: 2.8, spread: 0.064, ads: 0.044, pellets: 10, hs: 1.55, range: 108, auto: true, sfx: 'tacshot' },
+  musketoon: { name: 'Musketoon', ammo: 'medium', dmg: 44, rpm: 320, mag: 18, reload: 2.3, spread: 0.034, ads: 0.013, pellets: 1, hs: 1.8, range: 235, auto: false, sfx: 'ar' },
+  swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 38, rpm: 450, mag: 60, reload: 3.4, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
+  chainshot: { name: 'Chain Shot', ammo: 'medium', dmg: 58, rpm: 165, mag: 12, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
+  mortar: { name: 'Hand Mortar', ammo: 'medium', dmg: 80, rpm: 55, mag: 4, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
   // long range
-  longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 88, rpm: 105, mag: 5, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', bulletSpeed: 520 },
-  harpoon: { name: 'Harpoon Gun', ammo: 'medium', dmg: 105, rpm: 62, mag: 3, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 320, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 340 },
-  musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 135, rpm: 48, mag: 1, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 440, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'sniper', bulletSpeed: 560 },
+  longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 88, rpm: 105, mag: 8, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', bulletSpeed: 520 },
+  harpoon: { name: 'Harpoon Gun', ammo: 'medium', dmg: 105, rpm: 62, mag: 5, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 320, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 340 },
+  musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 135, rpm: 48, mag: 3, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 440, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'sniper', bulletSpeed: 560 },
   // Mythic — the captain's own hardware.
-  mythic_flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 100, rpm: 110, mag: 2, reload: 1.1, spread: 0.008, ads: 0.003, pellets: 1, hs: 2.5, range: 245, auto: false, sfx: 'pistol' },
-  mythic_blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 32, rpm: 82, mag: 2, reload: 2.2, spread: 0.050, ads: 0.034, pellets: 13, hs: 1.8, range: 78, auto: false, sfx: 'shotgun' },
-  mythic_swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 46, rpm: 480, mag: 55, reload: 3.1, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 245, auto: true, sfx: 'lmg' },
-  mythic_longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 112, rpm: 115, mag: 6, reload: 2.5, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.3, range: 385, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', bulletSpeed: 540 },
-  mythic_musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 180, rpm: 52, mag: 1, reload: 2.3, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.7, range: 470, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', bulletSpeed: 580 },
+  mythic_flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 100, rpm: 110, mag: 8, reload: 1.1, spread: 0.008, ads: 0.003, pellets: 1, hs: 2.5, range: 245, auto: false, sfx: 'pistol' },
+  mythic_blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 32, rpm: 82, mag: 8, reload: 2.2, spread: 0.050, ads: 0.034, pellets: 13, hs: 1.8, range: 78, auto: false, sfx: 'shotgun' },
+  mythic_sawedoff: { name: 'Sawed-off', ammo: 'shells', dmg: 42, rpm: 104, mag: 6, reload: 1.9, spread: 0.080, ads: 0.056, pellets: 15, hs: 1.7, range: 56, auto: false, sfx: 'shotgun' },
+  mythic_swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 46, rpm: 480, mag: 70, reload: 3.1, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 245, auto: true, sfx: 'lmg' },
+  mythic_longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 112, rpm: 115, mag: 10, reload: 2.5, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.3, range: 385, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', bulletSpeed: 540 },
+  mythic_musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 180, rpm: 52, mag: 4, reload: 2.3, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.7, range: 470, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', bulletSpeed: 580 },
   // Exotic — ordinary pirate guns with a curse on them.
-  exotic_flintlock: { name: 'Siphoning Flintlock', ammo: 'light', dmg: 86, rpm: 100, mag: 2, reload: 1.2, spread: 0.009, ads: 0.003, pellets: 1, hs: 2.3, range: 230, auto: false, sfx: 'pistol', onHit: 'siphon', siphon: 14 },
-  exotic_blunderbuss: { name: 'Shoving Blunderbuss', ammo: 'shells', dmg: 25, rpm: 78, mag: 2, reload: 2.5, spread: 0.052, ads: 0.036, pellets: 12, hs: 1.75, range: 74, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 22 },
-  exotic_mortar: { name: 'Detonating Mortar', ammo: 'medium', dmg: 86, rpm: 60, mag: 2, reload: 2.9, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 265, auto: false, sfx: 'ar', onHit: 'explode', blastR: 5.0, blastDmg: 72, bulletSpeed: 280 },
-  exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 142, rpm: 50, mag: 1, reload: 2.5, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 450, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 560 },
-  exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 40, rpm: 460, mag: 50, reload: 2.9, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 235, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.6 },
-  exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 94, rpm: 110, mag: 5, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.35, bulletSpeed: 520 },
+  exotic_flintlock: { name: 'Siphoning Flintlock', ammo: 'light', dmg: 86, rpm: 100, mag: 8, reload: 1.2, spread: 0.009, ads: 0.003, pellets: 1, hs: 2.3, range: 230, auto: false, sfx: 'pistol', onHit: 'siphon', siphon: 14 },
+  exotic_blunderbuss: { name: 'Shoving Blunderbuss', ammo: 'shells', dmg: 25, rpm: 78, mag: 8, reload: 2.5, spread: 0.052, ads: 0.036, pellets: 12, hs: 1.75, range: 74, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 22 },
+  exotic_flakgun: { name: 'Storm Flak', ammo: 'medium', dmg: 23, rpm: 165, mag: 12, reload: 2.6, spread: 0.060, ads: 0.041, pellets: 12, hs: 1.6, range: 116, auto: true, sfx: 'tacshot', onHit: 'chain', chainR: 8, chainMul: 0.5 },
+  exotic_mortar: { name: 'Detonating Mortar', ammo: 'medium', dmg: 86, rpm: 60, mag: 5, reload: 2.9, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 265, auto: false, sfx: 'ar', onHit: 'explode', blastR: 5.0, blastDmg: 72, bulletSpeed: 280 },
+  exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 142, rpm: 50, mag: 4, reload: 2.5, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 450, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 560 },
+  exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 40, rpm: 460, mag: 65, reload: 2.9, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 235, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.6 },
+  exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 94, rpm: 110, mag: 9, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.35, bulletSpeed: 520 },
 };
 
 /* No emitters survived the vault: every gun uses cartridges again. */
-const MYTHIC_WEAPONS = ['mythic_flintlock', 'mythic_blunderbuss', 'mythic_swivelgun', 'mythic_longrifle', 'mythic_musket'];
-const EXOTIC_WEAPONS = ['exotic_flintlock', 'exotic_blunderbuss', 'exotic_mortar', 'exotic_musket', 'exotic_swivelgun', 'exotic_longrifle'];
+const MYTHIC_WEAPONS = ['mythic_flintlock', 'mythic_blunderbuss', 'mythic_sawedoff', 'mythic_swivelgun', 'mythic_longrifle', 'mythic_musket'];
+const EXOTIC_WEAPONS = ['exotic_flintlock', 'exotic_blunderbuss', 'exotic_flakgun', 'exotic_mortar', 'exotic_musket', 'exotic_swivelgun', 'exotic_longrifle'];
 
 /* Which blocky gun body each pirate weapon wears. */
 const SPECIAL_BASE = {
   handcannon: 'flintlock',
+  pepperbox: 'revolver',
   grapeshot: 'tacshot',
+  sawedoff: 'doublebarrel',
+  flakgun: 'tacshot',
   repeater: 'smg',
   musketoon: 'ar',
   swivelgun: 'lmg',
@@ -9828,11 +9868,13 @@ const SPECIAL_BASE = {
   musket: 'sniper',
   mythic_flintlock: 'flintlock',
   mythic_blunderbuss: 'blunderbuss',
+  mythic_sawedoff: 'doublebarrel',
   mythic_swivelgun: 'lmg',
   mythic_longrifle: 'hunting',
   mythic_musket: 'sniper',
   exotic_flintlock: 'flintlock',
   exotic_blunderbuss: 'blunderbuss',
+  exotic_flakgun: 'tacshot',
   exotic_mortar: 'nova',
   exotic_musket: 'sniper',
   exotic_swivelgun: 'lmg',
@@ -9847,11 +9889,14 @@ for (const id of Object.keys(VAULTED_WEAPONS)) delete VAULTED_WEAPONS[id];
 const PIRATE_WEAPON_POOL = [
   // sidearms and close range
   'flintlock', 'flintlock',
+  'pepperbox', 'pepperbox',
   'repeater', 'repeater', 'repeater',
   'grapeshot', 'grapeshot',
   'blunderbuss', 'blunderbuss', 'blunderbuss',
+  'sawedoff', 'sawedoff',
   'handcannon',
   // mid range
+  'flakgun', 'flakgun',
   'musketoon', 'musketoon', 'musketoon',
   'swivelgun', 'swivelgun',
   'chainshot', 'chainshot',
@@ -10419,6 +10464,99 @@ const GUN_ICON_DRAW = {
     c.arc(56.6, 6.2, 1.9, 0, TAU);
     c.fillStyle = '#ffb84a';
     c.fill();
+  },
+
+  /* ---------- pepperbox: revolving cluster of short barrels --------------- */
+  pepperbox: function (c) {
+    icWoodShape(c, function (p) {
+      p.moveTo(30, 27);
+      p.lineTo(23, 30);
+      p.quadraticCurveTo(19, 41, 13, 49);
+      p.quadraticCurveTo(11, 53, 17, 53);
+      p.quadraticCurveTo(26, 48, 30, 37);
+      p.closePath();
+    }, 10, 27, 30, 53);
+    /* four barrels in a row, so it reads as a pepperbox */
+    for (let i = 0; i < 4; i++) {
+      icBarrel(c, 28, 20 + i * 3.2, 22, 2.6, 1.3);
+    }
+    icBand(c, 25, 18.5, 5, 14);
+    icBox(c, 49, 18.5, 5.5, 14, 2, icBrassGrad(c, 0, 18.5, 0, 32.5));
+    icBox(c, 23, 32, 10, 4.4, 2, icBrassGrad(c, 0, 32, 0, 36.4));
+    c.beginPath();
+    c.arc(30, 39, 4.6, 0.3, Math.PI - 0.3);
+    c.strokeStyle = icBrassGrad(c, 26, 37, 35, 44);
+    c.lineWidth = 1.5;
+    c.stroke();
+  },
+
+  /* ---------- sawed-off: stubby twin barrels, cropped stock --------------- */
+  sawedoff: function (c) {
+    icWoodShape(c, function (p) {
+      p.moveTo(28, 28);
+      p.lineTo(20, 31);
+      p.quadraticCurveTo(17, 40, 12, 46);
+      p.quadraticCurveTo(10, 50, 16, 50);
+      p.quadraticCurveTo(24, 46, 28, 38);
+      p.closePath();
+    }, 9, 28, 28, 50);
+    /* two fat tubes, cut square at the muzzle */
+    icBarrel(c, 26, 21, 30, 6.6, 3.2);
+    icBarrel(c, 26, 27.4, 30, 6.6, 3.2);
+    icBand(c, 23, 19.5, 6, 16);
+    icBox(c, 54, 19.5, 4.5, 16, 1.8, icBrassGrad(c, 0, 19.5, 0, 35.5));
+    c.beginPath();
+    c.arc(55.6, 24.3, 2.1, 0, TAU);
+    c.fillStyle = '#161d24';
+    c.fill();
+    c.beginPath();
+    c.arc(55.6, 30.7, 2.1, 0, TAU);
+    c.fillStyle = '#161d24';
+    c.fill();
+    c.beginPath();
+    c.arc(31, 40, 4.8, 0.3, Math.PI - 0.3);
+    c.strokeStyle = icBrassGrad(c, 27, 38, 36, 45);
+    c.lineWidth = 1.5;
+    c.stroke();
+  },
+
+  /* ---------- flak cannon: wide hopper-fed blaster ----------------------- */
+  flakgun: function (c) {
+    icWoodShape(c, function (p) {
+      p.moveTo(28, 29);
+      p.lineTo(16, 32);
+      p.quadraticCurveTo(6, 36, 4, 45);
+      p.quadraticCurveTo(3, 50, 8, 48);
+      p.lineTo(22, 38);
+      p.lineTo(28, 37);
+      p.closePath();
+    }, 2, 29, 28, 50);
+    icBarrel(c, 22, 23, 32, 10, 5);
+    icBand(c, 20, 21, 5.5, 14);
+    icBox(c, 52, 21, 7, 14, 3.5, icBrassGrad(c, 0, 21, 0, 35));
+    /* flared flak mouth */
+    c.beginPath();
+    c.moveTo(58, 22.5);
+    c.lineTo(63, 17);
+    c.lineTo(63, 39);
+    c.lineTo(58, 33.5);
+    c.closePath();
+    c.fillStyle = icBrassGrad(c, 58, 17, 63, 39);
+    c.fill();
+    /* ammo drum on top */
+    c.beginPath();
+    c.arc(38, 20, 7.6, 0, TAU);
+    c.fillStyle = icSteelGrad(c, 30, 12, 46, 28);
+    c.fill();
+    c.beginPath();
+    c.arc(38, 20, 3.4, 0, TAU);
+    c.fillStyle = icBrassGrad(c, 34, 16, 42, 24);
+    c.fill();
+    c.beginPath();
+    c.arc(30, 40, 4.8, 0.3, Math.PI - 0.3);
+    c.strokeStyle = icBrassGrad(c, 25, 37, 35, 45);
+    c.lineWidth = 1.5;
+    c.stroke();
   },
 
   /* ---------- long rifle: long barrel and a scope ------------------------ */
@@ -11835,7 +11973,7 @@ function clearLoot() {
 
 function lootWeaponType() {
   if (mod('snipers')) return pick(allowedOnly(['musket', 'longrifle', 'harpoon', 'musket', 'longrifle']));
-  if (mod('shotguns')) return pick(allowedOnly(['blunderbuss', 'grapeshot', 'blunderbuss']));
+  if (mod('shotguns')) return pick(allowedOnly(['blunderbuss', 'grapeshot', 'sawedoff', 'flakgun', 'pepperbox', 'sawedoff']));
   return pick(lootPoolForMode());
 }
 
@@ -12380,9 +12518,10 @@ function weaponSpecial(w, hit, dir, dmg) {
   }
 }
 
-/* The shotguns, by base type. They share a bloom model, a recoil kick and a
-   damage falloff, so none of them can quietly fall behind the others. */
-const SHOTGUN_FAMILY = ['blunderbuss', 'grapeshot', 'tacshot'];
+/* The shotguns, by the body they wear (SPECIAL_BASE maps a gun to one of these).
+   They share a bloom model, a recoil kick and a damage falloff, so none of them
+   can quietly fall behind the others. */
+const SHOTGUN_FAMILY = ['blunderbuss', 'grapeshot', 'tacshot', 'sawedoff', 'doublebarrel', 'revolver'];
 
 /* Season 6 runs on cells, not cartridges. Every shot pushes the emitter closer
    to a lockout, and the sink only starts after you actually stop firing: a
@@ -13194,9 +13333,11 @@ function updateRespawns() {
 const rebootVans = [];
 
 function ammoKit(type) {
-  const a = { light: 60, medium: 60, heavy: 60, shells: 60 };
+  // Magazines are bigger now, so the reserve that ships with a spawn is too:
+  // about five magazines of your own calibre and enough of the rest to trade.
+  const a = { light: 90, medium: 90, heavy: 90, shells: 90 };
   const t = (WEAPONS[type] || WEAPONS.flintlock).ammo;
-  a[t] = 60;
+  a[t] = 120;
   return a;
 }
 
@@ -13968,7 +14109,7 @@ let botPhase = 0;
 
 function botWeaponType(level) {
   if (mod('snipers')) return pick(allowedOnly(['musket', 'longrifle', 'harpoon', 'musket']));
-  if (mod('shotguns')) return pick(allowedOnly(['blunderbuss', 'grapeshot']));
+  if (mod('shotguns')) return pick(allowedOnly(['blunderbuss', 'grapeshot', 'sawedoff', 'flakgun', 'pepperbox']));
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
   return pick(lootPoolForMode());
 }
@@ -16353,9 +16494,17 @@ function updateCompass() {
 
 function updateMapName() {
   if (!mapNameEl) return;
-  const cx = clamp(Math.floor((player.pos.x / WORLD_EDGE + 1) / 2 * 6), 0, 5);
-  const cz = clamp(Math.floor((player.pos.z / WORLD_EDGE + 1) / 2 * 6), 0, 5);
-  const nm = sectorNamesForMode()[cz * 6 + cx];
+  // Inside a town, say so: the name matters more than the sector grid.
+  let nm = '';
+  for (let i = 0; i < worldPOIs.length; i++) {
+    const poi = worldPOIs[i];
+    if (Math.hypot(player.pos.x - poi.x, player.pos.z - poi.z) < poi.r) { nm = poi.name; break; }
+  }
+  if (!nm) {
+    const cx = clamp(Math.floor((player.pos.x / WORLD_EDGE + 1) / 2 * 6), 0, 5);
+    const cz = clamp(Math.floor((player.pos.z / WORLD_EDGE + 1) / 2 * 6), 0, 5);
+    nm = sectorNamesForMode()[cz * 6 + cx] || 'THE COAST';
+  }
   if (mapNameEl.dataset.sec !== nm) {
     mapNameEl.dataset.sec = nm;
     mapNameEl.textContent = nm;
@@ -16629,6 +16778,25 @@ function drawMinimap() {
     ctx.setLineDash([5, 5]);
     ctx.stroke();
     ctx.setLineDash([]);
+  }
+
+  // ---- town names, printed across the map in big type. Drawn after the storm
+  // shade so they stay white against the purple.
+  if (worldPOIs.length) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < worldPOIs.length; i++) {
+      const poi = worldPOIs[i];
+      const [tx, ty] = w2m(poi.x, poi.z);
+      ctx.font = '800 13px Archivo, Inter, system-ui, sans-serif';
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = 'rgba(3,9,12,.88)';
+      ctx.strokeText(poi.name, tx, ty);
+      ctx.fillStyle = 'rgba(255,255,255,.97)';
+      ctx.fillText(poi.name, tx, ty);
+    }
+    ctx.restore();
   }
 
   // bots — a Rift Radar in your bag puts every one of them on the map
@@ -17700,8 +17868,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 3 };
-const VERSION_PREV = '8.3.2';
+const VERSION = { major: 8, minor: 3, patch: 4 };
+const VERSION_PREV = '8.3.3';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
