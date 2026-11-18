@@ -6645,6 +6645,7 @@ img.gunIc {
       <li><span class="wnTag">05</span><div><b>NO SIGN-IN, NO ITEMS</b> — the lobby hands a guest the Recruit outfit and nothing else. Buying and the pirate token payout need an account; sign in and everything the account holds comes straight back.</div></li>
       <li><span class="wnTag">06</span><div><b>RELOAD'S MIXED POOL</b> — Reload draws the same blended pool as Blitz: the full arsenal mixed together, plus anything released through weapons.json for a power hour.</div></li>
       <li><span class="wnTag">07</span><div><b>THE LOBBY HUNTS THE BOT PILOT</b> — when a bot has the gunship, everyone turns on it: no shooter cap, no distance limit, and even a Blunderbuss reaches up at it. It goes down fast. When you fly, only three shooters break off, as before.</div></li>
+      <li><span class="wnTag">08</span><div><b>DROPS ARRIVE LOADED</b> — every gun you take off an eliminated player now comes with a full magazine instead of the few rounds they had left, so a pickup is ready to fire.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -13735,7 +13736,12 @@ function damageBot(b, amount, attackerName, head, point, attacker) {
 }
 
 function dropBotLoot(b) {
-  const items = [b.weapon, makeGold(50)];
+  const w = b.weapon;
+  // A dropped gun arrives loaded: whatever the bot burned through is refilled
+  // to the magazine the weapon ships with, so a pickup never lands half empty
+  // and forces a reload the moment you take it.
+  if (w && w.kind === 'weapon' && weaponUsesAmmo(w)) w.mag = WEAPONS[w.type].mag;
+  const items = [w, makeGold(50)];
   if (Math.random() < 0.6) items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   for (const it of items) {
     spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
@@ -17884,8 +17890,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 3, patch: 5 };
-const VERSION_PREV = '8.3.4';
+const VERSION = { major: 8, minor: 3, patch: 6 };
+const VERSION_PREV = '8.3.5';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
