@@ -5915,28 +5915,34 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
 #deathCine .dcRankBanner.down { color:#fff; background:rgba(120,18,30,.92); border-color:rgba(255,90,110,.5); }
 
 /* ============================== RESPAWN COUNTDOWN ==============================
-   Reload's respawn overlay wears the cinematic look now: a flat banner at the
-   top of the screen over a red wash — the live game stays visible below it
-   while you wait to drop back in. */
+   Reload's respawn overlay wears the cinematic look: a fully transparent
+   wash with a flat banner that fades and slides in on the same smooth easing
+   as the eliminated screen — the live match stays visible below it. */
 #respawn {
+  opacity:0; visibility:hidden;
+  transform:translateY(-18px);
+  transition:opacity .55s cubic-bezier(.2,.9,.3,1), transform .55s cubic-bezier(.2,.9,.3,1), visibility .55s;
   background:
-    linear-gradient(180deg, rgba(90,10,18,0) 0%, rgba(96,10,18,.26) 55%, rgba(130,12,20,.5) 100%),
-    radial-gradient(120% 90% at 50% 50%, rgba(110,8,16,0) 55%, rgba(110,8,16,.34) 100%);
+    linear-gradient(180deg, rgba(90,10,18,0) 0%, rgba(96,10,18,.14) 55%, rgba(110,8,16,.3) 100%),
+    radial-gradient(120% 90% at 50% 50%, rgba(110,8,16,0) 60%, rgba(110,8,16,.2) 100%);
   align-items:flex-start;
   padding-top:11vh;
-  animation:fadeIn .3s ease-out;
+  animation:none;
 }
+#respawn.hide { display:flex !important; }
+#respawn:not(.hide) { opacity:1; visibility:visible; transform:translateY(0); }
 .respBox {
-  background:rgba(9,10,14,.82);
-  border:1px solid rgba(255,90,110,.32);
+  background:rgba(9,10,14,.72);
+  border:1px solid rgba(255,90,110,.28);
   border-left:3px solid #ff5a6e;
   border-radius:0;
   clip-path:none;
   box-shadow:none;
   padding:12px 30px 14px;
-  animation:dcIn .45s cubic-bezier(.2,.9,.3,1) both;
+  animation:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
-@keyframes dcIn { from { opacity:0; transform:translateY(-18px); } }
 .respTitle {
   color:#ff5a6e;
   font-size:clamp(20px,3.4vw,30px);
@@ -6904,8 +6910,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE RESPAWN SCREEN MATCHES THE CINEMATICS</b> — Reload's respawn countdown wears the new look: a flat banner at the top of the screen over a soft red wash, with the live match visible below while you wait to drop back in.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE RANKED RECAP LIVES IN THE CINEMATIC</b> — no more card popping over your face. The recap now folds into the win and death screens: an RP cell in the bottom strip and a RANK UP / RANK DOWN banner under the title, all part of one screen.</div></li>
+      <li><span class="wnTag">01</span><div><b>SMOOTHER RESPAWN BANNER</b> — the respawn countdown is fully transparent now and slides in with the same smooth easing as the eliminated screen, instead of popping in. The live match reads clearly behind it the whole five seconds.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18732,8 +18737,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 8 };
-const VERSION_PREV = '8.4.7';
+const VERSION = { major: 8, minor: 4, patch: 9 };
+const VERSION_PREV = '8.4.8';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
