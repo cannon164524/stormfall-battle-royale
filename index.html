@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.08PT</div>
+      <div class="verTag" id="verTag">v9.09PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,15 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.08PT</b>
+        <b id="wnVersion">v9.09PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.07PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.08PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>WARM UP IN THE LOBBY</b> — the pre-game is yours now: run around, shoot the bots standing about, and watch the damage numbers land. Nobody goes down before the bus does — hits take a bot to one health and stop there, no knocks, no kills, no walls going up — and their health is put back the moment they board.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOSSES</b> — one to three named bruisers now hold the named places: the Drowned King, Salt Mother, Wreck Warden and Tide Colossus. They are half again your size, carry nine hundred health and a mythic, cannot be knocked down, and do not ride the bus. Put one down and it pays out a second vault-grade gun, heals, a hundred and twenty rounds and two hundred and fifty gold.</div></li>
+      <li><span class="wnTag">02</span><div><b>BOTS TAKE BOATS</b> — a bot caught in open water now swims for the nearest free hull, drives it at its own goal and steps off when it gets there. If the boat is wrecked underneath it, it goes back to swimming.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9681,11 +9682,8 @@ function exitVehicle() {
   toast('BOAT LEFT', 'sub');
 }
 
-function driveVehicle(v, dt) {
-  // input.fwd / input.right carry the keyboard and the touch stick alike
-  const throttle = clamp(input.fwd, -1, 1);
-  const steer = -clamp(input.right, -1, 1);
-  const top = (input.sprint || keyHeld('sprint')) ? VEHICLE_BOOST : VEHICLE_TOP;
+/* Hull physics, shared by the player at the wheel and any bot driving one. */
+function stepBoat(v, dt, throttle, steer, top) {
   const pos = v.group.position;
 
   if (throttle > 0) v.speed += 17 * dt;
@@ -9697,7 +9695,6 @@ function driveVehicle(v, dt) {
   // the rudder only bites once the boat is moving
   const grip = clamp(Math.abs(v.speed) / 7, 0, 1);
   v.yaw += steer * 1.8 * grip * (v.speed < 0 ? -1 : 1) * dt;
-  player.yaw = v.yaw;
   v.dir.set(Math.sin(v.yaw), 0, Math.cos(v.yaw));
 
   const prevX = pos.x, prevY = pos.y, prevZ = pos.z;
@@ -9741,15 +9738,75 @@ function driveVehicle(v, dt) {
 
   for (let i = 0; i < v.props.length; i++) v.props[i].rotation.z += v.speed * dt * 5;
 
-  // the driver rides inside, so everything that reads the player follows the boat
+  vehicleRam(v);
+  updateVehicleBar(v);
+  if (v.hp <= 0) destroyVehicle(v);
+}
+
+function driveVehicle(v, dt) {
+  // input.fwd / input.right carry the keyboard and the touch stick alike
+  const throttle = clamp(input.fwd, -1, 1);
+  const steer = -clamp(input.right, -1, 1);
+  const top = (input.sprint || keyHeld('sprint')) ? VEHICLE_BOOST : VEHICLE_TOP;
+  stepBoat(v, dt, throttle, steer, top);
+  if (!player.driving) return;              // wrecked under us this frame
+  const pos = v.group.position;
+  player.yaw = v.yaw;
   player.pos.set(pos.x, pos.y + 0.9, pos.z);
   player.vel.set(0, 0, 0);
   player.onGround = true;
   player.pitch = clamp(player.pitch, -0.55, 0.45);
+}
 
-  vehicleRam(v);
-  updateVehicleBar(v);
-  if (v.hp <= 0) destroyVehicle(v);
+/* A bot at the wheel: point the nose at its goal and hold the throttle. */
+function driveBotBoat(v, dt) {
+  const b = v.driver;
+  if (!b || b === 'player' || !b.alive || b.out) {
+    if (b && b !== 'player') b.boat = null;
+    v.driver = null;
+    return;
+  }
+  const goal = b.goal || b.attackerPos || null;
+  const dx = (goal ? goal.x : 0) - v.group.position.x;
+  const dz = (goal ? goal.z : 0) - v.group.position.z;
+  const want = Math.atan2(dx, dz);
+  const diff = ((want - v.yaw + Math.PI) % TAU + TAU) % TAU - Math.PI;
+  const steer = clamp(diff * 1.6, -1, 1);
+  const throttle = Math.abs(diff) < 0.9 ? 1 : 0.3;
+  stepBoat(v, dt, throttle, steer, VEHICLE_TOP * 0.85);
+  if (!v.group.parent) { b.boat = null; return; }
+  b.pos.set(v.group.position.x, v.group.position.y, v.group.position.z);
+  b.vel.set(0, 0, 0);
+  b.yaw = v.yaw;
+  if (b.rig) b.rig.group.visible = false;
+  if (goal && Math.hypot(dx, dz) < 12) botLeaveBoat(b);
+}
+
+/* Bots swim to a free hull and take it. */
+function botTryBoat(b) {
+  if (!b || b.boat || !b.alive || b.dropping || b.knocked) return;
+  if (waterDepthAt(b.pos.x, b.pos.z) < 1.15) return;
+  const v = nearestVehicle(b.pos, 9);
+  if (!v || v.driver) return;
+  v.driver = b;
+  b.boat = v;
+  b.pos.copy(v.group.position);
+  b.vel.set(0, 0, 0);
+  if (b.rig) b.rig.group.visible = false;
+}
+
+function botLeaveBoat(b) {
+  const v = b.boat;
+  b.boat = null;
+  if (!v) return;
+  if (v.driver === b) v.driver = null;
+  v.speed *= 0.4;
+  b.pos.set(v.group.position.x, v.group.position.y + 0.4, v.group.position.z);
+  b.vel.set(0, 0, 0);
+  if (b.rig) {
+    b.rig.group.visible = true;
+    b.rig.group.position.copy(b.pos);
+  }
 }
 
 /* The speed is the weapon: a click over walking pace is a shove, a full run
@@ -9759,7 +9816,7 @@ function vehicleRam(v) {
   const speed = Math.abs(v.speed);
   if (speed < VEHICLE_RAM_MIN) return;
   const pos = v.group.position;
-  const who = v.driver === 'player' ? 'You' : 'BOAT';
+  const who = v.driver === 'player' ? 'You' : (v.driver && v.driver.name ? v.driver.name : 'BOAT');
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
     if (!b.alive || b.out || b.dropping) continue;
@@ -9789,6 +9846,10 @@ function destroyVehicle(v, source) {
   vehicles.splice(idx, 1);
   const pos = v.group.position.clone();
   const mine = v.driver === 'player';
+  if (v.driver && v.driver !== 'player') {
+    v.driver.boat = null;
+    if (v.driver.rig) v.driver.rig.group.visible = true;
+  }
   if (mine) player.driving = null;
   if (v.group.parent) v.group.parent.remove(v.group);
   disposeTree(v.group);
@@ -9823,7 +9884,11 @@ function updateVehicles(dt) {
     const v = vehicles[i];
     if (!v) continue;
     if (v.driver === 'player') {
-      driveVehicle(v, dt);   // may wreck the car and drop it from the list
+      driveVehicle(v, dt);   // may wreck the boat and drop it from the list
+      continue;
+    }
+    if (v.driver) {          // a bot at the wheel
+      driveBotBoat(v, dt);
       continue;
     }
     v.speed = lerp(v.speed, 0, 1 - Math.exp(-2.4 * dt));
@@ -9949,6 +10014,7 @@ function beginStaging() {
   // the bus opens.
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
+    if (b.boss) continue;                   // a boss holds its own ground
     const a = (i / Math.max(1, bots.length)) * TAU + rand(-0.25, 0.25);
     const d = rand(7, 24);
     b.pos.set(player.pos.x + Math.cos(a) * d, 0, player.pos.z + Math.sin(a) * d);
@@ -10029,6 +10095,7 @@ function startBus() {
   const n = Math.max(1, bots.length);
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
+    if (b.boss) continue;                   // bosses stay out on the islands
     // One at a time, laddered down the run: nobody rides next to anybody else,
     // and nobody is seen in the bus — they drop out of the back when it is
     // their turn.
@@ -13983,6 +14050,7 @@ function teamMatesOf(e) {
 }
 
 function canKnockBot(b) {
+  if (b.boss) return false;   // a boss goes down when it goes down
   if (!isKnockMode() || !state.teamMode || b.knocked || b.out) return false;
   return teamMatesOf(b).length > 0;
 }
@@ -14355,7 +14423,18 @@ function dropBotLoot(b) {
   // and forces a reload the moment you take it.
   if (w && w.kind === 'weapon' && weaponUsesAmmo(w)) w.mag = WEAPONS[w.type].mag;
   const items = [w, makeGold(Math.round(50 * anomalyGoldMul()))];
-  if (Math.random() < 0.6) items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
+  if (b.boss) {
+    // a boss pays out: a second vault-grade gun, heals, a pile of gold and ammo
+    const bossPool = mythicPoolForMode().concat(exoticPoolForMode());
+    items.push(makeWeapon(bossPool.length ? pick(bossPool) : 'mythic_deepwater', R_MYTHIC));
+    items.push(makeGold(250));
+    items.push(makeHeal('shield', 1));
+    items.push(makeHeal(pick(['mini', 'bandage']), 2));
+    items.push(makeAmmo(pick(['light', 'medium', 'heavy']), 120));
+    toast('BOSS DOWN · ' + b.name, 'sub');
+  } else if (Math.random() < 0.6) {
+    items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
+  }
   for (const it of items) {
     spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
   }
@@ -14810,6 +14889,46 @@ function spawnBots(n) {
   for (let i = 0; i < n; i++) spawnBot(i);
 }
 
+/* =========================================================================
+   BOSSES — named bruisers that hold the named places. They are bots
+   underneath, so every system already knows how to hit them, but they carry
+   nine hundred health, never get knocked down, and drop vault-grade loot.
+   ========================================================================= */
+const BOSS_NAMES = ['THE DROWNED KING', 'SALT MOTHER', 'WRECK WARDEN', 'TIDE COLOSSUS'];
+
+function spawnBosses() {
+  if (isOG() || isGunGame() || isAimTest() || isSandbox()) return;
+  const spots = worldPOIs.slice();
+  const want = clamp(Math.round(bots.length / 12), 1, 3);
+  for (let i = 0; i < want && spots.length; i++) {
+    const poi = spots.splice(Math.floor(Math.random() * spots.length), 1)[0];
+    const before = bots.length;
+    spawnBot(before);
+    const b = bots[before];
+    if (!b) continue;
+    const x = poi.x + rand(-8, 8);
+    const z = poi.z + rand(-8, 8);
+    b.pos.set(x, Math.max(terrainHeight(x, z), TERRAIN_FLOOR) + 0.12, z);
+    b.vel.set(0, 0, 0);
+    b.dropping = false;
+    b.boss = true;
+    b.name = BOSS_NAMES[i % BOSS_NAMES.length];
+    b.skill = 0.95;
+    b.hp = 900;
+    b.shield = 100;
+    b.overshield = 100;
+    b.team = 1;
+    b.mate = false;
+    b.weapon = makeWeapon(pick(['mythic_deepwater', 'mythic_brine', 'exotic_geyser', 'mythic_tidepistol']), R_MYTHIC);
+    b.mag = WEAPONS[b.weapon.type].mag;
+    if (b.rig) {
+      b.rig.group.position.copy(b.pos);
+      b.rig.group.scale.setScalar(1.5);
+      if (!state.remoteJoin) setRigWeapon(b.rig, b.weapon.type);
+    }
+  }
+}
+
 function assignTeams() {
   for (let i = 0; i < bots.length; i++) {
     bots[i].team = 1;
@@ -15011,6 +15130,14 @@ function updateBot(b, dt) {
     b.heat = Math.max(0, (b.heat || 0) - dt * 0.30);
   }
   if (b.knocked) { updateBotCrawl(b, dt); return; }
+
+  // a boat carries them: no walking, no swimming, just the hull
+  if (b.boat) return;
+  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && state.time > (b.boatTryAt || 0)) {
+    b.boatTryAt = state.time + 1.2;
+    botTryBoat(b);
+    if (b.boat) return;
+  }
 
   if (b.dropping) {
     b.vel.y -= 38 * (gravityNow() / GRAVITY) * dt;
@@ -18555,6 +18682,7 @@ function startMatch() {
   assignTeams();
   positionFighters();
   spawnVehicles();
+  spawnBosses();
   // A drop seeds its long gun when the player lands; a ground start seeds it here.
   state.landGunSeeded = false;
   if (!player.dropping && !isGunGame()) {
@@ -19025,8 +19153,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 8 };
-const VERSION_PREV = '9.07PT';
+const VERSION = { season: 9, release: 9 };
+const VERSION_PREV = '9.08PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
