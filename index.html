@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.04PT</div>
+      <div class="verTag" id="verTag">v9.05PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,17 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.04PT</b>
+        <b id="wnVersion">v9.05PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.03PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.04PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE DROWNED COAST</b> — the one island is gone. Five islands now sit on a ring with open water between them, and five places are named on the map: Drowned Docks on the crown cay, the southern reach, the eastern and western shelves, and the low south-west flats. Each is laid out differently, with lone huts out on the cays.</div></li>
-      <li><span class="wnTag">02</span><div><b>SWIMMING</b> — water holds you at the surface now. You swim at a third of walking pace, cannot sprint or jump out of it, and a drop that ends over water splashes instead of landing on the sea floor. Bots swim too.</div></li>
-      <li><span class="wnTag">03</span><div><b>WATER ARSENAL</b> — the black-powder set is vaulted. Fourteen water weapons replace it, from the Tide Pistol and Riptide SMG up through the Geyser Launcher and Flood Lance to the Deepwater Rifle, plus mythic and exotic versions of four of them. Loot, vending, the gun ladder and the seed guns all run the new set.</div></li>
-      <li><span class="wnTag">04</span><div><b>DEEP PEARL</b> — the pirate token is gone. A deep pearl turns up in one chest in twenty instead, and the bargain is the same: win the match with it still in your boons and it buys out the whole shop and the battle pass.</div></li>
+      <li><span class="wnTag">01</span><div><b>ONE AT A TIME</b> — the lobby now leaves the bus in a trickle instead of a crowd: each bot's turn comes a beat after the last, spread down the whole run, and you meet them on the ground rather than in the sky together. Nobody is drawn inside the bus any more; they drop out of the back, already falling, when it is their turn.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9975,19 +9972,18 @@ function startBus() {
   camRig.ready = false;
 
   const ride = bus.len / bus.speed;
+  const n = Math.max(1, bots.length);
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
-    const a = (i / Math.max(1, bots.length)) * TAU;
-    b.busOff = new THREE.Vector3(
-      Math.cos(a) * rand(1.4, 2.6),
-      rand(-1.6, 0.8),
-      Math.sin(a) * rand(2.0, 4.0)
-    );
-    b.releaseAt = state.time + BUS_LOCK + rand(0.35, 1) * ride * 0.85;
+    // One at a time, laddered down the run: nobody rides next to anybody else,
+    // and nobody is seen in the bus — they drop out of the back when it is
+    // their turn.
+    const slot = (i + 0.5) / n;
+    b.releaseAt = state.time + BUS_LOCK + (0.16 + slot * 0.8) * ride + rand(-0.3, 0.3);
     b.dropping = true;
     b.vel.set(0, 0, 0);
     b.pos.copy(g.position);
-    if (b.rig) b.rig.group.visible = true;
+    if (b.rig) b.rig.group.visible = false;
   }
 
   sfx('engine');
@@ -10014,8 +10010,33 @@ function leaveBus(auto) {
   sfx('land');
 }
 
+/* A bot's turn comes: it drops out of the back of the bus already falling.
+   Riders are not drawn while they wait, so the bus never shows a crowd. */
+function dropBotFromBus(b) {
+  if (!bus) {
+    b.releaseAt = undefined;
+    b.dropping = true;
+    if (b.rig) b.rig.group.visible = true;
+    return;
+  }
+  const p = bus.group.position;
+  const d = bus.dir;
+  b.pos.set(p.x - d.x * 5.6, p.y - 1.4, p.z - d.z * 5.6);
+  b.vel.set(d.x * 6, -2, d.z * 6);
+  b.dropping = true;
+  b.releaseAt = undefined;
+  if (b.rig) {
+    b.rig.group.visible = true;
+    b.rig.group.position.copy(b.pos);
+  }
+}
+
 function endBus() {
   if (!bus) return;
+  // anyone whose stop never came falls out where the bus ended up
+  for (let i = 0; i < bots.length; i++) {
+    if (bots[i].releaseAt !== undefined) dropBotFromBus(bots[i]);
+  }
   if (bus.group.parent) bus.group.parent.remove(bus.group);
   disposeTree(bus.group);
   bus = null;
@@ -10035,16 +10056,16 @@ function updateBus(dt) {
     player.pos.set(p.x, p.y - 0.4, p.z);
     player.vel.set(0, 0, 0);
   }
-  // anyone still aboard rides where the bus is until their stop comes up
+  // the riders are not drawn: each one is dropped out of the back when their
+  // turn comes, one at a time down the length of the run
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
-    if (b.releaseAt === undefined || state.time >= b.releaseAt) continue;
-    b.pos.set(p.x + b.busOff.x, p.y + b.busOff.y, p.z + b.busOff.z);
-    b.vel.set(0, 0, 0);
-    if (b.rig) {
-      b.rig.group.visible = true;
-      b.rig.group.position.copy(b.pos);
+    if (b.releaseAt === undefined) continue;
+    if (state.time < b.releaseAt) {
+      if (b.rig) b.rig.group.visible = false;
+      continue;
     }
+    dropBotFromBus(b);
   }
 
   if (player.inBus) {
@@ -18944,8 +18965,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 4 };
-const VERSION_PREV = '9.03PT';
+const VERSION = { season: 9, release: 5 };
+const VERSION_PREV = '9.04PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
