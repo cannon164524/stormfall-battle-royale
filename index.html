@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.14PT</div>
+      <div class="verTag" id="verTag">v9.15PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,15 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.14PT</b>
+        <b id="wnVersion">v9.15PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.13PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.14PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>FALL DAMAGE</b> — a drop past a jump's own landing speed now costs you health, scaled off how hard you hit and capped at eighty, with the shake and the sound to match. Skydiving onto the map is still free; it is the cliffs, roofs and hillsides afterwards that bite.</div></li>
-      <li><span class="wnTag">02</span><div><b>NO CEASEFIRE</b> — rift anomalies no longer halve damage. They change the field and the loot, not the maths, so a bullet does what the gun says while an event runs.</div></li>
+      <li><span class="wnTag">01</span><div><b>CLEAN FINISH</b> — the kill that ends the match goes straight to the victory screen. No elimination card and no elimination-jackpot card over the top of it, even if the last opponent was carrying a mythic: the loot is still on the ground if you want it, it just does not cover the win.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -13669,9 +13668,14 @@ function killBot(b, killerName) {
   if (killerName === 'You') {
     player.kills++;
     hitmarker(true);
-    showResultCard('kill', b.name.toUpperCase());
+    // the winning kill goes straight to the victory screen: no elimination
+    // card and no jackpot card coming up over the top of it
+    const lastOpponent = state.teamMode
+      ? !bots.some((x) => x.team !== player.team && !x.out && !x.boss)
+      : !bots.some((x) => x.alive && !x.boss);
+    if (!lastOpponent) showResultCard('kill', b.name.toUpperCase());
     const rareGun = b.weapon && b.weapon.kind === 'weapon' && b.weapon.rarity >= R_ASCENDANT;
-    if (rareGun) {
+    if (rareGun && !lastOpponent) {
       showRareFind(b.weapon, 'ELIMINATION JACKPOT', 'TAKE IT OFF ' + b.name.toUpperCase() + ' · DROPPED WHERE THEY FELL');
     }
     killPulse();
@@ -19255,8 +19259,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 14 };
-const VERSION_PREV = '9.13PT';
+const VERSION = { season: 9, release: 15 };
+const VERSION_PREV = '9.14PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
