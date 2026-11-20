@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.11PT</div>
+      <div class="verTag" id="verTag">v9.12PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.11PT</b>
+        <b id="wnVersion">v9.12PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.10PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.11PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOSS RULES</b> — a boss now carries a hitbox the size of its body, so shots at the big silhouette land instead of slipping past it. Bosses do not build walls, they will not walk out into the sea, and rift anomalies do not halve the damage they take: the ceasefire is for everyone else.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOSSES ARE NOT THE LOBBY</b> — a boss no longer counts towards the players alive, so a win comes when the last real opponent is down, boss or no boss. They still count as an elimination and still pay their loot if you go and take them, and the top-left counter now reads the same number the win condition uses.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -13750,23 +13750,23 @@ function checkMatchEnd() {
   if (state.ended) return;
   if (isRumble() || isSandbox() || isGunGame()) return;
   if (isReload()) {
-    const anyLeft = bots.some((x) => !x.out);
+    const anyLeft = bots.some((x) => !x.out && !x.boss);
     if (!anyLeft && (player.alive || player.respawnAt > 0)) endMatch(true);
     return;
   }
   if (isReloadDuos()) {
-    const foes = bots.filter((b) => b.team !== player.team);
+    const foes = bots.filter((b) => b.team !== player.team && !b.boss);
     if (foes.length && foes.every((b) => b.out)) { endMatch(true); return; }
     if (!player.alive && player.respawnAt <= 0 && !mateAlive()) endMatch(false, player.lastHitBy || 'The Storm');
     return;
   }
   if (isDuos()) {
-    const foes = bots.filter((b) => b.team !== player.team);
+    const foes = bots.filter((b) => b.team !== player.team && !b.boss);
     if (foes.length && foes.every((b) => b.out)) { endMatch(true); return; }
     if (!player.alive && player.out && mateGone()) endMatch(false, player.lastHitBy || 'The Storm');
     return;
   }
-  if (player.alive && bots.filter((x) => x.alive).length === 0) endMatch(true);
+  if (player.alive && bots.filter((x) => x.alive && !x.boss).length === 0) endMatch(true);
 }
 
 function addTeamScore(team) {
@@ -17712,7 +17712,7 @@ function updateHUD() {
   }
 
   let alive = 0;
-  for (const b of bots) if (b.alive) alive++;
+  for (const b of bots) if (b.alive && !b.boss) alive++;
   if (player.alive) alive++;
   aliveEl.textContent = alive;
   elimEl.textContent = player.kills;
@@ -18779,7 +18779,7 @@ function startMatch() {
     seedLongGunNear(player.pos);
     state.landGunSeeded = true;
   }
-  state.alive = bots.length + 1;
+  state.alive = bots.filter((b) => !b.boss).length + 1;
 
   if (net.connected) {
     netEnsureRemoteRig();
@@ -18875,7 +18875,7 @@ function placementNow(win) {
     return teams.size + 1;
   }
   let aliveBots = 0;
-  for (const b of bots) if (isReload() ? !b.out : b.alive) aliveBots++;
+  for (const b of bots) if ((isReload() ? !b.out : b.alive) && !b.boss) aliveBots++;
   return aliveBots + 1;
 }
 
@@ -19243,8 +19243,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 11 };
-const VERSION_PREV = '9.10PT';
+const VERSION = { season: 9, release: 12 };
+const VERSION_PREV = '9.11PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
