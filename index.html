@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v2.2.0</div>
+      <div class="verTag" id="verTag">v9.01PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6926,18 +6926,19 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <div class="wnCard">
     <div class="wnTop">
       <div>
-        <div class="wnTitle">WHAT'S NEW</div>
-        <div class="wnSub">STORMFALL · PATCH NOTES</div>
+        <div class="wnTitle">PLAYTEST UPDATES</div>
+        <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v2.2.0</b>
-        <span id="wnLevel">MAJOR UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v2.1.0</div>
+        <b id="wnVersion">v9.01PT</b>
+        <span id="wnLevel">PLAYTEST UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.1.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SMOOTHER RESPAWN BANNER</b> — the respawn countdown is fully transparent now and slides in with the same smooth easing as the eliminated screen, instead of popping in. The live match reads clearly behind it the whole five seconds.</div></li>
+      <li><span class="wnTag">01</span><div><b>PLAYTEST NUMBERING</b> — this build numbers itself apart from the live game: 9.01PT, 9.02PT, and the second number moves on every change, big or small. These notes are rewritten to match.</div></li>
+      <li><span class="wnTag">02</span><div><b>VEHICLES IN, PLANE OUT</b> — six driveable cars are parked around the island. Stand next to one and press E, then W/S for throttle and A/D to steer; the nose hurts in proportion to how fast you were going. The gunship is gone.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18523,22 +18524,22 @@ function setMode(m) {
 }
 
 /* ---------------- versioning ----------------
-   MAJOR . MINOR . PATCH
-   MAJOR is the season number: this build is Season 9, so it lives on 9.x.
-   9.0.0 opens the season and every update through it stays on 9.
-   - minor goes up for a major update (9.0.0 -> 9.1.0)
-   - patch goes up for small updates (9.0.0 -> 9.0.1)
-   The numbers are plain, never padded or rolled over: the minor keeps
-   counting 10, 11, 12 inside a season, so 9.9.0 is followed by 9.10.0.
-   The live site is a separate copy of this repository and stays on
-   8.4.9 / Season 7; nothing built here reaches it.
+   SEASON . RELEASE PT — 9.01PT, 9.02PT, 9.03PT…
+   - the first number is the season, so every Season 9 build reads 9.xxPT
+   - the second is the playtest release and it moves on every change, big or
+     small: 9.01PT, 9.02PT, and straight on past 9.99PT to 9.100PT
+   - the PT suffix is what separates this build from the live game. The live
+     site is a separate copy of this repository on 8.4.9 / Season 7, and
+     nothing built here reaches it.
    VERSION_PREV is always the version string this build replaced.
+   The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 1, patch: 0 };
-const VERSION_PREV = '9.0.0';
+const VERSION = { season: 9, release: 1 };
+const VERSION_PREV = '9.1.0';
 
 function versionString() {
-  return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
+  const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
+  return VERSION.season + '.' + rel + 'PT';
 }
 
 function setVersionUI() {
@@ -18549,7 +18550,7 @@ function setVersionUI() {
   const hist = document.getElementById('wnHist');
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
-  if (lvl) lvl.textContent = VERSION.patch === 0 ? 'MAJOR UPDATE' : 'SMALL UPDATE';
+  if (lvl) lvl.textContent = 'PLAYTEST UPDATE';
 }
 
 /* =========================================================================
@@ -21959,8 +21960,11 @@ const MOTD_CACHE_KEY = 'stormfall.motd.last';
 const MOTD_DISMISS_KEY = 'stormfall.motd.dismissed';
 
 function motdVersionCmp(a, b) {
-  const pa = String(a || '0').split('.').map(Number);
-  const pb = String(b || '0').split('.').map(Number);
+  // the playtest build signs itself "9.01PT": read the leading digits of each
+  // segment so the PT suffix never turns a number into NaN
+  const parts = (v) => String(v || '0').split('.').map((s) => parseInt(s, 10) || 0);
+  const pa = parts(a);
+  const pb = parts(b);
   for (let i = 0; i < 3; i++) {
     const x = pa[i] || 0, y = pb[i] || 0;
     if (x !== y) return x - y;
