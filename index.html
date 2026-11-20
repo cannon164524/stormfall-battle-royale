@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.10PT</div>
+      <div class="verTag" id="verTag">v9.11PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.10PT</b>
+        <b id="wnVersion">v9.11PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.09PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.10PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOSS MARKERS</b> — every boss now carries a red health bar over its head that empties as you work it down, and sits on the map as a big red skull wherever it is, radar or no radar. Both clear the moment the boss goes down.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOSS RULES</b> — a boss now carries a hitbox the size of its body, so shots at the big silhouette land instead of slipping past it. Bosses do not build walls, they will not walk out into the sea, and rift anomalies do not halve the damage they take: the ceasefire is for everyone else.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9783,7 +9783,7 @@ function driveBotBoat(v, dt) {
 
 /* Bots swim to a free hull and take it. */
 function botTryBoat(b) {
-  if (!b || b.boat || !b.alive || b.dropping || b.knocked) return;
+  if (!b || b.boss || b.boat || !b.alive || b.dropping || b.knocked) return;
   if (waterDepthAt(b.pos.x, b.pos.z) < 1.15) return;
   const v = nearestVehicle(b.pos, 9);
   if (!v || v.driver) return;
@@ -12936,8 +12936,10 @@ function hitTest(o, d, maxDist, shooter, shooterTeam) {
     const b = bots[i];
     if (!b.alive || b === shooter || b.dropping) continue;
     if (state.teamMode && shooterTeam !== undefined && shooterTeam !== null && b.team === shooterTeam) continue;
-    const tb = rayCapsule(o, d, b.pos.x, b.pos.y + 0.22, b.pos.y + 1.35, b.pos.z, 0.36);
-    const th = raySphere(o, d, b.pos.x, b.pos.y + 1.8, b.pos.z, 0.27);
+    // a boss is half again the size, so body and head scale with the rig
+    const bs = b.boss ? 1.5 : 1;
+    const tb = rayCapsule(o, d, b.pos.x, b.pos.y + 0.22 * bs, b.pos.y + 1.35 * bs, b.pos.z, 0.36 * bs);
+    const th = raySphere(o, d, b.pos.x, b.pos.y + 1.8 * bs, b.pos.z, 0.27 * bs);
     if (th >= 0 && (tb < 0 || th <= tb + 0.18)) {
       if (th < best.dist) {
         best.dist = th; best.kind = 'bot'; best.bot = b; best.head = true; best.col = null;
@@ -13007,7 +13009,7 @@ function travelDistanceFor(origin, dir, maxDist, shooter, shooterTeam, rayDist) 
     const b = bots[i];
     if (!b.alive || b === shooter || b.dropping) continue;
     if (state.teamMode && shooterTeam !== undefined && shooterTeam !== null && b.team === shooterTeam) continue;
-    consider(b.pos.x, b.pos.y + 1.0, b.pos.z, 1.15);
+    consider(b.pos.x, b.pos.y + 1.0, b.pos.z, b.boss ? 1.7 : 1.15);
   }
   if (shooter && player.alive && !player.dropping) {
     consider(player.pos.x, player.pos.y + 1.0, player.pos.z, 1.25);
@@ -14355,6 +14357,8 @@ const SKULL_SVG = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" st
 function damageBot(b, amount, attackerName, head, point, attacker) {
   if (!b.alive) return;
   let d = amount;
+  // rift anomalies do not bend a boss: undo whatever the event scaled it by
+  if (b.boss) d /= Math.max(0.05, anomalyDamageMul());
   let shieldHit = 0;
   let overHit = 0;
   if (b.overshield > 0) {
@@ -15144,6 +15148,7 @@ function buildBox(b, threat) {
 }
 
 function botBuild(b) {
+  if (b.boss) return;   // a boss does not box up
   if (state.time < b.buildCooldown || mod('nobuild')) return;
   const src = b.attackerPos || (b.target ? b.target.pos : null);
   if (!src) return;
@@ -15302,6 +15307,12 @@ function updateBot(b, dt) {
     }
 
     const sp = speed * (anomalyUnstoppable() ? 1.25 : 1);
+    // a boss holds its own ground: it will not walk out into the sea
+    if (b.boss && terrainHeight(b.pos.x + moveX * sp * dt, b.pos.z + moveZ * sp * dt) < -0.4 &&
+        terrainHeight(b.pos.x, b.pos.z) > -0.4) {
+      moveX = 0;
+      moveZ = 0;
+    }
     b.pos.x += moveX * sp * dt;
     b.pos.z += moveZ * sp * dt;
     resolveCollisions(b.pos, b.pos.y, 0.45, 1.7);
@@ -19232,8 +19243,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 10 };
-const VERSION_PREV = '9.09PT';
+const VERSION = { season: 9, release: 11 };
+const VERSION_PREV = '9.10PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
