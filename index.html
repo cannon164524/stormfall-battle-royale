@@ -4653,7 +4653,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .tabs { margin-left:2px; }
   .tab { padding:5px 8px; font-size:8.5px; letter-spacing:.08em; }
   .cashTag, .vbTag { padding:2px 7px; font-size:8.5px; }
-  .verTag, #adminEntry { display:none; }
+  .verTag, .ptTag, #adminEntry { display:none; }
   .lobby { inset:40px 0 0 0; }
   .modeRow { height:84px; padding:6px 8px; }
   .modeBtn { flex:0 0 142px; padding:6px 8px 7px; }
@@ -4964,6 +4964,13 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 }
 .cashCoin, .vbCoin { border-radius:0; background:var(--teal); color:#04211c; }
 .verTag { display:block; font-size:8px; color:var(--ink-dim); }
+/* the playtest build sits beside the version, flat and quiet: one hairline,
+   no fill, no corner radius, small caps type like every other plate */
+.ptTag {
+  display:block; padding:2px 5px; border:1px solid var(--line); border-radius:0;
+  background:none; font-family:var(--body); font-size:8px; font-weight:800;
+  letter-spacing:.12em; line-height:1.2; color:var(--ink-dim); white-space:nowrap;
+}
 #adminEntry { display:block; font-size:8px; color:var(--ink-dim); }
 
 /* main area */
@@ -5260,7 +5267,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   .tagline { display:none; }
   .tab, .tab.active { padding:5px 8px; font-size:7px; letter-spacing:.08em; }
   .cashTag, .vbTag { font-size:7px; padding:2px 6px; }
-  .verTag, #adminEntry { display:none; }
+  .verTag, .ptTag, #adminEntry { display:none; }
   .lobby { top:42px; }
   .modeRow, #menu.modesOpen .modeRow { inset:0; padding:10px 8px; gap:6px; }
   #lobbyHero { left:50%; bottom:250px; }
@@ -6197,6 +6204,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="verTag" id="verTag">v2.2.0</div>
+      <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
 
@@ -6910,7 +6918,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SMOOTHER RESPAWN BANNER</b> — the respawn countdown is fully transparent now and slides in with the same smooth easing as the eliminated screen, instead of popping in. The live match reads clearly behind it the whole five seconds.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON 9 PLAYTEST BUILD</b> — this is the Season 9 playtest build. It runs the same game as the live Season 7 site, with nothing changed yet, so the two can be compared like for like. New features are tried out here first.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18731,14 +18739,18 @@ function setMode(m) {
 
 /* ---------------- versioning ----------------
    MAJOR . MINOR . PATCH
-   - minor goes up for a major update (x.9 -> x.10)
-   - patch goes up for small updates (x.x.9 -> x.x.10)
+   MAJOR is the season number: this build is Season 9, so it lives on 9.x.
+   9.0.0 opens the season and every update through it stays on 9.
+   - minor goes up for a major update (9.0.0 -> 9.1.0)
+   - patch goes up for small updates (9.0.0 -> 9.0.1)
    The numbers are plain, never padded or rolled over: the minor keeps
-   counting 10, 11, 12 inside a season. MAJOR only moves when a new season
-   ships: 8.0.0 is Season 7, and every update through the season stays on 8.
+   counting 10, 11, 12 inside a season, so 9.9.0 is followed by 9.10.0.
+   The live site is a separate copy of this repository and stays on
+   8.4.9 / Season 7; nothing built here reaches it.
+   VERSION_PREV is always the version string this build replaced.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 9 };
-const VERSION_PREV = '8.4.8';
+const VERSION = { major: 9, minor: 0, patch: 0 };
+const VERSION_PREV = '8.4.9';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
