@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.13PT</div>
+      <div class="verTag" id="verTag">v9.14PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,15 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.13PT</b>
+        <b id="wnVersion">v9.14PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.12PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.13PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO QUIET</b> — a rift anomaly now runs from the moment you land and for the whole match: 100% instead of a coin flip at each storm phase, and the next one opens the instant the last fades, with no gap in between. The event that just ran sits out the next draw, so you never get the same anomaly twice in a row.</div></li>
+      <li><span class="wnTag">01</span><div><b>FALL DAMAGE</b> — a drop past a jump's own landing speed now costs you health, scaled off how hard you hit and capped at eighty, with the shake and the sound to match. Skydiving onto the map is still free; it is the cliffs, roofs and hillsides afterwards that bite.</div></li>
+      <li><span class="wnTag">02</span><div><b>NO CEASEFIRE</b> — rift anomalies no longer halve damage. They change the field and the loot, not the maths, so a bullet does what the gun says while an event runs.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -14357,8 +14358,6 @@ const SKULL_SVG = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" st
 function damageBot(b, amount, attackerName, head, point, attacker) {
   if (!b.alive) return;
   let d = amount;
-  // rift anomalies do not bend a boss: undo whatever the event scaled it by
-  if (b.boss) d /= Math.max(0.05, anomalyDamageMul());
   let shieldHit = 0;
   let overHit = 0;
   if (b.overshield > 0) {
@@ -16030,9 +16029,8 @@ function startUnstoppable() {
    All gold pays double, and marked caches land across the island. */
 function anomalyGoldMul() { return anomaly.type === 'goldrush' ? 2 : 1; }
 
-/* Anomaly ceasefire: while any rift anomaly runs, all damage dealt by every
-   player and bot is cut in half, so fights grind on and the match stretches. */
-function anomalyDamageMul() { return anomaly.type ? 0.5 : 1; }
+/* Rift anomalies change the field, not the maths: nothing is scaled any more. */
+function anomalyDamageMul() { return 1; }
 
 function startGoldRush() {
   anomaly.data = [];
@@ -16941,6 +16939,17 @@ function updatePlayer(dt) {
   if (player.pos.y <= g + 0.02) {
     if (!player.onGround && player.vel.y < -7) {
       camRig.landDip = clamp(-player.vel.y * 0.035, 0, 0.6);
+    }
+    // fall damage: anything past a jump's own landing speed is a bill, and a
+    // long one is most of a health bar
+    if (!player.onGround && player.vel.y < -14) {
+      const fall = Math.min(80, (-player.vel.y - 14) * 3.4);
+      if (fall > 1) {
+        camRig.landDip = clamp(-player.vel.y * 0.05, 0, 0.8);
+        shake(clamp(-player.vel.y / 90, 0.08, 0.4));
+        sfx('hurt');
+        hurtPlayer(fall, 'The Fall', false, player.pos.clone());
+      }
     }
     player.pos.y = g;
     player.vel.y = 0;
@@ -19246,8 +19255,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 13 };
-const VERSION_PREV = '9.12PT';
+const VERSION = { season: 9, release: 14 };
+const VERSION_PREV = '9.13PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
