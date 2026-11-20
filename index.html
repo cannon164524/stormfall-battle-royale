@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.02PT</div>
+      <div class="verTag" id="verTag">v9.03PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,15 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.02PT</b>
+        <b id="wnVersion">v9.03PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.01PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.02PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>CAR HULLS</b> — cars carry health now, with a bar over the roof that fills down as they take it. The body stops bullets: a round that reaches a car hits the car, so it is cover for whoever is behind it and for whoever is driving, until the hull gives out and the car burns.</div></li>
+      <li><span class="wnTag">01</span><div><b>PRE-GAME LOBBY</b> — a drop match opens with you standing on the island for about twelve seconds while the board loads in. The countdown sits in the prompt line, and nothing starts until the bus arrives.</div></li>
+      <li><span class="wnTag">02</span><div><b>BATTLE BUS</b> — a balloon-lifted bus crosses the island on a fresh line every match. The doors stay shut for the first three seconds, then Space gets you out wherever you like; the end of the line throws everyone off. Nothing can shoot it down.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7135,6 +7136,9 @@ function isAimTest() { return state.mode === 'aimtest'; }
 function respawnMode() { return state.mode === 'reload' || state.mode === 'rankedreload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
 function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox' || state.mode === 'gungame'; }
 function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
+/* Modes that open on the battle bus. The labs skip it, so you can shoot and
+   build the moment they load. */
+function usesBus() { return state.mode !== 'aimtest' && state.mode !== 'sandbox'; }
 const SIPHON_AMOUNT = 100;
 function siphonActive() { return isRanked() || !!state.tourneyId; }
 function mod(key) { return !!state.mods[key]; }
@@ -9813,6 +9817,241 @@ function updateVehicleCamera(dt) {
   scopeAmount = 0;
 }
 
+/* =========================================================================
+   BATTLE BUS — every drop match opens in a pre-game lobby while the rest of
+   the board loads, then a bus floats in from one edge of the island and
+   crosses to the other. The doors stay shut for the first few seconds, then
+   Space gets you out wherever you like; the end of the line throws everyone
+   off. The bus is scenery you ride: it is not a target and has no health, so
+   nothing can bring it down.
+   ========================================================================= */
+const STAGE_TIME = 12;      // seconds in the pre-game lobby
+const BUS_LOCK = 3;         // doors stay shut this long after the ride starts
+const BUS_SPEED = 32;       // m/s along the line
+const BUS_ALT = 118;
+let bus = null;
+
+function buildBus() {
+  const g = new THREE.Group();
+  const body = mat(0x2a6f9e, true);
+  const dark = mat(0x14202c, true);
+  const accent = mat(0xc2ff3d, true);
+  const glass = new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.72 });
+  const lamp = new THREE.MeshBasicMaterial({ color: 0xe8ffd0 });
+
+  const add = (geo, material, x, y, z, rx, ry, rz) => {
+    const m = new THREE.Mesh(geo, material);
+    m.position.set(x, y, z);
+    m.rotation.set(rx || 0, ry || 0, rz || 0);
+    g.add(m);
+    return m;
+  };
+
+  // the bus: chassis, roof, a window band down each side, glass at the front
+  add(new THREE.BoxGeometry(3.2, 2.0, 8.6), body, 0, 0.4, 0);
+  add(new THREE.BoxGeometry(3.0, 0.34, 8.2), body, 0, 1.55, 0);
+  add(new THREE.BoxGeometry(3.06, 0.62, 7.0), glass, 0, 0.85, -0.2);
+  add(new THREE.BoxGeometry(2.8, 0.9, 0.14), glass, 0, 0.95, 4.28);
+  add(new THREE.BoxGeometry(3.4, 0.3, 0.4), accent, 0, 0.06, 4.4);
+  add(new THREE.BoxGeometry(0.4, 0.24, 0.1), lamp, -1.0, 0.34, 4.32);
+  add(new THREE.BoxGeometry(0.4, 0.24, 0.1), lamp, 1.0, 0.34, 4.32);
+
+  // wheels, tucked under the chassis
+  for (const sx of [-1, 1]) {
+    for (const sz of [1.9, -2.6]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.42, 12), dark);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(sx * 1.55, -0.5, sz);
+      g.add(wheel);
+    }
+  }
+
+  // the balloon it hangs from, and the ropes that hold it
+  const balloon = new THREE.Mesh(new THREE.SphereGeometry(4.4, 14, 10), accent);
+  balloon.position.set(0, 11.5, 0);
+  balloon.scale.set(1, 0.82, 1);
+  g.add(balloon);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.0, 1.4), dark);
+  cap.position.set(0, 7.2, 0);
+  g.add(cap);
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      add(new THREE.BoxGeometry(0.1, 5.8, 0.1), dark, sx * 1.3, 4.4, sz * 3.4);
+    }
+  }
+
+  g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+  return g;
+}
+
+/* The lobby: everybody stands on the island and waits for the board to fill.
+   Bots hover out of sight until the bus opens. */
+function beginStaging() {
+  state.phase = 'staging';
+  state.stageEnd = state.time + STAGE_TIME;
+  const ang = Math.random() * TAU;
+  const rad = Math.random() * 18;
+  player.pos.set(Math.cos(ang) * rad, 0, Math.sin(ang) * rad);
+  player.pos.y = Math.max(terrainHeight(player.pos.x, player.pos.z), TERRAIN_FLOOR) + 0.12;
+  player.dropping = false;
+  player.onGround = true;
+  player.knocked = false;
+  player.vel.set(0, 0, 0);
+  player.yaw = Math.random() * TAU;
+  player.pitch = -0.05;
+  if (player.rig) {
+    player.rig.group.position.copy(player.pos);
+    player.rig.group.visible = true;
+  }
+  for (let i = 0; i < bots.length; i++) if (bots[i].rig) bots[i].rig.group.visible = false;
+  camRig.ready = false;
+  toast('PRE-GAME LOBBY', 'WAITING FOR THE LOBBY TO FILL');
+  sfx('unlock');
+}
+
+/* The bus picks a line at random: it enters from one edge of the island, is
+   offset a little either way so the crossing differs every match, and leaves
+   out of the far side. Bots ride it too and peel off at their own point. */
+function startBus() {
+  const ang = Math.random() * TAU;
+  const off = rand(-110, 110);
+  const nx = -Math.sin(ang), nz = Math.cos(ang);
+  const R = 360;
+  const sx = -Math.cos(ang) * R + nx * off;
+  const sz = -Math.sin(ang) * R + nz * off;
+  const ex = Math.cos(ang) * R + nx * off;
+  const ez = Math.sin(ang) * R + nz * off;
+
+  const g = buildBus();
+  dynGroup.add(g);
+  g.position.set(sx, BUS_ALT, sz);
+  const dir = new THREE.Vector3(Math.cos(ang), 0, Math.sin(ang));
+  g.rotation.set(0, Math.atan2(dir.x, dir.z), 0, 'YXZ');
+
+  bus = {
+    group: g,
+    dir,
+    start: new THREE.Vector3(sx, BUS_ALT, sz),
+    speed: BUS_SPEED,
+    len: Math.hypot(ex - sx, ez - sz),
+    travelled: 0,
+    lockEnd: state.time + BUS_LOCK,
+    t: 0,
+  };
+
+  state.phase = 'bus';
+  player.inBus = true;
+  player.dropping = false;
+  player.onGround = false;
+  player.knocked = false;
+  player.vel.set(0, 0, 0);
+  player.pos.copy(g.position);
+  player.pitch = clamp(player.pitch, -0.7, 0.45);
+  aimDown = false;
+  buildState.active = false;
+  if (player.rig) player.rig.group.visible = false;
+  camRig.ready = false;
+
+  const ride = bus.len / bus.speed;
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    const a = (i / Math.max(1, bots.length)) * TAU;
+    b.busOff = new THREE.Vector3(
+      Math.cos(a) * rand(1.4, 2.6),
+      rand(-1.6, 0.8),
+      Math.sin(a) * rand(2.0, 4.0)
+    );
+    b.releaseAt = state.time + BUS_LOCK + rand(0.35, 1) * ride * 0.85;
+    b.dropping = true;
+    b.vel.set(0, 0, 0);
+    b.pos.copy(g.position);
+    if (b.rig) b.rig.group.visible = true;
+  }
+
+  sfx('engine');
+  toast('BATTLE BUS', 'SPACE TO JUMP · EVERYONE OFF AT THE END OF THE LINE');
+}
+
+function leaveBus(auto) {
+  if (!bus || !player.inBus) return;
+  const p = bus.group.position;
+  player.inBus = false;
+  player.pos.set(p.x, p.y - 0.6, p.z);
+  player.dropping = true;
+  player.onGround = false;
+  player.vel.set(bus.dir.x * 8, -4, bus.dir.z * 8);
+  if (player.rig) {
+    player.rig.group.visible = true;
+    player.rig.group.position.copy(player.pos);
+  }
+  camRig.ready = false;
+  aimDown = false;
+  input.jump = false;
+  state.phase = 'drop';
+  toast(auto ? 'END OF THE LINE · EVERYONE OFF' : 'JUMPED', 'sub');
+  sfx('land');
+}
+
+function endBus() {
+  if (!bus) return;
+  if (bus.group.parent) bus.group.parent.remove(bus.group);
+  disposeTree(bus.group);
+  bus = null;
+  for (let i = 0; i < bots.length; i++) bots[i].releaseAt = undefined;
+}
+
+function updateBus(dt) {
+  if (!bus) return;
+  bus.t += dt;
+  bus.travelled = Math.min(bus.len, bus.travelled + bus.speed * dt);
+  const p = bus.group.position;
+  p.copy(bus.start).addScaledVector(bus.dir, bus.travelled);
+  p.y = bus.start.y + Math.sin(bus.t * 0.8) * 1.2;
+  bus.group.rotation.z = Math.sin(bus.t * 0.5) * 0.02;
+
+  if (player.inBus) {
+    player.pos.set(p.x, p.y - 0.4, p.z);
+    player.vel.set(0, 0, 0);
+  }
+  // anyone still aboard rides where the bus is until their stop comes up
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (b.releaseAt === undefined || state.time >= b.releaseAt) continue;
+    b.pos.set(p.x + b.busOff.x, p.y + b.busOff.y, p.z + b.busOff.z);
+    b.vel.set(0, 0, 0);
+    if (b.rig) {
+      b.rig.group.visible = true;
+      b.rig.group.position.copy(b.pos);
+    }
+  }
+
+  if (player.inBus) {
+    if (state.time >= bus.lockEnd && input.jump) leaveBus(false);
+    else if (bus.travelled >= bus.len) leaveBus(true);
+  }
+  if (bus && bus.travelled >= bus.len && !player.inBus) endBus();
+}
+
+function updateBusCamera(dt) {
+  if (!bus) return;
+  const yaw = player.yaw;
+  const pitch = clamp(player.pitch, -0.9, 0.45);
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const look = new THREE.Vector3(Math.sin(yaw) * cp, sp, Math.cos(yaw) * cp);
+  const p = bus.group.position;
+  const want = new THREE.Vector3(p.x, p.y + 3.2, p.z).addScaledVector(look, -16);
+  if (!camRig.ready) { camRig.pos.copy(want); camRig.ready = true; }
+  else camRig.pos.lerp(want, 1 - Math.exp(-10 * dt));
+  camera.position.copy(camRig.pos);
+  camera.lookAt(p.x + look.x * 40, p.y + 3.2 + look.y * 40, p.z + look.z * 40);
+  camFov = lerp(camFov, 80, 1 - Math.exp(-5 * dt));
+  if (Math.abs(camera.fov - camFov) > 0.01) {
+    camera.fov = camFov;
+    camera.updateProjectionMatrix();
+  }
+  scopeAmount = 0;
+}
+
 function clearGroup(g) {
   while (g.children.length) {
     const c = g.children.pop();
@@ -9839,6 +10078,9 @@ function clearWorld() {
   extractSites.length = 0;
   vehicles.length = 0;
   player.driving = null;
+  player.inBus = false;
+  endBus();
+  state.stageEnd = 0;
   endAnomaly();
   clearLoot();
   clearDamageNumbers();
@@ -11277,6 +11519,7 @@ const player = {
   channel: null,
   gunLevel: 0,
   driving: null,
+  inBus: false,
   inv: [null, null, null, null, null],
   boons: [],
   slot: 0,
@@ -12522,7 +12765,7 @@ function hitTest(o, d, maxDist, shooter, shooterTeam) {
     }
   }
 
-  if (shooter && player.alive && !player.dropping) {
+  if (shooter && player.alive && !player.dropping && !player.inBus) {
     const tp = rayCapsule(o, d, player.pos.x, player.pos.y + 0.22, player.pos.y + 1.35, player.pos.z, 0.4);
     const thp = raySphere(o, d, player.pos.x, player.pos.y + 1.8, player.pos.z, 0.28);
     if (thp >= 0 && (tp < 0 || thp <= tp + 0.18)) {
@@ -13061,6 +13304,7 @@ function applySiphon() {
 
 function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (!player.alive) return;
+  if (player.inBus) return;   // on the bus you are out of the fight, and it cannot be shot down
   if (adminOn('god')) return;
   let d = dmg;
   if (!fromStorm && hasBoon('plate')) d *= 0.85;
@@ -14499,7 +14743,7 @@ function acquireTarget(b) {
     return hitBack;
   }
 
-  const playerOk = player.alive && !player.dropping && !player.knocked && !player.out &&
+  const playerOk = player.alive && !player.dropping && !player.knocked && !player.out && !player.inBus &&
     (!state.teamMode || player.team !== b.team);
 
   // The human should not be the whole lobby's target. The cap is deliberately
@@ -16256,6 +16500,8 @@ function updatePlayer(dt) {
     input.lookDY = 0;
   }
 
+  if (state.phase === 'staging') return;   // the lobby: stand still until the bus arrives
+  if (player.inBus) return;                // the bus carries the player until they jump
   if (player.driving) return;   // updateVehicles moves the car, and the player with it
 
   if (player.dropping) { updateDrop(dt); return; }
@@ -16493,6 +16739,7 @@ function angLerp(a, b, t) {
 }
 
 function updateCamera(dt) {
+  if (player.inBus) { updateBusCamera(dt); return; }
   if (player.driving) { updateVehicleCamera(dt); return; }
   const aspect = camera.aspect || (window.innerWidth / Math.max(1, window.innerHeight));
   const specMate = (!player.alive && player.out && isDuos()) ? mateOf() : null;
@@ -16924,7 +17171,7 @@ let plateKey = '';
 
 function updateNameplates() {
   if (!platesEl) return;
-  const on = state.teamMode && state.phase !== 'menu' && !state.ended;
+  const on = state.teamMode && state.phase !== 'menu' && state.phase !== 'staging' && !state.ended;
   platesEl.classList.toggle('hide', !on);
   const mates = on ? bots.filter((b) => b.team === player.team) : [];
   const key = mates.map((m) => m.name).join('|');
@@ -17177,7 +17424,13 @@ function updateHUD() {
   let promptText = '';
   const carNear = (!player.driving && player.alive && !player.dropping && !player.knocked)
     ? nearestVehicle(player.pos, 4.2) : null;
-  if (player.driving) {
+  if (state.phase === 'staging') {
+    promptText = '<b>PRE-GAME LOBBY</b> · BUS IN ' + Math.max(0, Math.ceil((state.stageEnd || 0) - state.time)) + 's';
+  } else if (player.inBus) {
+    promptText = (bus && state.time < bus.lockEnd)
+      ? '<b>HOLD ON</b> · DOORS IN ' + Math.max(0, Math.ceil(bus.lockEnd - state.time)) + 's'
+      : '<b>SPACE</b> JUMP';
+  } else if (player.driving) {
     // a car has no ammo counter, so the prompt line carries the speed instead
     promptText = '<b>' + Math.round(Math.abs(player.driving.speed) * 3.6) + '</b> KM/H · <b>E</b> EXIT';
   } else if (carNear) {
@@ -17584,6 +17837,7 @@ function updateMoveFromKeys() {
 }
 
 function interact() {
+  if (state.phase === 'staging' || player.inBus) return;
   if (player.driving) { exitVehicle(); return; }
   if (!player.alive || player.dropping || player.knocked) return;
   const car = nearestVehicle(player.pos, 4.6);
@@ -17612,7 +17866,7 @@ function interact() {
 
 function toggleBuild() {
   if (mod('nobuild')) { toast('BUILDING DISABLED', 'sub'); sfx('reload'); return; }
-  if (!player.alive || player.knocked || player.driving) return;
+  if (!player.alive || player.knocked || player.driving || player.inBus || state.phase === 'staging') return;
   buildState.active = !buildState.active;
   if (buildState.active) toast('BUILD MODE', 'sub');
 }
@@ -17750,7 +18004,8 @@ document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement === canvas) {
     input.lookDX += e.movementX || 0;
     input.lookDY += e.movementY || 0;
-  } else if (e.target === canvas && (state.phase === 'play' || state.phase === 'drop')) {
+  } else if (e.target === canvas && (state.phase === 'play' || state.phase === 'drop' ||
+    state.phase === 'staging' || state.phase === 'bus')) {
     // Fallback for environments where pointer lock is unavailable
     input.lookDX += (e.movementX || 0) * 0.8;
     input.lookDY += (e.movementY || 0) * 0.8;
@@ -17877,6 +18132,7 @@ function resetPlayerForMatch() {
   player.onGround = false;
   player.dropping = true;
   player.driving = null;
+  player.inBus = false;
   player.team = 0;
   player.knocked = false;
   player.bleed = 0;
@@ -18182,7 +18438,9 @@ function startMatch() {
   document.getElementById('hud').classList.add('on');
   document.getElementById('touch').classList.toggle('hide', !COARSE);
 
-  state.phase = 'drop';
+  // a drop match opens in the lobby and then on the bus; a ground start just plays
+  if (player.dropping && usesBus()) beginStaging();
+  else state.phase = player.dropping ? 'drop' : 'play';
   refreshHotbar();
   const badge = document.getElementById('modeBadge');
   if (badge) badge.innerHTML = badgeText();
@@ -18612,8 +18870,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 2 };
-const VERSION_PREV = '9.01PT';
+const VERSION = { season: 9, release: 3 };
+const VERSION_PREV = '9.02PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -19536,7 +19794,7 @@ function playReveal(entry) {
 
 function processRevealQueue() {
   if (revealActive || !revealQueue.length) return;
-  if (state.phase === 'play' || state.phase === 'drop') return;
+  if (state.phase === 'play' || state.phase === 'drop' || state.phase === 'staging' || state.phase === 'bus') return;
   const entry = revealQueue.shift();
   const el = document.getElementById('reveal');
   if (!el) return;
@@ -19715,7 +19973,7 @@ function rrCountDelta(gain) {
 function showRankedRecap(d) {
   const el = document.getElementById('rankRecap');
   if (!el) return;
-  if (state.phase === 'play' || state.phase === 'drop') return;
+  if (state.phase === 'play' || state.phase === 'drop' || state.phase === 'staging' || state.phase === 'bus') return;
   rrToken++;
   const token = rrToken;
 
@@ -20446,7 +20704,7 @@ document.getElementById('playBtn').addEventListener('click', () => {
 });
 document.getElementById('againBtn').addEventListener('click', () => backToMenu());
 document.getElementById('quitBtn').addEventListener('click', () => {
-  if (state.phase === 'play' || state.phase === 'drop') backToMenu();
+  if (state.phase === 'play' || state.phase === 'drop' || state.phase === 'staging' || state.phase === 'bus') backToMenu();
 });
 
 /* =========================================================================
@@ -20549,7 +20807,8 @@ function autoPickup() {
 }
 
 function handleCombatInput() {
-  if (!player.alive || player.dropping || player.knocked || player.driving || invOpen || vendOpen) { input.fireJust = false; return; }
+  if (!player.alive || player.dropping || player.knocked || player.driving || player.inBus ||
+      state.phase === 'staging' || invOpen || vendOpen) { input.fireJust = false; return; }
   if (buildState.active) {
     if (input.fireJust) placeBuild();
   } else if (!player.using) {
@@ -20631,6 +20890,8 @@ function animate(now) {
 
   state.time += dt;
 
+  if (state.phase === 'staging' && state.time >= state.stageEnd) startBus();
+  if (bus) updateBus(dt);
   if (state.phase === 'drop' && !player.dropping) state.phase = 'play';
 
   updatePlayer(dt);
@@ -20651,11 +20912,17 @@ function animate(now) {
     // Bots think at half rate, staggered across frames: the same behaviour for
     // roughly half the CPU, and dt is doubled so their timers stay honest.
     botPhase = botPhase ? 0 : 1;
-    for (let i = botPhase; i < bots.length; i += 2) updateBot(bots[i], dt * 2);
+    for (let i = botPhase; i < bots.length; i += 2) {
+      const b = bots[i];
+      if (state.phase === 'staging') continue;                                // still loading in
+      if (b.releaseAt !== undefined && state.time < b.releaseAt) continue;    // still on the bus
+      updateBot(b, dt * 2);
+    }
   }
   updateShieldRegen(dt);
   updateNet(dt);
-  updateStorm(dt);
+  // the storm waits for the field: it does not tick while the lobby fills or the bus flies
+  if (state.phase !== 'staging' && state.phase !== 'bus') updateStorm(dt);
   updateAnomaly(dt);
   updateVehicles(dt);
   updateGrenades(dt);
