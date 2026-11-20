@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.05PT</div>
+      <div class="verTag" id="verTag">v9.06PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,15 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.05PT</b>
+        <b id="wnVersion">v9.06PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.04PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.05PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ONE AT A TIME</b> — the lobby now leaves the bus in a trickle instead of a crowd: each bot's turn comes a beat after the last, spread down the whole run, and you meet them on the ground rather than in the sky together. Nobody is drawn inside the bus any more; they drop out of the back, already falling, when it is their turn.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOATS, NOT CARS</b> — the cars are gone. Six flat hulls now float out on the open water instead, with the same controls, the same speed and the same hull health and ram damage. They hold the water line with a slow swell, stop dead at the shallows rather than driving up a beach, and step you out swimming when you leave.</div></li>
+      <li><span class="wnTag">02</span><div><b>FASTER SWIMMING</b> — swimming is well over half walking pace now instead of a third, so a crossing between islands is a swim rather than a sentence.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7110,7 +7111,7 @@ const MODE_DEFS = {
   },
   og: {
     name: 'OG', short: 'OG', kicker: 'PLAYTEST',
-    desc: 'The game as it first shipped: the navy day-one build, the original thirteen guns on the green island, hitscan marksman rifles and all. No sprites, boons, vending machines or vehicles. Drop, loot, outlast.',
+    desc: 'The game as it first shipped: the navy day-one build, the original thirteen guns on the green island, hitscan marksman rifles and all. No sprites, boons, vending machines or boats. Drop, loot, outlast.',
     rules: ['<b>13</b> OG GUNS', 'STORM', 'NAVY BUILD'],
     adjustable: true,
     queue: (n) => n + ' OPPONENTS · OG RULES',
@@ -9420,9 +9421,9 @@ function buildRebootVans() {
 }
 
 /* =========================================================================
-   VEHICLES — flat, blocky ground cars parked around the island. E to get in,
-   W/S for throttle, A/D to steer, sprint for the top end, E to get out. Anyone
-   the nose catches takes damage read straight off how fast it was going.
+   BOATS — flat, blocky hulls moored out on the water. E to get in, W/S for
+   throttle, A/D to steer, sprint for the top end, E to get out. Anyone the
+   bow catches takes damage read straight off how fast it was going.
    ========================================================================= */
 const vehicles = [];
 const VEHICLE_TOP = 25;        // m/s, about 90 km/h before the boost
@@ -9448,49 +9449,37 @@ function buildVehicle() {
     return m;
   };
 
-  // chassis, hood and cab
-  add(new THREE.BoxGeometry(2.2, 0.55, 4.8), body, 0, 0.86, 0);
-  add(new THREE.BoxGeometry(2.05, 0.5, 1.5), body, 0, 1.16, 1.6);
-  add(new THREE.BoxGeometry(2.0, 0.85, 1.9), body, 0, 1.5, -0.5);
-  // windscreen, raked back over the hood
-  add(new THREE.BoxGeometry(1.86, 0.62, 0.12), glass, 0, 1.62, 0.52, -0.24, 0, 0);
+  // hull, bow and a flat deck
+  add(new THREE.BoxGeometry(2.3, 0.9, 5.4), body, 0, 0.0, 0);
+  add(new THREE.BoxGeometry(1.7, 0.75, 1.3), body, 0, 0.08, 2.9);
+  add(new THREE.BoxGeometry(2.0, 0.12, 4.6), dark, 0, 0.42, -0.2);
+  // gunwales down each side, and a stripe at the waterline
+  add(new THREE.BoxGeometry(0.16, 0.42, 5.2), body, -1.12, 0.42, 0);
+  add(new THREE.BoxGeometry(0.16, 0.42, 5.2), body, 1.12, 0.42, 0);
+  add(new THREE.BoxGeometry(2.36, 0.12, 5.2), accent, 0, 0.24, 0);
 
-  // cargo bed: tailgate and two rails
-  add(new THREE.BoxGeometry(2.0, 0.55, 0.14), dark, 0, 1.25, -1.5);
-  add(new THREE.BoxGeometry(0.14, 0.55, 1.5), dark, -0.95, 1.25, -0.75);
-  add(new THREE.BoxGeometry(0.14, 0.55, 1.5), dark, 0.95, 1.25, -0.75);
+  // console with a screen, a bench behind it
+  add(new THREE.BoxGeometry(1.2, 0.5, 0.9), dark, 0, 0.72, 0.5);
+  add(new THREE.BoxGeometry(1.1, 0.42, 0.1), glass, 0, 1.08, 0.9, -0.2, 0, 0);
+  add(new THREE.BoxGeometry(1.7, 0.28, 0.6), body, 0, 0.58, -1.5);
+  // bow lamp
+  add(new THREE.BoxGeometry(0.34, 0.18, 0.1), lamp, 0, 0.5, 3.5);
 
-  // bull bar, lamps and the stack
-  add(new THREE.BoxGeometry(2.3, 0.22, 0.22), accent, 0, 0.98, 2.45);
-  add(new THREE.BoxGeometry(0.14, 0.5, 0.14), accent, -0.86, 0.94, 2.42);
-  add(new THREE.BoxGeometry(0.14, 0.5, 0.14), accent, 0.86, 0.94, 2.42);
-  add(new THREE.BoxGeometry(0.42, 0.2, 0.1), lamp, -0.72, 1.16, 2.4);
-  add(new THREE.BoxGeometry(0.42, 0.2, 0.1), lamp, 0.72, 1.16, 2.4);
-  add(new THREE.CylinderGeometry(0.1, 0.1, 1.2, 6), dark, 0.98, 1.5, -1.4);
-
-  // wheels: a group per hub, so the axle spin and the steering angle stay
-  // separate, with the tyre turned onto the axle inside it
-  const wheels = [];
-  const fronts = [];
-  for (const sx of [-1, 1]) {
-    for (const sz of [1, -1]) {
-      const hub = new THREE.Group();
-      hub.position.set(sx * 1.06, 0.52, sz * 1.55);
-      const tyre = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.4, 12), dark);
-      tyre.rotation.z = Math.PI / 2;
-      hub.add(tyre);
-      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.44, 8), accent);
-      rim.rotation.z = Math.PI / 2;
-      hub.add(rim);
-      g.add(hub);
-      wheels.push(hub);
-      if (sz > 0) fronts.push(hub);
-    }
+  // outboard motor on the stern, with the propeller under it
+  add(new THREE.BoxGeometry(0.52, 0.72, 0.5), dark, 0, 0.5, -2.95);
+  const prop = new THREE.Group();
+  prop.position.set(0, 0.02, -3.2);
+  for (let i = 0; i < 3; i++) {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.58, 0.06), dark);
+    blade.rotation.z = (i / 3) * Math.PI * 2;
+    prop.add(blade);
   }
+  g.add(prop);
 
   g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
-  g.userData.wheels = wheels;
-  g.userData.fronts = fronts;
+  g.userData.wheels = [];
+  g.userData.fronts = [];
+  g.userData.props = [prop];
   return g;
 }
 
@@ -9527,6 +9516,7 @@ function addVehicle(x, y, z, yaw) {
     driver: null,
     wheels: g.userData.wheels,
     fronts: g.userData.fronts,
+    props: g.userData.props,
     bar,
     fill: barFill,
   };
@@ -9534,8 +9524,8 @@ function addVehicle(x, y, z, yaw) {
   return v;
 }
 
-/* The bar sits above the roof while the car is occupied or hurt, and reads the
-   hull: lime while it holds, amber, then coral just before it goes up. */
+/* The bar sits above the hull while the boat is occupied or hurt, and reads the
+   health: lime while it holds, amber, then coral just before it goes up. */
 function updateVehicleBar(v) {
   const bar = v.bar;
   if (!bar) return;
@@ -9551,7 +9541,7 @@ function updateVehicleBar(v) {
 }
 
 /* Rounds stop at the body, so the hull takes them instead of whoever is behind
-   it — and instead of the driver, until the car is wrecked. */
+   it — and instead of the driver, until the boat is wrecked. */
 function damageVehicle(v, amount, source, point) {
   if (!v || v.hp <= 0) return;
   v.hp -= amount;
@@ -9567,10 +9557,10 @@ function damageVehicle(v, amount, source, point) {
   if (v.hp <= 0) destroyVehicle(v, source);
 }
 
-/* Dry ground, clear of every collider, and not on top of another car. */
-function vehicleSpotFree(x, z, y) {
-  if (y < 2.6) return false;
-  if (!sideClear(x, z, y)) return false;
+/* Open water, well clear of the shore, and not on top of another boat. */
+function vehicleSpotFree(x, z) {
+  if (waterDepthAt(x, z) < 2.4) return false;
+  if (terrainHeight(x, z) > -0.6) return false;
   for (let i = 0; i < vehicles.length; i++) {
     const o = vehicles[i].group.position;
     if (Math.hypot(o.x - x, o.z - z) < 26) return false;
@@ -9580,17 +9570,16 @@ function vehicleSpotFree(x, z, y) {
 
 function spawnVehicles() {
   vehicles.length = 0;
-  // the day-one build has no cars, and a gun ladder has no room for them
+  // the day-one build has no boats, and a gun ladder has no room for them
   if (isOG() || isGunGame()) return;
-  for (let i = 0; i < 300 && vehicles.length < VEHICLE_SEATS; i++) {
+  for (let i = 0; i < 400 && vehicles.length < VEHICLE_SEATS; i++) {
     const ang = Math.random() * TAU;
-    const rad = 30 + Math.random() * 215;
+    const rad = 35 + Math.random() * 210;
     const x = Math.cos(ang) * rad;
     const z = Math.sin(ang) * rad;
-    if (Math.hypot(x, z) > 300) continue;
-    const y = Math.max(terrainHeight(x, z), TERRAIN_FLOOR);
-    if (!vehicleSpotFree(x, z, y)) continue;
-    addVehicle(x, y, z, Math.random() * TAU);
+    if (Math.hypot(x, z) > 305) continue;
+    if (!vehicleSpotFree(x, z)) continue;
+    addVehicle(x, WATER_Y - 0.12, z, Math.random() * TAU);
   }
 }
 
@@ -9624,7 +9613,7 @@ function boardVehicle(v) {
   if (player.rig) player.rig.group.visible = false;
   camRig.ready = false;
   sfx('engine');
-  toast('VEHICLE · W/S THROTTLE · A/D STEER · E EXIT', 'sub');
+  toast('BOAT · W/S THROTTLE · A/D TO TURN · E TO GET OUT', 'sub');
 }
 
 function exitVehicle() {
@@ -9641,14 +9630,22 @@ function exitVehicle() {
     v.group.position.z + rz * 2.4
   );
   resolveCollisions(player.pos, player.pos.y, PLAYER_R, 1.7);
-  player.pos.y = groundHeightAt(player.pos.x, player.pos.z, player.pos.y + 0.5);
+  if (waterDepthAt(player.pos.x, player.pos.z) > 1.15) {
+    // stepping off a boat leaves you swimming, not standing on the sea floor
+    player.pos.y = WATER_Y - 0.35;
+    player.swimming = true;
+    player.onGround = false;
+  } else {
+    player.pos.y = groundHeightAt(player.pos.x, player.pos.z, player.pos.y + 0.5);
+    player.swimming = false;
+    player.onGround = true;
+  }
   player.vel.set(0, 0, 0);
-  player.onGround = true;
   player.dropping = false;
   if (player.rig) player.rig.group.visible = true;
   camRig.ready = false;
   sfx('switch');
-  toast('VEHICLE PARKED', 'sub');
+  toast('BOAT LEFT', 'sub');
 }
 
 function driveVehicle(v, dt) {
@@ -9664,7 +9661,7 @@ function driveVehicle(v, dt) {
   v.speed -= v.speed * 0.32 * dt;
   v.speed = clamp(v.speed, -VEHICLE_REVERSE, top);
 
-  // the front wheels only bite once the car is rolling
+  // the rudder only bites once the boat is moving
   const grip = clamp(Math.abs(v.speed) / 7, 0, 1);
   v.yaw += steer * 1.8 * grip * (v.speed < 0 ? -1 : 1) * dt;
   player.yaw = v.yaw;
@@ -9682,23 +9679,15 @@ function driveVehicle(v, dt) {
     pos.z *= k;
     v.speed *= 0.4;
   }
-  // a car does not swim: the shoreline is a wall
-  if (terrainHeight(pos.x, pos.z) < -0.6) {
+  // a boat stays off the land: the shallows are a wall
+  if (terrainHeight(pos.x, pos.z) > -0.7) {
     pos.x = prevX;
     pos.z = prevZ;
     v.speed *= 0.5;
   }
 
   resolveCollisions(pos, prevY + 0.2, 1.5, 1.6);
-  let ground = groundHeightAt(pos.x, pos.z, prevY + 0.35, 0.7);
-  let struck = Math.hypot(pos.x - (prevX + v.dir.x * step), pos.z - (prevZ + v.dir.z * step)) > 0.06;
-  // a cliff face is a wall, not a ramp
-  if (ground - prevY > 0.85) {
-    pos.x = prevX;
-    pos.z = prevZ;
-    ground = prevY;
-    struck = true;
-  }
+  const struck = Math.hypot(pos.x - (prevX + v.dir.x * step), pos.z - (prevZ + v.dir.z * step)) > 0.06;
 
   const impact = Math.abs(v.speed);
   if (struck && impact > 6 && state.time >= (v.crashAt || 0)) {
@@ -9713,13 +9702,13 @@ function driveVehicle(v, dt) {
   } else if (struck) {
     v.speed *= 0.2;
   }
-  pos.y = ground;
+  // it floats: the hull rides the water line, with a slow swell under it
+  pos.y = WATER_Y - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
   v.group.rotation.set(0, v.yaw, 0, 'YXZ');
 
-  for (let i = 0; i < v.wheels.length; i++) v.wheels[i].rotation.x += v.speed * dt * 2.6;
-  for (let i = 0; i < v.fronts.length; i++) v.fronts[i].rotation.y = steer * 0.4;
+  for (let i = 0; i < v.props.length; i++) v.props[i].rotation.z += v.speed * dt * 5;
 
-  // the driver rides inside, so everything that reads the player follows the car
+  // the driver rides inside, so everything that reads the player follows the boat
   player.pos.set(pos.x, pos.y + 0.9, pos.z);
   player.vel.set(0, 0, 0);
   player.onGround = true;
@@ -9737,7 +9726,7 @@ function vehicleRam(v) {
   const speed = Math.abs(v.speed);
   if (speed < VEHICLE_RAM_MIN) return;
   const pos = v.group.position;
-  const who = v.driver === 'player' ? 'You' : 'Vehicle';
+  const who = v.driver === 'player' ? 'You' : 'BOAT';
   for (let i = 0; i < bots.length; i++) {
     const b = bots[i];
     if (!b.alive || b.out || b.dropping) continue;
@@ -9792,7 +9781,7 @@ function destroyVehicle(v, source) {
   player.onGround = false;
   if (player.rig) player.rig.group.visible = true;
   camRig.ready = false;
-  toast('VEHICLE WRECKED', 'sub');
+  toast('BOAT WRECKED', 'sub');
   hurtPlayer(34, 'Explosion', false, pos);
 }
 
@@ -9805,7 +9794,7 @@ function updateVehicles(dt) {
       continue;
     }
     v.speed = lerp(v.speed, 0, 1 - Math.exp(-2.4 * dt));
-    for (let w = 0; w < v.wheels.length; w++) v.wheels[w].rotation.x += v.speed * dt * 2.6;
+    for (let w = 0; w < v.props.length; w++) v.props[w].rotation.z += v.speed * dt * 5;
     vehicleRam(v);
     updateVehicleBar(v);
   }
@@ -16653,7 +16642,7 @@ function updatePlayer(dt) {
   if (hasBoon('boots')) speed *= 1.12;
   // in water you swim: slow, low, and no sprint
   player.swimming = player.pos.y < WATER_Y + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
-  if (player.swimming) speed = 3.3;
+  if (player.swimming) speed = 5.2;
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -17526,10 +17515,10 @@ function updateHUD() {
       : '<b>SPACE</b> JUMP';
   } else if (player.driving) {
     // a car has no ammo counter, so the prompt line carries the speed instead
-    promptText = '<b>' + Math.round(Math.abs(player.driving.speed) * 3.6) + '</b> KM/H · <b>E</b> EXIT';
+    promptText = '<b>' + Math.round(Math.abs(player.driving.speed) * 1.94) + '</b> KN · <b>E</b> TO GET OUT';
   } else if (carNear) {
     interactTarget = { type: 'vehicle', obj: carNear };
-    promptText = '<b>E</b> DRIVE';
+    promptText = '<b>E</b> BOARD';
   } else if (player.alive && !player.dropping && !player.knocked) {
     const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
     const van = site ? null : (mateNeedsReboot() ? nearestVan(player.pos, 3.6) : null);
@@ -18965,8 +18954,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 5 };
-const VERSION_PREV = '9.04PT';
+const VERSION = { season: 9, release: 6 };
+const VERSION_PREV = '9.05PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
