@@ -4967,10 +4967,28 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 /* the playtest build sits beside the version, flat and quiet: one hairline,
    no fill, no corner radius, small caps type like every other plate */
 .ptTag {
-  display:block; padding:2px 5px; border:1px solid var(--line); border-radius:0;
-  background:none; font-family:var(--body); font-size:8px; font-weight:800;
-  letter-spacing:.12em; line-height:1.2; color:var(--ink-dim); white-space:nowrap;
+  display:inline-flex; align-items:center; gap:5px; padding:2px 5px;
+  border:1px solid var(--line); border-radius:0; background:none;
+  font-family:var(--body); font-size:8px; font-weight:800; letter-spacing:.12em;
+  line-height:1.2; color:var(--ink-dim); white-space:nowrap; vertical-align:2px;
 }
+/* the mark is a hairline diamond, drawn rather than imported */
+.ptTag::before {
+  content:''; flex:none; width:5px; height:5px;
+  border:1px solid var(--coral); transform:rotate(45deg);
+}
+/* ---- the mark through the menu chrome: one per surface, never a badge wall ---- */
+.mpKicker .ptTag { margin-left:7px; }
+.mpkTitle .ptTag { margin-left:8px; }
+.playRow .ptTag { margin:8px 12px 0; align-self:flex-start; }
+/* every mode card carries it in the corner, so the whole grid reads as the
+   playtest build at a glance */
+.modeBtn::after {
+  content:''; position:absolute; right:9px; bottom:9px; pointer-events:none;
+  width:5px; height:5px; border:1px solid var(--coral); opacity:.5;
+  transform:rotate(45deg);
+}
+.modeBtn.active::after { opacity:1; }
 #adminEntry { display:block; font-size:8px; color:var(--ink-dim); }
 
 /* main area */
@@ -6226,7 +6244,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="modeRow" id="modeRowEl">
       <div class="mpkHead">
-        <span class="mpkTitle">ALL GAME MODES</span>
+        <span class="mpkTitle">ALL GAME MODES <span class="ptTag">PLAYTEST</span></span>
         <button id="modesClose" type="button">CLOSE</button>
       </div>
       <div class="modeGroup">
@@ -6407,6 +6425,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   </div>
 
   <div class="playRow" id="playRowEl">
+    <div class="ptTag" title="Season 9 playtest build">PLAYTEST BUILD</div>
     <div class="playerCard">
       <div class="pcAvatar" id="pcAvatar"></div>
       <div class="pcInfo">
@@ -6424,7 +6443,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelShop" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">STORE</div>
+        <div class="mpKicker">STORE <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
       <div class="mpMeta">SEASON 7 · NEW ISLAND</div>
@@ -6436,7 +6455,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelLocker" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">YOUR STUFF</div>
+        <div class="mpKicker">YOUR STUFF <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">LOCKER</div>
       </div>
       <div class="mpMeta" id="lockerMeta">0 / 0 OUTFITS</div>
@@ -6448,7 +6467,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 7</div>
+        <div class="mpKicker">SEASON 7 <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -6467,7 +6486,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelMp" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">PLAY TOGETHER</div>
+        <div class="mpKicker">PLAY TOGETHER <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">MULTIPLAYER</div>
       </div>
       <div class="mpMeta" id="mpStatus">NOT CONNECTED</div>
@@ -6525,7 +6544,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelSprites" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">COLLECTION</div>
+        <div class="mpKicker">COLLECTION <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">SPRITES</div>
       </div>
       <div class="mpMeta" id="spriteMeta">0 / 8 COLLECTED</div>
@@ -6537,7 +6556,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelSettings" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SYSTEM</div>
+        <div class="mpKicker">SYSTEM <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">SETTINGS</div>
       </div>
       <div class="mpMeta" id="settingsState">GRAPHICS: STANDARD</div>
@@ -6615,7 +6634,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelComp" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">TOURNAMENTS</div>
+        <div class="mpKicker">TOURNAMENTS <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">COMPETITIVE</div>
       </div>
       <div class="mpMeta" id="compMeta">BALANCE $0</div>
@@ -6640,7 +6659,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   <section id="panelAdmin" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">DEVELOPER</div>
+        <div class="mpKicker">DEVELOPER <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">ADMIN PANEL</div>
       </div>
       <div class="mpMeta" id="adminMeta">LOCKED</div>
@@ -6918,7 +6937,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEASON 9 PLAYTEST BUILD</b> — this is the Season 9 playtest build. It runs the same game as the live Season 7 site, with nothing changed yet, so the two can be compared like for like. New features are tried out here first.</div></li>
+      <li><span class="wnTag">01</span><div><b>SMOOTHER RESPAWN BANNER</b> — the respawn countdown is fully transparent now and slides in with the same smooth easing as the eliminated screen, instead of popping in. The live match reads clearly behind it the whole five seconds.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
