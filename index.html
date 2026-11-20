@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.03PT</div>
+      <div class="verTag" id="verTag">v9.04PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,15 +6930,17 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.03PT</b>
+        <b id="wnVersion">v9.04PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.02PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.03PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>PRE-GAME LOBBY</b> — a drop match opens with you standing on the island for about twelve seconds while the board loads in. The countdown sits in the prompt line, and nothing starts until the bus arrives.</div></li>
-      <li><span class="wnTag">02</span><div><b>BATTLE BUS</b> — a balloon-lifted bus crosses the island on a fresh line every match. The doors stay shut for the first three seconds, then Space gets you out wherever you like; the end of the line throws everyone off. Nothing can shoot it down.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE DROWNED COAST</b> — the one island is gone. Five islands now sit on a ring with open water between them, and five places are named on the map: Drowned Docks on the crown cay, the southern reach, the eastern and western shelves, and the low south-west flats. Each is laid out differently, with lone huts out on the cays.</div></li>
+      <li><span class="wnTag">02</span><div><b>SWIMMING</b> — water holds you at the surface now. You swim at a third of walking pace, cannot sprint or jump out of it, and a drop that ends over water splashes instead of landing on the sea floor. Bots swim too.</div></li>
+      <li><span class="wnTag">03</span><div><b>WATER ARSENAL</b> — the black-powder set is vaulted. Fourteen water weapons replace it, from the Tide Pistol and Riptide SMG up through the Geyser Launcher and Flood Lance to the Deepwater Rifle, plus mythic and exotic versions of four of them. Loot, vending, the gun ladder and the seed guns all run the new set.</div></li>
+      <li><span class="wnTag">04</span><div><b>DEEP PEARL</b> — the pirate token is gone. A deep pearl turns up in one chest in twenty instead, and the bargain is the same: win the match with it still in your boons and it buys out the whole shop and the battle pass.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7026,7 +7028,7 @@ const REVIVE_TIME = 3.4;
 const REVIVE_RANGE = 3.6;
 const REBOOT_TIME = 10;
 const SURVIVE_TIME = 20;   // Reload Duos: how long your mate must stay alive
-const GUN_ORDER = ['flintlock', 'repeater', 'grapeshot', 'pepperbox', 'musketoon', 'blunderbuss', 'sawedoff', 'swivelgun', 'flakgun', 'chainshot', 'longrifle', 'harpoon', 'musket'];
+const GUN_ORDER = ['tidepistol', 'riptide', 'coralgun', 'driftwood', 'saltburst', 'undertow', 'saltwind', 'brine', 'tideshot', 'floodlance', 'squall', 'deepwater', 'geyser'];
 
 const MODE_DEFS = {
   br: {
@@ -7266,16 +7268,44 @@ function fbm(x, y, oct) {
   return s / n;
 }
 
-/* Analytic island heightmap — the single source of truth for the ground. */
+/* Analytic island heightmap — the single source of truth for the ground.
+   Season 9 drowned the coast: what is left is a scatter of islands on a ring,
+   separated by open water, with beaches at every rim and deep sea outside. */
+const DROWNED_ISLES = [
+  { x: 0, z: 0, r: 62, peak: 34 },        // the crown cay, the biggest and highest
+  { x: 168, z: 74, r: 50, peak: 24 },     // eastern shelf
+  { x: -172, z: 58, r: 46, peak: 20 },    // western shelf
+  { x: 96, z: -176, r: 54, peak: 28 },    // the southern reach
+  { x: -140, z: -166, r: 44, peak: 17 },  // the low south-west flats
+  { x: 16, z: 205, r: 40, peak: 12 },     // a long north sandbar
+];
+
 function terrainHeight(x, z) {
-  const r = Math.hypot(x, z) / ISLAND_R;
-  const fall = Math.max(0, 1 - Math.pow(Math.min(r, 1.35), 2.2));
-  const ridge = fbm(x * 0.0031 + 12.7, z * 0.0031 - 5.3, 4);
-  const detail = fbm(x * 0.0115 - 3.4, z * 0.0115 + 8.1, 3);
-  const hills = (ridge - 0.46) * 62 + 10;
-  const bump = (detail - 0.5) * 9;
-  return (hills + bump) * (0.22 + 0.78 * fall) + 12 * fall - 30 * (1 - fall);
+  const detail = fbm(x * 0.0105 + 3.1, z * 0.0105 - 7.4, 3);
+  const ripple = fbm(x * 0.030 - 1.7, z * 0.030 + 2.9, 2);
+  let h = -9;                                  // the sea floor between islands
+  for (let i = 0; i < DROWNED_ISLES.length; i++) {
+    const isle = DROWNED_ISLES[i];
+    const d = Math.hypot(x - isle.x, z - isle.z) / isle.r;
+    if (d > 1.45) continue;
+    // a rounded shelf: the crown is a plateau, the rim falls away into water
+    const t = clamp((1.35 - d) / 0.9, 0, 1);
+    const shelf = t * t * (3 - 2 * t);
+    let v = -9 + (isle.peak + 9) * shelf;
+    // hills and grit only where there is actually land to shape
+    if (shelf > 0.2) {
+      v += (detail - 0.5) * 11 * shelf;
+      v += (ripple - 0.5) * 3.2 * shelf;
+    }
+    if (v > h) h = v;
+  }
+  // nothing to stand on far past the ring
+  const edge = Math.max(0, (Math.hypot(x, z) - 300) / 70);
+  return h - edge * edge * 26;
 }
+
+/* Water is a surface you swim on, not a floor you walk on. */
+function waterDepthAt(x, z) { return WATER_Y - terrainHeight(x, z); }
 
 /* =========================================================================
    RENDERER / SCENE / CAMERA / LIGHTS
@@ -8855,8 +8885,8 @@ function makeBeacon(x, z, rng) {
    stocked with one weapon at a fixed price, all marked on the minimap. ---- */
 const VEND_PRICE = 250;
 const vendingMachines = [];
-const VEND_TYPES = ['flintlock', 'repeater', 'grapeshot', 'blunderbuss', 'sawedoff', 'flakgun', 'pepperbox', 'musketoon', 'handcannon', 'swivelgun', 'chainshot'];
-const VEND_TYPES_CLASSIC = ['flintlock', 'repeater', 'grapeshot', 'blunderbuss', 'sawedoff', 'flakgun', 'pepperbox', 'musketoon', 'handcannon', 'swivelgun', 'chainshot'];
+const VEND_TYPES = ['tidepistol', 'riptide', 'coralgun', 'saltburst', 'driftwood', 'saltwind', 'undertow', 'brine', 'tideshot', 'whirlpool', 'floodlance'];
+const VEND_TYPES_CLASSIC = ['tidepistol', 'riptide', 'coralgun', 'saltburst', 'driftwood', 'saltwind', 'undertow', 'brine', 'tideshot', 'whirlpool', 'floodlance'];
 
 function vendTypesForMode() {
   const t = mapTheme();
@@ -9075,10 +9105,10 @@ const SITE_GAP = 2.5;
    printed across the minimap, Fortnite-style, so a drop has a destination. */
 const worldPOIs = [];
 const POI_NAMES = {
-  pirate: ['CANNON BAY', 'BLACK TIDE', 'SALT WAKE'],
+  pirate: ['DROWNED DOCKS', 'KELP HOLLOW', 'THE SHALLOWS', 'WRECK STREET', 'LOW TIDE'],
   classic: ['OLD TOWN', 'HARBOR ROW', 'BLUE BARN'],
   future: ['NEON STRIP', 'RELAY NINE', 'HELIX DOCK'],
-  mix: ['BLACK TIDE', 'OLD TOWN', 'SALT WAKE'],
+  mix: ['DROWNED DOCKS', 'OLD TOWN', 'THE SHALLOWS'],
 };
 
 function poiNamesForTheme(theme) {
@@ -9108,88 +9138,80 @@ function populateWorld() {
   worldSites.length = 0;
   worldPOIs.length = 0;
 
-  // ---- three named towns: a tight group of buildings each, spread evenly
-  // around the island so every drop has a landmark to aim for.
+  // ---- the drowned archipelago: five named places, one per island, each laid
+  // out differently so a drop reads the moment the skyline comes up.
   const townNames = poiNamesForTheme(theme);
-  const townAngles = [0.55, 2.72, 4.85];
-  for (let i = 0; i < 3; i++) {
-    let px = 0, pz = 0, ok = false;
-    for (let t = 0; t < 60; t++) {
-      const ang = townAngles[i] + (rng() - 0.5) * 0.5;
-      const rad = (95 + rng() * 95) * shrink;
-      px = Math.cos(ang) * rad;
-      pz = Math.sin(ang) * rad;
-      if (terrainHeight(px, pz) > 3.2) { ok = true; break; }
-    }
-    if (!ok) continue;
-    const clusterClassic = theme === 'classic' || (theme === 'mix' && i % 2 === 0);
-    // the middle of town, then a ring of buildings pressed close together
-    const n = 7 + Math.floor(rng() * 3);
+  const POIS = [
+    { x: 0, z: 0, ring: 7, spread: 26, crates: 5 },
+    { x: 96, z: -176, ring: 6, spread: 24, crates: 4 },
+    { x: 168, z: 74, ring: 5, spread: 22, crates: 3 },
+    { x: -172, z: 58, ring: 4, spread: 20, crates: 2 },
+    { x: -140, z: -166, ring: 3, spread: 16, crates: 2 },
+  ];
+  for (let p = 0; p < POIS.length; p++) {
+    const poi = POIS[p];
+    const px = poi.x, pz = poi.z;
+    if (terrainHeight(px, pz) < 4) continue;   // that island sank; leave the water to it
+    const n = poi.ring + Math.floor(rng() * 2);
     for (let j = 0; j < n; j++) {
-      let ox = 0, oz = 0, rad2 = 0, placed = false, apt = false, dims = null;
+      let ox = px, oz = pz, rad2 = 0, placed = false, dims = null;
       for (let t = 0; t < 50; t++) {
-        // a ring at 50-88% of the town's radius, so the middle stays open
-        const a = (j / n) * TAU + rng() * 0.55;
-        const dist = (14 + rng() * 22) * (shrink < 1 ? 0.85 : 1);
+        const a = (j / n) * TAU + rng() * 0.6;
+        const dist = poi.spread * (0.45 + rng() * 0.55);
         ox = px + Math.cos(a) * dist;
         oz = pz + Math.sin(a) * dist;
-        apt = theme === 'future' && !clusterClassic && rng() < 0.34;
-        dims = apt ? null : rollHouseDims(rng);
-        rad2 = apt ? APARTMENT_R : houseRadius(dims);
-        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, rad2)) { placed = true; break; }
+        dims = rollHouseDims(rng);
+        rad2 = houseRadius(dims);
+        if (terrainHeight(ox, oz) > 2.0 && siteFreeAt(ox, oz, rad2)) { placed = true; break; }
       }
       if (!placed) continue;
       const rot = Math.floor(rng() * 4) * (Math.PI / 2);
       const swap = Math.abs(Math.sin(rot)) > 0.5;
-      siteThemeMode = clusterClassic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
-      if (apt) makeApartment(ox, oz, rot, rng, rng() < 0.5 ? 4 : 3);
-      else if (clusterClassic) makeClassicHouse(ox, oz, rot, rng, dims);
+      siteThemeMode = theme === 'classic' ? 'classic' : theme === 'future' ? 'future' : 'pirate';
+      if (theme === 'classic') makeClassicHouse(ox, oz, rot, rng, dims);
       else if (theme === 'future') makeHouse(ox, oz, rot, rng, dims);
       else makePirateHut(ox, oz, rot, rng, dims);
-      claimSite(ox, oz, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
+      claimSite(ox, oz, rad2, swap ? dims.d / 2 : dims.w / 2, swap ? dims.w / 2 : dims.d / 2);
     }
-    // a few crates scattered through the town
-    for (let j = 0; j < 4; j++) {
-      let ox = 0, oz = 0, placed = false;
+    // crates, cargo and cover scattered through the square
+    for (let j = 0; j < poi.crates; j++) {
+      let ox = px, oz = pz, placed = false;
       for (let t = 0; t < 30; t++) {
         const a = rng() * TAU;
-        const dist = rng() * 30;
+        const dist = rng() * poi.spread * 1.2;
         ox = px + Math.cos(a) * dist;
         oz = pz + Math.sin(a) * dist;
-        if (terrainHeight(ox, oz) > 2.2 && siteFreeAt(ox, oz, CONTAINER_R)) { placed = true; break; }
+        if (terrainHeight(ox, oz) > 2.0 && siteFreeAt(ox, oz, CONTAINER_R)) { placed = true; break; }
       }
       if (!placed) continue;
-      siteThemeMode = clusterClassic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
-      if (clusterClassic) makeClassicCrate(ox, oz, rng);
+      siteThemeMode = theme === 'classic' ? 'classic' : theme === 'future' ? 'future' : 'pirate';
+      if (theme === 'classic') makeClassicCrate(ox, oz, rng);
       else if (theme === 'future') makeContainer(ox, oz, rng);
       else makePirateCrate(ox, oz, rng);
       claimSite(ox, oz, CONTAINER_R);
     }
-    worldPOIs.push({ x: px, z: pz, name: townNames[i] || 'TOWN', r: 44 });
+    worldPOIs.push({ x: px, z: pz, name: townNames[p] || ('ISLE ' + (p + 1)), r: 40 });
   }
 
-  // ---- everywhere else: a few lone houses, never in a town
-  for (let i = 0; i < 9; i++) {
-    let x = 0, z = 0, rad2 = 0, ok = false, apt = false, dims = null;
-    const classic = theme === 'classic' || (theme === 'mix' && i % 2 === 0);
-    for (let t = 0; t < 70; t++) {
+  // ---- a few lone huts out on the smaller cays and sandbars
+  for (let i = 0; i < 4; i++) {
+    let x = 0, z = 0, rad2 = 0, ok = false, dims = null;
+    for (let t = 0; t < 90; t++) {
       const ang = rng() * TAU;
-      const dist = rng() * 215 * shrink;
+      const dist = 40 + rng() * 240;
       x = Math.cos(ang) * dist; z = Math.sin(ang) * dist;
-      apt = theme === 'future' && !classic && i % 3 === 0;
-      dims = apt ? null : rollHouseDims(rng);
-      rad2 = apt ? APARTMENT_R : houseRadius(dims);
-      if (terrainHeight(x, z) > 3 && siteFreeAt(x, z, rad2)) { ok = true; break; }
+      dims = rollHouseDims(rng);
+      rad2 = houseRadius(dims);
+      if (terrainHeight(x, z) > 2.4 && siteFreeAt(x, z, rad2)) { ok = true; break; }
     }
     if (!ok) continue;
     const rot = Math.floor(rng() * 4) * (Math.PI / 2);
     const swap = Math.abs(Math.sin(rot)) > 0.5;
-    siteThemeMode = classic ? 'classic' : (theme === 'future' ? 'future' : 'pirate');
-    if (apt) makeApartment(x, z, rot, rng, rng() < 0.55 ? 4 : 3);
-    else if (classic) makeClassicHouse(x, z, rot, rng, dims);
+    siteThemeMode = theme === 'classic' ? 'classic' : theme === 'future' ? 'future' : 'pirate';
+    if (theme === 'classic') makeClassicHouse(x, z, rot, rng, dims);
     else if (theme === 'future') makeHouse(x, z, rot, rng, dims);
     else makePirateHut(x, z, rot, rng, dims);
-    claimSite(x, z, rad2, apt ? (swap ? 6.4 : 6.9) : (swap ? dims.d / 2 : dims.w / 2), apt ? (swap ? 6.9 : 6.4) : (swap ? dims.w / 2 : dims.d / 2));
+    claimSite(x, z, rad2, swap ? dims.d / 2 : dims.w / 2, swap ? dims.w / 2 : dims.d / 2);
   }
 
   // trees (kept out of buildings)
@@ -10222,45 +10244,39 @@ const VAULTED_WEAPONS = {
 };
 
 /* =========================================================================
-   SEASON 7 ARSENAL — every gun is black powder, wood and brass. Nothing that
-   fired a cell or a coil survived the vault, so there is no heat system left:
-   every weapon loads a magazine and draws from the reserve.
+   SEASON 9 ARSENAL — the drowned coast's own hardware. Everything here fires
+   from water: pressure lances, salt charges, reef scatterguns and the long
+   rifles that read a target across open sea. The black-powder set is vaulted.
    ========================================================================= */
 const WEAPONS = {
   // sidearms
-  flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 78, rpm: 95, mag: 6, reload: 1.3, spread: 0.010, ads: 0.004, pellets: 1, hs: 2.2, range: 220, auto: false, sfx: 'pistol' },
-  handcannon: { name: 'Hand Cannon', ammo: 'heavy', dmg: 68, rpm: 130, mag: 8, reload: 2.1, spread: 0.020, ads: 0.008, pellets: 1, hs: 1.9, range: 210, auto: false, sfx: 'heavyar' },
-  pepperbox: { name: 'Pepperbox', ammo: 'light', dmg: 24, rpm: 240, mag: 18, reload: 2.0, spread: 0.072, ads: 0.050, pellets: 4, hs: 1.5, range: 96, auto: true, sfx: 'pistol' },
+  tidepistol: { name: 'Tide Pistol', ammo: 'light', dmg: 34, rpm: 300, mag: 14, reload: 1.6, spread: 0.016, ads: 0.006, pellets: 1, hs: 2.0, range: 170, auto: false, sfx: 'pistol' },
+  whirlpool: { name: 'Whirlpool Revolver', ammo: 'light', dmg: 62, rpm: 110, mag: 6, reload: 2.4, spread: 0.016, ads: 0.0001, pellets: 1, hs: 1.9, range: 220, auto: true, sfx: 'pistol', scoped: true, zoom: '2X', scopedFov: 40, scope: 'reddot' },
   // close range
-  blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 26, rpm: 72, mag: 6, reload: 2.5, spread: 0.055, ads: 0.038, pellets: 12, hs: 1.6, range: 70, auto: false, sfx: 'shotgun' },
-  sawedoff: { name: 'Sawed-off', ammo: 'shells', dmg: 33, rpm: 92, mag: 4, reload: 2.2, spread: 0.086, ads: 0.062, pellets: 14, hs: 1.65, range: 50, auto: false, sfx: 'shotgun' },
-  grapeshot: { name: 'Grapeshot Swivel', ammo: 'shells', dmg: 18, rpm: 170, mag: 12, reload: 2.6, spread: 0.045, ads: 0.030, pellets: 9, hs: 1.7, range: 84, auto: true, sfx: 'tacshot' },
-  repeater: { name: 'Repeater Carbine', ammo: 'light', dmg: 28, rpm: 660, mag: 24, reload: 1.9, spread: 0.022, ads: 0.009, pellets: 1, hs: 1.7, range: 165, auto: true, sfx: 'smg' },
+  riptide: { name: 'Riptide SMG', ammo: 'light', dmg: 17, rpm: 720, mag: 30, reload: 1.9, spread: 0.058, ads: 0.030, pellets: 1, hs: 1.5, range: 120, auto: true, sfx: 'smg' },
+  driftwood: { name: 'Driftwood Double', ammo: 'shells', dmg: 12, rpm: 150, mag: 2, reload: 2.4, spread: 0.070, ads: 0.055, pellets: 8, hs: 1.7, range: 48, auto: false, sfx: 'doublebarrel' },
+  saltburst: { name: 'Saltburst Pump', ammo: 'shells', dmg: 13, rpm: 80, mag: 5, reload: 2.9, spread: 0.062, ads: 0.048, pellets: 10, hs: 1.75, range: 62, auto: false, sfx: 'shotgun' },
+  coralgun: { name: 'Coral Scatter', ammo: 'shells', dmg: 18, rpm: 170, mag: 12, reload: 2.6, spread: 0.045, ads: 0.030, pellets: 9, hs: 1.7, range: 84, auto: true, sfx: 'tacshot' },
   // mid range
-  flakgun: { name: 'Flak Cannon', ammo: 'medium', dmg: 21, rpm: 150, mag: 10, reload: 2.8, spread: 0.064, ads: 0.044, pellets: 10, hs: 1.55, range: 108, auto: true, sfx: 'tacshot' },
-  musketoon: { name: 'Musketoon', ammo: 'medium', dmg: 44, rpm: 320, mag: 18, reload: 2.3, spread: 0.034, ads: 0.013, pellets: 1, hs: 1.8, range: 235, auto: false, sfx: 'ar' },
-  swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 38, rpm: 450, mag: 60, reload: 3.4, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
-  chainshot: { name: 'Chain Shot', ammo: 'medium', dmg: 58, rpm: 165, mag: 12, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
-  mortar: { name: 'Hand Mortar', ammo: 'medium', dmg: 80, rpm: 55, mag: 4, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
+  saltwind: { name: 'Saltwind Flak', ammo: 'medium', dmg: 21, rpm: 150, mag: 10, reload: 2.8, spread: 0.064, ads: 0.044, pellets: 10, hs: 1.55, range: 108, auto: true, sfx: 'tacshot' },
+  undertow: { name: 'Undertow Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.3, spread: 0.046, ads: 0.016, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
+  brine: { name: 'Brine Repeater', ammo: 'medium', dmg: 38, rpm: 450, mag: 60, reload: 3.3, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
+  tideshot: { name: 'Tideshot', ammo: 'medium', dmg: 58, rpm: 165, mag: 12, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
+  geyser: { name: 'Geyser Launcher', ammo: 'medium', dmg: 80, rpm: 55, mag: 4, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
   // long range
-  longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 88, rpm: 105, mag: 8, reload: 2.7, spread: 0.020, ads: 0.0001, pellets: 1, hs: 2.2, range: 360, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', bulletSpeed: 520 },
-  harpoon: { name: 'Harpoon Gun', ammo: 'medium', dmg: 105, rpm: 62, mag: 5, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 320, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 340 },
-  musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 135, rpm: 48, mag: 3, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 440, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'sniper', bulletSpeed: 560 },
-  // Mythic — the captain's own hardware.
-  mythic_flintlock: { name: 'Flintlock Pistol', ammo: 'light', dmg: 100, rpm: 110, mag: 8, reload: 1.1, spread: 0.008, ads: 0.003, pellets: 1, hs: 2.5, range: 245, auto: false, sfx: 'pistol' },
-  mythic_blunderbuss: { name: 'Blunderbuss', ammo: 'shells', dmg: 32, rpm: 82, mag: 8, reload: 2.2, spread: 0.050, ads: 0.034, pellets: 13, hs: 1.8, range: 78, auto: false, sfx: 'shotgun' },
-  mythic_sawedoff: { name: 'Sawed-off', ammo: 'shells', dmg: 42, rpm: 104, mag: 6, reload: 1.9, spread: 0.080, ads: 0.056, pellets: 15, hs: 1.7, range: 56, auto: false, sfx: 'shotgun' },
-  mythic_swivelgun: { name: 'Swivel Gun', ammo: 'medium', dmg: 46, rpm: 480, mag: 70, reload: 3.1, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 245, auto: true, sfx: 'lmg' },
-  mythic_longrifle: { name: 'Long Rifle', ammo: 'medium', dmg: 112, rpm: 115, mag: 10, reload: 2.5, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.3, range: 385, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', bulletSpeed: 540 },
-  mythic_musket: { name: 'Sea Musket', ammo: 'heavy', dmg: 180, rpm: 52, mag: 4, reload: 2.3, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.7, range: 470, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', bulletSpeed: 580 },
-  // Exotic — ordinary pirate guns with a curse on them.
-  exotic_flintlock: { name: 'Siphoning Flintlock', ammo: 'light', dmg: 86, rpm: 100, mag: 8, reload: 1.2, spread: 0.009, ads: 0.003, pellets: 1, hs: 2.3, range: 230, auto: false, sfx: 'pistol', onHit: 'siphon', siphon: 14 },
-  exotic_blunderbuss: { name: 'Shoving Blunderbuss', ammo: 'shells', dmg: 25, rpm: 78, mag: 8, reload: 2.5, spread: 0.052, ads: 0.036, pellets: 12, hs: 1.75, range: 74, auto: false, sfx: 'shotgun', onHit: 'knock', knockForce: 22 },
-  exotic_flakgun: { name: 'Storm Flak', ammo: 'medium', dmg: 23, rpm: 165, mag: 12, reload: 2.6, spread: 0.060, ads: 0.041, pellets: 12, hs: 1.6, range: 116, auto: true, sfx: 'tacshot', onHit: 'chain', chainR: 8, chainMul: 0.5 },
-  exotic_mortar: { name: 'Detonating Mortar', ammo: 'medium', dmg: 86, rpm: 60, mag: 5, reload: 2.9, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 265, auto: false, sfx: 'ar', onHit: 'explode', blastR: 5.0, blastDmg: 72, bulletSpeed: 280 },
-  exotic_musket: { name: 'Freezing Musket', ammo: 'heavy', dmg: 142, rpm: 50, mag: 4, reload: 2.5, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.5, range: 450, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 560 },
-  exotic_swivelgun: { name: 'Chaining Swivel Gun', ammo: 'medium', dmg: 40, rpm: 460, mag: 65, reload: 2.9, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 235, auto: true, sfx: 'lmg', onHit: 'chain', chainR: 10, chainMul: 0.6 },
-  exotic_longrifle: { name: 'Ricochet Long Rifle', ammo: 'medium', dmg: 94, rpm: 110, mag: 9, reload: 2.6, spread: 0.018, ads: 0.0001, pellets: 1, hs: 2.2, range: 370, auto: false, sfx: 'hunting', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', ricochet: true, ricochetR: 5.5, ricochetMul: 0.35, bulletSpeed: 520 },
+  floodlance: { name: 'Flood Lance', ammo: 'medium', dmg: 105, rpm: 62, mag: 5, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 320, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 340 },
+  squall: { name: 'Squall Marksman', ammo: 'medium', dmg: 46, rpm: 150, mag: 12, reload: 3.0, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.0, range: 380, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 30, scope: 'marksman', bulletSpeed: 520 },
+  deepwater: { name: 'Deepwater Rifle', ammo: 'heavy', dmg: 135, rpm: 48, mag: 3, reload: 2.6, spread: 0.030, ads: 0.0001, pellets: 1, hs: 2.6, range: 440, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 26, scope: 'sniper', bulletSpeed: 560 },
+  // Mythic — pressure-forged versions of the coast's own guns.
+  mythic_tidepistol: { name: 'Tide Pistol', ammo: 'light', dmg: 46, rpm: 320, mag: 16, reload: 1.2, spread: 0.013, ads: 0.005, pellets: 1, hs: 2.2, range: 190, auto: false, sfx: 'pistol' },
+  mythic_saltburst: { name: 'Saltburst Pump', ammo: 'shells', dmg: 16, rpm: 86, mag: 8, reload: 2.2, spread: 0.058, ads: 0.044, pellets: 12, hs: 1.8, range: 70, auto: false, sfx: 'shotgun' },
+  mythic_brine: { name: 'Brine Repeater', ammo: 'medium', dmg: 46, rpm: 480, mag: 70, reload: 3.1, spread: 0.024, ads: 0.012, pellets: 1, hs: 1.75, range: 245, auto: true, sfx: 'lmg' },
+  mythic_deepwater: { name: 'Deepwater Rifle', ammo: 'heavy', dmg: 180, rpm: 52, mag: 4, reload: 2.3, spread: 0.026, ads: 0.0001, pellets: 1, hs: 2.7, range: 470, auto: false, sfx: 'sniper', scoped: true, zoom: '6X', scopedFov: 24, scope: 'sniper', bulletSpeed: 580 },
+  // Exotic — the current's own tricks, mostly.
+  exotic_undertow: { name: 'Siphoning Undertow', ammo: 'medium', dmg: 33, rpm: 380, mag: 32, reload: 2.1, spread: 0.042, ads: 0.014, pellets: 1, hs: 1.7, range: 250, auto: true, sfx: 'ar', onHit: 'siphon', siphon: 9 },
+  exotic_coralgun: { name: 'Chaining Coral', ammo: 'shells', dmg: 23, rpm: 165, mag: 12, reload: 2.6, spread: 0.060, ads: 0.041, pellets: 12, hs: 1.6, range: 116, auto: true, sfx: 'tacshot', onHit: 'chain', chainR: 8, chainMul: 0.5 },
+  exotic_geyser: { name: 'Overflowing Geyser', ammo: 'medium', dmg: 86, rpm: 60, mag: 5, reload: 2.9, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.6, range: 265, auto: false, sfx: 'ar', onHit: 'explode', blastR: 5.0, blastDmg: 72, bulletSpeed: 280 },
+  exotic_squall: { name: 'Freezing Squall', ammo: 'medium', dmg: 48, rpm: 155, mag: 12, reload: 2.8, spread: 0.028, ads: 0.0001, pellets: 1, hs: 2.1, range: 390, auto: false, sfx: 'sniper', scoped: true, zoom: '4X', scopedFov: 28, scope: 'marksman', onHit: 'freeze', freezeTime: 2.8, bulletSpeed: 520 },
   /* OG ARSENAL — the original thirteen, exactly as the first build shipped them.
      Only the OG mode loots them (unless a power hour releases one). */
   pistol: { name: 'Pistol', ammo: 'light', dmg: 25, rpm: 380, mag: 16, reload: 1.6, spread: 0.016, ads: 0.006, pellets: 1, hs: 1.9, range: 160, auto: true, sfx: 'pistol' },
@@ -10285,24 +10301,25 @@ const WEAPONS = {
 };
 
 /* No emitters survived the vault: every gun uses cartridges again. */
-const MYTHIC_WEAPONS = ['mythic_flintlock', 'mythic_blunderbuss', 'mythic_sawedoff', 'mythic_swivelgun', 'mythic_longrifle', 'mythic_musket'];
-const EXOTIC_WEAPONS = ['exotic_flintlock', 'exotic_blunderbuss', 'exotic_flakgun', 'exotic_mortar', 'exotic_musket', 'exotic_swivelgun', 'exotic_longrifle'];
+const MYTHIC_WEAPONS = ['mythic_tidepistol', 'mythic_saltburst', 'mythic_brine', 'mythic_deepwater'];
+const EXOTIC_WEAPONS = ['exotic_undertow', 'exotic_coralgun', 'exotic_geyser', 'exotic_squall'];
 
-/* Which blocky gun body each pirate weapon wears. */
+/* Which blocky gun body each water weapon wears. */
 const SPECIAL_BASE = {
-  handcannon: 'flintlock',
-  pepperbox: 'revolver',
-  grapeshot: 'tacshot',
-  sawedoff: 'doublebarrel',
-  flakgun: 'tacshot',
-  repeater: 'smg',
-  musketoon: 'ar',
-  swivelgun: 'lmg',
-  chainshot: 'burst',
-  mortar: 'nova',
-  longrifle: 'hunting',
-  harpoon: 'rail',
-  musket: 'sniper',
+  tidepistol: 'pistol',
+  whirlpool: 'revolver',
+  riptide: 'smg',
+  driftwood: 'doublebarrel',
+  saltburst: 'shotgun',
+  coralgun: 'combat',
+  saltwind: 'tacshot',
+  undertow: 'ar',
+  brine: 'lmg',
+  tideshot: 'lever',
+  geyser: 'nova',
+  floodlance: 'rail',
+  squall: 'hunting',
+  deepwater: 'sniper',
   /* the vault relics ride the Season 6 bodies they came in on */
   mythic_reaper: 'reaper',
   mythic_heavyar: 'heavyar',
@@ -10313,52 +10330,46 @@ const SPECIAL_BASE = {
   tactical: 'ar',
   marksman: 'sniper',
   railgun: 'rail',
-  mythic_flintlock: 'flintlock',
-  mythic_blunderbuss: 'blunderbuss',
-  mythic_sawedoff: 'doublebarrel',
-  mythic_swivelgun: 'lmg',
-  mythic_longrifle: 'hunting',
-  mythic_musket: 'sniper',
-  exotic_flintlock: 'flintlock',
-  exotic_blunderbuss: 'blunderbuss',
-  exotic_flakgun: 'tacshot',
-  exotic_mortar: 'nova',
-  exotic_musket: 'sniper',
-  exotic_swivelgun: 'lmg',
-  exotic_longrifle: 'hunting',
+  mythic_tidepistol: 'pistol',
+  mythic_saltburst: 'shotgun',
+  mythic_brine: 'lmg',
+  mythic_deepwater: 'sniper',
+  exotic_undertow: 'ar',
+  exotic_coralgun: 'combat',
+  exotic_geyser: 'nova',
+  exotic_squall: 'hunting',
 };
 
 /* Anything still sitting in the vaulted table is gone for good. */
 for (const id of Object.keys(VAULTED_WEAPONS)) delete VAULTED_WEAPONS[id];
 
-/* Season 7 loot table: powder pistols and scatterguns up close, carbines and
-   swivel guns through the middle, long rifles and muskets for the horizon. */
-const PIRATE_WEAPON_POOL = [
+/* Season 9 loot table: sidearms and salt charges up close, repeaters and flak
+   through the middle, lances and long rifles for the horizon. */
+const WATER_WEAPON_POOL = [
   // sidearms and close range
-  'flintlock', 'flintlock',
-  'pepperbox', 'pepperbox',
-  'repeater', 'repeater', 'repeater',
-  'grapeshot', 'grapeshot',
-  'blunderbuss', 'blunderbuss', 'blunderbuss',
-  'sawedoff', 'sawedoff',
-  'handcannon',
+  'tidepistol', 'tidepistol',
+  'whirlpool',
+  'riptide', 'riptide', 'riptide',
+  'coralgun', 'coralgun',
+  'saltburst', 'saltburst', 'saltburst',
+  'driftwood', 'driftwood',
   // mid range
-  'flakgun', 'flakgun',
-  'musketoon', 'musketoon', 'musketoon',
-  'swivelgun', 'swivelgun',
-  'chainshot', 'chainshot',
-  'mortar',
+  'saltwind', 'saltwind',
+  'undertow', 'undertow', 'undertow',
+  'brine', 'brine',
+  'tideshot', 'tideshot',
+  'geyser',
   // long range
-  'longrifle', 'longrifle',
-  'harpoon',
-  'musket', 'musket',
+  'squall', 'squall',
+  'floodlance',
+  'deepwater', 'deepwater',
 ];
 
-const LOOT_WEAPON_POOL = PIRATE_WEAPON_POOL;
+const LOOT_WEAPON_POOL = WATER_WEAPON_POOL;
 
 /* Reload and Blitz both run the mixed pool: the whole arsenal blended
    together, plus anything released through weapons.json. */
-const CLASSIC_WEAPON_POOL = PIRATE_WEAPON_POOL.slice();
+const CLASSIC_WEAPON_POOL = WATER_WEAPON_POOL.slice();
 
 const BLITZ_WEAPON_POOL = LOOT_WEAPON_POOL.concat(CLASSIC_WEAPON_POOL);
 
@@ -11170,6 +11181,31 @@ function gunIconImage(base, variant) {
     if (url) GUN_ICONS[type] = '<img class="gunIc" alt="" draggable="false" src="' + url + '">';
   }
 })();
+
+/* The water arsenal wears the drawn art of the body it is built on, so every
+   new gun has a picture without a second art pass. */
+const WATER_ICON = {
+  tidepistol: 'flintlock', whirlpool: 'pepperbox', riptide: 'repeater',
+  driftwood: 'sawedoff', saltburst: 'blunderbuss', coralgun: 'grapeshot',
+  saltwind: 'flakgun', undertow: 'musketoon', brine: 'swivelgun',
+  tideshot: 'chainshot', geyser: 'mortar', floodlance: 'harpoon',
+  squall: 'longrifle', deepwater: 'musket',
+};
+(function buildWaterIcons() {
+  const put = (id, base, variant) => {
+    const url = gunIconImage(base, variant || 'base');
+    if (url) GUN_ICONS[id] = '<img class="gunIc" alt="" draggable="false" src="' + url + '">';
+  };
+  for (const id in WATER_ICON) put(id, WATER_ICON[id], 'base');
+  for (const id of MYTHIC_WEAPONS) {
+    const base = String(id).replace(/^mythic_/, '');
+    if (WATER_ICON[base]) put(id, WATER_ICON[base], 'mythic');
+  }
+  for (const id of EXOTIC_WEAPONS) {
+    const base = String(id).replace(/^exotic_/, '');
+    if (WATER_ICON[base]) put(id, WATER_ICON[base], 'exotic');
+  }
+})();
 GUN_ICONS.radar = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><circle cx="32" cy="34" r="21" stroke-width="4"/><circle cx="32" cy="34" r="11" stroke-width="2.5" opacity=".55"/><path d="M32 34L47 21" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="34" r="4" fill="currentColor" stroke="none"/><circle cx="45" cy="27" r="2.4" fill="currentColor" stroke="none"/></svg>';
 GUN_ICONS.regen = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="16" y="16" width="32" height="40" rx="7"/><rect x="25" y="9" width="14" height="8" rx="3"/><rect x="29" y="26" width="6" height="22" fill="#0b1a2b"/><rect x="21" y="34" width="22" height="6" fill="#0b1a2b"/><rect x="20" y="22" width="24" height="3" opacity=".35"/></svg>';
 GUN_ICONS.boots = '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M22 8h14v24h9c8 0 13 6 13 14v10H22z"/><rect x="16" y="50" width="40" height="6" rx="3" opacity=".6"/><rect x="26" y="14" width="6" height="3" rx="1.5" fill="#0b1a2b" opacity=".5"/></svg>';
@@ -11233,11 +11269,11 @@ function makeGrappler() {
   return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
 }
 
-/* A chest in twenty holds the pirate token. Picking it up puts it in your boon
+/* A chest in twenty holds the deep pearl. Picking it up puts it in your boon
    slots — it only pays out if you go on to win that match with it. */
-const PIRATE_TOKEN_CHANCE = 0.05;
+const DEEP_PEARL_CHANCE = 0.05;
 function makeToken() {
-  return { kind: 'token', name: 'Pirate Token' };
+  return { kind: 'token', name: 'Deep Pearl' };
 }
 
 /* -------------------------------------------------------------------------
@@ -11364,7 +11400,7 @@ const BOONS = {
   plate: { name: 'Guardian Plate', color: '#c8a2ff', icon: 'plate', desc: '-15% DAMAGE TAKEN' },
   scav: { name: 'Scavenger', color: '#d8a86a', icon: 'scav', desc: '+50% WOOD FROM CHESTS' },
   synth: { name: 'Ammo Synth', color: '#8fd6ff', icon: 'synth', desc: 'RESERVE AMMO REFILLS' },
-  token: { name: 'Pirate Token', color: '#ffd451', icon: 'token', desc: 'WIN THE MATCH TO CLAIM THE WHOLE SHOP' },
+  token: { name: 'Deep Pearl', color: '#ffd451', icon: 'token', desc: 'WIN THE MATCH TO CLAIM THE WHOLE SHOP' },
 };
 /* The token never rolls as a random boon — it only comes out of a chest. */
 const BOON_TYPES = ['radar', 'regen', 'boots', 'plate', 'scav', 'synth'];
@@ -11478,7 +11514,7 @@ function itemLabel(item) {
   if (item.kind === 'gold') return 'Gold Bars';
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
-  if (item.kind === 'token') return 'Pirate Token';
+  if (item.kind === 'token') return 'Deep Pearl';
   return 'Item';
 }
 function itemMeta(item) {
@@ -11520,6 +11556,7 @@ const player = {
   gunLevel: 0,
   driving: null,
   inBus: false,
+  swimming: false,
   inv: [null, null, null, null, null],
   boons: [],
   slot: 0,
@@ -12183,7 +12220,7 @@ function createPlayerRig() {
   player.rig = makeRig(sk.shirt, sk.pants, sk.skin, sk.accent);
   player.rig.group.position.copy(player.pos);
   dynGroup.add(player.rig.group);
-  setRigWeapon(player.rig, 'flintlock');
+  setRigWeapon(player.rig, 'tidepistol');
 }
 
 function animateRig(rig, speed, t) {
@@ -12432,8 +12469,8 @@ function clearLoot() {
 }
 
 function lootWeaponType() {
-  if (mod('snipers')) return pick(allowedOnly(['musket', 'longrifle', 'harpoon', 'musket', 'longrifle']));
-  if (mod('shotguns')) return pick(allowedOnly(['blunderbuss', 'grapeshot', 'sawedoff', 'flakgun', 'pepperbox', 'sawedoff']));
+  if (mod('snipers')) return pick(allowedOnly(['deepwater', 'squall', 'floodlance', 'deepwater', 'squall']));
+  if (mod('shotguns')) return pick(allowedOnly(['saltburst', 'coralgun', 'driftwood', 'saltwind', 'riptide', 'driftwood']));
   return pick(lootPoolForMode());
 }
 
@@ -12493,7 +12530,7 @@ function scatterLoot(rng) {
 /* Season 6 runs on long guns, so every match seeds a handful of guaranteed
    ones across the whole island — and one within a short walk of where you land,
    so a scoped rifle is never a whole-match search. */
-const SEED_LONG_GUNS = ['longrifle', 'musket', 'longrifle', 'musket', 'longrifle', 'musket'];
+const SEED_LONG_GUNS = ['squall', 'deepwater', 'squall', 'deepwater', 'floodlance', 'squall'];
 
 function longGunSeeds() {
   return allowedOnly(SEED_LONG_GUNS);
@@ -12516,7 +12553,7 @@ function seedLongGunLoot() {
 }
 
 function seedLongGunNear(pos) {
-  const type = pick(allowedOnly(['musket', 'longrifle', 'harpoon']));
+  const type = pick(allowedOnly(['deepwater', 'squall', 'floodlance']));
   let fallback = null;
   for (let t = 0; t < 80; t++) {
     const ang = Math.random() * TAU;
@@ -12612,7 +12649,7 @@ function pickupLoot(l) {
       toast('TOKEN ALREADY HELD · WIN TO CLAIM IT', 'sub');
     } else {
       addBoon('token');
-      toast('PIRATE TOKEN · WIN THE MATCH TO CLAIM IT', '');
+      toast('DEEP PEARL · WIN THE MATCH TO CLAIM IT', '');
     }
     sfx('unlock');
     return;
@@ -12681,8 +12718,8 @@ function openChest(c) {
   }
   if (!isOG() && Math.random() < 0.25) drops.push(makeGrappler());
   if (!isOG()) drops.push(makeGold(Math.round(50 * anomalyGoldMul())));
-  // One chest in twenty hides the season's pirate token.
-  if (!isOG() && Math.random() < PIRATE_TOKEN_CHANCE) drops.push(makeToken());
+  // One chest in twenty hides the season's deep pearl.
+  if (!isOG() && Math.random() < DEEP_PEARL_CHANCE) drops.push(makeToken());
 
   const a0 = Math.random() * TAU;
   for (let i = 0; i < drops.length; i++) {
@@ -12695,7 +12732,7 @@ function openChest(c) {
   }
   for (let i = 0; i < drops.length; i++) {
     if (drops[i].kind === 'token') {
-      showRareFind(drops[i], 'PIRATE TOKEN', 'PICK IT UP AND WIN TO CLAIM THE SHOP');
+      showRareFind(drops[i], 'DEEP PEARL', 'PICK IT UP AND WIN TO CLAIM THE SHOP');
       break;
     }
   }
@@ -12986,7 +13023,7 @@ function weaponSpecial(w, hit, dir, dmg) {
 /* The shotguns, by the body they wear (SPECIAL_BASE maps a gun to one of these).
    They share a bloom model, a recoil kick and a damage falloff, so none of them
    can quietly fall behind the others. */
-const SHOTGUN_FAMILY = ['blunderbuss', 'grapeshot', 'tacshot', 'sawedoff', 'doublebarrel', 'revolver', 'shotgun'];
+const SHOTGUN_FAMILY = ['saltburst', 'coralgun', 'saltwind', 'driftwood', 'doublebarrel', 'whirlpool', 'shotgun'];
 
 /* Season 6 runs on cells, not cartridges. Every shot pushes the emitter closer
    to a lockout, and the sink only starts after you actually stop firing: a
@@ -14006,7 +14043,7 @@ function rebootMate() {
     m.rig.group.visible = true;
     dynGroup.add(m.rig.group);
     m.rig.group.position.copy(m.pos);
-    if (!state.remoteJoin) setRigWeapon(m.rig, 'flintlock');
+    if (!state.remoteJoin) setRigWeapon(m.rig, 'tidepistol');
   }
   toast('MATE REBOOTED', 'sub');
   sfx('respawn');
@@ -14610,8 +14647,8 @@ let botNamePool = [];
 let botPhase = 0;
 
 function botWeaponType(level) {
-  if (mod('snipers')) return pick(allowedOnly(['musket', 'longrifle', 'harpoon', 'musket']));
-  if (mod('shotguns')) return pick(allowedOnly(['blunderbuss', 'grapeshot', 'sawedoff', 'flakgun', 'pepperbox']));
+  if (mod('snipers')) return pick(allowedOnly(['deepwater', 'squall', 'floodlance', 'deepwater']));
+  if (mod('shotguns')) return pick(allowedOnly(['saltburst', 'coralgun', 'driftwood', 'saltwind', 'riptide']));
   if (isGunGame()) return GUN_ORDER[Math.min(GUN_ORDER.length - 1, level || 0)];
   return pick(lootPoolForMode());
 }
@@ -14898,7 +14935,14 @@ function updateBot(b, dt) {
     b.vel.y = Math.max(b.vel.y, -58);
     b.pos.y += b.vel.y * dt;
     const g = groundHeightAt(b.pos.x, b.pos.z, b.pos.y, Math.max(STEP_UP, -b.vel.y * dt + 0.05));
-    if (b.pos.y <= g) {
+    // a bot that comes down over deep water floats instead of sinking
+    if (waterDepthAt(b.pos.x, b.pos.z) > 1.2 && b.pos.y <= WATER_Y - 0.4) {
+      b.pos.y = WATER_Y - 0.35;
+      b.vel.y = 0;
+      b.dropping = false;
+      b.goal = chooseBotGoal(b);
+      b.goalTime = state.time + 9;
+    } else if (b.pos.y <= g) {
       b.pos.y = g;
       b.vel.y = 0;
       b.dropping = false;
@@ -15046,6 +15090,7 @@ function updateBot(b, dt) {
     if (b.knock.lengthSq() < 1.5) b.knock = null;
   }
   b.pos.y = groundHeightAt(b.pos.x, b.pos.z, b.pos.y);
+  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && b.pos.y < WATER_Y - 0.35) b.pos.y = WATER_Y - 0.35;
 
   const r = Math.hypot(b.pos.x, b.pos.z);
   if (r > 320) { b.pos.x *= 320 / r; b.pos.z *= 320 / r; }
@@ -15084,6 +15129,7 @@ function updateBotCrawl(b, dt) {
   b.pos.z += moveZ * 1.5 * dt;
   resolveCollisions(b.pos, b.pos.y, 0.45, 1.7);
   b.pos.y = groundHeightAt(b.pos.x, b.pos.z, b.pos.y);
+  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && b.pos.y < WATER_Y - 0.35) b.pos.y = WATER_Y - 0.35;
   if (b.rig) {
     b.rig.group.position.copy(b.pos);
     b.rig.group.rotation.y = b.yaw;
@@ -16462,6 +16508,18 @@ function updateDrop(dt) {
   const r = Math.hypot(p.x, p.z);
   if (r > 305) { p.x *= 305 / r; p.z *= 305 / r; }
 
+  // water breaks the fall: you splash and swim, you do not stand on the floor
+  if (p.y <= WATER_Y - 0.45 && waterDepthAt(p.x, p.z) > 1.2) {
+    p.y = WATER_Y - 0.35;
+    player.vel.set(0, 0, 0);
+    player.dropping = false;
+    player.onGround = false;
+    player.swimming = true;
+    toast('SPLASH', 'sub');
+    sfx('land');
+    return;
+  }
+
   const g = groundHeightAt(p.x, p.z, p.y, Math.max(STEP_UP, -player.vel.y * dt + 0.05));
   if (p.y <= g) {
     p.y = g;
@@ -16572,6 +16630,9 @@ function updatePlayer(dt) {
   if (anomalyUnstoppable()) speed *= 1.25;
   if (adminOn('speed')) speed *= 2.4;
   if (hasBoon('boots')) speed *= 1.12;
+  // in water you swim: slow, low, and no sprint
+  player.swimming = player.pos.y < WATER_Y + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
+  if (player.swimming) speed = 3.3;
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -16609,7 +16670,7 @@ function updatePlayer(dt) {
   resolveCollisions(player.pos, player.pos.y, PLAYER_R, 1.7);
 
   player.coyote = player.onGround ? 0.12 : Math.max(0, (player.coyote || 0) - dt);
-  if (input.jump && player.coyote > 0) {
+  if (input.jump && player.coyote > 0 && !player.swimming) {
     player.vel.y = 9.0;
     player.coyote = 0;
     player.onGround = false;
@@ -16628,6 +16689,18 @@ function updatePlayer(dt) {
     player.vel.y = 0;
     player.onGround = true;
   } else {
+    player.onGround = false;
+  }
+
+  // deep water floats you at the surface instead of the sea floor
+  const swimDepth = waterDepthAt(player.pos.x, player.pos.z);
+  player.swimming = swimDepth > 1.15 && player.pos.y < WATER_Y + 0.1;
+  if (player.swimming) {
+    const surf = WATER_Y - 0.35;
+    if (player.pos.y < surf) {
+      player.pos.y = Math.min(surf, player.pos.y + Math.max(1.8, -player.vel.y) * dt * 1.5);
+      player.vel.y = 0;
+    }
     player.onGround = false;
   }
 
@@ -18133,6 +18206,7 @@ function resetPlayerForMatch() {
   player.dropping = true;
   player.driving = null;
   player.inBus = false;
+  player.swimming = false;
   player.team = 0;
   player.knocked = false;
   player.bleed = 0;
@@ -18199,9 +18273,9 @@ function plannedBotCount() {
 
 function defaultStartWeapon() {
   if (isOG()) return 'pistol';   // OG drops you in with the day-one sidearm
-  if (mod('snipers')) return 'musket';
-  if (mod('shotguns')) return 'blunderbuss';
-  return 'flintlock';
+  if (mod('snipers')) return 'deepwater';
+  if (mod('shotguns')) return 'saltburst';
+  return 'tidepistol';
 }
 
 /* The spawn loadout: every weapon flagged startingWeapon in weapons.json, in
@@ -18640,7 +18714,7 @@ function endMatch(win, killerName) {
   if (win) {
     awardBpXp(500);
     victoryFanfare();
-    if (hasBoon('token')) setTimeout(redeemPirateToken, 1500);
+    if (hasBoon('token')) setTimeout(redeemDeepPearl, 1500);
   }
   if (player.spriteId && (player.spriteExtracted || win)) {
     if (!ownsSprite(player.spriteId)) {
@@ -18870,8 +18944,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 3 };
-const VERSION_PREV = '9.02PT';
+const VERSION = { season: 9, release: 4 };
+const VERSION_PREV = '9.03PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -19009,7 +19083,7 @@ const VB_RESET_ID = 'wipe-6.5.3';
 function defaultProfile() {
   return {
     vbucks: 0, vbReset: VB_RESET_ID, owned: ['default'], equipped: 'default',
-    battlePass: false, bpXp: 0, claimed: [], pirateToken: false,
+    battlePass: false, bpXp: 0, claimed: [], deepPearl: false,
     sprites: {}, sprite: '', spritePicked: false,
     pocket: 'shock',
     rankRp: 0,
@@ -19057,7 +19131,7 @@ function loadProfileFrom(p) {
         base.sprites = (p.sprites && typeof p.sprites === 'object') ? p.sprites : {};
         base.sprite = typeof p.sprite === 'string' ? p.sprite : '';
         base.spritePicked = !!p.spritePicked;
-        base.pirateToken = !!p.pirateToken;
+        base.deepPearl = !!(p.deepPearl || p.pirateToken);
         if (p.season === SEASON) {
           base.battlePass = !!p.battlePass;
           base.bpXp = Math.max(0, p.bpXp || 0);
@@ -19850,7 +19924,7 @@ function showRareFind(item, kicker, subLine) {
   const art = document.getElementById('rfArt');
   if (kick) kick.textContent = kicker || 'RARE CHEST FIND';
   if (title) title.textContent = token ? 'RARE CHEST FIND' : RARITY[item.rarity].name.toUpperCase() + ' FOUND';
-  if (name) name.textContent = token ? 'PIRATE TOKEN' : (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
+  if (name) name.textContent = token ? 'DEEP PEARL' : (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
   if (sub) sub.textContent = subLine || (RARITY[item.rarity].name.toUpperCase() + ' · GRAB IT BEFORE IT VANISHES');
   if (art) art.innerHTML = token ? GUN_ICONS.token : (GUN_ICONS[item.type] || '');
 
@@ -20362,14 +20436,14 @@ function claimBpTiers() {
   renderPass();
 }
 
-/* ---------------- pirate token ----------------
-   The chest token. Picked up it sits in your boon slots; only a win with it
+/* ---------------- deep pearl ----------------
+   The chest find. Picked up it sits in your boon slots; only a win with it
    still on you buys out the entire item shop — every outfit that has ever
    carried a price — and unlocks this season's battle pass, permanently. Losing
-   costs you the token, so it has to be earned. Kept in the profile with the
-   token flag so a second one is a no-op. */
-function redeemPirateToken() {
-  if (!account.signedIn) { toast('SIGN IN TO REDEEM THE TOKEN', 'sub'); return; }
+   costs you the pearl, so it has to be earned. Kept in the profile with the
+   pearl flag so a second one is a no-op. */
+function redeemDeepPearl() {
+  if (!account.signedIn) { toast('SIGN IN TO REDEEM THE PEARL', 'sub'); return; }
   let gained = 0;
   for (let i = 0; i < SKINS.length; i++) {
     const sk = SKINS[i];
@@ -20377,7 +20451,7 @@ function redeemPirateToken() {
     profile.owned.push(sk.id);
     gained++;
   }
-  profile.pirateToken = true;
+  profile.deepPearl = true;
   profile.battlePass = true;
   saveProfile();
   refreshWallet();
@@ -20388,13 +20462,13 @@ function redeemPirateToken() {
   sfx('bpBuy');
   shake(0.3);
   playReveal({
-    kicker: 'PIRATE TOKEN · WON',
+    kicker: 'DEEP PEARL · WON',
     title: 'THE WHOLE SHOP',
     name: 'UNLOCKED',
     sub: gained + ' OUTFITS AND THE BATTLE PASS, FREE',
     art: GUN_ICONS.token,
   });
-  toast('PIRATE TOKEN REDEEMED · ' + gained + ' OUTFITS', 'sub');
+  toast('DEEP PEARL REDEEMED · ' + gained + ' OUTFITS', 'sub');
 }
 
 function selectPocket(type) {
@@ -21065,7 +21139,7 @@ function netEnsureRemoteRig() {
   const rig = makeRig(sk.shirt, sk.pants, sk.skin, sk.accent);
   rig.group.visible = false;
   dynGroup.add(rig.group);
-  setRigWeapon(rig, 'flintlock');
+  setRigWeapon(rig, 'tidepistol');
   net.remoteRig = rig;
   return rig;
 }
@@ -21713,7 +21787,7 @@ function adminRefill() {
 
 function adminLoadout() {
   if (!player.alive) { toast('START A MATCH FIRST', 'sub'); return; }
-  const picks = ['blunderbuss', 'grapeshot', 'musketoon', 'longrifle', 'musket'];
+  const picks = ['saltburst', 'coralgun', 'undertow', 'squall', 'deepwater'];
   for (let i = 0; i < picks.length && i < player.inv.length; i++) {
     player.inv[i] = makeWeapon(picks[i], 4);
   }
@@ -22295,10 +22369,10 @@ function boot() {
    Schema: { id, tag, title, body, link, linkText, minVersion, maxVersion }. */
 const MOTD_URL = 'https://gist.githubusercontent.com/cannon164524/53e30ebd0b724394a72dd6729b454936/raw/announcement.json';
 const MOTD_DEFAULT = {
-  id: 's7-pirate-coast',
+  id: 's9-drowned-coast',
   tag: 'MESSAGE OF THE DAY',
-  title: 'THE PIRATE COAST',
-  body: 'Season 7 has beached a fleet on a new island. Board the galleon, loot its deck, and watch the chests: one in twenty hides the pirate token, and only a win with it in your boons pays out the whole item shop.',
+  title: 'THE DROWNED COAST',
+  body: 'The sea took the old coast. Five islands are all that is left, with open water between them and a swim in every rotation. Line up on the new water arsenal and watch the chests: one in twenty hides a deep pearl, and only a win with it in your boons pays out the whole item shop.',
   link: ''
 };
 const MOTD_CACHE_KEY = 'stormfall.motd.last';
