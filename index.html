@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.07PT</div>
+      <div class="verTag" id="verTag">v9.08PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,15 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.07PT</b>
+        <b id="wnVersion">v9.08PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.06PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.07PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>CAUSEWAYS</b> — six low bars of sand now link the islands: the crown to the southern reach, the eastern and northern shelves, the eastern shelf across to the western, and the two southern islands to each other. You can walk between them, the water still runs on either side of every bar, and the gaps that are left are wide enough to take a boat through.</div></li>
-      <li><span class="wnTag">02</span><div><b>ISLETS</b> — three small cays have risen in the channels, so the open water is broken up instead of empty.</div></li>
+      <li><span class="wnTag">01</span><div><b>WARM UP IN THE LOBBY</b> — the pre-game is yours now: run around, shoot the bots standing about, and watch the damage numbers land. Nobody goes down before the bus does — hits take a bot to one health and stop there, no knocks, no kills, no walls going up — and their health is put back the moment they board.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9945,7 +9944,30 @@ function beginStaging() {
     player.rig.group.position.copy(player.pos);
     player.rig.group.visible = true;
   }
-  for (let i = 0; i < bots.length; i++) if (bots[i].rig) bots[i].rig.group.visible = false;
+  // The lobby is a yard, not a queue: everyone stands about on the ground in
+  // front of you, alive and shootable, with the bots' brains switched off until
+  // the bus opens.
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    const a = (i / Math.max(1, bots.length)) * TAU + rand(-0.25, 0.25);
+    const d = rand(7, 24);
+    b.pos.set(player.pos.x + Math.cos(a) * d, 0, player.pos.z + Math.sin(a) * d);
+    b.pos.y = Math.max(terrainHeight(b.pos.x, b.pos.z), TERRAIN_FLOOR) + 0.12;
+    b.vel.set(0, 0, 0);
+    b.dropping = false;
+    b.alive = true;
+    b.out = false;
+    b.knocked = false;
+    b.bleed = 0;
+    b.reviveT = 0;
+    b.lobbyHp = b.hp;                       // put back when the bus opens
+    b.yaw = Math.atan2(player.pos.x - b.pos.x, player.pos.z - b.pos.z);
+    if (b.rig) {
+      b.rig.group.position.copy(b.pos);
+      b.rig.group.rotation.y = b.yaw;
+      b.rig.group.visible = true;
+    }
+  }
   camRig.ready = false;
   toast('PRE-GAME LOBBY', 'WAITING FOR THE LOBBY TO FILL');
   sfx('unlock');
@@ -9994,6 +10016,15 @@ function startBus() {
   if (player.rig) player.rig.group.visible = false;
   camRig.ready = false;
 
+  // practice in the lobby does not cost you the match's ammo
+  const held = currentItem();
+  if (held && held.kind === 'weapon') {
+    held.mag = WEAPONS[held.type].mag;
+    const ammoType = WEAPONS[held.type].ammo;
+    player.ammo[ammoType] = Math.max(player.ammo[ammoType] || 0, 90);
+    refreshHotbar();
+  }
+
   const ride = bus.len / bus.speed;
   const n = Math.max(1, bots.length);
   for (let i = 0; i < bots.length; i++) {
@@ -10003,6 +10034,10 @@ function startBus() {
     // their turn.
     const slot = (i + 0.5) / n;
     b.releaseAt = state.time + BUS_LOCK + (0.16 + slot * 0.8) * ride + rand(-0.3, 0.3);
+    // a lobby's worth of practice shots does not follow them into the match
+    if (b.lobbyHp) b.hp = b.lobbyHp;
+    b.lobbyHp = 0;
+    b.shield = 0;
     b.dropping = true;
     b.vel.set(0, 0, 0);
     b.pos.copy(g.position);
@@ -14305,9 +14340,12 @@ function damageBot(b, amount, attackerName, head, point, attacker) {
   }
 
   if (b.hp <= 0) {
-    if (canKnockBot(b)) knockBot(b, attackerName || 'Storm');
+    // the pre-game lobby is a practice yard: hits land and read, but nobody
+    // goes down before the bus does
+    if (state.phase === 'staging') b.hp = 1;
+    else if (canKnockBot(b)) knockBot(b, attackerName || 'Storm');
     else killBot(b, attackerName || 'Storm');
-  } else if (b.skill > 0.45 && !mod('nobuild') && Math.random() < 0.4) botBuild(b);
+  } else if (state.phase !== 'staging' && b.skill > 0.45 && !mod('nobuild') && Math.random() < 0.4) botBuild(b);
 }
 
 function dropBotLoot(b) {
@@ -16602,7 +16640,6 @@ function updatePlayer(dt) {
     input.lookDY = 0;
   }
 
-  if (state.phase === 'staging') return;   // the lobby: stand still until the bus arrives
   if (player.inBus) return;                // the bus carries the player until they jump
   if (player.driving) return;   // updateVehicles moves the car, and the player with it
 
@@ -18988,8 +19025,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 7 };
-const VERSION_PREV = '9.06PT';
+const VERSION = { season: 9, release: 8 };
+const VERSION_PREV = '9.07PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -20926,7 +20963,7 @@ function autoPickup() {
 
 function handleCombatInput() {
   if (!player.alive || player.dropping || player.knocked || player.driving || player.inBus ||
-      state.phase === 'staging' || invOpen || vendOpen) { input.fireJust = false; return; }
+      invOpen || vendOpen) { input.fireJust = false; return; }
   if (buildState.active) {
     if (input.fireJust) placeBuild();
   } else if (!player.using) {
