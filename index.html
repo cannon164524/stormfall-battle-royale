@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.09PT</div>
+      <div class="verTag" id="verTag">v9.10PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,15 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.09PT</b>
+        <b id="wnVersion">v9.10PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.08PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.09PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOSSES</b> — one to three named bruisers now hold the named places: the Drowned King, Salt Mother, Wreck Warden and Tide Colossus. They are half again your size, carry nine hundred health and a mythic, cannot be knocked down, and do not ride the bus. Put one down and it pays out a second vault-grade gun, heals, a hundred and twenty rounds and two hundred and fifty gold.</div></li>
-      <li><span class="wnTag">02</span><div><b>BOTS TAKE BOATS</b> — a bot caught in open water now swims for the nearest free hull, drives it at its own goal and steps off when it gets there. If the boat is wrecked underneath it, it goes back to swimming.</div></li>
+      <li><span class="wnTag">01</span><div><b>BOSS MARKERS</b> — every boss now carries a red health bar over its head that empties as you work it down, and sits on the map as a big red skull wherever it is, radar or no radar. Both clear the moment the boss goes down.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -14921,11 +14920,47 @@ function spawnBosses() {
     b.mate = false;
     b.weapon = makeWeapon(pick(['mythic_deepwater', 'mythic_brine', 'exotic_geyser', 'mythic_tidepistol']), R_MYTHIC);
     b.mag = WEAPONS[b.weapon.type].mag;
+    b.maxHp = b.hp;
+
+    // a health bar over the head: the same billboarded plate the boats carry
+    const bar = new THREE.Group();
+    const barBack = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.8, 0.46),
+      new THREE.MeshBasicMaterial({ color: 0x0b1214, transparent: true, opacity: 0.75, depthWrite: false })
+    );
+    const barFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.5, 0.28),
+      new THREE.MeshBasicMaterial({ color: 0xff4d5e, transparent: true, opacity: 0.95, depthWrite: false })
+    );
+    barFill.position.z = 0.02;
+    bar.add(barBack, barFill);
+    bar.visible = false;
+    bar.renderOrder = 12;
+    dynGroup.add(bar);
+    b.bar = bar;
+    b.barFill = barFill;
+
     if (b.rig) {
       b.rig.group.position.copy(b.pos);
       b.rig.group.scale.setScalar(1.5);
       if (!state.remoteJoin) setRigWeapon(b.rig, b.weapon.type);
     }
+  }
+}
+
+/* Bosses carry their health over their head, so the fight reads at a glance. */
+function updateBossBars() {
+  for (let i = 0; i < bots.length; i++) {
+    const b = bots[i];
+    if (!b.boss || !b.bar) continue;
+    const on = b.alive && !b.out && !b.dropping && !b.knocked;
+    b.bar.visible = on;
+    if (!on) continue;
+    b.bar.position.set(b.pos.x, b.pos.y + 3.4, b.pos.z);
+    b.bar.quaternion.copy(camera.quaternion);
+    const frac = clamp(b.hp / (b.maxHp || 900), 0, 1);
+    b.barFill.scale.x = Math.max(0.001, frac);
+    b.barFill.position.x = -(1 - frac) * 3.5 / 2;
   }
 }
 
@@ -17857,6 +17892,43 @@ function w2m(x, z) {
   return [(x / MAP_WORLD + 0.5) * MAP_SIZE, (z / MAP_WORLD + 0.5) * MAP_SIZE];
 }
 
+/* A flat red skull, for the boss markers on the minimap. */
+function drawBossSkull(ctx, x, y, r) {
+  ctx.save();
+  ctx.translate(x, y);
+  // cranium
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.18, r * 0.74, 0, TAU);
+  ctx.fillStyle = '#ff3b4a';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.75)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // jaw
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.44, r * 0.34);
+  ctx.lineTo(r * 0.44, r * 0.34);
+  ctx.lineTo(r * 0.3, r * 0.98);
+  ctx.lineTo(-r * 0.3, r * 0.98);
+  ctx.closePath();
+  ctx.fillStyle = '#ff3b4a';
+  ctx.fill();
+  ctx.stroke();
+  // eye sockets and nose, cut out dark
+  ctx.fillStyle = 'rgba(8,4,6,.92)';
+  ctx.beginPath();
+  ctx.arc(-r * 0.31, -r * 0.24, r * 0.2, 0, TAU);
+  ctx.arc(r * 0.31, -r * 0.24, r * 0.2, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(0, r * 0.02);
+  ctx.lineTo(r * 0.13, r * 0.3);
+  ctx.lineTo(-r * 0.13, r * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 let mapFrame = 0;
 function drawMinimap() {
   mapFrame++;
@@ -17979,6 +18051,13 @@ function drawMinimap() {
       ctx.lineWidth = 1;
       ctx.stroke();
     }
+  }
+
+  // bosses — a big red skull, shown wherever they are on the map
+  for (const b of bots) {
+    if (!b.boss || !b.alive || b.out || b.dropping) continue;
+    const [bx, by] = w2m(b.pos.x, b.pos.z);
+    drawBossSkull(ctx, bx, by, 9);
   }
 
   // reboot vans
@@ -19153,8 +19232,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 9 };
-const VERSION_PREV = '9.08PT';
+const VERSION = { season: 9, release: 10 };
+const VERSION_PREV = '9.09PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -21208,6 +21287,7 @@ function animate(now) {
   if (state.phase !== 'staging' && state.phase !== 'bus') updateStorm(dt);
   updateAnomaly(dt);
   updateVehicles(dt);
+  updateBossBars();
   updateGrenades(dt);
   updatePocketEffects(dt);
   updateRespawns();
