@@ -15315,7 +15315,7 @@ function updateBot(b, dt) {
     }
     b.pos.x += moveX * sp * dt;
     b.pos.z += moveZ * sp * dt;
-    resolveCollisions(b.pos, b.pos.y, 0.45, 1.7);
+    resolveCollisions(b.pos, b.pos.y, b.boss ? 0.62 : 0.45, b.boss ? 2.5 : 1.7);
     b.moveT += dt;
 
     const moved = Math.hypot(b.pos.x - sx, b.pos.z - sz);
@@ -15341,7 +15341,7 @@ function updateBot(b, dt) {
     b.pos.x += b.knock.x * dt;
     b.pos.z += b.knock.z * dt;
     b.knock.multiplyScalar(Math.exp(-2.2 * dt));
-    resolveCollisions(b.pos, b.pos.y, 0.45, 1.7);
+    resolveCollisions(b.pos, b.pos.y, b.boss ? 0.62 : 0.45, b.boss ? 2.5 : 1.7);
     if (b.knock.lengthSq() < 1.5) b.knock = null;
   }
   b.pos.y = groundHeightAt(b.pos.x, b.pos.z, b.pos.y);
