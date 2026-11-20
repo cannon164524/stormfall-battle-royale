@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.12PT</div>
+      <div class="verTag" id="verTag">v9.13PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,14 +6930,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.12PT</b>
+        <b id="wnVersion">v9.13PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.11PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.12PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOSSES ARE NOT THE LOBBY</b> — a boss no longer counts towards the players alive, so a win comes when the last real opponent is down, boss or no boss. They still count as an elimination and still pay their loot if you go and take them, and the top-left counter now reads the same number the win condition uses.</div></li>
+      <li><span class="wnTag">01</span><div><b>NO QUIET</b> — a rift anomaly now runs from the moment you land and for the whole match: 100% instead of a coin flip at each storm phase, and the next one opens the instant the last fades, with no gap in between. The event that just ran sits out the next draw, so you never get the same anomaly twice in a row.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15705,16 +15705,15 @@ function nextStormPhase() {
   blitzAddXp(2);
   toast('STORM CLOSING', 'sub');
   sfx('storm');
-  // A rift anomaly may flip the script the moment the phase opens. The first
-  // phase always gets one, so a match opens with an event inside the first
-  // minute. An event lasts through its own close AND the next countdown — two
-  // phases technically — and fades when the second close opens. No second
-  // anomaly rolls while one is running.
+  // A rift anomaly now runs non-stop: one opens the moment a phase does, an
+  // event lasts through its own close AND the next countdown — two phases
+  // technically — and the next one opens the instant the last fades. Nothing
+  // waits for a cooldown and nothing rolls a die.
   if (anomaly.type) {
     if (anomaly.age >= 1) endAnomaly();
     else anomaly.age++;
   }
-  if (!anomaly.type && anomalyAllowed() && (storm.phase === 0 || Math.random() < ANOMALY_CHANCE)) startAnomaly();
+  if (!anomaly.type && anomalyAllowed()) startAnomaly();
 }
 
 function outsideStorm(x, z) {
@@ -15834,8 +15833,7 @@ function audioInit() {
      Mythic drop plus gold, then a new mark is set.
    - MOON GRAVITY: the whole island runs at 45% gravity until the anomaly fades.
    */
-const anomaly = { type: '', data: null, age: 0 };
-const ANOMALY_CHANCE = 0.8;
+const anomaly = { type: '', data: null, age: 0, last: '' };
 const DIG_COUNT = 8;
 const DRONE_COUNT = 5;
 const DRONE_HP = 150;
@@ -16075,11 +16073,14 @@ function startMoonGravity() {
 /* ---- EVENT LIFECYCLE ---- */
 function startAnomaly() {
   // Stabilize the Rift is the headline event, so it comes up half the time;
-  // the other five share the rest evenly.
-  anomaly.type = pick([
+  // the other five share the rest evenly. The one that just ran is taken out
+  // of the hat, so events never repeat back to back.
+  const pool = [
     'stabilize', 'stabilize', 'stabilize', 'stabilize', 'stabilize',
     'spritehunt', 'goldrush', 'bounty', 'unstoppable', 'moongrav',
-  ]);
+  ].filter((t) => t !== anomaly.last);
+  anomaly.type = pick(pool.length ? pool : ['stabilize']);
+  anomaly.last = anomaly.type;
   anomaly.data = null;
   anomaly.age = 0;
   if (anomaly.type === 'spritehunt') startSpriteHunt();
@@ -16103,6 +16104,8 @@ function endAnomaly() {
 /* ---- PER-FRAME ---- */
 function updateAnomaly(dt) {
   if (state.phase !== 'play') return;
+  // nothing is ever quiet now: the moment one event ends, the next opens
+  if (!anomaly.type && anomalyAllowed()) startAnomaly();
   if (anomaly.type !== 'stabilize' || !anomaly.data) return;
   const s = anomaly.data;
   for (const d of s.drones) {
@@ -19243,8 +19246,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 12 };
-const VERSION_PREV = '9.11PT';
+const VERSION = { season: 9, release: 13 };
+const VERSION_PREV = '9.12PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
