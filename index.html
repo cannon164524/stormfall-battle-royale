@@ -6221,7 +6221,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.06PT</div>
+      <div class="verTag" id="verTag">v9.07PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6930,15 +6930,15 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.06PT</b>
+        <b id="wnVersion">v9.07PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.05PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.06PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>BOATS, NOT CARS</b> — the cars are gone. Six flat hulls now float out on the open water instead, with the same controls, the same speed and the same hull health and ram damage. They hold the water line with a slow swell, stop dead at the shallows rather than driving up a beach, and step you out swimming when you leave.</div></li>
-      <li><span class="wnTag">02</span><div><b>FASTER SWIMMING</b> — swimming is well over half walking pace now instead of a third, so a crossing between islands is a swim rather than a sentence.</div></li>
+      <li><span class="wnTag">01</span><div><b>CAUSEWAYS</b> — six low bars of sand now link the islands: the crown to the southern reach, the eastern and northern shelves, the eastern shelf across to the western, and the two southern islands to each other. You can walk between them, the water still runs on either side of every bar, and the gaps that are left are wide enough to take a boat through.</div></li>
+      <li><span class="wnTag">02</span><div><b>ISLETS</b> — three small cays have risen in the channels, so the open water is broken up instead of empty.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -7276,7 +7276,30 @@ const DROWNED_ISLES = [
   { x: 96, z: -176, r: 54, peak: 28 },    // the southern reach
   { x: -140, z: -166, r: 44, peak: 17 },  // the low south-west flats
   { x: 16, z: 205, r: 40, peak: 12 },     // a long north sandbar
+  // islets out in the channels, so the water is broken up rather than empty
+  { x: 78, z: 118, r: 26, peak: 7 },
+  { x: -86, z: -74, r: 24, peak: 6 },
+  { x: -36, z: 148, r: 22, peak: 5 },
 ];
+
+/* Causeways: low bars of sand that link the islands, so the coast reads as one
+   drowned country with water in the gaps instead of six separate rocks. */
+const DROWNED_LINKS = [
+  { x1: 0, z1: 0, x2: 96, z2: -176, w: 20 },       // crown to the southern reach
+  { x1: 0, z1: 0, x2: 168, z2: 74, w: 17 },        // crown to the eastern shelf
+  { x1: 0, z1: 0, x2: 16, z2: 205, w: 14 },        // crown to the north sandbar
+  { x1: 168, z1: 74, x2: -172, z2: 58, w: 11 },    // eastern to western, a thin bar
+  { x1: -172, z1: 58, x2: -140, z2: -166, w: 12 }, // western to the south-west flats
+  { x1: -140, z1: -166, x2: 96, z2: -176, w: 11 }, // the two southern islands
+];
+
+function distToLink(x, z, L) {
+  const dx = L.x2 - L.x1, dz = L.z2 - L.z1;
+  const len2 = dx * dx + dz * dz;
+  let t = len2 > 0 ? ((x - L.x1) * dx + (z - L.z1) * dz) / len2 : 0;
+  t = clamp(t, 0, 1);
+  return Math.hypot(x - (L.x1 + dx * t), z - (L.z1 + dz * t));
+}
 
 function terrainHeight(x, z) {
   const detail = fbm(x * 0.0105 + 3.1, z * 0.0105 - 7.4, 3);
@@ -7295,6 +7318,17 @@ function terrainHeight(x, z) {
       v += (detail - 0.5) * 11 * shelf;
       v += (ripple - 0.5) * 3.2 * shelf;
     }
+    if (v > h) h = v;
+  }
+  // the causeways: sandbars that bridge the gaps between the islands
+  for (let i = 0; i < DROWNED_LINKS.length; i++) {
+    const L = DROWNED_LINKS[i];
+    const span = L.w * 2.2;
+    const d = distToLink(x, z, L);
+    if (d > span) continue;
+    const t = clamp(1 - d / span, 0, 1);
+    const ridge = t * t * (3 - 2 * t);
+    const v = -9 + ridge * 13 + (detail - 0.5) * 2.4 * ridge;
     if (v > h) h = v;
   }
   // nothing to stand on far past the ring
@@ -18954,8 +18988,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 6 };
-const VERSION_PREV = '9.05PT';
+const VERSION = { season: 9, release: 7 };
+const VERSION_PREV = '9.06PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
