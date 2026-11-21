@@ -4990,6 +4990,31 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
 }
 .modeBtn.active::after { opacity:1; }
 #adminEntry { display:block; font-size:8px; color:var(--ink-dim); }
+/* the season clock over the deploy button, and the closed notice */
+.seasonTimer {
+  margin:0 12px 8px; padding:7px 8px; text-align:center;
+  border:1px solid var(--line); border-radius:0; background:none;
+  font-family:var(--body); font-size:9px; font-weight:800; letter-spacing:.16em;
+  color:var(--ink-dim); text-transform:uppercase;
+}
+.seasonTimer b { color:var(--ink); font-weight:800; letter-spacing:.1em; }
+#seasonClosed {
+  position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+  padding:20px; background:#080a0e;
+}
+#seasonClosed.hide { display:none; }
+.scCard {
+  width:min(520px,100%); padding:22px 22px 18px; text-align:center;
+  border:1px solid var(--line); border-radius:0; background:#0d1416;
+}
+.scKicker { font-family:var(--body); font-size:8px; font-weight:800; letter-spacing:.28em; color:var(--ink-dim); }
+.scTitle { margin:10px 0 8px; font-family:var(--display); font-size:26px; font-weight:800; letter-spacing:.06em; color:var(--ink); }
+.scNote { margin:0 0 16px; font-family:var(--body); font-size:12px; line-height:1.5; color:var(--ink-dim); }
+.scLink {
+  display:inline-block; padding:11px 18px; text-decoration:none;
+  background:var(--lime); color:#0a0f07; border-radius:0;
+  font-family:var(--display); font-size:15px; font-weight:800; letter-spacing:.1em;
+}
 
 /* main area */
 .lobby { position:absolute; left:0; right:0; top:46px; bottom:0; display:block; padding:0; }
@@ -6221,7 +6246,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.15PT</div>
+      <div class="verTag" id="verTag">v9.16PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6437,6 +6462,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="queueMode" id="queueMode">SOLO — <span id="queueBots">24</span> OPPONENTS</div>
       <div class="queueSub">Survive the storm. Take the crown.</div>
     </div>
+    <div class="seasonTimer" id="seasonTimer">SEASON 9 STARTS IN <b>—</b></div>
     <button id="playBtn">DEPLOY</button>
   </div>
 
@@ -6930,16 +6956,26 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.15PT</b>
+        <b id="wnVersion">v9.16PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.14PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.15PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>CLEAN FINISH</b> — the kill that ends the match goes straight to the victory screen. No elimination card and no elimination-jackpot card over the top of it, even if the last opponent was carrying a mythic: the loot is still on the ground if you want it, it just does not cover the win.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE CLOCK</b> — the lobby now carries a countdown above DEPLOY: "Season 9 starts in xD xH", ticking to midnight on Monday 23 November. When it runs out the playtest closes itself and the screen says so, pointing everyone at the official build until the next season's playtest opens.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
+  </div>
+</div>
+
+<!-- ============================== PLAYTEST CLOSED ============================== -->
+<div id="seasonClosed" class="hide" role="dialog" aria-modal="true">
+  <div class="scCard">
+    <div class="scKicker">STORMFALL · SEASON 9 PLAYTEST</div>
+    <div class="scTitle">THIS PLAYTEST IS CLOSED</div>
+    <p class="scNote">Season 9 has started, so the playtest build stops here. It opens again for the next season's playtest. To keep playing now, switch to the official build.</p>
+    <a class="scLink" href="https://stormfall-battle-royale-eoko--preview.freemilk.app" target="_blank" rel="noopener noreferrer">PLAY THE OFFICIAL BUILD</a>
   </div>
 </div>
 
@@ -19259,8 +19295,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 15 };
-const VERSION_PREV = '9.14PT';
+const VERSION = { season: 9, release: 16 };
+const VERSION_PREV = '9.15PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -19277,6 +19313,52 @@ function setVersionUI() {
   const lvl = document.getElementById('wnLevel');
   if (lvl) lvl.textContent = 'PLAYTEST UPDATE';
 }
+
+/* ---------------- season clock ----------------
+   The playtest runs until Season 9 opens on Monday 23 November. The lobby
+   counts down to it, and once the clock passes the build closes itself: the
+   notice points everyone at the official game until the next playtest. */
+const SEASON_START = new Date(2026, 10, 23, 0, 0, 0);   // 23 November, local midnight
+
+function seasonMsLeft() { return SEASON_START.getTime() - Date.now(); }
+function seasonIsClosed() { return seasonMsLeft() <= 0; }
+
+function updateSeasonTimer() {
+  const el = document.getElementById('seasonTimer');
+  if (!el) return;
+  const ms = seasonMsLeft();
+  if (ms <= 0) {
+    if (el.dataset.done !== '1') {
+      el.dataset.done = '1';
+      el.innerHTML = 'SEASON 9 IS LIVE';
+    }
+    return;
+  }
+  const totalH = Math.floor(ms / 3600000);
+  const d = Math.floor(totalH / 24);
+  const h = totalH % 24;
+  const text = 'SEASON 9 STARTS IN <b>' + d + 'D ' + h + 'H</b>';
+  if (el.dataset.t !== text) {
+    el.dataset.t = text;
+    el.innerHTML = text;
+  }
+}
+
+function showSeasonClosed() {
+  const el = document.getElementById('seasonClosed');
+  if (el) el.classList.remove('hide');
+  const menu = document.getElementById('menu');
+  if (menu) menu.classList.add('hide');
+  const end = document.getElementById('end');
+  if (end) end.classList.add('hide');
+  const hud = document.getElementById('hud');
+  if (hud) hud.classList.remove('on');
+  const wn = document.getElementById('whatsNew');
+  if (wn) wn.classList.add('hide');
+}
+
+updateSeasonTimer();
+setInterval(updateSeasonTimer, 1000);
 
 /* =========================================================================
    PROFILE · V-BUCKS · COSMETICS
@@ -22659,7 +22741,9 @@ function boot() {
     // Shader compile used to block the loading screen. Let the menu appear
     // first and compile behind it.
     setTimeout(() => { try { renderer.compile(scene, camera); } catch (e) { /* ignore */ } }, 40);
-    if (pendingStart) {
+    if (seasonIsClosed()) {
+      showSeasonClosed();
+    } else if (pendingStart) {
       pendingStart = false;
       startMatch();
     } else if (TEST_QUICK_START) {
