@@ -6191,6 +6191,133 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
   .modeKicker, .modeFoot { font-size:7.5px; letter-spacing:.16em; }
   #lobbyHero { left:50%; bottom:118px; transform:translateX(-50%); }
 }
+
+/* =========================================================================
+   SEASON 9 — rebuild after looking at it on a phone
+   The corners, the micro-tracking and the twelve orphaned 8px labels were the
+   noise. This pass cuts every clip-path, gives the mode picker a sheet that
+   scrolls with its own header, turns the collapsed mode bar into the main
+   control on a phone, and pulls the in-game HUD apart where it overlapped.
+   ========================================================================= */
+/* one flat language: no cut corners, one hairline, tabular numbers */
+.modeBtn, .modeRow .modeBtn, .playRow, #playBtn, #modeBar, #modesClose,
+.slot, #pocketSlot, #prompt, #vitals, #resultCard .rcHead, #resultCard .rcName,
+.buildPiece, .mapFrame, #stormInfo, #spectate, #mateTimer, #tourneyHud,
+#seasonClosed .scCard, .mpBlock, .card, .wnCard {
+  clip-path:none;
+}
+#hud, #hud * { font-variant-numeric:tabular-nums; }
+
+/* ---- the shell: no stale season line, tabs that all fit ---- */
+body:not(.og-ui) .tagline { display:none; }
+.menuTop { gap:10px; }
+.tabs { overflow-x:auto; overflow-y:hidden; flex-wrap:nowrap; scrollbar-width:none; }
+.tabs::-webkit-scrollbar { display:none; }
+.tab, .tab.active { flex:0 0 auto; padding:7px 9px; font-size:8.5px; letter-spacing:.14em; }
+.cashTag, .vbTag { padding:3px 7px; }
+
+/* ---- the mode control: a real button instead of a 13pt whisper ---- */
+#modeBar {
+  height:46px; padding:0 14px; display:flex; align-items:center; gap:10px;
+  background:#071e2a; border:1px solid rgba(126,226,255,.3); border-left:3px solid var(--lime);
+}
+#modeBar .mbLabel { font-family:var(--label); font-size:7.5px; letter-spacing:.3em; color:rgba(198,230,244,.5); }
+#modeBar b { font-family:var(--display); font-size:17px; font-weight:800; letter-spacing:.04em; color:var(--ink); }
+#modeBar .mbHint {
+  margin-left:auto; padding:5px 10px; background:var(--lime); color:#041824;
+  border:0; font-family:var(--label); font-size:8px; font-weight:700; letter-spacing:.18em;
+}
+
+/* ---- the mode picker: a sheet that scrolls, header pinned, nothing clipped ---- */
+#menu.modesOpen .modeRow {
+  position:fixed; inset:0; display:grid; grid-template-columns:1fr 1fr;
+  align-content:start; gap:8px; padding:0 10px 14px;
+  background:#030c14; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; counter-reset: modes;
+}
+#menu.modesOpen .modeRow .mpkHead {
+  position:sticky; top:0; z-index:2; grid-column:1/-1;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 2px 10px; background:#030c14;
+  border-bottom:1px solid rgba(126,226,255,.22);
+}
+#menu.modesOpen .mpkTitle { font-family:var(--label); font-size:9px; letter-spacing:.3em; color:rgba(198,230,244,.55); }
+#menu.modesOpen #modesClose {
+  padding:9px 16px; background:var(--lime); color:#041824; border:0;
+  font-family:var(--label); font-size:9px; font-weight:800; letter-spacing:.2em;
+}
+#menu.modesOpen .modeGroup { display:contents; }
+#menu.modesOpen .modeGroupLabel {
+  grid-column:1/-1; display:block; padding:10px 2px 2px;
+  font-family:var(--label); font-size:7px; font-weight:700;
+  letter-spacing:.3em; color:rgba(198,230,244,.38); text-transform:uppercase;
+}
+#menu.modesOpen .modeBtn {
+  position:relative; min-height:84px; display:flex; flex-direction:column;
+  justify-content:center; gap:3px; padding:12px 12px 12px 34px;
+  border:1px solid rgba(126,226,255,.14); border-left:2px solid rgba(92,225,255,.3);
+  background:#071e2a;
+}
+#menu.modesOpen .modeBtn.active { border-color:var(--lime); border-left-color:var(--lime); background:#0d3142; }
+#menu.modesOpen .modeBtn .modeKicker { font-size:7px; letter-spacing:.24em; }
+#menu.modesOpen .modeBtn .modeName { font-size:16px; line-height:1.1; }
+#menu.modesOpen .modeBtn .modeFoot { font-size:7.5px; letter-spacing:.1em; }
+#menu.modesOpen .modeBtn::before {
+  content:counter(modes, decimal-leading-zero); counter-increment: modes;
+  position:absolute; left:11px; top:12px;
+  font-family:var(--display); font-size:10px; font-weight:800; letter-spacing:0;
+  color:rgba(92,225,255,.4);
+}
+#menu.modesOpen .modeBtn.active::before { color:var(--lime); }
+#menu.modesOpen .modeBtn::after { display:none; }
+
+/* ---- the brief: a clean plate, DEPLOY centred, the clock quiet ---- */
+.playRow { border-left:3px solid var(--lime); background:#061a26; }
+.playRow::before { letter-spacing:.3em; font-size:7.5px; }
+.seasonTimer { padding:6px 8px; font-size:8.5px; letter-spacing:.16em; }
+#playBtn {
+  justify-content:center; text-align:center; padding:14px 10px;
+  font-size:19px; letter-spacing:.26em;
+}
+.queueMode { font-size:15px; letter-spacing:.06em; }
+
+/* ---- in game: the top stack pulled apart ---- */
+#modeBadge {
+  left:8px; top:10px; width:112px; padding:5px 8px;
+  font-family:var(--label); font-size:7.5px; letter-spacing:.14em;
+  border-left:3px solid var(--lime); background:rgba(4,20,30,.9);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#quitBtn { left:8px; top:36px; width:112px; font-size:7.5px; letter-spacing:.14em; }
+#stormInfo { left:50%; transform:translateX(-50%); top:10px; width:118px; padding:7px 8px; }
+#stormLabel { font-size:6.5px; letter-spacing:.1em; }
+#stormTime { font-size:15px; }
+#stormInfo .metaCell b { font-size:17px; }
+#stormInfo .metaCell span { font-size:6.5px; }
+#stormWarn { font-size:6.5px; letter-spacing:.06em; }
+.mapFrame { border:1px solid rgba(126,226,255,.3); }
+
+/* ---- in game: the bottom half, sorted by where things actually sit ---- */
+#prompt {
+  left:50%; right:auto; transform:translateX(-50%);
+  bottom:186px; max-width:270px; padding:7px 12px; text-align:center;
+  font-family:var(--label); font-size:9px; letter-spacing:.14em; line-height:1.4;
+}
+#useBar { bottom:176px; }
+#vitals { left:8px; bottom:10px; width:150px; padding:7px 9px 8px; }
+.bar { height:9px; }
+.bar > b { font-size:8px; }
+#weaponCluster { right:8px; bottom:10px; align-items:flex-end; gap:6px; }
+#ammoBox b { font-size:22px; }
+#ammoBox i { font-size:8px; letter-spacing:.14em; }
+.slot { min-width:42px; }
+.slot .key { font-size:9px; top:2px; }
+.slot .cnt { font-size:9px; }
+#padHints { right:8px; bottom:2px; font-size:7px; }
+#ammoGauge { margin:-36px 0 0 40px; width:6px; }
+#feed { left:8px; top:30%; max-width:60vw; }
+.feedRow { padding:4px 8px; font-size:9.5px; }
+#tpName, #tpState { font-size:7px; }
 </style>
 </head>
 <body>
@@ -6428,7 +6555,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.18PT</div>
+      <div class="verTag" id="verTag">v9.19PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -7138,15 +7265,16 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.18PT</b>
+        <b id="wnVersion">v9.19PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.17PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.18PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>MEDALLIONS</b> — a boss now leaves exactly what it carried: its mythic and one medallion, both lit up on the ground and on the way in. Medallions sit in a boon slot and work on their own: Tideheart heals you while you swim, Storm Eye halves storm damage, Hunter puts every enemy on the map, Ironshell takes a quarter off everything that lands on you.</div></li>
-      <li><span class="wnTag">02</span><div><b>A NEW SHELL</b> — the interface has a new typeface for display and labels, and the lobby is rebuilt around a numbered vertical roster of modes down the left with the brief held on the right and the hero between them, on any screen wide enough for it. Phones keep the swipe rail.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE MODE SHEET, REBUILT</b> — picking a mode is a proper full-screen sheet now: every card scrolls into view instead of being cut off, the groups are labelled (Battle Royale, Ranked, Arcade), the header stays pinned with its CLOSE button, cards are taller with a number on each, and the dead black half-screen is gone.</div></li>
+      <li><span class="wnTag">02</span><div><b>A MODE BUTTON WORTH PRESSING</b> — the collapsed strip at the bottom of the lobby is now a real control: the current mode in big type, a cyan CHANGE MODE button, and a rail down the side. The stale "SEASON 7" under the logo is gone, and every tab in the top bar can be reached again.</div></li>
+      <li><span class="wnTag">03</span><div><b>CORNERS OFF, HUD SORTED</b> — every cut corner and repeated 1px notch has been removed for one flat plate language. In game, the prompt no longer sits on the hotbar, the match badge, leave button and storm panel each have their own space, and the small labels are bigger.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -19505,8 +19633,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 18 };
-const VERSION_PREV = '9.17PT';
+const VERSION = { season: 9, release: 19 };
+const VERSION_PREV = '9.18PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
