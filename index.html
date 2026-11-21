@@ -6967,7 +6967,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEASON 7 CLOSES MONDAY</b> — the island goes offline at midnight on Monday while Season 9 is built. The deploy row counts it down until then, and at zero the game stops taking matches and closes the doors. Nothing is lost: outfits, pass tiers, V-Bucks and rank all carry over.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON 7 IS CLOSED</b> — the island is offline from now until Season 9 goes live: no mode can be started, and the game opens on the closed card instead. Everything on your account is kept — outfits, pass tiers, V-Bucks and rank all come back with the new season.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18811,8 +18811,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 5, patch: 0 };
-const VERSION_PREV = '8.4.9';
+const VERSION = { major: 8, minor: 5, patch: 1 };
+const VERSION_PREV = '8.5.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18830,31 +18830,34 @@ function setVersionUI() {
 }
 
 /* ---------------- scheduled shutdown ----------------
-   Season 7 closes while Season 9 is built. The game plays normally right up to
-   the minute below — the lobby counts it down — and from then on nothing can
-   start a match and the offline card owns the screen.
+   Season 7 is closed while Season 9 is built. From the moment below nothing can
+   start a match: showMatchfinder, startMatch and the boot path all refuse, and
+   the offline card owns the screen.
 
-   startsAt is read in each player's own local time, so everyone loses their
-   evening at their own midnight. Append a Z (2026-11-23T00:00:00Z) to bring
-   the whole world down at one moment instead.
+   startsAt: 'now' shuts the game the instant it loads, which is where it stands
+   today. Give it a date instead ('2026-12-01T00:00:00') to schedule a close in
+   the future: the lobby counts that down to the minute in each player's own
+   local time, and the shutdown starts when it lands. Append a Z
+   (2026-12-01T00:00:00Z) to use one moment worldwide instead.
 
-   To bring the game back: set enabled to false, or move startsAt forward. The
-   copy here feeds both the offline card and the countdown strip. */
+   To bring the game back: set enabled to false, or give startsAt a later date.
+   The copy here feeds both the offline card and the countdown strip. */
 const SHUTDOWN = {
   enabled: true,
-  startsAt: '2026-11-23T00:00:00',      // Monday, midnight, the player's own time
+  startsAt: 'now',                       // closed already; a date schedules the close instead
   kicker: 'SEASON 7 · CLOSED',
   title: 'STORMFALL IS OFFLINE',
-  headline: 'MON 00:00',                 // printed as CLOSED on the card
+  headline: 'NOW',                       // printed as CLOSED on the card
   lines: [
     'The island is closed while we build Season 9. Everything on your account — outfits, pass tiers, V-Bucks and rank — is saved exactly where you left it.',
-    'Play returns with Season 9. The date lands on this screen first.',
+    'Play returns the day Season 9 goes live. The date lands on this screen first.',
   ],
   footerLeft: 'STORMFALL · BATTLE ROYALE',
   footerRight: 'SEASON 9 INBOUND',
 };
 
 const SHUTDOWN_AT = (() => {
+  if (String(SHUTDOWN.startsAt).trim().toLowerCase() === 'now') return Date.now();
   const t = Date.parse(SHUTDOWN.startsAt);
   return Number.isFinite(t) ? t : 0;
 })();
