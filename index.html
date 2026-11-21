@@ -6009,6 +6009,136 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
 .respLives { margin-top:10px; }
 .respLives i { background:#ff5a6e; box-shadow:none; opacity:.9; }
 .respLives i.off { background:rgba(255,255,255,.14); }
+
+/* =========================================================================
+   THE DROWNED COAST — interface pass
+   Salt-white type on deep-sea plates: cyan for everything you can press,
+   sea-green for health, coral for everything that hurts. Flat as ever —
+   hairline borders, solid fills, cut corners, no gradients, no glow.
+   ========================================================================= */
+:root {
+  --bg:#04101a;
+  --panel:#08202c;
+  --line:rgba(126,226,255,.18);
+  --ink:#eaf8ff;
+  --ink-dim:rgba(198,230,244,.55);
+  --lime:#5ce1ff;
+  --teal:#46f0d2;
+  --coral:#ff7a5c;
+  --gold:#ffd27a;
+  --danger:#ff5c6e;
+}
+#menu, #end { background:#04101a; }
+
+/* ---- the chrome: a tideline under the top bar ---- */
+.menuTop { background:#061824; border-bottom:1px solid rgba(126,226,255,.34); }
+.logo { color:var(--ink); letter-spacing:.24em; }
+.tab, .tab.active { border:0; border-left:1px solid rgba(126,226,255,.12); letter-spacing:.2em; }
+.tab { color:rgba(198,230,244,.5); }
+.tab:hover { color:var(--ink); background:rgba(92,225,255,.08); }
+.tab.active { background:var(--lime); color:#041824; }
+.cashTag, .vbTag { background:#051a26; border-color:rgba(126,226,255,.2); }
+.verTag { color:rgba(198,230,244,.6); }
+.ptTag { border-color:rgba(126,226,255,.24); color:rgba(198,230,244,.7); }
+
+/* ---- the mode rail: plates with a cut corner and a waterline ---- */
+.modeRow { background:#030c14; }
+.modeBtn, .modeBtn:hover, .modeBtn.active {
+  border:1px solid rgba(126,226,255,.16); background:#071e2a; border-left:2px solid rgba(92,225,255,.35);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+}
+.modeBtn:hover { background:#0b2836; border-color:rgba(126,226,255,.4); border-left-color:var(--lime); }
+.modeBtn.active { background:#0d3142; border-color:var(--lime); border-left-color:var(--lime); }
+.modeBtn.active .modeName { color:var(--lime); }
+.modeName { color:var(--ink); letter-spacing:.08em; }
+.modeKicker { color:rgba(198,230,244,.45); letter-spacing:.26em; }
+.modeKicker.new { color:var(--coral); }
+.modeFoot { color:rgba(198,230,244,.4); letter-spacing:.08em; }
+.mpkTitle { color:rgba(198,230,244,.45); }
+
+/* ---- the brief and the deploy ---- */
+.playRow { background:#061a26; border:1px solid rgba(126,226,255,.22); }
+.playRow::before { color:var(--lime); letter-spacing:.34em; border-bottom:1px solid rgba(126,226,255,.22); }
+.queueMode { color:var(--ink); }
+.queueSub { color:rgba(198,230,244,.5); }
+.pcName { color:var(--ink); }
+.pcSkin { color:rgba(198,230,244,.45); }
+#playBtn {
+  background:var(--lime); color:#041824; border-radius:0; letter-spacing:.22em;
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+#playBtn:hover { filter:brightness(1.06); }
+.seasonTimer { border-color:rgba(126,226,255,.22); color:rgba(198,230,244,.62); letter-spacing:.18em; }
+.seasonTimer b { color:var(--lime); }
+.seatPanel, .sidePanel { border-top:1px solid rgba(126,226,255,.16); }
+.seatLabel { color:rgba(198,230,244,.42); }
+.pocketOpt.sel, .modChip.sel { background:var(--lime); color:#041824; border-color:var(--lime); }
+
+/* ---- panels ---- */
+.menuPanel { background:rgba(4,16,26,.96); }
+.mpHead { border-bottom:1px solid rgba(126,226,255,.22); }
+.mpTitle { color:var(--ink); }
+.mpKicker, .mpMeta, .passState { color:var(--lime); }
+.card, .tier, .compCard, .mpBlock, .spriteCard {
+  background:#071e2a; border:1px solid rgba(126,226,255,.14); border-radius:0;
+}
+.card:hover { border-color:rgba(126,226,255,.4); }
+
+/* ---- in game: cold plates, cyan rails ---- */
+#vitals, #prompt, .slot, #pocketSlot, #spectate, #mateTimer, #tourneyHud,
+.buildPiece, .mapFrame, #ammoBox, #stormInfo, .metaCell {
+  background:#04141e; border:1px solid rgba(126,226,255,.2);
+}
+.bar { background:rgba(126,226,255,.12); }
+.bar.shield > i, .tpHealth > i { background:var(--lime); }
+.bar.health > i { background:#7dffb0; }
+.bar.health.low > i { background:var(--coral); }
+#overFill { background:#cfeeff; }
+.bar::after { background:repeating-linear-gradient(90deg, transparent 0 9px, rgba(2,12,18,.55) 9px 10px); }
+.slot.active { border-color:var(--lime); background:rgba(92,225,255,.14); }
+#pocketSlot.ready { border-color:rgba(92,225,255,.55); }
+#ammoBox b { color:var(--ink); }
+#ammoBox i { color:var(--lime); }
+#ammoGauge { background:rgba(3,12,18,.72); border:1px solid rgba(126,226,255,.26); }
+#ammoGauge .agFill { background:var(--lime); }
+#useBar { background:rgba(126,226,255,.14); }
+#useBar i { background:var(--lime); }
+.buildPiece.sel { border-color:var(--lime); color:var(--lime); background:rgba(92,225,255,.1); }
+.mapFrame { border:1px solid rgba(126,226,255,.28); }
+#prompt b { color:var(--lime); }
+.feedRow { border-left:2px solid rgba(92,225,255,.55); background:rgba(4,18,26,.72); }
+#resultCard .rcHead { border-color:rgba(92,225,255,.5); background:#061c26; }
+#resultCard .rcHead b, #resultCard .rcIcon { color:var(--lime); }
+#resultCard.kill .rcHead { border-color:rgba(255,122,92,.6); background:#180d0a; }
+#resultCard.kill .rcHead b, #resultCard.kill .rcIcon { color:var(--coral); }
+#resultCard .rcName { background:#04141e; border-color:rgba(126,226,255,.2); color:var(--ink); }
+#end.win { background:#04141c; }
+#end.win .endTitle { color:var(--lime); }
+#stormBar i, .stormFill { background:var(--lime); }
+
+/* ---- lobby furniture: the hero, the mode bar, the match furniture ---- */
+#lobbyHero .heroName { color:var(--lime); letter-spacing:.4em; font-size:9px; }
+.heroGlow { background:none; border:1px solid rgba(126,226,255,.4); border-radius:0; }
+#modeBar { background:#071e2a; border:1px solid rgba(126,226,255,.24); }
+#modeBar b { color:var(--ink); letter-spacing:.16em; }
+#modeBar .mbHint { color:var(--lime); }
+.mpkHead { border-bottom:1px solid rgba(126,226,255,.22); }
+#modesClose { background:var(--lime); color:#041824; }
+.rankCrest { border-color:rgba(126,226,255,.35); color:var(--lime); }
+.rankBar i { background:var(--lime); }
+.keyList kbd { border-color:rgba(126,226,255,.22); color:var(--ink-dim); }
+.stepBtn { background:rgba(92,225,255,.12); border-color:rgba(92,225,255,.35); color:var(--ink); }
+.pocketOpt, .modChip { border-color:rgba(126,226,255,.2); color:rgba(198,230,244,.66); }
+.pocketOpt.sel, .modChip.sel { color:#041824; }
+
+/* ---- in game: the frame around the fight ---- */
+#modeBadge { background:#04141e; border:1px solid rgba(126,226,255,.24); color:var(--ink); }
+#modeBadge b { color:var(--lime); }
+#quitBtn { border-color:rgba(255,122,92,.55); color:var(--coral); }
+#stormInfo { border-color:rgba(126,226,255,.24); }
+#stormLabel, #stormTime { color:rgba(198,230,244,.55); }
+#aliveCount, #killCount { color:var(--ink); }
+.mapName, .cLbl { color:rgba(198,230,244,.6); }
 </style>
 </head>
 <body>
@@ -6246,7 +6376,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.16PT</div>
+      <div class="verTag" id="verTag">v9.17PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6956,14 +7086,14 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.16PT</b>
+        <b id="wnVersion">v9.17PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.15PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.16PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE CLOCK</b> — the lobby now carries a countdown above DEPLOY: "Season 9 starts in xD xH", ticking to midnight on Monday 23 November. When it runs out the playtest closes itself and the screen says so, pointing everyone at the official build until the next season's playtest opens.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE COAST GETS ITS OWN LOOK</b> — the whole interface has been repainted for the drowned island: salt-white type on deep-sea plates, cold cyan on everything you can press, sea-green health and a separate coral for damage, with the last of the old lime gone. Mode cards carry a waterline rail, the match brief has its own accent header, and the in-game plates, bars, feed, prompt and result cards all move to the same language.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -19295,8 +19425,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 16 };
-const VERSION_PREV = '9.15PT';
+const VERSION = { season: 9, release: 17 };
+const VERSION_PREV = '9.16PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
