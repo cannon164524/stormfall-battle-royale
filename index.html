@@ -8348,20 +8348,22 @@ body.ui11 #stickKnob { backdrop-filter:none; -webkit-backdrop-filter:none; box-s
    The cluster must stay under ~100px tall on a phone so the fire pad at
    bottom:110px stays clear of it — hence one horizontal pill. */
 body.ui11 #weaponCluster { right:10px; bottom:10px; gap:6px; }
-/* two IDs here because the base layer styles it as #weaponCluster #ammoBox */
+/* two IDs here because the base layer styles it as #weaponCluster #ammoBox;
+   the readout floats with no plate at all — the text shadow carries legibility */
 body.ui11 #weaponCluster #ammoBox {
   flex-direction:row; align-items:baseline; gap:7px;
   padding:8px 14px;
-  border:1px solid rgba(255,255,255,.10); border-radius:16px;
-  background:rgba(10,15,24,.42);
+  border:0; border-radius:0;
+  background:none; box-shadow:none;
   text-align:left;
+  text-shadow:0 1px 3px rgba(0,0,0,.65), 0 0 8px rgba(0,0,0,.35);
 }
-/* the prompt ("LANDED", pickups, board prompts) is on screen constantly:
-   faint plate, no box. A hairline legibility shadow instead of fill. */
+/* the prompt ("BATTLE BUS IN 5", "LANDED", pickups) is on screen constantly:
+   no bar at all. The hairline shadow keeps it readable over sky and sea. */
 body.ui11 #hud #prompt {
-  background:rgba(10,15,24,.36);
-  border:1px solid rgba(255,255,255,.10);
-  text-shadow:0 1px 2px rgba(0,0,0,.55);
+  background:none; box-shadow:none;
+  border:0;
+  text-shadow:0 1px 3px rgba(0,0,0,.7), 0 0 10px rgba(0,0,0,.4);
 }
 body.ui11 #weaponCluster #ammoBox::before {
   order:-1; display:block; margin:0;
@@ -8693,7 +8695,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.25PT</div>
+      <div class="verTag" id="verTag">v9.26PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -9407,14 +9409,14 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.25PT</b>
+        <b id="wnVersion">v9.26PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.24PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.25PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>PICKUP BANNER, UNBOXED</b> — the "COMMON PISTOL" banner (and every rarity above it) drops its black card: the name floats over the find's rays and sparks with a soft shadow instead of a plate. Colour, animation and timing unchanged.</div></li>
+      <li><span class="wnTag">01</span><div><b>NO PLATES AT ALL</b> — the in-hand readout (weapon name, ammo) and the prompt lines ("BATTLE BUS IN 5", "LANDED", pickups) now float free of any box or bar, legible by shadow alone.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -21773,8 +21775,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 25 };
-const VERSION_PREV = '9.24PT';
+const VERSION = { season: 9, release: 26 };
+const VERSION_PREV = '9.25PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
