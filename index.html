@@ -8422,6 +8422,40 @@ body.ui11 #end #againBtn {
   background:var(--ui-accent); color:var(--ui-accent-ink);
   font-family:var(--display); font-weight:800; letter-spacing:.02em;
 }
+
+/* ---- pickup banner: no black box behind "COMMON PISTOL" ----
+   The card keeps its padding, animation, tier colours, rays and sparks; only
+   the fill, border and shadow go. Legibility moves onto the text itself. */
+body.ui11 .rfCard,
+body.ui11 #rareFind[data-tier="mythic"] .rfCard,
+body.ui11 #rareFind[data-tier="exotic"] .rfCard,
+body.ui11 #rareFind[data-tier="ascendant"] .rfCard {
+  background:none; border:0; box-shadow:none;
+}
+body.ui11 .rfKicker,
+body.ui11 #rareFind[data-tier="mythic"] .rfKicker,
+body.ui11 #rareFind[data-tier="exotic"] .rfKicker,
+body.ui11 #rareFind[data-tier="ascendant"] .rfKicker {
+  text-shadow:0 1px 3px rgba(0,0,0,.65);
+}
+body.ui11 .rfTitle,
+body.ui11 #rareFind[data-tier="mythic"] .rfTitle,
+body.ui11 #rareFind[data-tier="exotic"] .rfTitle,
+body.ui11 #rareFind[data-tier="ascendant"] .rfTitle {
+  text-shadow:0 2px 6px rgba(0,0,0,.7);
+}
+body.ui11 .rfName,
+body.ui11 #rareFind[data-tier="mythic"] .rfName,
+body.ui11 #rareFind[data-tier="exotic"] .rfName,
+body.ui11 #rareFind[data-tier="ascendant"] .rfName {
+  text-shadow:0 1px 3px rgba(0,0,0,.65);
+}
+body.ui11 .rfSub,
+body.ui11 #rareFind[data-tier="mythic"] .rfSub,
+body.ui11 #rareFind[data-tier="exotic"] .rfSub,
+body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
+  text-shadow:0 1px 3px rgba(0,0,0,.6);
+}
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8659,7 +8693,7 @@ body.ui11 #end #againBtn {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.24PT</div>
+      <div class="verTag" id="verTag">v9.25PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -9373,15 +9407,14 @@ body.ui11 #end #againBtn {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.24PT</b>
+        <b id="wnVersion">v9.25PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.23PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.24PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEE-THROUGH READOUTS</b> — the in-hand panel (weapon name and ammo) drops its near-solid box for a faint plate, so it stops sitting like a black sticker over the water.</div></li>
-      <li><span class="wnTag">02</span><div><b>QUIETER PROMPTS</b> — pop-up lines like "LANDED" and the pickup prompts lose their black box too: a faint plate with a hairline edge, legible over sky or sea. Nothing mechanical moved.</div></li>
+      <li><span class="wnTag">01</span><div><b>PICKUP BANNER, UNBOXED</b> — the "COMMON PISTOL" banner (and every rarity above it) drops its black card: the name floats over the find's rays and sparks with a soft shadow instead of a plate. Colour, animation and timing unchanged.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -21740,8 +21773,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 24 };
-const VERSION_PREV = '9.23PT';
+const VERSION = { season: 9, release: 25 };
+const VERSION_PREV = '9.24PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
