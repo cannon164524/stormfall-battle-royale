@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0b1214">
+<meta name="theme-color" content="#04070c">
 <title>Stormfall — Battle Royale</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230b1214'/%3E%3Cpath%20d='M8%208h16'%20stroke='%233fe0c5'%20stroke-width='2'/%3E%3Cpath%20d='M40%206%2016%2036h13l-5%2022%2024-32H34z'%20fill='%23c2ff3d'/%3E%3C/svg%3E">
 <link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230b1214'/%3E%3Cpath%20d='M8%208h16'%20stroke='%233fe0c5'%20stroke-width='2'/%3E%3Cpath%20d='M40%206%2016%2036h13l-5%2022%2024-32H34z'%20fill='%23c2ff3d'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230b1214'/%3E%3Cpath%20d='M8%208h16'%20stroke='%233fe0c5'%20stroke-width='2'/%3E%3Cpath%20d='M40%206%2016%2036h13l-5%2022%2024-32H34z'%20fill='%23c2ff3d'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Anton&family=Barlow+Condensed:wght@600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Anton&family=Barlow+Condensed:wght@600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 :root{--bg:#050b14;--panel:#0b1626;--line:rgba(122,178,255,.16);--ink:#eaf3ff;--ink-dim:rgba(234,243,255,.56);--accent:#4fc3ff;--gold:#ffc844;--danger:#ff4d5e;--display:'Anton',Impact,sans-serif;--label:'Barlow Condensed','Barlow Semi Condensed',Arial,sans-serif;--body:'Barlow Semi Condensed','Helvetica Neue',Arial,sans-serif}
@@ -6356,9 +6356,1952 @@ body:not(.og-ui) .tagline { display:none; }
 /* the patch card fits the phone, and its CLOSE cannot hide below the fold */
 .wnCard { max-height:84vh; overflow-y:auto; }
 #wnClose { position:sticky; bottom:0; }
+
+/* =========================================================================
+   9.21PT — INTERFACE REBUILD: DEEP WATER
+   -------------------------------------------------------------------------
+   The whole shell is rebuilt rather than repainted: a new grid for the lobby
+   (hero | modes | brief), a floating dock, and one surface language used by
+   every plate in the game.
+
+   Cost, because this has to run on cheap hardware:
+     - every surface is ONE static gradient, ONE 1px border and ONE inset
+       top highlight. Nothing is animated but transform and background-color.
+     - no backdrop-filter anywhere, no filter on large areas, no animated
+       box-shadows. The frame budget goes to the world, not the chrome.
+     - prefers-reduced-motion strips the transitions entirely.
+   Everything is scoped under body.ui9 so it outranks the older layers
+   without a single !important.
+   ========================================================================= */
+
+body.ui9 {
+  /* --- surfaces ---------------------------------------------------------- */
+  --ui-ink:#eff6fd;
+  --ui-ink-2:rgba(211,228,244,.66);
+  --ui-ink-3:rgba(211,228,244,.40);
+  --ui-line:rgba(255,255,255,.09);
+  --ui-line-2:rgba(255,255,255,.16);
+  --ui-glass:linear-gradient(180deg,rgba(23,36,54,.80),rgba(8,14,23,.88));
+  --ui-plate:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  --ui-accent:#68e2ff;
+  --ui-accent-ink:#03202c;
+  --ui-mint:#5cf0c0;
+  --ui-amber:#ffd479;
+  --ui-rose:#ff7a8c;
+  --ui-r1:10px; --ui-r2:14px; --ui-r3:20px; --ui-r4:26px; --ui-rp:999px;
+  --ui-top:inset 0 1px 0 rgba(255,255,255,.13);
+  --ui-lift:0 28px 60px -34px rgba(0,0,0,.95);
+
+  /* --- old tokens, pulled into the same family ---------------------------- */
+  --bg:#04070c;
+  --panel:#0a1420;
+  --line:rgba(255,255,255,.09);
+  --ink:#eff6fd;
+  --ink-dim:rgba(211,228,244,.66);
+  --accent:#68e2ff;
+  --gold:#ffd479;
+  --danger:#ff7a8c;
+  --ok:#5cf0c0;
+  --lime:#68e2ff;
+  --hudPanel:rgba(6,12,20,.72);
+  --hudLime:#68e2ff;
+  --hudLine:rgba(255,255,255,.09);
+  --hudLine2:rgba(255,255,255,.16);
+  --display:'Archivo',Impact,sans-serif;
+  --label:'Inter',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+
+  color:var(--ui-ink);
+  font-family:var(--body);
+}
+
+/* ---------------- the field ---------------------------------------------- */
+body.ui9 #menu {
+  padding:0;
+  gap:0;
+  background:
+    radial-gradient(88% 58% at 10% -10%, rgba(26,124,156,.48), transparent 62%),
+    radial-gradient(78% 60% at 94% 108%, rgba(34,56,142,.44), transparent 60%),
+    linear-gradient(180deg,#05090f 0%,#04070c 64%);
+}
+body.ui9 #menu::before,
+body.ui9 #menu::after { display:none; }
+
+/* ---------------- the bar across the top --------------------------------- */
+body.ui9 .menuTop {
+  flex:0 0 auto;
+  margin:10px 12px 0;
+  padding:7px 8px 7px 16px;
+  gap:12px;
+  align-items:center;
+  flex-wrap:nowrap;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:var(--ui-glass);
+  box-shadow:var(--ui-top), var(--ui-lift);
+  overflow:hidden;
+}
+body.ui9 .brand { flex:0 0 auto; line-height:1; }
+body.ui9 .logo {
+  font-family:'Archivo',sans-serif;
+  font-weight:800; font-style:normal;
+  font-size:18px; letter-spacing:-.015em; line-height:1;
+  background:none;
+  -webkit-background-clip:border-box; background-clip:border-box;
+  -webkit-text-fill-color:currentColor;
+  color:#fff;
+  filter:none;
+}
+body.ui9 .tagline { display:none; }
+
+body.ui9 .tabs {
+  flex:1 1 auto; min-width:0;
+  margin:0 0 0 4px; padding:4px; gap:2px;
+  display:flex; align-items:center; flex-wrap:nowrap;
+  overflow-x:auto; overflow-y:hidden;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.045);
+  scrollbar-width:none;
+}
+body.ui9 .tabs::-webkit-scrollbar { display:none; }
+body.ui9 .tab {
+  flex:0 0 auto;
+  padding:7px 13px;
+  border:0; border-radius:var(--ui-rp);
+  font-family:'Inter',sans-serif;
+  font-size:9.5px; font-weight:600; letter-spacing:.13em;
+  color:var(--ui-ink-2);
+  text-shadow:none;
+  transition:background .16s ease, color .16s ease;
+}
+body.ui9 .tab:hover { color:#fff; background:rgba(255,255,255,.07); }
+body.ui9 .tab.active {
+  color:#04161f;
+  background:linear-gradient(180deg,#d8f8ff,#8ee4fc);
+  border-bottom:0;
+  text-shadow:none;
+  box-shadow:0 2px 10px -6px rgba(0,0,0,.9);
+}
+
+body.ui9 .topRight { flex:0 0 auto; gap:8px; }
+body.ui9 .cashTag,
+body.ui9 .vbTag {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 11px 5px 5px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.05);
+  font-family:'Inter',sans-serif;
+  font-size:10px; font-weight:600; letter-spacing:.04em;
+  color:var(--ui-ink);
+}
+body.ui9 .cashCoin,
+body.ui9 .vbCoin {
+  width:17px; height:17px;
+  border-radius:50%;
+  display:grid; place-items:center;
+  font-size:9px; font-weight:800;
+  box-shadow:none;
+}
+body.ui9 .cashCoin { background:linear-gradient(180deg,#8df0b4,#3fc27f); color:#022a18; }
+body.ui9 .vbCoin { background:linear-gradient(180deg,#9becff,#3fc0ea); color:#032430; }
+
+body.ui9 #accEntry,
+body.ui9 #adminEntry {
+  padding:7px 13px;
+  border:1px solid var(--ui-line-2);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.07);
+  color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.12em;
+  transition:background .16s ease, border-color .16s ease;
+}
+body.ui9 #accEntry:hover,
+body.ui9 #adminEntry:hover { background:rgba(255,255,255,.14); }
+
+body.ui9 .verTag {
+  border:0; background:none; padding:0 2px;
+  font-size:9px; font-weight:600; letter-spacing:.1em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .ptTag {
+  padding:3px 9px;
+  border:1px solid rgba(104,226,255,.32);
+  border-radius:var(--ui-rp);
+  background:rgba(104,226,255,.10);
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.16em;
+  color:var(--ui-accent);
+}
+
+/* ---------------- the lobby: hero | modes | brief ------------------------ */
+body.ui9 .lobby {
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,332px);
+  grid-template-rows:auto auto minmax(0,1fr) auto;
+  gap:10px;
+  padding:12px 12px 0;
+  align-items:stretch;
+}
+body.ui9 #lobbyHero { grid-column:1; grid-row:1; }
+body.ui9 #motd { grid-column:1; grid-row:2; }
+body.ui9 #modeRowEl { grid-column:1; grid-row:3; }
+body.ui9 #modeBar { grid-column:1; grid-row:4; }
+body.ui9 .lobbyFoot { grid-column:2; grid-row:1 / span 4; }
+
+body.ui9 #lobbyHero {
+  position:relative;
+  display:flex; align-items:center; gap:18px;
+  min-height:126px;
+  padding:16px 20px;
+  overflow:hidden;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r3);
+  background:linear-gradient(120deg,rgba(27,47,72,.86),rgba(7,13,22,.60) 72%);
+  box-shadow:var(--ui-top);
+}
+body.ui9 #lobbyHero .heroGlow {
+  position:absolute; right:-4%; top:-46%;
+  width:340px; height:340px;
+  background:radial-gradient(closest-side,rgba(104,226,255,.24),transparent 72%);
+  filter:none;
+  pointer-events:none;
+}
+body.ui9 .heroFig {
+  order:2;
+  margin-left:auto;
+  position:relative;
+  width:132px; height:124px;
+  flex:0 0 auto;
+  display:grid; place-items:center;
+  overflow:hidden;
+}
+body.ui9 .heroFig > * { transform:scale(.40); transform-origin:center center; }
+body.ui9 .heroMeta { position:relative; min-width:0; }
+body.ui9 .heroKicker {
+  display:block;
+  margin-bottom:7px;
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:.22em;
+  color:var(--ui-accent);
+}
+body.ui9 .heroName {
+  font-family:'Archivo',sans-serif;
+  font-weight:800; font-style:normal;
+  font-size:clamp(22px,2.4vw,30px);
+  letter-spacing:-.02em; line-height:1;
+  color:#fff;
+  border:0; padding:0;
+}
+body.ui9 .heroTag {
+  display:block;
+  margin-top:9px;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:500; letter-spacing:.16em;
+  color:var(--ui-ink-3);
+}
+
+/* ---------------- the modes, as cards in the room ------------------------ */
+body.ui9 #menu .modeRow {
+  position:static;
+  width:auto; max-width:none; max-height:none; height:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:8px;
+  align-content:start;
+  overflow-y:auto; overflow-x:hidden;
+  padding:2px 4px 4px 2px;
+  margin:0;
+  border:0; background:none; box-shadow:none;
+  counter-reset:uiMode;
+}
+body.ui9 .modeRow .mpkHead {
+  grid-column:1 / -1;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 2px 2px;
+  border:0;
+}
+body.ui9 .mpkTitle {
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.2em;
+  color:var(--ui-ink-2);
+}
+body.ui9 #modesClose { display:none; }
+body.ui9 .modeGroup { display:contents; }
+body.ui9 .modeGroupLabel {
+  grid-column:1 / -1;
+  margin:6px 0 -2px 2px;
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:.22em;
+  color:var(--ui-ink-3);
+}
+
+body.ui9 .modeBtn {
+  position:relative;
+  display:flex; flex-direction:column; gap:4px;
+  min-height:76px;
+  padding:11px 34px 12px 14px;
+  text-align:left;
+  clip-path:none;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:var(--ui-plate);
+  box-shadow:var(--ui-top);
+  transition:transform .16s cubic-bezier(.2,.8,.3,1), border-color .16s ease, background .16s ease;
+}
+body.ui9 #menu .modeBtn::before {
+  content:counter(uiMode,decimal-leading-zero);
+  counter-increment:uiMode;
+  position:absolute; top:11px; right:13px;
+  font-family:'Archivo',sans-serif;
+  font-size:10px; font-weight:700; letter-spacing:.02em;
+  color:rgba(255,255,255,.20);
+}
+body.ui9 .modeBtn:hover {
+  transform:translateY(-2px);
+  border-color:rgba(255,255,255,.20);
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+}
+body.ui9 .modeBtn.active {
+  border-color:rgba(104,226,255,.55);
+  background:linear-gradient(180deg,rgba(104,226,255,.22),rgba(104,226,255,.05));
+  box-shadow:var(--ui-top), 0 0 0 1px rgba(104,226,255,.18);
+}
+body.ui9 .modeBtn.active::before { color:var(--ui-accent); }
+body.ui9 .modeKicker {
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.16em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .modeKicker.new { color:var(--ui-amber); }
+body.ui9 .modeName {
+  font-family:'Archivo',sans-serif;
+  font-weight:700; font-style:normal;
+  font-size:15px; letter-spacing:-.01em; line-height:1.15;
+  color:#fff;
+}
+body.ui9 .modeFoot {
+  margin-top:auto;
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; letter-spacing:.06em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .modeFoot b { color:var(--ui-ink); font-weight:700; font-size:9.5px; }
+body.ui9 .modeTick { display:none; }
+
+/* the plain mode bar is the phone's way in; the cards are in the room */
+body.ui9 #modeBar {
+  display:none;
+  align-items:center; gap:14px;
+  padding:14px 20px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:var(--ui-plate);
+  text-align:left;
+}
+body.ui9 .mbLabel {
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:.18em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #mbMode {
+  font-family:'Archivo',sans-serif;
+  font-size:18px; font-weight:700; letter-spacing:.01em;
+  color:#fff;
+}
+body.ui9 .mbHint {
+  position:static;
+  margin-left:auto;
+  padding:8px 16px;
+  border-radius:var(--ui-rp);
+  background:linear-gradient(180deg,#d8f8ff,#8ee4fc);
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:700; letter-spacing:.14em;
+  color:#04161f;
+}
+
+/* ---------------- the brief: one column of plates ------------------------ */
+body.ui9 .lobbyFoot {
+  display:flex; flex-direction:column; gap:9px;
+  min-height:0;
+  margin:0;
+  padding:0 2px 4px 0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.18) transparent;
+}
+body.ui9 .lobbyFoot::-webkit-scrollbar { width:6px; }
+body.ui9 .lobbyFoot::-webkit-scrollbar-thumb {
+  background:rgba(255,255,255,.16);
+  border-radius:99px;
+}
+body.ui9 .seatPanel,
+body.ui9 .sidePanel {
+  padding:12px 14px;
+  border:1px solid var(--ui-line);
+  border-top:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:var(--ui-plate);
+  box-shadow:var(--ui-top);
+}
+body.ui9 .seatLabel {
+  margin-bottom:9px;
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:.18em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .seatRow { gap:10px; }
+body.ui9 .stepBtn {
+  width:30px; height:30px;
+  border:1px solid var(--ui-line-2);
+  border-radius:var(--ui-r1);
+  background:rgba(255,255,255,.07);
+  color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:15px; font-weight:600; line-height:1;
+  transition:background .15s ease;
+}
+body.ui9 .stepBtn:hover { background:rgba(255,255,255,.14); }
+body.ui9 #botRange {
+  height:4px;
+  border-radius:99px;
+  background:linear-gradient(90deg,rgba(104,226,255,.9),rgba(104,226,255,.22));
+}
+body.ui9 #botRange::-webkit-slider-thumb {
+  width:16px; height:16px;
+  border:0; border-radius:50%;
+  background:#eefaff;
+  box-shadow:0 2px 8px -2px rgba(0,0,0,.9), 0 0 0 3px rgba(104,226,255,.22);
+}
+body.ui9 #botRange::-moz-range-thumb {
+  width:16px; height:16px;
+  border:0; border-radius:50%;
+  background:#eefaff;
+  box-shadow:0 2px 8px -2px rgba(0,0,0,.9);
+}
+body.ui9 .seatCount {
+  margin-top:9px;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:600; letter-spacing:.14em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .seatCount b {
+  margin-right:4px;
+  font-family:'Archivo',sans-serif;
+  font-size:22px; font-weight:800; letter-spacing:-.01em;
+  color:#fff;
+}
+
+body.ui9 .reloadRules span {
+  padding:5px 9px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r1);
+  background:rgba(255,255,255,.04);
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:600; letter-spacing:.1em;
+  color:var(--ui-ink-2);
+}
+body.ui9 .reloadRules b { color:#fff; font-size:10.5px; }
+
+body.ui9 .pocketPick { gap:6px; }
+body.ui9 .pocketOpt,
+body.ui9 .modChip,
+body.ui9 .optChip {
+  padding:8px 6px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r1);
+  background:rgba(255,255,255,.04);
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:600; letter-spacing:.1em;
+  color:var(--ui-ink-2);
+  transition:background .15s ease, color .15s ease, border-color .15s ease;
+}
+body.ui9 .pocketOpt:hover,
+body.ui9 .modChip:hover,
+body.ui9 .optChip:hover { background:rgba(255,255,255,.10); color:#fff; }
+body.ui9 .pocketOpt.sel,
+body.ui9 .modChip.on,
+body.ui9 .optChip.on {
+  border-color:transparent;
+  background:linear-gradient(180deg,#d8f8ff,#8ee4fc);
+  color:#04161f;
+  box-shadow:none;
+}
+
+body.ui9 .rankRow { gap:11px; }
+body.ui9 .rankCrest {
+  width:38px; height:38px;
+  display:grid; place-items:center;
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(180deg,#ffe1a0,#c99130);
+  color:#241a02;
+  font-family:'Archivo',sans-serif;
+  font-size:15px; font-weight:800;
+}
+body.ui9 .rankName {
+  font-family:'Archivo',sans-serif;
+  font-size:15px; font-weight:700; letter-spacing:.01em;
+  color:#fff;
+}
+body.ui9 .rankRp {
+  font-family:'Inter',sans-serif;
+  font-size:9px; letter-spacing:.1em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .rankBar {
+  height:4px;
+  margin-top:10px;
+  border-radius:99px;
+  background:rgba(255,255,255,.10);
+  overflow:hidden;
+}
+body.ui9 .rankBar > i {
+  border-radius:99px;
+  background:linear-gradient(90deg,#ffcf72,#ffe9b8);
+  box-shadow:none;
+}
+
+body.ui9 .keyList { gap:5px 10px; font-size:10.5px; color:var(--ui-ink-2); }
+body.ui9 kbd {
+  min-width:44px;
+  padding:3px 6px;
+  border:1px solid var(--ui-line-2);
+  border-radius:6px;
+  background:rgba(255,255,255,.07);
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:600; letter-spacing:.04em;
+  color:#fff;
+}
+
+/* ---------------- the dock ------------------------------------------------ */
+body.ui9 .playRow {
+  flex:0 0 auto;
+  position:relative; z-index:3;
+  margin:10px 12px 12px;
+  padding:9px 9px 9px 9px;
+  display:flex; align-items:center; gap:12px;
+  border:1px solid var(--ui-line);
+  border-left:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:var(--ui-glass);
+  box-shadow:var(--ui-top), var(--ui-lift);
+}
+body.ui9 .playRow > .ptTag { display:none; }
+body.ui9 .playerCard {
+  display:flex; align-items:center; gap:9px;
+  padding:4px 14px 4px 4px;
+  border:1px solid var(--ui-line);
+  border-left:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.05);
+}
+body.ui9 .pcAvatar {
+  width:34px; height:34px;
+  display:grid; place-items:end center;
+  border-radius:50%;
+  background:rgba(104,226,255,.13);
+  overflow:hidden;
+}
+body.ui9 .pcAvatar .mini { transform:scale(.34); transform-origin:bottom center; margin:0; }
+body.ui9 .pcName {
+  font-family:'Inter',sans-serif;
+  font-size:11px; font-weight:700; letter-spacing:.06em;
+  color:#fff;
+}
+body.ui9 .pcSkin {
+  font-family:'Inter',sans-serif;
+  font-size:8px; letter-spacing:.14em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .queueInfo { min-width:0; margin:0; }
+body.ui9 .queueMode {
+  font-family:'Archivo',sans-serif;
+  font-weight:700; font-style:normal;
+  font-size:14px; letter-spacing:.01em; line-height:1.2;
+  color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+body.ui9 .queueSub {
+  margin-top:2px;
+  font-family:'Inter',sans-serif;
+  font-size:9.5px; letter-spacing:.02em;
+  color:var(--ui-ink-3);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+body.ui9 #queueBots { color:var(--ui-accent); }
+body.ui9 .seasonTimer {
+  margin-left:auto;
+  padding:6px 12px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.04);
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:600; letter-spacing:.12em;
+  color:var(--ui-ink-2);
+  white-space:nowrap;
+}
+body.ui9 .seasonTimer b { color:#fff; font-weight:700; }
+body.ui9 #playBtn {
+  margin-left:0;
+  padding:13px 38px;
+  border:0;
+  border-radius:var(--ui-rp);
+  font-family:'Archivo',sans-serif;
+  font-weight:800; font-style:normal;
+  font-size:14px; letter-spacing:.18em;
+  color:var(--ui-accent-ink);
+  background:linear-gradient(180deg,#cdf5ff,#6eddfb 58%,#3cc3ee);
+  box-shadow:0 16px 34px -18px rgba(90,210,255,.9), inset 0 1px 0 rgba(255,255,255,.75);
+  clip-path:none;
+  text-shadow:none;
+  white-space:nowrap;
+  transition:transform .12s ease, filter .16s ease;
+}
+body.ui9 #playBtn:hover { filter:brightness(1.05); }
+body.ui9 #playBtn:active { transform:translateY(1px); }
+
+/* the player card's own avatar should stay circular inside the dock */
+body.ui9 .pcAvatar .mini { max-width:none; }
+
+/* ---------------- the tabs' own rooms ------------------------------------ */
+body.ui9 .menuPanel {
+  margin:12px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r3);
+  background:linear-gradient(180deg,rgba(15,26,40,.96),rgba(6,11,19,.98));
+  box-shadow:var(--ui-top), var(--ui-lift);
+  overflow:hidden;
+}
+body.ui9 .mpHead {
+  align-items:flex-start;
+  padding:18px 20px 14px;
+  border-bottom:1px solid var(--ui-line);
+  background:none;
+}
+body.ui9 .mpKicker {
+  margin-bottom:6px;
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:.22em;
+  color:var(--ui-accent);
+}
+body.ui9 .mpTitle {
+  font-family:'Archivo',sans-serif;
+  font-weight:800; font-style:normal;
+  font-size:clamp(22px,3vw,30px); letter-spacing:-.02em; line-height:1;
+  color:#fff;
+}
+body.ui9 .mpMeta {
+  padding-top:4px;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:600; letter-spacing:.12em;
+  color:var(--ui-ink-3);
+}
+body.ui9 .mpScroll { padding:0; }
+body.ui9 .mpFoot {
+  padding:12px 20px 16px;
+  border-top:1px solid var(--ui-line);
+  gap:10px;
+  background:none;
+}
+body.ui9 .mpBack {
+  padding:10px 18px;
+  border:1px solid var(--ui-line-2);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.14em;
+  transition:background .16s ease;
+}
+body.ui9 .mpBack:hover { background:rgba(255,255,255,.13); }
+body.ui9 .mpAction,
+body.ui9 .buyBig {
+  padding:11px 18px;
+  border:0;
+  border-radius:var(--ui-rp);
+  background:linear-gradient(180deg,#cdf5ff,#6eddfb 58%,#3cc3ee);
+  color:var(--ui-accent-ink);
+  font-family:'Inter',sans-serif;
+  font-size:10px; font-weight:700; letter-spacing:.12em;
+  box-shadow:0 14px 30px -20px rgba(90,210,255,.9);
+}
+body.ui9 .cardGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(172px,1fr));
+  gap:10px;
+  padding:16px 20px;
+}
+body.ui9 .card {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:var(--ui-plate);
+  box-shadow:var(--ui-top);
+  overflow:hidden;
+  transition:transform .16s cubic-bezier(.2,.8,.3,1), border-color .16s ease;
+}
+body.ui9 .card:hover { transform:translateY(-2px); border-color:rgba(255,255,255,.2); }
+body.ui9 .setCard {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:var(--ui-plate);
+  box-shadow:var(--ui-top);
+}
+body.ui9 .setTitle {
+  font-family:'Archivo',sans-serif;
+  font-size:14px; font-weight:700; letter-spacing:.01em;
+  color:#fff;
+}
+body.ui9 .setSwitch {
+  border:1px solid var(--ui-line-2);
+  border-radius:99px;
+  background:rgba(255,255,255,.10);
+}
+body.ui9 .setSwitch[aria-checked="true"] {
+  background:linear-gradient(180deg,#b6efff,#5cd2f4);
+  border-color:transparent;
+}
+body.ui9 .setSwitch[aria-checked="true"] i { background:#04222e; }
+body.ui9 .setReset {
+  border:1px solid var(--ui-line-2);
+  border-radius:99px;
+  background:rgba(255,255,255,.05);
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:700; letter-spacing:.1em;
+}
+body.ui9 .setAction {
+  border:1px solid rgba(104,226,255,.4);
+  border-radius:var(--ui-r1);
+  background:rgba(104,226,255,.14);
+  font-family:'Inter',sans-serif;
+  font-size:9.5px; font-weight:700; letter-spacing:.1em;
+}
+body.ui9 .setAction.ghost {
+  border-color:var(--ui-line-2);
+  background:rgba(255,255,255,.04);
+}
+body.ui9 .passBarWrap { padding:0 20px 14px; }
+body.ui9 .passBar { height:5px; border-radius:99px; background:rgba(255,255,255,.10); }
+body.ui9 .passBar > i { border-radius:99px; }
+
+/* ---------------- the cards that stop the game --------------------------- */
+body.ui9 .wnCard,
+body.ui9 .accBox,
+body.ui9 .gateBox,
+body.ui9 .repCard,
+body.ui9 .revCard,
+body.ui9 .rrCard,
+body.ui9 .scCard,
+body.ui9 .spkCard,
+body.ui9 .vendCard,
+body.ui9 .invPanel,
+body.ui9 .mfInner,
+body.ui9 .downPanel,
+body.ui9 .respBox {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r4);
+  background:linear-gradient(180deg,rgba(17,28,44,.98),rgba(6,11,19,.99));
+  box-shadow:var(--ui-top), 0 40px 90px -40px #000;
+}
+body.ui9 .wnTitle,
+body.ui9 .accTitle,
+body.ui9 .gateTitle,
+body.ui9 .repTitle,
+body.ui9 .revTitle,
+body.ui9 .rrTitle,
+body.ui9 .scTitle,
+body.ui9 .spkTitle,
+body.ui9 .mfTitle {
+  font-family:'Archivo',sans-serif;
+  font-weight:800; font-style:normal; letter-spacing:-.02em;
+  color:#fff;
+}
+body.ui9 .wnKicker,
+body.ui9 .accKicker,
+body.ui9 .gateKicker,
+body.ui9 .repKicker,
+body.ui9 .revKicker,
+body.ui9 .rrKicker,
+body.ui9 .scKicker,
+body.ui9 .spkKicker,
+body.ui9 .mfKicker {
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:700; letter-spacing:.22em;
+  color:var(--ui-accent);
+}
+body.ui9 .accNote,
+body.ui9 .gateNote,
+body.ui9 .spkNote,
+body.ui9 .scNote,
+body.ui9 .repNote,
+body.ui9 .banNote,
+body.ui9 .rrNote {
+  font-family:'Inter',sans-serif;
+  font-size:11.5px; line-height:1.55;
+  color:var(--ui-ink-2);
+}
+body.ui9 .accInput,
+body.ui9 .gateInput,
+body.ui9 .mpArea {
+  border:1px solid var(--ui-line-2);
+  border-radius:var(--ui-r1);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+}
+body.ui9 .accInput:focus,
+body.ui9 .gateInput:focus,
+body.ui9 .mpArea:focus {
+  outline:none;
+  border-color:rgba(104,226,255,.6);
+  background:rgba(104,226,255,.07);
+}
+body.ui9 .accTabs { border-radius:var(--ui-r1); background:rgba(255,255,255,.05); padding:4px; gap:3px; }
+body.ui9 .accTab {
+  border-radius:8px;
+  border:0;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.1em;
+  color:var(--ui-ink-2);
+}
+body.ui9 .accTab.active {
+  background:linear-gradient(180deg,#d8f8ff,#8ee4fc);
+  color:#04161f;
+}
+body.ui9 .accGo,
+body.ui9 .revBtn,
+body.ui9 #rrClose,
+body.ui9 .spkBtn,
+body.ui9 #againBtn,
+body.ui9 #wnClose {
+  border:0;
+  border-radius:var(--ui-rp);
+  background:linear-gradient(180deg,#cdf5ff,#6eddfb 58%,#3cc3ee);
+  color:var(--ui-accent-ink);
+  font-family:'Inter',sans-serif;
+  font-size:10.5px; font-weight:700; letter-spacing:.12em;
+  box-shadow:0 14px 30px -22px rgba(90,210,255,.9);
+}
+body.ui9 .accGhost {
+  border:1px solid var(--ui-line-2);
+  border-radius:var(--ui-rp);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  font-family:'Inter',sans-serif;
+  font-size:10.5px; font-weight:700; letter-spacing:.12em;
+}
+body.ui9 .wnList li { border-color:var(--ui-line); }
+body.ui9 .wnTag {
+  border-radius:6px;
+  background:rgba(104,226,255,.12);
+  color:var(--ui-accent);
+  font-family:'Inter',sans-serif;
+}
+
+/* =========================================================================
+   IN GAME — the same plates, one gutter, kept off each other
+   ========================================================================= */
+body.ui9 #hud { font-family:'Inter',sans-serif; }
+
+/* top left: mode, leave, objective */
+body.ui9 #modeBadge {
+  left:10px; top:10px;
+  width:auto; max-width:170px;
+  padding:5px 11px;
+  border:1px solid var(--ui-line);
+  border-left:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.72);
+  box-shadow:var(--ui-top);
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.14em;
+  color:var(--ui-accent);
+  clip-path:none;
+}
+body.ui9 #modeBadge::before {
+  position:static;
+  width:5px; height:5px;
+  margin-right:6px;
+  border-radius:50%;
+  background:var(--ui-accent);
+  box-shadow:none;
+}
+body.ui9 #quitBtn {
+  left:10px; top:38px;
+  width:auto; padding:4px 10px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.72);
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.12em;
+  color:var(--ui-ink-2);
+}
+body.ui9 #questLine {
+  left:10px; top:66px;
+  padding:5px 11px 5px 7px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.72);
+  box-shadow:var(--ui-top);
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; letter-spacing:.04em;
+  color:var(--ui-ink-2);
+}
+body.ui9 .qGlyph {
+  width:15px; height:15px;
+  display:grid; place-items:center;
+  border-radius:50%;
+  background:rgba(104,226,255,.16);
+  color:var(--ui-accent);
+  font-size:9px; font-weight:800;
+}
+body.ui9 .qText b { color:#fff; }
+
+/* top middle: the clock */
+body.ui9 #stormInfo {
+  left:50%; top:10px;
+  transform:translateX(-50%);
+  width:132px;
+  padding:8px 10px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:rgba(6,12,20,.72);
+  box-shadow:var(--ui-top);
+  text-align:center;
+}
+body.ui9 #stormLabel {
+  font-family:'Inter',sans-serif;
+  font-size:7px; font-weight:700; letter-spacing:.16em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #stormTime {
+  font-family:'Archivo',sans-serif;
+  font-size:16px; font-weight:800; letter-spacing:.01em;
+  color:#fff;
+}
+body.ui9 #stormBar {
+  height:3px;
+  margin:5px 0 0;
+  border-radius:99px;
+  background:rgba(255,255,255,.12);
+  overflow:hidden;
+}
+body.ui9 #stormBarFill { border-radius:99px; background:var(--ui-accent); }
+body.ui9 #stormTag {
+  margin-top:4px;
+  font-family:'Inter',sans-serif;
+  font-size:7px; letter-spacing:.12em;
+  color:var(--ui-accent);
+}
+
+/* top right: the map */
+body.ui9 #mapWrap { top:10px; right:10px; }
+body.ui9 .mapFrame {
+  padding:4px;
+  border:1px solid var(--ui-line-2);
+  border-radius:var(--ui-r2);
+  background:rgba(6,12,20,.72);
+  box-shadow:var(--ui-top);
+  overflow:hidden;
+}
+body.ui9 #minimap { display:block; border-radius:10px; }
+body.ui9 .mapFrame .mapCmp,
+body.ui9 .mapCmp {
+  font-family:'Inter',sans-serif;
+  font-size:6.5px; font-weight:700;
+  color:rgba(255,255,255,.45);
+}
+body.ui9 .mapName,
+body.ui9 #mapName {
+  padding:2px 6px;
+  border:0;
+  border-radius:99px;
+  background:rgba(6,12,20,.7);
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.12em;
+  color:var(--ui-ink-2);
+}
+body.ui9 .mapReport {
+  width:16px; height:16px;
+  border:1px solid var(--ui-line-2);
+  border-radius:50%;
+  background:rgba(6,12,20,.8);
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700;
+  color:var(--ui-ink-2);
+}
+body.ui9 #mapMeta {
+  display:flex; gap:6px;
+  margin-top:6px;
+  padding:0;
+  border:0;
+  background:none;
+}
+body.ui9 .metaCell {
+  flex:1;
+  display:flex; align-items:baseline; gap:5px;
+  padding:5px 8px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r1);
+  background:rgba(6,12,20,.72);
+}
+body.ui9 .metaCell b {
+  font-family:'Archivo',sans-serif;
+  font-size:13px; font-weight:800; letter-spacing:0;
+  color:#fff;
+}
+body.ui9 .metaCell span {
+  font-family:'Inter',sans-serif;
+  font-size:7px; font-weight:700; letter-spacing:.12em;
+  color:var(--ui-ink-3);
+}
+
+/* kill feed */
+body.ui9 #feed { left:10px; top:28%; gap:4px; max-width:min(56vw,340px); }
+body.ui9 .feedRow {
+  padding:4px 10px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.66);
+  font-family:'Inter',sans-serif;
+  font-size:9px; letter-spacing:.02em;
+  color:var(--ui-ink-2);
+}
+body.ui9 .feedRow b { color:#fff; }
+
+/* vitals */
+body.ui9 #vitals {
+  left:10px; bottom:10px;
+  width:190px;
+  padding:9px 11px 10px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:rgba(6,12,20,.74);
+  box-shadow:var(--ui-top);
+}
+body.ui9 .bar {
+  height:10px;
+  margin:0 0 4px;
+  border:0;
+  border-radius:99px;
+  background:rgba(255,255,255,.10);
+  overflow:hidden;
+}
+body.ui9 .bar > i {
+  border-radius:99px;
+  box-shadow:none;
+}
+body.ui9 .bar.health > i { background:linear-gradient(90deg,#3fe0a4,#8df6cd); }
+body.ui9 .bar.shield > i { background:linear-gradient(90deg,#37b7e8,#9ae9ff); }
+body.ui9 .bar > b {
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700;
+  color:#03161d;
+  text-shadow:none;
+}
+body.ui9 #pvName {
+  margin-top:3px;
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.16em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #livesRow i {
+  border-radius:2px;
+  background:var(--ui-accent);
+  box-shadow:none;
+}
+
+/* weapon cluster */
+body.ui9 #weaponCluster { right:10px; bottom:10px; gap:7px; align-items:flex-end; }
+body.ui9 #ammoBox {
+  padding:6px 12px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:rgba(6,12,20,.74);
+  box-shadow:var(--ui-top);
+}
+body.ui9 #ammoBox b {
+  font-family:'Archivo',sans-serif;
+  font-size:22px; font-weight:800; letter-spacing:-.02em;
+  color:#fff;
+}
+body.ui9 #ammoBox span {
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:600;
+  color:var(--ui-ink-3);
+}
+body.ui9 #weaponName {
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:.14em;
+  color:var(--ui-ink-2);
+}
+body.ui9 #slotRow { gap:6px; }
+body.ui9 #hotbar { gap:6px; }
+body.ui9 .slot {
+  min-width:44px;
+  border:1px solid var(--ui-line);
+  border-radius:11px;
+  background:rgba(6,12,20,.66);
+  box-shadow:none;
+  transition:background .14s ease, border-color .14s ease, transform .14s ease;
+}
+body.ui9 .slot.active {
+  background:linear-gradient(180deg,#e2f8ff,#a9e7fb);
+  border-color:transparent;
+  transform:translateY(-2px);
+}
+body.ui9 .slot .key {
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700;
+  color:var(--ui-ink-3);
+}
+body.ui9 .slot.active .key { color:rgba(4,22,31,.6); }
+body.ui9 .slot .cnt {
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700;
+  color:#fff;
+}
+body.ui9 #pocketSlot {
+  border:1px solid var(--ui-line);
+  border-radius:11px;
+  background:rgba(6,12,20,.66);
+}
+body.ui9 .pkey {
+  font-family:'Inter',sans-serif;
+  font-size:8px; font-weight:700;
+}
+body.ui9 .plabel {
+  font-family:'Inter',sans-serif;
+  font-size:7px; font-weight:700; letter-spacing:.1em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #matsBig .bigMat {
+  padding:3px 8px;
+  border:1px solid var(--ui-line);
+  border-radius:99px;
+  background:rgba(6,12,20,.66);
+}
+body.ui9 .bigMat b {
+  font-family:'Inter',sans-serif;
+  font-size:10px; font-weight:700;
+  color:#fff;
+}
+body.ui9 #padHints {
+  right:10px; bottom:2px;
+  font-family:'Inter',sans-serif;
+  font-size:7px; letter-spacing:.1em;
+  color:var(--ui-ink-3);
+}
+
+/* prompt */
+body.ui9 #prompt {
+  left:50%; right:auto;
+  transform:translateX(-50%);
+  bottom:150px;
+  max-width:min(70vw,320px);
+  padding:7px 14px;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.80);
+  box-shadow:var(--ui-top);
+  text-align:center;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:600; letter-spacing:.1em;
+  color:#fff;
+}
+body.ui9 #useBar {
+  left:50%; transform:translateX(-50%);
+  bottom:140px;
+  width:150px;
+  overflow:hidden;
+  border-radius:99px;
+  background:rgba(255,255,255,.12);
+}
+body.ui9 #useBar > i {
+  border-radius:99px;
+  background:var(--ui-accent);
+}
+
+/* kill / result cards */
+body.ui9 #resultCard .rcHead {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.86);
+  box-shadow:var(--ui-top);
+}
+body.ui9 #resultCard .rcName {
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.18em;
+  color:var(--ui-ink-2);
+}
+body.ui9 #eventBanner {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-rp);
+  background:rgba(6,12,20,.82);
+  box-shadow:var(--ui-top);
+}
+body.ui9 #eventBanner b {
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.2em;
+  color:var(--ui-accent);
+}
+body.ui9 .toast,
+body.ui9 #toasts > * {
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r1);
+  background:rgba(6,12,20,.8);
+  box-shadow:none;
+}
+
+/* the touch pad */
+body.ui9 #stick {
+  border:1px solid var(--ui-line-2);
+  border-radius:50%;
+  background:rgba(6,12,20,.34);
+}
+body.ui9 #stickKnob {
+  border-radius:50%;
+  background:rgba(235,250,255,.82);
+  box-shadow:none;
+}
+body.ui9 #touchBtns { gap:7px; }
+body.ui9 #touchBtns .row { gap:7px; }
+body.ui9 .tbtn {
+  border:1px solid rgba(255,255,255,.20);
+  border-radius:50%;
+  background:rgba(7,15,24,.55);
+  box-shadow:var(--ui-top);
+  font-family:'Inter',sans-serif;
+  font-weight:700; letter-spacing:.08em;
+  color:#eff6fd;
+}
+body.ui9 .tbtn.small {
+  border-radius:50%;
+  background:rgba(7,15,24,.48);
+  font-size:8px;
+}
+body.ui9 .tbtn[data-act="fire"] {
+  border-color:rgba(104,226,255,.55);
+  background:linear-gradient(180deg,rgba(133,236,255,.34),rgba(48,168,214,.22));
+  color:#fff;
+}
+body.ui9 .tbtn:active {
+  transform:scale(.96);
+  background:rgba(104,226,255,.3);
+}
+
+/* =========================================================================
+   SKELETON, FORCED
+   The older layers pinned the lobby together with absolutely positioned
+   children (the mode rail at left:16px, the hero at left:50%/bottom:118px,
+   the dock as a card in the brief column). A relative element keeps those
+   offsets, so every one of them is cleared here before the new grid runs.
+   ========================================================================= */
+body.ui9 #menu {
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  overflow:hidden;
+}
+body.ui9 .menuTop {
+  position:relative;
+  inset:auto;
+  transform:none;
+  width:auto;
+  max-width:none;
+  height:auto;
+}
+body.ui9 .lobby {
+  position:relative;
+  inset:auto;
+  transform:none;
+  width:auto;
+  max-width:none;
+  height:auto;
+  max-height:none;
+  flex:1 1 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,332px);
+  grid-template-rows:minmax(0,1fr) auto auto;
+  gap:10px;
+  padding:12px 12px 0;
+  align-items:stretch;
+  overflow:hidden;
+}
+body.ui9 #lobbyHero {
+  position:relative;
+  inset:auto;
+  left:auto; right:auto; top:auto; bottom:auto;
+  transform:none;
+  grid-column:1; grid-row:1;
+  width:auto;
+  max-width:none;
+  height:auto;
+  min-height:0;
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  align-items:flex-end;
+  justify-content:flex-start;
+  text-align:left;
+  gap:20px;
+  padding:22px 24px;
+  overflow:hidden;
+}
+body.ui9 #motd {
+  position:relative;
+  inset:auto;
+  transform:none;
+  grid-column:1; grid-row:2;
+}
+body.ui9 #modeBar {
+  position:relative;
+  inset:auto;
+  transform:none;
+  grid-column:1; grid-row:3;
+  width:auto;
+  max-width:none;
+  display:flex;
+}
+body.ui9 .lobbyFoot {
+  position:relative;
+  inset:auto;
+  transform:none;
+  grid-column:2;
+  grid-row:1 / span 3;
+  width:auto;
+  max-width:none;
+  height:auto;
+  max-height:none;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:0 4px 4px 0;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.30) rgba(255,255,255,.05);
+}
+body.ui9 .playRow {
+  position:relative;
+  inset:auto;
+  left:auto; right:auto; top:auto; bottom:auto;
+  transform:none;
+  width:auto;
+  max-width:none;
+  height:auto;
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  align-items:center;
+  margin:10px 12px 12px;
+  padding:9px;
+  gap:12px;
+}
+body.ui9 .playRow::before { display:none; }
+
+/* the hero's own text lives under id rules in older layers */
+body.ui9 #lobbyHero .heroMeta {
+  position:relative;
+  min-width:0;
+  max-width:58%;
+  order:1;
+}
+body.ui9 #lobbyHero .heroKicker {
+  display:block;
+  margin-bottom:9px;
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; font-weight:700; letter-spacing:.24em;
+  color:var(--ui-accent);
+}
+body.ui9 #lobbyHero .heroName {
+  display:block;
+  font-family:'Archivo',sans-serif;
+  font-weight:800; font-style:normal;
+  font-size:clamp(30px,4.2vw,48px);
+  letter-spacing:-.025em; line-height:.98;
+  color:#fff;
+  border:0; padding:0;
+  text-transform:none;
+}
+body.ui9 #lobbyHero .heroTag {
+  display:block;
+  margin-top:11px;
+  font-family:'Inter',sans-serif;
+  font-size:9.5px; font-weight:500; letter-spacing:.18em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #lobbyHero .heroGlow {
+  position:absolute;
+  right:-60px; bottom:-180px; top:auto; left:auto;
+  width:560px; height:560px;
+  border:0;
+  background:radial-gradient(closest-side,rgba(104,226,255,.20),transparent 72%);
+  filter:none;
+  pointer-events:none;
+}
+body.ui9 #lobbyHero .heroFig {
+  position:relative;
+  order:2;
+  margin-left:auto;
+  margin-right:4%;
+  width:190px; height:300px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:end center;
+  overflow:hidden;
+}
+body.ui9 #lobbyHero .heroFig > * {
+  transform:scale(2.1);
+  transform-origin:bottom center;
+  margin-bottom:0;
+}
+body.ui9 #modeBar .mbHint { color:#04161f; }
+body.ui9 #modeBar b { color:#fff; }
+body.ui9 #modeBar .mbLabel { color:var(--ui-ink-3); }
+
+/* ---- the mode sheet: one list, full screen, reachable from the dock bar --- */
+body.ui9 #menu:not(.modesOpen) .modeRow { display:none !important; }
+body.ui9 #menu.modesOpen .modeRow {
+  display:grid;
+  position:fixed;
+  inset:0;
+  z-index:80;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  align-content:start;
+  gap:8px;
+  margin:0;
+  padding:66px 16px 34px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  background:linear-gradient(180deg,#060b12,#04070c);
+  counter-reset:uiMode;
+}
+body.ui9 #menu.modesOpen .modeRow .mpkHead {
+  grid-column:1 / -1;
+  position:fixed;
+  left:16px; right:16px; top:10px;
+  z-index:81;
+  padding:8px 2px;
+  border:0;
+  background:none;
+}
+body.ui9 #menu.modesOpen #modesClose {
+  display:inline-flex;
+  align-items:center;
+  padding:8px 18px;
+  border:0;
+  border-radius:var(--ui-rp);
+  background:linear-gradient(180deg,#d8f8ff,#8ee4fc);
+  color:#04161f;
+  font-family:'Inter',sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.14em;
+}
+
+/* ---- in game: the instrument rail and the old lime are gone ---- */
+body.ui9 #hud {
+  --hudPanel:rgba(6,12,20,.72);
+  --hudLine:rgba(255,255,255,.09);
+  --hudLine2:rgba(255,255,255,.16);
+  --hudDim:rgba(211,228,244,.45);
+  --hudLime:#68e2ff;
+  --hudTeal:#46f0d2;
+  --hudCoral:#ff7a8c;
+}
+body.ui9 #hud::before { display:none; }
+body.ui9 .bar::after { display:none; }
+body.ui9 #pocketSlot { min-width:52px; padding:4px 6px; }
+body.ui9 #mapWrap {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+body.ui9 #mapMeta {
+  display:flex;
+  flex-direction:row;
+  gap:6px;
+  width:100%;
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+@media (max-width:1099px) {
+  body.ui9 .lobby { grid-template-columns:minmax(0,1fr) minmax(0,296px); }
+  body.ui9 .heroFig { width:104px; height:104px; }
+}
+
+@media (max-width:899px) {
+  body.ui9 .menuTop {
+    flex-wrap:wrap;
+    margin:8px 8px 0;
+    padding:8px 10px;
+    border-radius:var(--ui-r3);
+  }
+  body.ui9 .brand { order:1; }
+  body.ui9 .topRight { order:2; margin-left:auto; gap:6px; }
+  body.ui9 .tabs {
+    order:3;
+    flex:1 0 100%;
+    margin:7px 0 0;
+    padding:3px;
+  }
+  body.ui9 .verTag { display:none; }
+  body.ui9 .ptTag#ptTag { display:none; }
+
+  body.ui9 .lobby {
+    display:flex; flex-direction:column;
+    gap:9px;
+    padding:9px 8px 0;
+    overflow-y:auto; overflow-x:hidden;
+  }
+  body.ui9 #lobbyHero {
+    order:1;
+    min-height:112px;
+    padding:13px 15px;
+    border-radius:var(--ui-r3);
+  }
+  body.ui9 .heroFig { width:96px; height:96px; }
+  body.ui9 .heroFig > * { transform:scale(.34); }
+  body.ui9 #motd { order:2; }
+  body.ui9 #modeBar { order:3; display:flex; }
+  body.ui9 .lobbyFoot { order:4; overflow:visible; padding:0; }
+
+  body.ui9 .playRow {
+    flex-wrap:wrap;
+    margin:9px 8px 9px;
+    padding:9px;
+    gap:9px;
+    border-radius:var(--ui-r3);
+  }
+  body.ui9 .playerCard { order:1; flex:0 0 auto; }
+  body.ui9 .seasonTimer {
+    order:2; flex:0 0 auto;
+    margin-left:auto;
+    font-size:8px; letter-spacing:.08em;
+  }
+  body.ui9 .queueInfo { order:3; flex:1 0 100%; }
+  body.ui9 .queueMode { font-size:12.5px; }
+  body.ui9 .queueSub { font-size:9px; }
+  body.ui9 #playBtn {
+    order:4;
+    flex:1 0 100%;
+    margin:0;
+    padding:15px 0;
+    text-align:center;
+    font-size:14px;
+    letter-spacing:.22em;
+  }
+
+  /* the mode sheet: one column on a phone */
+  body.ui9 #menu.modesOpen .modeRow {
+    grid-template-columns:1fr;
+    padding:60px 10px 26px;
+  }
+  body.ui9 #menu.modesOpen .modeRow .mpkHead { left:10px; right:10px; top:9px; }
+  body.ui9 #menu.modesOpen .modeBtn { padding-right:40px; }
+}
+
+@media (max-width:560px) {
+  body.ui9 .cashTag,
+  body.ui9 .vbTag { padding:5px 6px 5px 5px; font-size:9px; }
+  body.ui9 #adminEntry { display:none; }
+  body.ui9 #accEntry { padding:7px 10px; }
+  body.ui9 .heroTag { display:none; }
+  body.ui9 #vitals { width:158px; }
+  body.ui9 #prompt { bottom:196px; max-width:76vw; }
+}
+
+@media (pointer:coarse) {
+  body.ui9 #prompt { bottom:212px; }
+  body.ui9 #useBar { bottom:202px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ui9 *,
+  body.ui9 *::before,
+  body.ui9 *::after {
+    transition:none !important;
+    animation:none !important;
+  }
+}
+
+/* the mode sheet is the one way in at every size, so the bar stays */
+@media (min-width:900px) {
+  body.ui9 #menu.modesOpen .modeRow {
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    padding:70px 28px 40px;
+  }
+  body.ui9 #menu.modesOpen .modeRow .mpkHead { left:28px; right:28px; top:12px; }
+}
+
+/* =========================================================================
+   THE SHEET'S OWN CARDS
+   The old sheet rules still outrank a plain class selector, which left the
+   cards as numbered blanks. These selectors carry the sheet context, so the
+   names, kickers and feet are written here for good.
+   ========================================================================= */
+body.ui9 #menu.modesOpen .modeRow .modeBtn {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-height:64px;
+  padding:12px 44px 12px 14px;
+  text-align:left;
+  clip-path:none;
+  border:1px solid var(--ui-line);
+  border-radius:var(--ui-r2);
+  background:var(--ui-plate);
+  box-shadow:var(--ui-top);
+}
+body.ui9 #menu.modesOpen .modeRow .modeBtn .modeKicker {
+  display:block;
+  font-family:'Inter',sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.16em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #menu.modesOpen .modeRow .modeBtn .modeName {
+  display:block;
+  font-family:'Archivo',sans-serif;
+  font-size:15px; font-weight:700; line-height:1.2;
+  letter-spacing:.01em;
+  color:#fff;
+}
+body.ui9 #menu.modesOpen .modeRow .modeBtn.active .modeName { color:#fff; }
+body.ui9 #menu.modesOpen .modeRow .modeBtn .modeFoot {
+  display:block;
+  margin-top:2px;
+  font-family:'Inter',sans-serif;
+  font-size:8.5px; letter-spacing:.05em;
+  color:var(--ui-ink-3);
+}
+body.ui9 #menu.modesOpen .modeRow .modeBtn .modeFoot b { color:#fff; font-weight:700; }
+body.ui9 #menu.modesOpen .modeRow .modeBtn .modeTick { display:none; }
+body.ui9 #menu.modesOpen .modeRow .modeBtn::before {
+  left:auto; right:14px; top:12px;
+  transform:none;
+  font-family:'Archivo',sans-serif;
+  font-size:10px; font-weight:700; letter-spacing:.02em;
+  color:rgba(255,255,255,.22);
+}
+body.ui9 #menu.modesOpen .modeRow .modeBtn.active::before { color:var(--ui-accent); }
+
+/* the map's counters belong under the map, not across the storm clock */
+body.ui9 #mapMeta { position:static; inset:auto; transform:none; }
+
+/* =========================================================================
+   PHONE
+   ========================================================================= */
+@media (max-width:899px) {
+  body.ui9 #lobbyHero { min-height:0; padding:16px 18px; }
+  body.ui9 #lobbyHero .heroMeta { max-width:66%; }
+  body.ui9 #lobbyHero .heroKicker {
+    margin-bottom:7px;
+    font-size:7.5px; letter-spacing:.16em;
+  }
+  body.ui9 #lobbyHero .heroName { font-size:clamp(26px,7vw,34px); }
+  body.ui9 #lobbyHero .heroTag {
+    margin-top:8px;
+    font-size:8.5px; letter-spacing:.12em;
+  }
+  body.ui9 #lobbyHero .heroFig {
+    width:104px; height:150px;
+    margin-right:0;
+  }
+  body.ui9 #lobbyHero .heroFig > * { transform:scale(1.2); }
+
+  body.ui9 #modeBar { gap:10px; padding:12px 14px; }
+  body.ui9 #modeBar .mbLabel { display:none; }
+  body.ui9 #mbMode {
+    font-size:16px; letter-spacing:0;
+    white-space:nowrap;
+  }
+  body.ui9 #modeBar .mbHint {
+    flex:0 0 auto;
+    padding:8px 14px;
+    font-size:8px;
+    letter-spacing:.1em;
+    white-space:nowrap;
+  }
+
+  body.ui9 #pocketPanel,
+  body.ui9 #modPanel,
+  body.ui9 #rankPanel { display:block !important; }
+
+  /* in game: the four corners stop writing over each other */
+  body.ui9 #modeBadge {
+    max-width:106px;
+    padding:4px 8px;
+    font-size:6.5px; letter-spacing:.06em;
+  }
+  body.ui9 #quitBtn { padding:3px 8px; font-size:6.5px; letter-spacing:.08em; }
+  body.ui9 #questLine {
+    max-width:120px;
+    padding:4px 8px 4px 5px;
+    font-size:7.5px;
+  }
+  body.ui9 #stormInfo { width:104px; padding:6px 8px; }
+  body.ui9 #stormTime { font-size:14px; }
+  body.ui9 #stormLabel { font-size:6px; letter-spacing:.1em; }
+  body.ui9 #stormTag { font-size:6px; }
+  body.ui9 #vitals { width:126px; padding:7px 8px 8px; }
+  body.ui9 .slot { min-width:38px; }
+  body.ui9 #weaponCluster { right:8px; bottom:8px; gap:5px; }
+  body.ui9 #ammoBox { padding:5px 9px; }
+  body.ui9 #ammoBox b { font-size:18px; }
+}
+/* =========================================================================
+   PLAYTEST 9.22 · REDESIGN
+   A new visual layer over ui9. Rounded surfaces, a new display face (Sora),
+   one accent colour, solid fills only: no backdrop-filter, no gradients, no
+   glow, no animated shadows, so it draws as cheaply on an older PC as the
+   layers under it. Every selector is scoped under body.ui10 #menu or
+   body.ui10 #hud so it outranks ui9 without !important.
+   ========================================================================= */
+body.ui10 {
+  --ui-ink:#f2f5fa;
+  --ui-ink-2:#9aa6b8;
+  --ui-ink-3:#5f6981;
+  --ui-line:rgba(255,255,255,.07);
+  --ui-line-2:rgba(255,255,255,.13);
+  --ui-glass:#10151f;
+  --ui-plate:#161d2a;
+  --ui-accent:#5fe3d0;
+  --ui-accent-ink:#04221e;
+  --ui-mint:#5fe3a0;
+  --ui-amber:#ffc46b;
+  --ui-rose:#ff7d7d;
+  --ui-r1:12px; --ui-r2:16px; --ui-r3:22px; --ui-r4:28px; --ui-rp:999px;
+  --ui-top:inset 0 1px 0 rgba(255,255,255,.04);
+  --ui-lift:0 12px 28px -16px rgba(0,0,0,.75);
+  --accent:#5fe3d0;
+  --gold:#ffc46b;
+  --danger:#ff7d7d;
+  --ok:#5fe3a0;
+  --lime:#5fe3d0;
+  --hudLime:#5fe3d0;
+  --hudPanel:rgba(12,16,24,.84);
+  --hudLine:rgba(255,255,255,.07);
+  --hudLine2:rgba(255,255,255,.13);
+  --display:'Sora',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  color:var(--ui-ink);
+  font-family:var(--body);
+}
+
+/* ---------------- menu: field, top bar, tabs ---------------- */
+body.ui10 #menu,
+body.ui10 #menu.modesOpen { background:#080b11; }
+body.ui10 #menu .menuTop {
+  border-radius:26px; background:#10151f; box-shadow:none;
+  border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu .logo {
+  font-family:var(--display); font-weight:800; font-size:19px;
+  letter-spacing:-.02em; color:#fff;
+}
+body.ui10 #menu .tagline {
+  font-family:var(--body); font-weight:700; font-size:9px;
+  letter-spacing:.12em; color:var(--ui-ink-3);
+}
+body.ui10 #menu .tabs {
+  display:flex; gap:2px; padding:4px; border-radius:999px;
+  background:#0b0f16; border:1px solid var(--ui-line);
+}
+body.ui10 #menu .tab {
+  border:0; border-radius:999px; background:transparent; clip-path:none;
+  color:var(--ui-ink-2); font-family:var(--body); font-weight:600;
+  font-size:11px; letter-spacing:.02em; padding:8px 14px;
+}
+body.ui10 #menu .tab.active { background:var(--ui-accent); color:var(--ui-accent-ink); }
+body.ui10 #menu .cashTag,
+body.ui10 #menu .vbTag,
+body.ui10 #menu #accEntry,
+body.ui10 #menu #adminEntry {
+  border-radius:999px; clip-path:none; background:#161d2a;
+  border:1px solid var(--ui-line); color:var(--ui-ink);
+}
+body.ui10 #menu .verTag,
+body.ui10 #menu .ptTag { border-radius:999px; clip-path:none; }
+
+/* ---------------- menu: hero ---------------- */
+body.ui10 #menu #lobbyHero {
+  border-radius:28px; background:#10151f; border:1px solid var(--ui-line);
+  overflow:hidden; clip-path:none;
+}
+body.ui10 #menu #lobbyHero .heroGlow { display:none; }
+body.ui10 #menu #lobbyHero .heroKicker {
+  font-family:var(--body); font-weight:700; letter-spacing:.14em;
+  color:var(--ui-accent);
+}
+body.ui10 #menu #lobbyHero .heroName {
+  font-family:var(--display); font-weight:800; letter-spacing:-.025em; color:#fff;
+}
+body.ui10 #menu #lobbyHero .heroTag {
+  display:inline-block; border-radius:999px; background:#161d2a;
+  border:1px solid var(--ui-line); padding:6px 12px;
+  font-family:var(--body); font-weight:600; letter-spacing:.06em;
+  color:var(--ui-ink-2);
+}
+
+/* ---------------- menu: mode bar and mode cards ---------------- */
+body.ui10 #menu #modeBar {
+  border-radius:22px; background:#10151f; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu #modeBar .mbLabel {
+  font-family:var(--body); font-weight:700; letter-spacing:.12em; color:var(--ui-ink-3);
+}
+body.ui10 #menu #mbMode {
+  font-family:var(--display); font-weight:700; letter-spacing:-.01em; color:#fff;
+}
+body.ui10 #menu #modeBar .mbHint {
+  border-radius:999px; background:var(--ui-accent); color:var(--ui-accent-ink);
+  border:0; font-family:var(--body); font-weight:700; clip-path:none;
+}
+body.ui10 #menu #modeRowEl .modeBtn,
+body.ui10 #menu.modesOpen #modeRowEl .modeBtn {
+  border-radius:20px; background:#161d2a; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu #modeRowEl .modeBtn.active,
+body.ui10 #menu.modesOpen #modeRowEl .modeBtn.active {
+  border-color:var(--ui-accent); background:#0f2b2a;
+}
+body.ui10 #menu #modeRowEl .modeName { font-family:var(--display); font-weight:700; }
+body.ui10 #menu #modeRowEl .modeKicker { font-family:var(--body); letter-spacing:.1em; }
+body.ui10 #menu #modeRowEl .modeGroupLabel {
+  font-family:var(--body); font-weight:700; letter-spacing:.12em; color:var(--ui-ink-3);
+}
+
+/* ---------------- menu: seat panels, chips, dock ---------------- */
+body.ui10 #menu .seatPanel,
+body.ui10 #menu .sidePanel {
+  border-radius:20px; background:#10151f; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu .seatLabel {
+  font-family:var(--body); font-weight:700; font-size:10px;
+  letter-spacing:.12em; color:var(--ui-ink-3);
+}
+body.ui10 #menu .modChip,
+body.ui10 #menu .pocketOpt {
+  border-radius:999px; background:#161d2a; border:1px solid var(--ui-line);
+  color:var(--ui-ink-2); font-family:var(--body); font-weight:600; clip-path:none;
+}
+body.ui10 #menu .modChip.sel,
+body.ui10 #menu .modChip.on,
+body.ui10 #menu .pocketOpt.sel,
+body.ui10 #menu .pocketOpt.on {
+  background:var(--ui-accent); color:var(--ui-accent-ink); border-color:transparent;
+}
+body.ui10 #menu .stepBtn {
+  border-radius:999px; background:#161d2a; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu kbd {
+  border-radius:7px; background:#1f2735; border:1px solid var(--ui-line-2);
+  font-family:var(--body);
+}
+body.ui10 #menu .playRow {
+  border-radius:26px; background:#10151f; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu .playerCard {
+  border-radius:999px; background:#161d2a; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #menu #seasonTimer {
+  border-radius:999px; background:#161d2a; border:1px solid var(--ui-line);
+  clip-path:none; font-family:var(--body); letter-spacing:.06em; color:var(--ui-ink-2);
+}
+body.ui10 #menu #seasonTimer b { color:var(--ui-accent); }
+body.ui10 #menu #playBtn {
+  border-radius:999px; background:var(--ui-accent); color:var(--ui-accent-ink);
+  border:0; box-shadow:none; clip-path:none; min-height:52px; padding:0 36px;
+  font-family:var(--display); font-weight:800; font-size:16px; letter-spacing:.01em;
+}
+body.ui10 #menu #playBtn:disabled { background:#222b3a; color:var(--ui-ink-3); }
+
+/* ---------------- in game: plates ----------------
+   One translucent-looking plate language, but as solid fills. */
+body.ui10 #hud #vitals {
+  border-radius:20px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none; box-shadow:none;
+}
+body.ui10 #hud .bar {
+  border-radius:999px; overflow:hidden; background:#1a2230; clip-path:none;
+}
+body.ui10 #hud .bar.health i { background:#5fe3a0; }
+body.ui10 #hud .bar.shield i { background:#7cc4ff; }
+body.ui10 #hud #overFill { background:#ffc46b; }
+body.ui10 #hud #hpNum,
+body.ui10 #hud #shieldNum { font-family:var(--display); font-weight:800; }
+body.ui10 #hud #hotbar .slot {
+  border-radius:14px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none;
+}
+body.ui10 #hud #hotbar .slot.sel,
+body.ui10 #hud #hotbar .slot.active,
+body.ui10 #hud #hotbar .slot.on {
+  border-color:var(--ui-accent); background:#0f2b2a;
+}
+body.ui10 #hud #pocketSlot {
+  border-radius:14px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none;
+}
+body.ui10 #hud #ammoBox {
+  border-radius:18px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none;
+}
+body.ui10 #hud #ammoMag { font-family:var(--display); font-weight:800; }
+body.ui10 #hud #modeBadge {
+  border-radius:999px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none; font-family:var(--body); font-weight:700; letter-spacing:.08em;
+}
+body.ui10 #hud #questLine {
+  border-radius:999px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none;
+}
+body.ui10 #hud #stormInfo {
+  border-radius:18px; background:rgba(12,16,24,.84); border:1px solid var(--ui-line);
+  clip-path:none;
+}
+body.ui10 #hud #stormTime { font-family:var(--display); font-weight:800; }
+body.ui10 #hud #stormBar,
+body.ui10 #hud #stormBarFill { border-radius:999px; overflow:hidden; }
+body.ui10 #hud #mapWrap .mapFrame {
+  border-radius:22px; background:#0b1119; border:1px solid var(--ui-line);
+  clip-path:none; overflow:hidden;
+}
+body.ui10 #hud #mapMeta .metaCell {
+  border-radius:12px; background:rgba(12,16,24,.84);
+}
+body.ui10 #hud #prompt {
+  border-radius:999px; background:rgba(12,16,24,.88); border:1px solid var(--ui-line);
+  clip-path:none; font-family:var(--body);
+}
+body.ui10 #hud #quitBtn {
+  border-radius:999px; clip-path:none; background:rgba(12,16,24,.84);
+  border:1px solid var(--ui-line);
+}
+body.ui10 #hud .mat { border-radius:999px; }
+body.ui10 #hud #stormWarn { border-radius:999px; clip-path:none; }
+body.ui10 #hud #mateTimer { border-radius:18px; clip-path:none; }
+body.ui10 #hud #useBar { border-radius:999px; overflow:hidden; }
+body.ui10 #hud #vend .vendCard {
+  border-radius:20px; background:#10151f; border:1px solid var(--ui-line); clip-path:none;
+}
+body.ui10 #hud #resultCard,
+body.ui10 #hud #eventBanner { border-radius:18px; clip-path:none; }
+body.ui10 #hud #feed > * { border-radius:12px; clip-path:none; }
 </style>
 </head>
-<body>
+<body class="ui9 ui10">
 
 <canvas id="game"></canvas>
 
@@ -6576,7 +8519,7 @@ body:not(.og-ui) .tagline { display:none; }
   <div class="menuTop">
     <div class="brand">
       <div class="logo">STORMFALL</div>
-      <div class="tagline">SEASON <b>7</b></div>
+      <div class="tagline">SEASON <b>9</b></div>
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="play">PLAY</button>
@@ -6593,7 +8536,7 @@ body:not(.og-ui) .tagline { display:none; }
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.20PT</div>
+      <div class="verTag" id="verTag">v9.22PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6602,7 +8545,11 @@ body:not(.og-ui) .tagline { display:none; }
     <div id="lobbyHero">
       <div class="heroGlow"></div>
       <div class="heroFig" id="lobbyHeroFig"></div>
-      <div class="heroName" id="lobbyHeroName">SPRITE RUNNER</div>
+      <div class="heroMeta">
+        <span class="heroKicker">SEASON 9 PLAYTEST</span>
+        <div class="heroName" id="lobbyHeroName">SPRITE RUNNER</div>
+        <span class="heroTag">DROWNED COAST</span>
+      </div>
     </div>
 
     <div id="motd" class="hide" role="status" aria-live="polite">
@@ -6807,7 +8754,7 @@ body:not(.og-ui) .tagline { display:none; }
     </div>
     <div class="queueInfo">
       <div class="queueMode" id="queueMode">SOLO — <span id="queueBots">24</span> OPPONENTS</div>
-      <div class="queueSub">Survive the storm. Take the crown.</div>
+      <div class="queueSub" id="queueSub">Survive the storm. Take the crown.</div>
     </div>
     <div class="seasonTimer" id="seasonTimer">SEASON 9 STARTS IN <b>—</b></div>
     <button id="playBtn">DEPLOY</button>
@@ -7303,15 +9250,16 @@ body:not(.og-ui) .tagline { display:none; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.20PT</b>
+        <b id="wnVersion">v9.22PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.19PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.21PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE SHEET, ACTUALLY FULL SCREEN</b> — it was still stopping halfway down the phone, with the card numbers counting in twos and the right column running off the edge. Fixed: the whole screen is the list now, every card fits its own name, and the modes are numbered once, 01 to 13.</div></li>
-      <li><span class="wnTag">02</span><div><b>TIDY-UPS FROM THE SCREEN</b> — the top bar keeps its row instead of shoving the logo off the top, the mode bar reads CHANGE MODE, the in-game prompt sits clear of the buttons, and the panels across the top no longer sit on top of each other. Battle pass and shop no longer say Season 7.</div></li>
+      <li><span class="wnTag">01</span><div><b>NEW VISUAL LAYER</b> — rounded plates, a new display face (Sora) for titles and numbers, one cyan accent and solid fills instead of gradients across the lobby and the in-game HUD.</div></li>
+      <li><span class="wnTag">02</span><div><b>LOBBY AND HUD RESTYLED</b> — pill tabs, pill chips and buttons, the DEPLOY button is a pill, and the vitals, hotbar, ammo, storm clock and minimap sit on the same plate.</div></li>
+      <li><span class="wnTag">03</span><div><b>NO GAMEPLAY CHANGES</b> — same modes, weapons, maps, bosses and rules. Only colours, type, corners and borders moved.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -19632,7 +21580,7 @@ function setMode(m) {
   // OG mode reskins the whole interface to the navy day-one build.
   document.body.classList.toggle('og-ui', state.mode === 'og');
   const tag = document.querySelector('.tagline');
-  if (tag) tag.innerHTML = state.mode === 'og' ? 'OG BUILD · <b>v1.0.0</b>' : 'SEASON <b>7</b>';
+  if (tag) tag.innerHTML = state.mode === 'og' ? 'OG BUILD · <b>v1.0.0</b>' : 'SEASON <b>9</b>';
   const def = modeDef();
   document.querySelectorAll('.modeBtn').forEach((b) => {
     b.classList.toggle('active', b.dataset.mode === state.mode);
@@ -19670,8 +21618,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 20 };
-const VERSION_PREV = '9.19PT';
+const VERSION = { season: 9, release: 22 };
+const VERSION_PREV = '9.21PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
