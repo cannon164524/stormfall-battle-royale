@@ -6139,6 +6139,58 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
 #stormLabel, #stormTime { color:rgba(198,230,244,.55); }
 #aliveCount, #killCount { color:var(--ink); }
 .mapName, .cLbl { color:rgba(198,230,244,.6); }
+
+/* =========================================================================
+   SEASON 9 — the new shell
+   Archivo for display and labels, Inter for body: wide heavy grotesque in
+   place of the tall condensed face. A vertical mode roster down the left on
+   anything wide enough, the brief held on the right, the hero between them.
+   ========================================================================= */
+:root {
+  --display:'Archivo','Barlow Condensed',Impact,sans-serif;
+  --label:'Archivo','Barlow Condensed',Arial,sans-serif;
+  --body:'Inter','Barlow Semi Condensed',system-ui,Arial,sans-serif;
+}
+.logo { font-family:var(--display); font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.tab, .tab.active { font-family:var(--label); font-weight:700; letter-spacing:.16em; }
+.mpTitle, .wnTitle, .endTitle, .queueMode, #playBtn, .modeName,
+.rcHead b, .endTitle, .annTitle { font-family:var(--display); font-weight:800; }
+.modeName { letter-spacing:.02em; text-transform:uppercase; }
+.mpTitle { letter-spacing:.04em; text-transform:uppercase; }
+.mpKicker, .seatLabel, .mpkTitle, .wnLevel, .verTag, .ptTag, .seasonTimer { font-family:var(--label); }
+
+@media (min-width: 760px) {
+  /* the roster: one row per mode, numbered, down the left side */
+  .modeRow {
+    position:absolute; left:16px; top:14px; bottom:14px; width:310px;
+    display:flex; flex-direction:column; flex-wrap:nowrap; gap:5px;
+    overflow-y:auto; overflow-x:hidden; background:none; padding:0;
+    counter-reset: modes;
+  }
+  .modeRow::-webkit-scrollbar { width:0; }
+  .modeRow .mpkHead { flex:0 0 auto; padding:0 0 8px; margin:0; }
+  .modeGroup { display:flex; flex-direction:column; gap:5px; }
+  .modeGroupLabel {
+    display:block; padding:9px 2px 3px; font-family:var(--label);
+    font-size:7.5px; font-weight:700; letter-spacing:.32em;
+    color:rgba(198,230,244,.4); text-transform:uppercase;
+  }
+  .modeBtn, .modeBtn:hover, .modeBtn.active {
+    flex:0 0 auto; min-height:54px; padding:9px 12px 9px 36px;
+    clip-path:polygon(0 0, 100% 0, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+  .modeBtn { counter-increment: modes; position:relative; }
+  .modeBtn::before {
+    content:counter(modes, decimal-leading-zero);
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    font-family:var(--display); font-size:11px; font-weight:800;
+    letter-spacing:0; color:rgba(92,225,255,.45);
+  }
+  .modeBtn.active::before { color:var(--lime); }
+  .modeName { font-size:15px; }
+  .modeKicker, .modeFoot { font-size:7.5px; letter-spacing:.16em; }
+  #lobbyHero { left:50%; bottom:118px; transform:translateX(-50%); }
+}
 </style>
 </head>
 <body>
@@ -6376,7 +6428,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.17PT</div>
+      <div class="verTag" id="verTag">v9.18PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -7086,14 +7138,15 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.17PT</b>
+        <b id="wnVersion">v9.18PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.16PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.17PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE COAST GETS ITS OWN LOOK</b> — the whole interface has been repainted for the drowned island: salt-white type on deep-sea plates, cold cyan on everything you can press, sea-green health and a separate coral for damage, with the last of the old lime gone. Mode cards carry a waterline rail, the match brief has its own accent header, and the in-game plates, bars, feed, prompt and result cards all move to the same language.</div></li>
+      <li><span class="wnTag">01</span><div><b>MEDALLIONS</b> — a boss now leaves exactly what it carried: its mythic and one medallion, both lit up on the ground and on the way in. Medallions sit in a boon slot and work on their own: Tideheart heals you while you swim, Storm Eye halves storm damage, Hunter puts every enemy on the map, Ironshell takes a quarter off everything that lands on you.</div></li>
+      <li><span class="wnTag">02</span><div><b>A NEW SHELL</b> — the interface has a new typeface for display and labels, and the lobby is rebuilt around a numbered vertical roster of modes down the left with the brief held on the right and the hero between them, on any screen wide enough for it. Phones keep the swipe rail.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -11518,6 +11571,21 @@ const WATER_ICON = {
   }
 })();
 GUN_ICONS.radar = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor"><circle cx="32" cy="34" r="21" stroke-width="4"/><circle cx="32" cy="34" r="11" stroke-width="2.5" opacity=".55"/><path d="M32 34L47 21" stroke-width="3.5" stroke-linecap="round"/><circle cx="32" cy="34" r="4" fill="currentColor" stroke="none"/><circle cx="45" cy="27" r="2.4" fill="currentColor" stroke="none"/></svg>';
+/* Medallions: a ring and a ribbon, one glyph each so a boon slot reads at a
+   glance. Drawn flat, no gradients. */
+const MEDAL_ART = {
+  med_tide: '<path d="M20 38c4-6 8-6 12 0s8 6 12 0" stroke-width="4" fill="none" stroke-linecap="round"/>',
+  med_storm: '<path d="M34 12L20 36h9l-3 16 14-24h-9z" stroke-width="3" fill="currentColor" stroke="none"/>',
+  med_hunt: '<circle cx="32" cy="34" r="9" stroke-width="3.5" fill="none"/><path d="M32 18v7M32 43v7M16 34h7M41 34h7" stroke-width="3.5" stroke-linecap="round"/>',
+  med_shell: '<path d="M32 18l12 5v9c0 8-6 13-12 16-6-3-12-8-12-16v-9z" stroke-width="3.5" fill="none"/>',
+};
+for (const key in MEDAL_ART) {
+  GUN_ICONS[key] = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linejoin="round">' +
+    '<circle cx="32" cy="34" r="24" stroke-width="4"/>' +
+    '<circle cx="32" cy="34" r="19" stroke-width="1.5" opacity=".45"/>' +
+    '<path d="M22 6h20l-10 12z" fill="currentColor" stroke="none"/>' +
+    MEDAL_ART[key] + '</svg>';
+}
 GUN_ICONS.regen = '<svg viewBox="0 0 64 64" fill="currentColor"><rect x="16" y="16" width="32" height="40" rx="7"/><rect x="25" y="9" width="14" height="8" rx="3"/><rect x="29" y="26" width="6" height="22" fill="#0b1a2b"/><rect x="21" y="34" width="22" height="6" fill="#0b1a2b"/><rect x="20" y="22" width="24" height="3" opacity=".35"/></svg>';
 GUN_ICONS.boots = '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M22 8h14v24h9c8 0 13 6 13 14v10H22z"/><rect x="16" y="50" width="40" height="6" rx="3" opacity=".6"/><rect x="26" y="14" width="6" height="3" rx="1.5" fill="#0b1a2b" opacity=".5"/></svg>';
 GUN_ICONS.plate = '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l21 9v17c0 12-9 21-21 26-12-5-21-14-21-26V15z"/><rect x="28" y="21" width="8" height="24" fill="#0b1a2b"/><rect x="20" y="29" width="24" height="8" fill="#0b1a2b"/></svg>';
@@ -11712,9 +11780,16 @@ const BOONS = {
   scav: { name: 'Scavenger', color: '#d8a86a', icon: 'scav', desc: '+50% WOOD FROM CHESTS' },
   synth: { name: 'Ammo Synth', color: '#8fd6ff', icon: 'synth', desc: 'RESERVE AMMO REFILLS' },
   token: { name: 'Deep Pearl', color: '#ffd451', icon: 'token', desc: 'WIN THE MATCH TO CLAIM THE WHOLE SHOP' },
+  // ---- medallions: boss loot, one ability each, worn in a boon slot ----
+  med_tide: { name: 'Tideheart Medallion', color: '#5ce1ff', icon: 'medal_tide', medal: true, desc: 'HEALS 2 HP A SECOND WHILE YOU SWIM' },
+  med_storm: { name: 'Storm Eye Medallion', color: '#b48cff', icon: 'medal_storm', medal: true, desc: 'HALVES STORM DAMAGE' },
+  med_hunt: { name: 'Hunter Medallion', color: '#ffd27a', icon: 'medal_hunt', medal: true, desc: 'EVERY ENEMY ON THE MINIMAP' },
+  med_shell: { name: 'Ironshell Medallion', color: '#ff9f6a', icon: 'medal_shell', medal: true, desc: '-25% DAMAGE TAKEN, ON TOP OF A PLATE' },
 };
 /* The token never rolls as a random boon — it only comes out of a chest. */
 const BOON_TYPES = ['radar', 'regen', 'boots', 'plate', 'scav', 'synth'];
+/* Medallions never roll either: a boss leaves one behind when it falls. */
+const MEDALLIONS = ['med_tide', 'med_storm', 'med_hunt', 'med_shell'];
 
 function makeBoon(type) {
   const key = BOONS[type] ? type : 'radar';
@@ -12735,7 +12810,9 @@ function spawnLoot(x, y, z, item) {
   model.position.y = 0.45;
   g.add(model);
 
-  const special = item.kind === 'token' || (item.kind === 'weapon' && item.rarity >= R_ASCENDANT);
+  const special = item.kind === 'token' ||
+    (item.kind === 'boon' && BOONS[item.type] && BOONS[item.type].medal) ||
+    (item.kind === 'weapon' && item.rarity >= R_ASCENDANT);
   let halo = null;
 
   const ring = new THREE.Mesh(
@@ -12765,7 +12842,7 @@ function spawnLoot(x, y, z, item) {
 
   g.position.set(x, y, z);
   dynGroup.add(g);
-  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: item.kind === 'token' ? 900 : LOOT_LIFE + rand(0, 8), dead: false });
+  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: (item.kind === 'token' || (item.kind === 'boon' && BOONS[item.type] && BOONS[item.type].medal)) ? 900 : LOOT_LIFE + rand(0, 8), dead: false });
   while (loot.length > LOOT_MAX) {
     const old = loot.shift();
     if (!old) break;
@@ -13658,6 +13735,8 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (adminOn('god')) return;
   let d = dmg;
   if (!fromStorm && hasBoon('plate')) d *= 0.85;
+  if (!fromStorm && hasBoon('med_shell')) d *= 0.75;
+  if (fromStorm && hasBoon('med_storm')) d *= 0.5;
   let shieldPart = 0;
   let healthPart = 0;
   player.lastDamage = state.time;
@@ -14596,13 +14675,11 @@ function dropBotLoot(b) {
   if (w && w.kind === 'weapon' && weaponUsesAmmo(w)) w.mag = WEAPONS[w.type].mag;
   const items = [w, makeGold(Math.round(50 * anomalyGoldMul()))];
   if (b.boss) {
-    // a boss pays out: a second vault-grade gun, heals, a pile of gold and ammo
-    const bossPool = mythicPoolForMode().concat(exoticPoolForMode());
-    items.push(makeWeapon(bossPool.length ? pick(bossPool) : 'mythic_deepwater', R_MYTHIC));
+    // a boss leaves exactly what it carried: one mythic, and one medallion
+    const med = makeBoon(pick(MEDALLIONS));
+    spawnLoot(b.pos.x + rand(-0.7, 0.7), b.pos.y + 0.6, b.pos.z + rand(-0.7, 0.7), med);
+    showRareFind(med, 'MEDALLION', 'BOSS DROP · ' + BOONS[med.type].name.toUpperCase());
     items.push(makeGold(250));
-    items.push(makeHeal('shield', 1));
-    items.push(makeHeal(pick(['mini', 'bandage']), 2));
-    items.push(makeAmmo(pick(['light', 'medium', 'heavy']), 120));
     toast('BOSS DOWN · ' + b.name, 'sub');
   } else if (Math.random() < 0.6) {
     items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
@@ -16992,6 +17069,9 @@ function updatePlayer(dt) {
   if (player.knocked) { updateCrawl(dt); return; }
 
   // utilities are passives, so they tick before anything else this frame
+  if (hasBoon('med_tide') && player.swimming && player.hp < player.maxHp) {
+    player.hp = Math.min(player.maxHp, player.hp + 2 * dt);
+  }
   if (hasBoon('regen') && player.shield < player.maxShield && state.time >= (player.lastDamage || 0) + 4) {
     player.shield = Math.min(player.maxShield, player.shield + 3 * dt);
   }
@@ -18226,7 +18306,7 @@ function drawMinimap() {
   }
 
   // bots — a Rift Radar in your bag puts every one of them on the map
-  const radar = hasBoon('radar');
+  const radar = hasBoon('radar') || hasBoon('med_hunt');
   for (const b of bots) {
     if (!b.alive || b.dropping) continue;
     const d = Math.hypot(b.pos.x - player.pos.x, b.pos.z - player.pos.z);
@@ -19425,8 +19505,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 17 };
-const VERSION_PREV = '9.16PT';
+const VERSION = { season: 9, release: 18 };
+const VERSION_PREV = '9.17PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -20439,9 +20519,10 @@ function showRareFind(item, kicker, subLine) {
   const el = document.getElementById('rareFind');
   if (!el) return;
   const token = item.kind === 'token';
-  const mythic = !token && item.rarity >= R_MYTHIC;
-  const ascendant = !mythic && !token && item.rarity >= R_ASCENDANT;
-  el.dataset.tier = token || mythic ? 'mythic' : ascendant ? 'ascendant' : 'exotic';
+  const medal = item.kind === 'boon';
+  const mythic = !token && !medal && item.rarity >= R_MYTHIC;
+  const ascendant = !mythic && !token && !medal && item.rarity >= R_ASCENDANT;
+  el.dataset.tier = token || medal || mythic ? 'mythic' : ascendant ? 'ascendant' : 'exotic';
   el.classList.toggle('noDim', isBlitz());
 
   const kick = document.getElementById('rfKicker');
@@ -20450,10 +20531,15 @@ function showRareFind(item, kicker, subLine) {
   const sub = document.getElementById('rfSub');
   const art = document.getElementById('rfArt');
   if (kick) kick.textContent = kicker || 'RARE CHEST FIND';
-  if (title) title.textContent = token ? 'RARE CHEST FIND' : RARITY[item.rarity].name.toUpperCase() + ' FOUND';
-  if (name) name.textContent = token ? 'DEEP PEARL' : (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
-  if (sub) sub.textContent = subLine || (RARITY[item.rarity].name.toUpperCase() + ' · GRAB IT BEFORE IT VANISHES');
-  if (art) art.innerHTML = token ? GUN_ICONS.token : (GUN_ICONS[item.type] || '');
+  if (title) title.textContent = token ? 'RARE CHEST FIND' : medal ? 'BOSS DROP' : RARITY[item.rarity].name.toUpperCase() + ' FOUND';
+  if (name) name.textContent = token ? 'DEEP PEARL'
+    : medal ? BOONS[item.type].name.toUpperCase()
+    : (RARITY[item.rarity].name + ' ' + WEAPONS[item.type].name).toUpperCase();
+  if (sub) sub.textContent = subLine || (medal ? 'A MEDALLION · GRAB IT BEFORE IT VANISHES'
+    : RARITY[item.rarity].name.toUpperCase() + ' · GRAB IT BEFORE IT VANISHES');
+  if (art) art.innerHTML = token ? GUN_ICONS.token
+    : medal ? (GUN_ICONS[BOONS[item.type].icon] || '')
+    : (GUN_ICONS[item.type] || '');
 
   el.classList.remove('hide');
   el.classList.remove('on');
