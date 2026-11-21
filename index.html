@@ -8299,6 +8299,122 @@ body.ui10 #hud #vend .vendCard {
 body.ui10 #hud #resultCard,
 body.ui10 #hud #eventBanner { border-radius:18px; clip-path:none; }
 body.ui10 #hud #feed > * { border-radius:12px; clip-path:none; }
+
+/* =========================================================================
+   PLAYTEST 9.23 · THE FINISHING PASS
+   The rest of the redesign, on top of ui9/ui10:
+     · the touch pad becomes an icon pad — a big fire circle plus six labelled
+       icon tiles, no text-only buttons left;
+     · the in-hand panel is rebuilt as one compact pill (name, mag, reserve)
+       that stays clear of the fire pad above it;
+     · the heat gauge beside the reticle is a clean rounded strip, its stripe
+       overlay and drop shadows gone;
+     · the end screen joins the same plate language.
+   Scoped under body.ui11 so it outranks ui9/ui10 without !important. Cheap
+   to draw: no backdrop-filter, no gradients, no box-shadows, no filters.
+   ========================================================================= */
+
+/* ---- touch pad: icon tiles ---- */
+body.ui11 #touchBtns { right:14px; bottom:110px; gap:7px; }
+body.ui11 #touchBtns .row { gap:7px; }
+body.ui11 .tbtn {
+  width:60px; height:60px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  border:1px solid rgba(255,255,255,.16); border-radius:19px;
+  background:rgba(10,15,24,.62);
+  box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+  font-family:var(--body); font-size:8px; letter-spacing:.1em;
+  color:#eef6fd;
+  transition:transform .08s ease, background .12s ease;
+}
+body.ui11 .tbtn svg { width:19px; height:19px; display:block; }
+body.ui11 .tbtn svg * { stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+body.ui11 .tbtn .tlabel { font-size:7px; font-weight:700; letter-spacing:.14em; color:rgba(234,243,255,.58); }
+body.ui11 .tbtn.small { width:48px; height:48px; border-radius:15px; background:rgba(10,15,24,.5); }
+body.ui11 .tbtn[data-act="fire"] {
+  width:84px; height:84px; border-radius:50%;
+  background:rgba(95,227,208,.14); border-color:rgba(95,227,208,.55);
+  color:#fff;
+}
+body.ui11 .tbtn[data-act="fire"] svg { width:30px; height:30px; }
+body.ui11 .tbtn[data-act="fire"] .tlabel { color:rgba(255,255,255,.72); letter-spacing:.2em; }
+body.ui11 .tbtn:active { transform:scale(.94); background:rgba(95,227,208,.24); }
+
+/* the stick loses its blur — the cheapest draw in the layer */
+body.ui11 #stick,
+body.ui11 #stickKnob { backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
+
+/* ---- bottom-right: in-hand pill rebuilt around the fire pad ----
+   The cluster must stay under ~100px tall on a phone so the fire pad at
+   bottom:110px stays clear of it — hence one horizontal pill. */
+body.ui11 #weaponCluster { right:10px; bottom:10px; gap:6px; }
+/* two IDs here because the base layer styles it as #weaponCluster #ammoBox */
+body.ui11 #weaponCluster #ammoBox {
+  flex-direction:row; align-items:baseline; gap:7px;
+  padding:8px 14px;
+  border:1px solid var(--ui-line); border-radius:16px;
+  background:rgba(12,16,24,.82);
+  text-align:left;
+}
+body.ui11 #weaponCluster #ammoBox::before {
+  order:-1; display:block; margin:0;
+  font-family:var(--body); font-size:7px; font-weight:700; letter-spacing:.16em;
+  color:var(--ui-ink-3);
+}
+body.ui11 #weaponCluster #ammoBox i { order:0; font-style:normal; margin-right:2px; }
+body.ui11 #weaponCluster #ammoBox b { order:1; }
+body.ui11 #weaponCluster #ammoBox span { order:2; }
+
+/* ---- heat gauge beside the reticle ---- */
+body.ui11 #ammoGauge {
+  width:6px; height:64px; margin:-32px 0 0 46px;
+  border:1px solid rgba(255,255,255,.2); border-radius:99px;
+  background:rgba(8,13,20,.66);
+}
+body.ui11 #ammoGauge .agFill { border-radius:99px; box-shadow:none; filter:none; }
+body.ui11 #ammoGauge .agFill::after { content:none; }
+body.ui11 #ammoGauge .agCap { border-radius:99px; background:rgba(255,255,255,.5); }
+
+/* ---- top-left plates join the pills ---- */
+body.ui11 #hud #modeBadge,
+body.ui11 #hud #questLine {
+  border:1px solid var(--ui-line); border-radius:999px;
+  background:rgba(12,16,24,.84);
+  clip-path:none; box-shadow:none;
+}
+body.ui11 #hud .buildPiece {
+  border:1px solid var(--ui-line); border-radius:14px;
+  background:rgba(12,16,24,.8);
+  font-family:var(--body); font-weight:700; letter-spacing:.12em;
+}
+
+/* on a touch screen the prompt lifts above the pad so nothing lands on it */
+@media (pointer:coarse) {
+  body.ui11 #prompt { bottom:316px; }
+  body.ui11 #useBar { bottom:306px; }
+}
+
+/* ---- end screen: same plates ---- */
+body.ui11 #end .endInner {
+  border:1px solid var(--ui-line); border-radius:30px;
+  background:rgba(10,14,21,.9);
+  box-shadow:none;
+}
+body.ui11 #end .endPlace { font-family:var(--display); font-weight:800; }
+body.ui11 #end .endTitle { font-family:var(--display); font-weight:800; letter-spacing:-.02em; }
+body.ui11 #end .endRule { height:3px; border-radius:99px; background:var(--ui-accent); opacity:.9; }
+body.ui11 #end .endStats div {
+  border:1px solid var(--ui-line); border-radius:18px;
+  background:rgba(255,255,255,.04);
+  padding:12px 20px;
+}
+body.ui11 #end .endStats b { font-family:var(--display); font-weight:800; font-size:24px; color:#fff; }
+body.ui11 #end .endStats span { font-family:var(--body); font-weight:600; font-size:8.5px; letter-spacing:.16em; color:var(--ui-ink-3); }
+body.ui11 #end #againBtn {
+  border:0; border-radius:999px;
+  background:var(--ui-accent); color:var(--ui-accent-ink);
+  font-family:var(--display); font-weight:800; letter-spacing:.02em;
+}
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8536,7 +8652,7 @@ body.ui10 #hud #feed > * { border-radius:12px; clip-path:none; }
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.22PT</div>
+      <div class="verTag" id="verTag">v9.23PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -9105,16 +9221,16 @@ body.ui10 #hud #feed > * { border-radius:12px; clip-path:none; }
   <div id="stick"><div id="stickKnob"></div></div>
   <div id="touchBtns">
     <div class="row">
-      <button class="tbtn small" data-act="reload">VENT</button>
-      <button class="tbtn small" data-act="build">BUILD</button>
-      <button class="tbtn small" data-act="inv">INV</button>
+      <button class="tbtn small" data-act="reload"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg><span class="tlabel">VENT</span></button>
+      <button class="tbtn small" data-act="build"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span class="tlabel">BUILD</span></button>
+      <button class="tbtn small" data-act="inv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="tlabel">INV</span></button>
     </div>
     <div class="row">
-      <button class="tbtn small" data-act="jump">JUMP</button>
-      <button class="tbtn small" data-act="use">USE</button>
-      <button class="tbtn small" data-act="pocket">SHOCK</button>
+      <button class="tbtn small" data-act="jump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l7-7 7 7"/><path d="M5 20l7-7 7 7"/></svg><span class="tlabel">JUMP</span></button>
+      <button class="tbtn small" data-act="use"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg><span class="tlabel">USE</span></button>
+      <button class="tbtn small" data-act="pocket"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L6 13h5l-1 9 8-12h-5l0-8z"/></svg><span class="tlabel">SHOCK</span></button>
     </div>
-    <button class="tbtn" data-act="fire">FIRE</button>
+    <button class="tbtn" data-act="fire"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span class="tlabel">FIRE</span></button>
   </div>
 </div>
 
@@ -9250,16 +9366,16 @@ body.ui10 #hud #feed > * { border-radius:12px; clip-path:none; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.22PT</b>
+        <b id="wnVersion">v9.23PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.21PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.22PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NEW VISUAL LAYER</b> — rounded plates, a new display face (Sora) for titles and numbers, one cyan accent and solid fills instead of gradients across the lobby and the in-game HUD.</div></li>
-      <li><span class="wnTag">02</span><div><b>LOBBY AND HUD RESTYLED</b> — pill tabs, pill chips and buttons, the DEPLOY button is a pill, and the vitals, hotbar, ammo, storm clock and minimap sit on the same plate.</div></li>
-      <li><span class="wnTag">03</span><div><b>NO GAMEPLAY CHANGES</b> — same modes, weapons, maps, bosses and rules. Only colours, type, corners and borders moved.</div></li>
+      <li><span class="wnTag">01</span><div><b>ICON TOUCH PAD</b> — the action buttons are now drawn icon tiles in a two-tier pad: a big fire circle in the corner with vent, build, inventory, jump, use and shock around it, each with its own drawn glyph.</div></li>
+      <li><span class="wnTag">02</span><div><b>IN-HAND PILL</b> — the ammo panel is rebuilt as one compact pill that sits clear of the fire pad, and the heat gauge beside the crosshair loses its stripe overlay and shadows.</div></li>
+      <li><span class="wnTag">03</span><div><b>END SCREEN</b> — the result screen joins the same rounded plate language, with the display face on the place, the title and the stats. No gameplay changes in this release.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -21618,8 +21734,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 22 };
-const VERSION_PREV = '9.21PT';
+const VERSION = { season: 9, release: 23 };
+const VERSION_PREV = '9.22PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
