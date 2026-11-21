@@ -572,6 +572,62 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 #bootError h1 { font-family:'Anton', Impact, sans-serif; font-size:26px; letter-spacing:.06em; margin:0 0 10px; }
 #bootError p { font-size:14px; line-height:1.5; opacity:.75; margin:0; }
 
+/* ============================== SCHEDULED SHUTDOWN ==============================
+   The countdown strip under the deploy row, and the card that replaces the game
+   once the schedule lands. Both read from SHUTDOWN, next to VERSION. */
+.queueCloses {
+  margin-top:5px; font-family:var(--label); font-size:11px; font-weight:700;
+  letter-spacing:.16em; color:rgba(194,255,61,.88); text-transform:uppercase;
+}
+
+#shutdown {
+  position:fixed; inset:0; z-index:130; display:flex; align-items:center; justify-content:center;
+  padding:24px; background:#05080a;
+}
+#shutdown.hide { display:none; }
+.sdInner {
+  width:min(560px, 100%);
+  padding:6px 0 6px 22px; border-left:3px solid #c2ff3d;
+  animation:sdIn .34s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes sdIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.sdKicker {
+  font-family:var(--label); font-size:11px; font-weight:700; letter-spacing:.3em;
+  text-transform:uppercase; color:rgba(194,255,61,.8);
+}
+.sdTitle {
+  margin:12px 0 0; font-family:var(--display); font-style:italic; font-size:clamp(34px, 8vw, 58px);
+  line-height:.92; letter-spacing:.01em; color:#eaf3ff;
+}
+.sdBody {
+  margin:16px 0 0; max-width:46ch; font-size:15px; line-height:1.6; color:rgba(234,243,255,.6);
+}
+.sdMeta {
+  margin-top:24px; padding-top:14px; border-top:1px solid rgba(234,243,255,.12);
+  display:flex; flex-wrap:wrap; gap:12px 30px;
+}
+.sdMeta div {
+  font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.18em;
+  text-transform:uppercase; color:rgba(234,243,255,.4);
+}
+.sdMeta b {
+  display:block; margin-top:4px; font-family:var(--display); font-style:normal;
+  font-size:18px; letter-spacing:.05em; color:#eaf3ff;
+}
+.sdFoot {
+  position:absolute; left:24px; right:24px; bottom:22px;
+  display:flex; justify-content:space-between; gap:16px;
+  font-family:var(--label); font-size:10px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; color:rgba(234,243,255,.3);
+}
+@media (max-width:760px) {
+  #shutdown { padding:20px; }
+  .sdInner { padding-left:16px; }
+  .sdBody { font-size:14px; }
+  .sdFoot { left:20px; right:20px; bottom:16px; font-size:9px; letter-spacing:.16em; }
+  .queueCloses { font-size:10px; letter-spacing:.12em; }
+}
+
 /* ============================== HITMARKER / WIPE / RESPAWN ============================== */
 #hitmarker.shield i { background:#5bdcff; box-shadow:0 0 8px rgba(80,210,255,.95); }
 
@@ -6409,6 +6465,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     <div class="queueInfo">
       <div class="queueMode" id="queueMode">SOLO — <span id="queueBots">24</span> OPPONENTS</div>
       <div class="queueSub">Survive the storm. Take the crown.</div>
+      <div class="queueCloses hide" id="shutdownNotice"></div>
     </div>
     <button id="playBtn">DEPLOY</button>
   </div>
@@ -6910,7 +6967,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SMOOTHER RESPAWN BANNER</b> — the respawn countdown is fully transparent now and slides in with the same smooth easing as the eliminated screen, instead of popping in. The live match reads clearly behind it the whole five seconds.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON 7 CLOSES MONDAY</b> — the island goes offline at midnight on Monday while Season 9 is built. The deploy row counts it down until then, and at zero the game stops taking matches and closes the doors. Nothing is lost: outfits, pass tiers, V-Bucks and rank all carry over.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -6933,6 +6990,22 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     <h1>CANNOT CONNECT</h1>
     <p>The 3D engine could not be loaded. Check your internet connection and reload this page.</p>
   </div>
+</div>
+
+<!-- ============================== SCHEDULED SHUTDOWN ==============================
+     Season 7 goes dark while Season 9 is built. The schedule and every line of
+     copy on this card live in SHUTDOWN, next to VERSION. -->
+<div id="shutdown" class="hide">
+  <div class="sdInner">
+    <div class="sdKicker" id="sdKicker"></div>
+    <h1 class="sdTitle" id="sdTitle"></h1>
+    <div id="sdLines"></div>
+    <div class="sdMeta">
+      <div>CLOSED <b id="sdClosed">&mdash;</b></div>
+      <div>BUILD <b id="sdVer">&mdash;</b></div>
+    </div>
+  </div>
+  <div class="sdFoot"><span id="sdFootL"></span><span id="sdFootR"></span></div>
 </div>
 
 <script>
@@ -18227,6 +18300,7 @@ function blitzAddXp(n) {
 }
 
 function startMatch() {
+  if (shutdownActive()) { openShutdown(); return; }
   audioInit();
   state.ended = false;
   state.time = 0;
@@ -18737,8 +18811,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 4, patch: 9 };
-const VERSION_PREV = '8.4.8';
+const VERSION = { major: 8, minor: 5, patch: 0 };
+const VERSION_PREV = '8.4.9';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18753,6 +18827,100 @@ function setVersionUI() {
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
   if (lvl) lvl.textContent = VERSION.patch === 0 ? 'MAJOR UPDATE' : 'SMALL UPDATE';
+}
+
+/* ---------------- scheduled shutdown ----------------
+   Season 7 closes while Season 9 is built. The game plays normally right up to
+   the minute below — the lobby counts it down — and from then on nothing can
+   start a match and the offline card owns the screen.
+
+   startsAt is read in each player's own local time, so everyone loses their
+   evening at their own midnight. Append a Z (2026-11-23T00:00:00Z) to bring
+   the whole world down at one moment instead.
+
+   To bring the game back: set enabled to false, or move startsAt forward. The
+   copy here feeds both the offline card and the countdown strip. */
+const SHUTDOWN = {
+  enabled: true,
+  startsAt: '2026-11-23T00:00:00',      // Monday, midnight, the player's own time
+  kicker: 'SEASON 7 · CLOSED',
+  title: 'STORMFALL IS OFFLINE',
+  headline: 'MON 00:00',                 // printed as CLOSED on the card
+  lines: [
+    'The island is closed while we build Season 9. Everything on your account — outfits, pass tiers, V-Bucks and rank — is saved exactly where you left it.',
+    'Play returns with Season 9. The date lands on this screen first.',
+  ],
+  footerLeft: 'STORMFALL · BATTLE ROYALE',
+  footerRight: 'SEASON 9 INBOUND',
+};
+
+const SHUTDOWN_AT = (() => {
+  const t = Date.parse(SHUTDOWN.startsAt);
+  return Number.isFinite(t) ? t : 0;
+})();
+
+function shutdownActive() {
+  return SHUTDOWN.enabled !== false && SHUTDOWN_AT > 0 && Date.now() >= SHUTDOWN_AT;
+}
+
+/* "2D 14H 03M" with days to go, "14H 03M 12S" on the last day. */
+function shutdownSpan(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  const p = (n) => (n < 10 ? '0' + n : String(n));
+  if (d > 0) return d + 'D ' + p(h) + 'H ' + p(m) + 'M';
+  if (h > 0) return h + 'H ' + p(m) + 'M ' + p(sec) + 'S';
+  return m + 'M ' + p(sec) + 'S';
+}
+
+let shutdownShown = false;
+
+function openShutdown() {
+  if (shutdownShown) return;
+  shutdownShown = true;
+  const el = document.getElementById('shutdown');
+  if (state.phase === 'play' || state.phase === 'drop') {
+    try { backToMenu(); } catch (e) { /* the card covers whatever is left */ }
+  }
+  if (!el) return;
+  const put = (id, txt) => {
+    const n = document.getElementById(id);
+    if (n) n.textContent = txt;
+  };
+  put('sdKicker', SHUTDOWN.kicker || '');
+  put('sdTitle', SHUTDOWN.title || '');
+  put('sdClosed', SHUTDOWN.headline || '');
+  put('sdVer', 'v' + versionString());
+  put('sdFootL', SHUTDOWN.footerLeft || '');
+  put('sdFootR', SHUTDOWN.footerRight || '');
+  const box = document.getElementById('sdLines');
+  if (box) {
+    box.textContent = '';
+    (SHUTDOWN.lines || []).forEach((line) => {
+      const p = document.createElement('p');
+      p.className = 'sdBody';
+      p.textContent = line;
+      box.appendChild(p);
+    });
+  }
+  const notice = document.getElementById('shutdownNotice');
+  if (notice) notice.classList.add('hide');
+  el.classList.remove('hide');
+}
+
+/* Runs once a second from boot: keeps the lobby countdown honest, and takes the
+   screen the moment the schedule lands even if someone is mid-match. */
+function shutdownTick() {
+  if (shutdownActive()) { openShutdown(); return; }
+  const notice = document.getElementById('shutdownNotice');
+  if (!notice) return;
+  if (SHUTDOWN.enabled === false || SHUTDOWN_AT <= 0) { notice.classList.add('hide'); return; }
+  notice.classList.remove('hide');
+  notice.textContent = 'SEASON 7 CLOSES ' + (SHUTDOWN.headline || '') +
+    ' · ' + shutdownSpan(SHUTDOWN_AT - Date.now());
 }
 
 /* =========================================================================
@@ -20482,6 +20650,7 @@ function showWhatsNew() {
 let mfToken = 0;
 
 function showMatchfinder(done) {
+  if (shutdownActive()) { openShutdown(); return; }
   const el = document.getElementById('matchfinder');
   if (!el) { done(); return; }
   mfToken++;
@@ -22089,6 +22258,8 @@ const TEST_QUICK_START = /[?&]test\b/.test(location.search);
 function boot() {
   window.__sfBooted = true;
   wireAccountUI();
+  shutdownTick();
+  setInterval(shutdownTick, 1000);
   // No sign-in, no items: guests get the default outfit only. A saved login
   // keeps everything on screen until the sign-in settles.
   if (!accountSaved()) applyGuestLimits();
@@ -22126,6 +22297,9 @@ function boot() {
     // Shader compile used to block the loading screen. Let the menu appear
     // first and compile behind it.
     setTimeout(() => { try { renderer.compile(scene, camera); } catch (e) { /* ignore */ } }, 40);
+    // A scheduled shutdown owns the screen: no match, no sign-in card, no patch
+    // notes, and no render loop burning the phone behind an opaque card.
+    if (shutdownActive()) { openShutdown(); return; }
     if (pendingStart) {
       pendingStart = false;
       startMatch();
