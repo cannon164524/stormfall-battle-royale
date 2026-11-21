@@ -8352,9 +8352,16 @@ body.ui11 #weaponCluster { right:10px; bottom:10px; gap:6px; }
 body.ui11 #weaponCluster #ammoBox {
   flex-direction:row; align-items:baseline; gap:7px;
   padding:8px 14px;
-  border:1px solid var(--ui-line); border-radius:16px;
-  background:rgba(12,16,24,.82);
+  border:1px solid rgba(255,255,255,.10); border-radius:16px;
+  background:rgba(10,15,24,.42);
   text-align:left;
+}
+/* the prompt ("LANDED", pickups, board prompts) is on screen constantly:
+   faint plate, no box. A hairline legibility shadow instead of fill. */
+body.ui11 #hud #prompt {
+  background:rgba(10,15,24,.36);
+  border:1px solid rgba(255,255,255,.10);
+  text-shadow:0 1px 2px rgba(0,0,0,.55);
 }
 body.ui11 #weaponCluster #ammoBox::before {
   order:-1; display:block; margin:0;
@@ -8652,7 +8659,7 @@ body.ui11 #end #againBtn {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.23PT</div>
+      <div class="verTag" id="verTag">v9.24PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -9366,16 +9373,15 @@ body.ui11 #end #againBtn {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.23PT</b>
+        <b id="wnVersion">v9.24PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.22PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.23PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ICON TOUCH PAD</b> — the action buttons are now drawn icon tiles in a two-tier pad: a big fire circle in the corner with vent, build, inventory, jump, use and shock around it, each with its own drawn glyph.</div></li>
-      <li><span class="wnTag">02</span><div><b>IN-HAND PILL</b> — the ammo panel is rebuilt as one compact pill that sits clear of the fire pad, and the heat gauge beside the crosshair loses its stripe overlay and shadows.</div></li>
-      <li><span class="wnTag">03</span><div><b>END SCREEN</b> — the result screen joins the same rounded plate language, with the display face on the place, the title and the stats. No gameplay changes in this release.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEE-THROUGH READOUTS</b> — the in-hand panel (weapon name and ammo) drops its near-solid box for a faint plate, so it stops sitting like a black sticker over the water.</div></li>
+      <li><span class="wnTag">02</span><div><b>QUIETER PROMPTS</b> — pop-up lines like "LANDED" and the pickup prompts lose their black box too: a faint plate with a hairline edge, legible over sky or sea. Nothing mechanical moved.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -21734,8 +21740,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 23 };
-const VERSION_PREV = '9.22PT';
+const VERSION = { season: 9, release: 24 };
+const VERSION_PREV = '9.23PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
