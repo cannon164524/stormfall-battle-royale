@@ -6967,7 +6967,7 @@ body.death-ui #tourneyHud, body.death-ui #spectate {
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SEASON 7 IS CLOSED</b> — the island is offline from now until Season 9 goes live: no mode can be started, and the game opens on the closed card instead. Everything on your account is kept — outfits, pass tiers, V-Bucks and rank all come back with the new season.</div></li>
+      <li><span class="wnTag">01</span><div><b>A NEW ERA</b> — the screen everyone lands on while the game is closed now reads "It's time for a new era of Stormfall." instead of announcing the shutdown, above the note that every account is kept.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18811,8 +18811,8 @@ function setMode(m) {
    counting 10, 11, 12 inside a season. MAJOR only moves when a new season
    ships: 8.0.0 is Season 7, and every update through the season stays on 8.
    ------------------------------------------------- */
-const VERSION = { major: 8, minor: 5, patch: 1 };
-const VERSION_PREV = '8.5.0';
+const VERSION = { major: 8, minor: 5, patch: 2 };
+const VERSION_PREV = '8.5.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -18845,11 +18845,11 @@ function setVersionUI() {
 const SHUTDOWN = {
   enabled: true,
   startsAt: 'now',                       // closed already; a date schedules the close instead
-  kicker: 'SEASON 7 · CLOSED',
-  title: 'STORMFALL IS OFFLINE',
+  kicker: 'SEASON 9',
+  title: 'IT’S TIME FOR A NEW ERA OF STORMFALL.',
   headline: 'NOW',                       // printed as CLOSED on the card
   lines: [
-    'The island is closed while we build Season 9. Everything on your account — outfits, pass tiers, V-Bucks and rank — is saved exactly where you left it.',
+    'Season 7 is over. The island is closed while we build what comes next, and everything on your account — outfits, pass tiers, V-Bucks and rank — is saved exactly where you left it.',
     'Play returns the day Season 9 goes live. The date lands on this screen first.',
   ],
   footerLeft: 'STORMFALL · BATTLE ROYALE',
