@@ -6353,7 +6353,101 @@ body:not(.og-ui) .tagline { display:none; }
 #stormTime { font-size:13px; }
 .mapName, #mapName { font-size:8px; letter-spacing:.1em; }
 
-/* the patch card fits the phone, and its CLOSE cannot hide below the fold */
+/* =========================================================================
+   ui12 — the defect pass
+   Everything here is an override of what the inspector found on a phone:
+   the half-height mode sheet with no header, the ammo readout under the fire
+   circle, the prompt under the action pad, the cut-off lobby column, the
+   clipped tab strip, the minimap name spilling out, and the stray centre
+   gauge. !important is deliberate: it has to beat every older layer.
+   ========================================================================= */
+
+/* ---- the mode sheet: full screen, one column, header pinned ---- */
+#menu.modesOpen .modeRow {
+  position:fixed !important;
+  top:0 !important; left:0 !important; right:0 !important; bottom:0 !important;
+  width:auto !important; max-width:none !important;
+  height:100vh !important; max-height:none !important;
+  display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important;
+  align-items:stretch !important; gap:8px !important;
+  padding:0 10px 24px !important;
+  overflow-y:auto !important; overflow-x:hidden !important;
+  background:#0b1220 !important; z-index:55 !important;
+}
+#menu.modesOpen .modeRow .mpkHead {
+  display:flex !important; position:sticky !important; top:0 !important;
+  z-index:3 !important; flex:0 0 auto !important;
+  align-items:center !important; justify-content:space-between !important;
+  padding:14px 2px 10px !important; margin:0 !important;
+  background:#0b1220 !important; border-bottom:1px solid rgba(255,255,255,.1) !important;
+  opacity:1 !important; pointer-events:auto !important;
+}
+#menu.modesOpen .mpkTitle { display:inline-block !important; font-size:9px !important; letter-spacing:.3em !important; color:rgba(234,248,255,.6) !important; }
+#menu.modesOpen #modesClose {
+  display:inline-block !important; width:auto !important; height:auto !important;
+  padding:9px 18px !important; border:0 !important; border-radius:999px !important;
+  background:#5ce1ff !important; color:#04121a !important;
+  font-family:var(--label) !important; font-size:9px !important; font-weight:800 !important;
+  letter-spacing:.2em !important;
+}
+#menu.modesOpen .modeGroup { display:contents !important; }
+#menu.modesOpen .modeGroupLabel { display:none !important; }
+#menu.modesOpen .modeBtn {
+  flex:0 0 auto !important; width:100% !important; min-height:0 !important;
+  padding:14px 14px 14px 14px !important; border-radius:14px !important;
+  display:flex !important; flex-direction:column !important; gap:3px !important;
+  border:1px solid rgba(255,255,255,.1) !important; background:#131a28 !important;
+}
+#menu.modesOpen .modeBtn.active { border-color:#5ce1ff !important; background:#12303c !important; }
+#menu.modesOpen .modeBtn .modeName { font-size:20px !important; line-height:1.15 !important; }
+#menu.modesOpen .modeBtn .modeFoot { font-size:9px !important; letter-spacing:.06em !important; }
+#menu.modesOpen .modeBtn .modeKicker { font-size:7.5px !important; letter-spacing:.2em !important; }
+#menu.modesOpen .modeBtn::before {
+  position:static !important; display:block !important; order:3 !important;
+  content:counter(modeNo, decimal-leading-zero) !important;
+  font-family:var(--display) !important; font-size:9px !important;
+  color:rgba(92,225,255,.5) !important; margin-top:2px !important;
+}
+
+/* ---- the header: every tab reachable, nothing clipped ---- */
+.tabs { overflow-x:auto !important; overflow-y:hidden !important; flex-wrap:nowrap !important; scrollbar-width:none !important; }
+.tabs::-webkit-scrollbar { display:none !important; }
+.tab, .tab.active { flex:0 0 auto !important; font-size:8px !important; letter-spacing:.05em !important; padding:7px 9px !important; }
+
+/* ---- the lobby: the column can scroll clear of the brief ---- */
+#lobbyEl { overflow-y:auto !important; overflow-x:hidden !important; padding-bottom:220px !important; }
+#lobbyEl .lobbyFoot { display:flex !important; flex-direction:column !important; gap:10px !important; }
+
+/* ---- in game: the ammo readout out from under the fire circle ---- */
+#weaponCluster #ammoBox {
+  background:none !important; border:0 !important; box-shadow:none !important;
+  margin-right:66px !important; padding:0 4px 0 0 !important;
+  text-align:right !important;
+}
+#weaponCluster #ammoBox b { font-size:26px !important; text-shadow:0 2px 6px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9) !important; }
+#weaponCluster #ammoBox i { text-shadow:0 2px 6px rgba(0,0,0,.85) !important; }
+#fireBtn { font-size:0 !important; }
+
+/* ---- in game: the prompt above the action pad, on every phone ---- */
+#prompt {
+  bottom:310px !important; left:50% !important; right:auto !important;
+  transform:translateX(-50%) !important; max-width:290px !important;
+  background:none !important; border:0 !important;
+  text-shadow:0 2px 6px rgba(0,0,0,.9), 0 0 2px rgba(0,0,0,.95) !important;
+}
+
+/* ---- in game: the left stack and the top panels get their own air ---- */
+#teamPanel { top:158px !important; right:8px !important; left:auto !important; }
+#mateTimer { top:auto !important; bottom:220px !important; }
+#ammoGauge { display:none !important; }
+#padHints { display:none !important; }
+.mapName, #mapName { display:none !important; }
+#touch svg { color:#eaf8ff !important; }
+.slot .key { z-index:2 !important; }
+
+/* ---- the death screen joins the same language ---- */
+#dcMenu, .dcBtn, #end .endBtn, #againBtn { border-radius:999px !important; background:#5ce1ff !important; color:#04121a !important; border:0 !important; }
+
 .wnCard { max-height:84vh; overflow-y:auto; }
 #wnClose { position:sticky; bottom:0; }
 
@@ -8458,6 +8552,82 @@ body.ui11 #rareFind[data-tier="exotic"] .rfSub,
 body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   text-shadow:0 1px 3px rgba(0,0,0,.6);
 }
+
+/* =========================================================================
+   ui12 (final layer) — the defect pass, last so nothing can undo it.
+   Half-height mode sheet with no header, ammo under the fire circle, prompt
+   under the action pad, cut-off lobby column, clipped tabs, minimap name
+   spilling out, stray centre gauge.
+   ========================================================================= */
+#menu.modesOpen .modeRow {
+  position:fixed !important; inset:0 !important;
+  width:auto !important; max-width:none !important;
+  height:100vh !important; max-height:none !important;
+  display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important;
+  align-items:stretch !important; gap:8px !important; padding:0 10px 24px !important;
+  overflow-y:auto !important; overflow-x:hidden !important;
+  background:#0b1220 !important; z-index:55 !important;
+}
+#menu.modesOpen .modeRow .mpkHead {
+  display:flex !important; position:sticky !important; top:0 !important; z-index:3 !important;
+  flex:0 0 auto !important; align-items:center !important; justify-content:space-between !important;
+  padding:14px 2px 10px !important; margin:0 !important;
+  background:#0b1220 !important; border-bottom:1px solid rgba(255,255,255,.1) !important;
+  opacity:1 !important; pointer-events:auto !important;
+}
+#menu.modesOpen .mpkTitle { display:inline-block !important; font-size:9px !important; letter-spacing:.3em !important; color:rgba(234,248,255,.6) !important; }
+#menu.modesOpen #modesClose {
+  display:inline-block !important; width:auto !important; height:auto !important;
+  padding:9px 18px !important; border:0 !important; border-radius:999px !important;
+  background:#5ce1ff !important; color:#04121a !important;
+  font-family:var(--label) !important; font-size:9px !important; font-weight:800 !important; letter-spacing:.2em !important;
+}
+#menu.modesOpen .modeGroup { display:contents !important; }
+#menu.modesOpen .modeGroupLabel { display:none !important; }
+#menu.modesOpen .modeBtn {
+  flex:0 0 auto !important; width:100% !important; min-height:0 !important;
+  padding:14px !important; border-radius:14px !important;
+  display:flex !important; flex-direction:column !important; gap:3px !important;
+  border:1px solid rgba(255,255,255,.1) !important; background:#131a28 !important;
+}
+#menu.modesOpen .modeBtn.active { border-color:#5ce1ff !important; background:#12303c !important; }
+#menu.modesOpen .modeBtn .modeName { font-size:20px !important; line-height:1.15 !important; }
+#menu.modesOpen .modeBtn .modeFoot { font-size:9px !important; letter-spacing:.06em !important; }
+#menu.modesOpen .modeBtn .modeKicker { font-size:7.5px !important; letter-spacing:.2em !important; }
+#menu.modesOpen .modeBtn::before {
+  position:static !important; display:block !important; order:3 !important;
+  content:counter(modeNo, decimal-leading-zero) !important;
+  font-family:var(--display) !important; font-size:9px !important;
+  color:rgba(92,225,255,.5) !important; margin-top:2px !important;
+}
+.tabs { overflow-x:auto !important; overflow-y:hidden !important; flex-wrap:nowrap !important; scrollbar-width:none !important; }
+.tabs::-webkit-scrollbar { display:none !important; }
+.tab, .tab.active { flex:0 0 auto !important; font-size:8px !important; letter-spacing:.05em !important; padding:7px 9px !important; }
+#lobbyEl { overflow-y:auto !important; overflow-x:hidden !important; padding-bottom:220px !important; }
+#lobbyEl .lobbyFoot { display:flex !important; flex-direction:column !important; gap:10px !important; }
+#weaponCluster #ammoBox {
+  background:none !important; border:0 !important; box-shadow:none !important;
+  margin-right:66px !important; padding:0 4px 0 0 !important; text-align:right !important;
+}
+#weaponCluster #ammoBox b { font-size:26px !important; text-shadow:0 2px 6px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.9) !important; }
+#weaponCluster #ammoBox i { text-shadow:0 2px 6px rgba(0,0,0,.85) !important; }
+#fireBtn { font-size:0 !important; }
+#prompt {
+  bottom:310px !important; left:50% !important; right:auto !important;
+  transform:translateX(-50%) !important; max-width:290px !important;
+  background:none !important; border:0 !important;
+  text-shadow:0 2px 6px rgba(0,0,0,.9), 0 0 2px rgba(0,0,0,.95) !important;
+}
+#teamPanel { top:158px !important; right:8px !important; left:auto !important; }
+#mateTimer { top:auto !important; bottom:220px !important; }
+#ammoGauge { display:none !important; }
+#padHints { display:none !important; }
+.mapName, #mapName { display:none !important; }
+#touch svg { color:#eaf8ff !important; }
+.slot .key { z-index:2 !important; }
+#dcMenu, .dcBtn, #end .endBtn, #againBtn {
+  border-radius:999px !important; background:#5ce1ff !important; color:#04121a !important; border:0 !important;
+}
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8695,7 +8865,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.26PT</div>
+      <div class="verTag" id="verTag">v9.27PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -9409,9 +9579,9 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.26PT</b>
+        <b id="wnVersion">v9.27PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.25PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.26PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
@@ -21775,8 +21945,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 26 };
-const VERSION_PREV = '9.25PT';
+const VERSION = { season: 9, release: 27 };
+const VERSION_PREV = '9.26PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
