@@ -6318,6 +6318,44 @@ body:not(.og-ui) .tagline { display:none; }
 #feed { left:8px; top:30%; max-width:60vw; }
 .feedRow { padding:4px 8px; font-size:9.5px; }
 #tpName, #tpState { font-size:7px; }
+
+/* ---- take two: the sheet is the whole screen, numbered once ---- */
+#menu.modesOpen .modeRow {
+  width:100% !important; max-width:none !important;
+  max-height:none !important; height:100%;
+  left:0; right:0; top:0; bottom:0;
+  padding:0 8px 22px; gap:8px;
+  counter-reset: modeNo;
+}
+#menu.modesOpen .modeBtn { min-height:0; padding:11px 10px 11px 32px; gap:2px; }
+#menu.modesOpen .modeBtn .modeName { font-size:13px; line-height:1.2; }
+#menu.modesOpen .modeBtn .modeFoot { font-size:7px; letter-spacing:.08em; }
+#menu.modesOpen .modeBtn .modeKicker { font-size:6.5px; letter-spacing:.2em; }
+#menu.modesOpen .modeBtn::before {
+  content:counter(modeNo, decimal-leading-zero); counter-increment: modeNo;
+  position:absolute; left:10px; top:11px;
+  font-family:var(--display); font-size:10px; font-weight:800; letter-spacing:0;
+  color:rgba(92,225,255,.4);
+}
+#menu.modesOpen .modeBtn.active::before { color:var(--lime); }
+
+/* ---- the header holds its row instead of pushing itself off ---- */
+.menuTop { flex-wrap:nowrap; overflow:hidden; }
+.brand { flex:0 0 auto; }
+.tabs { flex:1 1 auto; min-width:0; }
+.topRight { flex:0 0 auto; }
+.playRow { border-left:1px solid rgba(126,226,255,.22); }
+
+/* ---- in game: clear the buttons, give the panels room ---- */
+#prompt { bottom:248px; }
+#modeBadge { width:124px; font-size:7px; letter-spacing:.08em; }
+#stormInfo { width:130px; }
+#stormTime { font-size:13px; }
+.mapName, #mapName { font-size:8px; letter-spacing:.1em; }
+
+/* the patch card fits the phone, and its CLOSE cannot hide below the fold */
+.wnCard { max-height:84vh; overflow-y:auto; }
+#wnClose { position:sticky; bottom:0; }
 </style>
 </head>
 <body>
@@ -6555,7 +6593,7 @@ body:not(.og-ui) .tagline { display:none; }
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.19PT</div>
+      <div class="verTag" id="verTag">v9.20PT</div>
       <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
     </div>
   </div>
@@ -6675,7 +6713,7 @@ body:not(.og-ui) .tagline { display:none; }
     <button id="modeBar" type="button">
       <span class="mbLabel">GAME MODE</span>
       <b id="mbMode">BATTLE ROYALE</b>
-      <span class="mbHint">ALL MODES</span>
+      <span class="mbHint">CHANGE MODE</span>
     </button>
 
     <div class="lobbyFoot">
@@ -6781,7 +6819,7 @@ body:not(.og-ui) .tagline { display:none; }
         <div class="mpKicker">STORE <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
-      <div class="mpMeta">SEASON 7 · NEW ISLAND</div>
+      <div class="mpMeta">SEASON 9 · DROWNED COAST</div>
     </div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -6802,7 +6840,7 @@ body:not(.og-ui) .tagline { display:none; }
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 7 <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">SEASON 9 <span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -7265,16 +7303,15 @@ body:not(.og-ui) .tagline { display:none; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.19PT</b>
+        <b id="wnVersion">v9.20PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.18PT</div>
+        <div class="wnHist" id="wnHist">FROM v9.19PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE MODE SHEET, REBUILT</b> — picking a mode is a proper full-screen sheet now: every card scrolls into view instead of being cut off, the groups are labelled (Battle Royale, Ranked, Arcade), the header stays pinned with its CLOSE button, cards are taller with a number on each, and the dead black half-screen is gone.</div></li>
-      <li><span class="wnTag">02</span><div><b>A MODE BUTTON WORTH PRESSING</b> — the collapsed strip at the bottom of the lobby is now a real control: the current mode in big type, a cyan CHANGE MODE button, and a rail down the side. The stale "SEASON 7" under the logo is gone, and every tab in the top bar can be reached again.</div></li>
-      <li><span class="wnTag">03</span><div><b>CORNERS OFF, HUD SORTED</b> — every cut corner and repeated 1px notch has been removed for one flat plate language. In game, the prompt no longer sits on the hotbar, the match badge, leave button and storm panel each have their own space, and the small labels are bigger.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE SHEET, ACTUALLY FULL SCREEN</b> — it was still stopping halfway down the phone, with the card numbers counting in twos and the right column running off the edge. Fixed: the whole screen is the list now, every card fits its own name, and the modes are numbered once, 01 to 13.</div></li>
+      <li><span class="wnTag">02</span><div><b>TIDY-UPS FROM THE SCREEN</b> — the top bar keeps its row instead of shoving the logo off the top, the mode bar reads CHANGE MODE, the in-game prompt sits clear of the buttons, and the panels across the top no longer sit on top of each other. Battle pass and shop no longer say Season 7.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -18378,7 +18415,7 @@ function drawMinimap() {
     for (let i = 0; i < worldPOIs.length; i++) {
       const poi = worldPOIs[i];
       const [tx, ty] = w2m(poi.x, poi.z);
-      ctx.font = '800 13px Archivo, Inter, system-ui, sans-serif';
+      ctx.font = '800 10px Archivo, Inter, system-ui, sans-serif';
       ctx.lineWidth = 3.5;
       ctx.strokeStyle = 'rgba(3,9,12,.88)';
       ctx.strokeText(poi.name, tx, ty);
@@ -19633,8 +19670,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced.
    The notes card is PLAYTEST UPDATES and is rewritten with every release.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 19 };
-const VERSION_PREV = '9.18PT';
+const VERSION = { season: 9, release: 20 };
+const VERSION_PREV = '9.19PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
