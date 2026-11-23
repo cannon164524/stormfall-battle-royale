@@ -4998,22 +4998,38 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   color:var(--ink-dim); text-transform:uppercase;
 }
 .seasonTimer b { color:var(--ink); font-weight:800; letter-spacing:.1em; }
+/* the launch gate: the only screen before 08:30 PST on 23 November */
 #seasonClosed {
   position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
-  padding:20px; background:#080a0e;
+  padding:22px; background:#0b1220;
 }
 #seasonClosed.hide { display:none; }
 .scCard {
-  width:min(520px,100%); padding:22px 22px 18px; text-align:center;
-  border:1px solid var(--line); border-radius:0; background:#0d1416;
+  width:min(560px,100%); padding:30px 26px 26px; text-align:center;
+  border:1px solid rgba(255,255,255,.1); border-radius:24px; background:#101722;
 }
-.scKicker { font-family:var(--body); font-size:8px; font-weight:800; letter-spacing:.28em; color:var(--ink-dim); }
-.scTitle { margin:10px 0 8px; font-family:var(--display); font-size:26px; font-weight:800; letter-spacing:.06em; color:var(--ink); }
-.scNote { margin:0 0 16px; font-family:var(--body); font-size:12px; line-height:1.5; color:var(--ink-dim); }
-.scLink {
-  display:inline-block; padding:11px 18px; text-decoration:none;
-  background:var(--lime); color:#0a0f07; border-radius:0;
-  font-family:var(--display); font-size:15px; font-weight:800; letter-spacing:.1em;
+.scWord {
+  font-family:var(--display); font-size:11px; font-weight:800;
+  letter-spacing:.34em; color:#5ce1ff;
+}
+.scKicker {
+  margin-top:20px; font-family:var(--label); font-size:8.5px; font-weight:700;
+  letter-spacing:.32em; color:rgba(234,248,255,.45);
+}
+.scTitle {
+  margin:10px auto 0; max-width:460px;
+  font-family:var(--display); font-weight:800; text-transform:uppercase;
+  font-size:clamp(26px, 7.2vw, 42px); line-height:1.06; letter-spacing:-.01em; color:#fff;
+}
+.scClock {
+  margin:22px auto 0; padding:14px 10px; max-width:360px;
+  border:1px solid rgba(92,225,255,.28); border-radius:16px; background:rgba(92,225,255,.06);
+  font-family:var(--display); font-size:clamp(18px, 5.4vw, 26px); font-weight:800;
+  letter-spacing:.08em; color:#5ce1ff; font-variant-numeric:tabular-nums;
+}
+.scNote {
+  margin:16px 0 0; font-family:var(--label); font-size:8.5px; font-weight:700;
+  letter-spacing:.24em; color:rgba(234,248,255,.42);
 }
 
 /* main area */
@@ -8865,8 +8881,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.27PT</div>
-      <div class="ptTag" id="ptTag" title="Season 9 playtest build">PLAYTEST</div>
+      <div class="verTag" id="verTag">v9.0.0</div>
     </div>
   </div>
 
@@ -8892,7 +8907,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
     </div>
     <div class="modeRow" id="modeRowEl">
       <div class="mpkHead">
-        <span class="mpkTitle">ALL GAME MODES <span class="ptTag">PLAYTEST</span></span>
+        <span class="mpkTitle">ALL GAME MODES</span>
         <button id="modesClose" type="button">CLOSE</button>
       </div>
       <div class="modeGroup">
@@ -9073,7 +9088,6 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   </div>
 
   <div class="playRow" id="playRowEl">
-    <div class="ptTag" title="Season 9 playtest build">PLAYTEST BUILD</div>
     <div class="playerCard">
       <div class="pcAvatar" id="pcAvatar"></div>
       <div class="pcInfo">
@@ -9092,7 +9106,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelShop" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">STORE <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">STORE</div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
       <div class="mpMeta">SEASON 9 · DROWNED COAST</div>
@@ -9104,7 +9118,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelLocker" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">YOUR STUFF <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">YOUR STUFF</div>
         <div class="mpTitle">LOCKER</div>
       </div>
       <div class="mpMeta" id="lockerMeta">0 / 0 OUTFITS</div>
@@ -9116,7 +9130,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 9 <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">SEASON 9</div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -9135,7 +9149,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelMp" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">PLAY TOGETHER <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">PLAY TOGETHER</div>
         <div class="mpTitle">MULTIPLAYER</div>
       </div>
       <div class="mpMeta" id="mpStatus">NOT CONNECTED</div>
@@ -9193,7 +9207,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelSprites" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">COLLECTION <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">COLLECTION</div>
         <div class="mpTitle">SPRITES</div>
       </div>
       <div class="mpMeta" id="spriteMeta">0 / 8 COLLECTED</div>
@@ -9205,7 +9219,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelSettings" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SYSTEM <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">SYSTEM</div>
         <div class="mpTitle">SETTINGS</div>
       </div>
       <div class="mpMeta" id="settingsState">GRAPHICS: STANDARD</div>
@@ -9283,7 +9297,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelComp" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">TOURNAMENTS <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">TOURNAMENTS</div>
         <div class="mpTitle">COMPETITIVE</div>
       </div>
       <div class="mpMeta" id="compMeta">BALANCE $0</div>
@@ -9308,7 +9322,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelAdmin" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">DEVELOPER <span class="ptTag">PLAYTEST</span></div>
+        <div class="mpKicker">DEVELOPER</div>
         <div class="mpTitle">ADMIN PANEL</div>
       </div>
       <div class="mpMeta" id="adminMeta">LOCKED</div>
@@ -9575,30 +9589,36 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <div class="wnCard">
     <div class="wnTop">
       <div>
-        <div class="wnTitle">PLAYTEST UPDATES</div>
-        <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
+        <div class="wnTitle">WHAT'S NEW</div>
+        <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.27PT</b>
-        <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.26PT</div>
+        <b id="wnVersion">v9.0.0</b>
+        <span id="wnLevel">SEASON LAUNCH</span>
+        <div class="wnHist" id="wnHist">FROM v8.4.9</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>NO PLATES AT ALL</b> — the in-hand readout (weapon name, ammo) and the prompt lines ("BATTLE BUS IN 5", "LANDED", pickups) now float free of any box or bar, legible by shadow alone.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE DROWNED COAST</b> — a new island: five isles on a ring, joined by sandbars, with open water and a swim in every rotation.</div></li>
+      <li><span class="wnTag">02</span><div><b>BOATS</b> — six hulls out on the water. Take one, open the throttle, and the bow does the damage.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE BATTLE BUS</b> — every match opens in a pre-game lobby, then a balloon-lifted bus crosses the island. Jump when you like; the end of the line throws everyone off.</div></li>
+      <li><span class="wnTag">04</span><div><b>BOSSES AND MEDALLIONS</b> — named bruisers hold the named places, marked with a red skull. Put one down and it leaves a mythic and a medallion that grants an ability.</div></li>
+      <li><span class="wnTag">05</span><div><b>THE WATER ARSENAL</b> — fourteen new weapons, from the Tide Pistol to the Deepwater Rifle, with mythic and exotic versions of four of them.</div></li>
+      <li><span class="wnTag">06</span><div><b>A NEW INTERFACE</b> — new type, new plates, a rebuilt mode picker and a reworked in-game HUD.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
 </div>
 
-<!-- ============================== PLAYTEST CLOSED ============================== -->
+<!-- ============================== SEASON LAUNCH GATE ============================== -->
 <div id="seasonClosed" class="hide" role="dialog" aria-modal="true">
   <div class="scCard">
-    <div class="scKicker">STORMFALL · SEASON 9 PLAYTEST</div>
-    <div class="scTitle">THIS PLAYTEST IS CLOSED</div>
-    <p class="scNote">Season 9 has started, so the playtest build stops here. It opens again for the next season's playtest. To keep playing now, switch to the official build.</p>
-    <a class="scLink" href="https://stormfall-battle-royale-eoko--preview.freemilk.app" target="_blank" rel="noopener noreferrer">PLAY THE OFFICIAL BUILD</a>
+    <div class="scWord">STORMFALL</div>
+    <div class="scKicker">SEASON 9</div>
+    <div class="scTitle">IT'S TIME FOR A NEW ERA OF STORMFALL.</div>
+    <div class="scClock" id="scClock">—</div>
+    <div class="scNote">DOORS OPEN 8:30 AM PST · MONDAY 23 NOVEMBER</div>
   </div>
 </div>
 
@@ -21935,22 +21955,19 @@ function setMode(m) {
 }
 
 /* ---------------- versioning ----------------
-   SEASON . RELEASE PT — 9.01PT, 9.02PT, 9.03PT…
-   - the first number is the season, so every Season 9 build reads 9.xxPT
-   - the second is the playtest release and it moves on every change, big or
-     small: 9.01PT, 9.02PT, and straight on past 9.99PT to 9.100PT
-   - the PT suffix is what separates this build from the live game. The live
-     site is a separate copy of this repository on 8.4.9 / Season 7, and
-     nothing built here reaches it.
-   VERSION_PREV is always the version string this build replaced.
-   The notes card is PLAYTEST UPDATES and is rewritten with every release.
+   MAJOR . MINOR . PATCH — this is the official build now.
+   MAJOR is the season number: Season 9 ships on 9.x, and 9.0.0 is the launch.
+   - minor goes up for a big update (9.0.0 -> 9.1.0)
+   - patch goes up for a small one (9.0.0 -> 9.0.1)
+   The numbers are plain and never roll over: 9.9.0 is followed by 9.10.0.
+   VERSION_PREV is always the version string this build replaced, and the
+   notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 9, release: 27 };
-const VERSION_PREV = '9.26PT';
+const VERSION = { major: 9, minor: 0, patch: 0 };
+const VERSION_PREV = '8.4.9';
 
 function versionString() {
-  const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
-  return VERSION.season + '.' + rel + 'PT';
+  return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
 }
 
 function setVersionUI() {
@@ -21961,33 +21978,45 @@ function setVersionUI() {
   const hist = document.getElementById('wnHist');
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
-  if (lvl) lvl.textContent = 'PLAYTEST UPDATE';
+  if (lvl) lvl.textContent = (VERSION.minor === 0 && VERSION.patch === 0) ? 'SEASON LAUNCH'
+    : VERSION.patch === 0 ? 'MAJOR UPDATE' : 'SMALL UPDATE';
 }
 
-/* ---------------- season clock ----------------
-   The playtest runs until Season 9 opens on Monday 23 November. The lobby
-   counts down to it, and once the clock passes the build closes itself: the
-   notice points everyone at the official game until the next playtest. */
-const SEASON_START = new Date(2026, 10, 23, 0, 0, 0);   // 23 November, local midnight
+/* ---------------- launch gate ----------------
+   The game is locked until Season 9 opens: 08:30 PST on Monday 23 November
+   2026, one fixed instant so every clock agrees. Until then the gate is the
+   only thing on screen, and the moment the instant passes it lifts by itself
+   without a reload. */
+const LAUNCH_AT = new Date('2026-11-23T08:30:00-08:00').getTime();
 
-function seasonMsLeft() { return SEASON_START.getTime() - Date.now(); }
-function seasonIsClosed() { return seasonMsLeft() <= 0; }
+function launchMsLeft() { return LAUNCH_AT - Date.now(); }
+function seasonIsClosed() { return launchMsLeft() > 0; }   // locked before launch
+
+function fmtCountdown(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n) => (n < 10 ? '0' + n : String(n));
+  return d + 'D ' + pad(h) + 'H ' + pad(m) + 'M ' + pad(s) + 'S';
+}
 
 function updateSeasonTimer() {
+  const ms = launchMsLeft();
+  const clock = document.getElementById('scClock');
+  if (clock) clock.textContent = ms > 0 ? fmtCountdown(ms) : 'THE DOORS ARE OPEN';
   const el = document.getElementById('seasonTimer');
   if (!el) return;
-  const ms = seasonMsLeft();
   if (ms <= 0) {
     if (el.dataset.done !== '1') {
       el.dataset.done = '1';
-      el.innerHTML = 'SEASON 9 IS LIVE';
+      el.innerHTML = 'SEASON 9 · LIVE';
     }
     return;
   }
   const totalH = Math.floor(ms / 3600000);
-  const d = Math.floor(totalH / 24);
-  const h = totalH % 24;
-  const text = 'SEASON 9 STARTS IN <b>' + d + 'D ' + h + 'H</b>';
+  const text = 'SEASON 9 OPENS IN <b>' + Math.floor(totalH / 24) + 'D ' + (totalH % 24) + 'H</b>';
   if (el.dataset.t !== text) {
     el.dataset.t = text;
     el.innerHTML = text;
@@ -22007,8 +22036,22 @@ function showSeasonClosed() {
   if (wn) wn.classList.add('hide');
 }
 
+/* One tick a second drives both the gate clock and the lobby countdown, and
+   lifts the gate on its own when the launch instant passes. */
+function tickLaunchGate() {
+  updateSeasonTimer();
+  if (!seasonIsClosed()) {
+    const el = document.getElementById('seasonClosed');
+    if (el && !el.classList.contains('hide')) {
+      el.classList.add('hide');
+      const menu = document.getElementById('menu');
+      if (menu) menu.classList.remove('hide');
+    }
+  }
+}
+
 updateSeasonTimer();
-setInterval(updateSeasonTimer, 1000);
+setInterval(tickLaunchGate, 1000);
 
 /* =========================================================================
    PROFILE · V-BUCKS · COSMETICS
