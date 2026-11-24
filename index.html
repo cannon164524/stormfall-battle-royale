@@ -9534,19 +9534,14 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.0.0</b>
-        <span id="wnLevel">SEASON LAUNCH</span>
-        <div class="wnHist" id="wnHist">FROM v8.4.9</div>
+        <b id="wnVersion">v9.1.0</b>
+        <span id="wnLevel">MAJOR UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.0.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE DROWNED COAST</b> — a new island: five isles on a ring, joined by sandbars, with open water and a swim in every rotation.</div></li>
-      <li><span class="wnTag">02</span><div><b>BOATS</b> — six hulls out on the water. Take one, open the throttle, and the bow does the damage.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE BATTLE BUS</b> — every match opens in a pre-game lobby, then a balloon-lifted bus crosses the island. Jump when you like; the end of the line throws everyone off.</div></li>
-      <li><span class="wnTag">04</span><div><b>BOSSES AND MEDALLIONS</b> — named bruisers hold the named places, marked with a red skull. Put one down and it leaves a mythic and a medallion that grants an ability.</div></li>
-      <li><span class="wnTag">05</span><div><b>THE WATER ARSENAL</b> — fourteen new weapons, from the Tide Pistol to the Deepwater Rifle, with mythic and exotic versions of four of them.</div></li>
-      <li><span class="wnTag">06</span><div><b>A NEW INTERFACE</b> — new type, new plates, a rebuilt mode picker and a reworked in-game HUD.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE MINIGUN</b> — one new gun in the pools, and it is deliberately broken: eleven hundred rounds a minute with a hundred and fifty in the belt. It always lands Common, so the rarity roll cannot soften it and nobody can hold a better one.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -13043,6 +13038,11 @@ const WEAPONS = {
   undertow: { name: 'Undertow Rifle', ammo: 'medium', dmg: 31, rpm: 360, mag: 30, reload: 2.3, spread: 0.046, ads: 0.016, pellets: 1, hs: 1.6, range: 240, auto: true, sfx: 'ar' },
   brine: { name: 'Brine Repeater', ammo: 'medium', dmg: 38, rpm: 450, mag: 60, reload: 3.3, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
   tideshot: { name: 'Tideshot', ammo: 'medium', dmg: 58, rpm: 165, mag: 12, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
+  /* Deliberately broken, and deliberately Common: eleven hundred rounds a
+     minute and a belt of a hundred and fifty. fixedRarity 0 means the roll can
+     never turn it into anything but a Common Minigun, which is the only thing
+     keeping it honest. */
+  minigun: { name: 'Minigun', ammo: 'light', dmg: 28, rpm: 1100, mag: 150, reload: 4.4, spread: 0.036, ads: 0.020, pellets: 1, hs: 1.9, range: 210, auto: true, sfx: 'lmg', fixedRarity: 0 },
   geyser: { name: 'Geyser Launcher', ammo: 'medium', dmg: 80, rpm: 55, mag: 4, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
   // long range
   floodlance: { name: 'Flood Lance', ammo: 'medium', dmg: 105, rpm: 62, mag: 5, reload: 2.6, spread: 0.016, ads: 0.0001, pellets: 1, hs: 2.0, range: 320, auto: false, sfx: 'hunting', pierce: true, bulletSpeed: 340 },
@@ -13099,6 +13099,7 @@ const SPECIAL_BASE = {
   tideshot: 'lever',
   geyser: 'nova',
   floodlance: 'rail',
+  minigun: 'lmg',
   squall: 'hunting',
   deepwater: 'sniper',
   /* the vault relics ride the Season 6 bodies they came in on */
@@ -13139,6 +13140,7 @@ const WATER_WEAPON_POOL = [
   'undertow', 'undertow', 'undertow',
   'brine', 'brine',
   'tideshot', 'tideshot',
+  'minigun', 'minigun',
   'geyser',
   // long range
   'squall', 'squall',
@@ -13968,7 +13970,7 @@ function gunIconImage(base, variant) {
 const WATER_ICON = {
   tidepistol: 'flintlock', whirlpool: 'pepperbox', riptide: 'repeater',
   driftwood: 'sawedoff', saltburst: 'blunderbuss', coralgun: 'grapeshot',
-  saltwind: 'flakgun', undertow: 'musketoon', brine: 'swivelgun',
+  saltwind: 'flakgun', undertow: 'musketoon', brine: 'swivelgun', minigun: 'swivelgun',
   tideshot: 'chainshot', geyser: 'mortar', floodlance: 'harpoon',
   squall: 'longrifle', deepwater: 'musket',
 };
@@ -14046,7 +14048,10 @@ function rarityRoll(bonus) {
 
 function makeWeapon(type, rarity) {
   const w = WEAPONS[type];
-  return { kind: 'weapon', type, rarity, mag: w.mag, name: RARITY[rarity].name + ' ' + w.name };
+  // A gun can pin its own rarity: the Minigun is always Common, whatever the
+  // floor, a chest or a bot upgrade rolled for it.
+  const r = w.fixedRarity === undefined ? rarity : w.fixedRarity;
+  return { kind: 'weapon', type, rarity: r, mag: w.mag, name: RARITY[r].name + ' ' + w.name };
 }function makeHeal(type, count) {
   return { kind: 'heal', type, count: count || 1, name: HEALS[type].name };
 }
@@ -21929,8 +21934,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 0, patch: 0 };
-const VERSION_PREV = '8.4.9';
+const VERSION = { major: 9, minor: 1, patch: 0 };
+const VERSION_PREV = '9.0.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
