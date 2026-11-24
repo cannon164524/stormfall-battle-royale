@@ -8585,6 +8585,11 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
 #dcMenu, .dcBtn, #end .endBtn, #againBtn {
   border-radius:999px !important; background:#5ce1ff !important; color:#04121a !important; border:0 !important;
 }
+
+/* the ammo dial is back, for every weapon: the strip beside the reticle reads
+   the magazine on a gun that reloads and the heat on the minigun. This sits at
+   the end of the sheet so it wins over every pass that hid it. */
+#ammoGauge { display:block !important; }
 </style>
 </head>
 <body class="ui9 ui10">
@@ -9534,15 +9539,16 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.2.0</b>
-        <span id="wnLevel">MAJOR UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.1.0</div>
+        <b id="wnVersion">v9.2.1</b>
+        <span id="wnLevel">SMALL UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.2.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE SEASON HAS AN END</b> — a countdown under the deploy row runs to Wednesday 25 November, 10:50 AM PST. When it reaches zero the doors shut on their own, mid-match or not, and the gate returns saying the season is over.</div></li>
-      <li><span class="wnTag">02</span><div><b>A DRIVER IN THE BOAT</b> — a hull taken by a bot now keeps the bot standing at the wheel, with its name on a plate above the boat. An occupied boat never reads as an empty one again.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE MINIGUN RUNS HOT</b> — no magazine and no reload: eleven hundred rounds a minute until the cells lock, then one second on R vents the whole bank.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE AMMO DIAL IS BACK</b> — the strip beside the reticle shows for every weapon again: the magazine on a gun that reloads, the heat on the minigun.</div></li>
+      <li><span class="wnTag">03</span><div><b>A FALL LOOKS LIKE A FALL</b> — dying to fall damage no longer topples you like a bullet did: you land face down, flatten out, and go through the ground with dust and a thud.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10119,9 +10125,10 @@ let siteThemeMode = 'future';
 function isClassicSite() { return siteThemeMode === 'classic'; }
 function isPirateSite() { return siteThemeMode === 'pirate'; }
 
-/* Season 7 has no emitters left: every gun loads cartridges and draws on the
-   reserve ammo, so this set stays empty. */
-const HEAT_WEAPONS = new Set();
+/* One gun runs on heat instead of a magazine: the minigun. It never reloads —
+   the trigger heats the cells until they lock, and R vents a whole bank in one
+   second. Every other gun loads cartridges and draws on the reserve ammo. */
+const HEAT_WEAPONS = new Set(['minigun']);
 
 function weaponUsesAmmo(it) {
   return !!(it && it.kind === 'weapon' && !HEAT_WEAPONS.has(it.type));
@@ -13107,9 +13114,9 @@ const WEAPONS = {
   brine: { name: 'Brine Repeater', ammo: 'medium', dmg: 38, rpm: 450, mag: 60, reload: 3.3, spread: 0.028, ads: 0.014, pellets: 1, hs: 1.7, range: 225, auto: true, sfx: 'lmg' },
   tideshot: { name: 'Tideshot', ammo: 'medium', dmg: 58, rpm: 165, mag: 12, reload: 2.5, spread: 0.026, ads: 0.011, pellets: 1, hs: 1.8, range: 275, auto: false, sfx: 'lever', ricochet: true, ricochetR: 5, ricochetMul: 0.4 },
   /* Deliberately broken, and deliberately Common: eleven hundred rounds a
-     minute and a belt of a hundred and fifty. fixedRarity 0 means the roll can
-     never turn it into anything but a Common Minigun, which is the only thing
-     keeping it honest. */
+     minute with no magazine at all — the cells heat until they lock and R
+     vents them, so the belt never runs dry. fixedRarity 0 means the roll can
+     never turn it into anything but a Common Minigun. */
   minigun: { name: 'Minigun', ammo: 'light', dmg: 28, rpm: 1100, mag: 150, reload: 4.4, spread: 0.036, ads: 0.020, pellets: 1, hs: 1.9, range: 210, auto: true, sfx: 'lmg', fixedRarity: 0 },
   geyser: { name: 'Geyser Launcher', ammo: 'medium', dmg: 80, rpm: 55, mag: 4, reload: 3.0, spread: 0.030, ads: 0.014, pellets: 1, hs: 1.5, range: 255, auto: false, sfx: 'ar', onHit: 'explode', blastR: 4.2, blastDmg: 58, bulletSpeed: 260 },
   // long range
@@ -16258,7 +16265,7 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
 /* ---------------- death animation ---------------- */
 const corpses = [];
 
-function spawnCorpse(rig) {
+function spawnCorpse(rig, mode) {
   if (!rig || !rig.group) return;
   const g = rig.group.clone(true);
   g.position.copy(rig.group.position);
@@ -16268,9 +16275,11 @@ function spawnCorpse(rig) {
   corpses.push({
     g,
     t: 0,
+    mode: mode || 'topple',
     dir: Math.random() < 0.5 ? 1 : -1,
     twist: rand(-0.45, 0.45),
     baseY: g.position.y,
+    baseScale: g.scale.clone(),
   });
 }
 
@@ -16279,6 +16288,30 @@ function updateCorpses(dt) {
     const c = corpses[i];
     c.t += dt;
     const t = c.t;
+    // a fall is not a topple: the body hits face down, spreads out flat, and
+    // goes through the ground in half the time a shot body takes
+    if (c.mode === 'fall') {
+      if (t < 0.16) {
+        const p = t / 0.16;
+        const e = 1 - Math.pow(1 - p, 3);
+        c.g.rotation.x = c.dir * e * 1.57;
+        c.g.rotation.z = c.twist * e * 0.35;
+        c.g.position.y = c.baseY - e * 0.44;
+        c.g.scale.set(
+          c.baseScale.x * (1 + e * 0.6),
+          c.baseScale.y * (1 - e * 0.82),
+          c.baseScale.z * (1 + e * 0.6)
+        );
+      } else {
+        const p = clamp((t - 0.16) / 0.62, 0, 1);
+        c.g.position.y = c.baseY - 0.44 - p * 0.7;
+        if (p >= 1) {
+          if (c.g.parent) c.g.parent.remove(c.g);
+          corpses.splice(i, 1);
+        }
+      }
+      continue;
+    }
     if (t < 0.45) {
       const p = t / 0.45;
       const e = 1 - Math.pow(1 - p, 3);
@@ -16322,13 +16355,22 @@ function playerDie(killer) {
     player.spriteExtracted = false;
   }
   player.reloading = false;
+  const fell = killer === 'The Fall';
   if (player.rig) {
     player.rig.group.rotation.x = 0;
-    spawnCorpse(player.rig);
+    spawnCorpse(player.rig, fell ? 'fall' : 'topple');
     player.rig.group.visible = false;
   }
   addFeed(killer, 'You', false);
-  sfx('death');
+  if (fell) {
+    // a fall reads as a landing, not as a shot: dust off the ground, a thud
+    // instead of the death sting, and the body left flat behind it
+    impactFX(new THREE.Vector3(player.pos.x, player.pos.y + 0.15, player.pos.z));
+    shockwaveFX(player.pos.clone(), 2.4);
+    sfx('crash');
+  } else {
+    sfx('death');
+  }
   hideDownOverlay();
 
   if (isGunGame()) {
@@ -22002,8 +22044,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 2, patch: 0 };
-const VERSION_PREV = '9.1.0';
+const VERSION = { major: 9, minor: 2, patch: 1 };
+const VERSION_PREV = '9.2.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
