@@ -16236,8 +16236,11 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (fromStorm && hasBoon('med_storm')) d *= 0.5;
   let shieldPart = 0;
   let healthPart = 0;
+  // A fall is the ground, not a bullet: it takes health only and never shield,
+  // so a full shield bar does not save you from a long drop.
+  const fall = sourceName === 'The Fall';
   player.lastDamage = state.time;
-  if (!fromStorm) {
+  if (!fromStorm && !fall) {
     if (player.overshield > 0) {
       const o = Math.min(player.overshield, d);
       player.overshield -= o;
