@@ -9539,15 +9539,15 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.3.0</b>
+        <b id="wnVersion">v9.4.0</b>
         <span id="wnLevel">MAJOR UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.2.1</div>
+        <div class="wnHist" id="wnHist">FROM v9.3.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE GLIDER IS YOURS TO PULL</b> — nothing opens for you any more. SPACE opens it, SPACE again cuts it, and the prompt under the reticle carries your altitude the whole way down.</div></li>
-      <li><span class="wnTag">02</span><div><b>NO GLIDER, NO MERCY</b> — a closed glider means a hard landing, and it comes out of health, never shield: nothing up to 18 m/s, 96 at terminal velocity. Water is hard water and does the same.</div></li>
+      <li><span class="wnTag">01</span><div><b>THREE RANKS PAST UNREAL</b> — Ascendant, Celestial and Eternal sit above the old ceiling, and each costs more than the whole climb before it: 520, 780 and 1,100 RP, with a −34 to −50 RP bill for a game that ends outside the top five.</div></li>
+      <li><span class="wnTag">02</span><div><b>FIVE MORE TOURNAMENTS</b> — Diamond Invitational, Champion Circuit, Ascendant Series, Celestial Cup and Eternal Championship, one per rank up the new ladder, to a $100,000 top prize. Every one pays only the winner.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9788,7 +9788,9 @@ function stormScale() {
   return s;
 }
 
-/* Ranked: RP ladder, Bronze III up to Unreal. */
+/* Ranked: RP ladder, Bronze III up to Eternal. The three ranks above Unreal
+   are the long climb: each costs more than any rank before it, and a bad game
+   east of Unreal takes a big bite back. */
 const RANKS = [
   { name: 'BRONZE', color: '#b4785a' },
   { name: 'SILVER', color: '#b9c6d2' },
@@ -9798,11 +9800,14 @@ const RANKS = [
   { name: 'ELITE', color: '#c58bff' },
   { name: 'CHAMPION', color: '#ff7fd0' },
   { name: 'UNREAL', color: '#ff4d5e' },
+  { name: 'ASCENDANT', color: '#e879f9' },
+  { name: 'CELESTIAL', color: '#7cf6ff' },
+  { name: 'ETERNAL', color: '#ffd23f' },
 ];
 /* Early ranks are cheap: each tier costs less RP low down and more as you climb. */
-const RANK_STEPS = [100, 130, 160, 190, 220, 250, 280, 310];
-const RP_PER_RANK = 220;
-const RANK_TOTAL = RANK_STEPS.reduce((a, b) => a + b, 0);
+const RANK_STEPS = [100, 130, 160, 190, 220, 250, 280, 310, 520, 780, 1100];
+/* The base eight steps: the lobby tops out where Unreal always did. */
+const RANK_BASE_TOTAL = RANK_STEPS.slice(0, 8).reduce((a, b) => a + b, 0);
 const ROMAN = ['I', 'II', 'III'];
 
 /* One emblem per rank, drawn in the crest and on the ranked recap. */
@@ -9814,7 +9819,13 @@ const RANK_ICONS = [
   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l8.6 9.4-8.6 9.4L3.4 12z"/></svg>',
   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.4l2.7 6.1 6.6.7-4.9 4.5 1.4 6.5-5.8-3.3-5.8 3.3 1.4-6.5L2.7 9.2l6.6-.7z"/></svg>',
   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.6 19.4l1.6-11 5 3.4L12 5l2.8 6.8 5-3.4 1.6 11z"/><circle cx="12" cy="16.4" r="1.5" fill="#0a0d12"/></svg>',
-  '<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M12 1.8c3.4 3.2 6.8 5.6 6.8 10.1a6.8 6.8 0 01-13.6 0c0-4.5 3.4-6.9 6.8-10.1zm0 5.4c-1.8 1.9-3.3 3.3-3.3 5.4a3.3 3.3 0 006.6 0c0-2.1-1.5-3.5-3.3-5.4z"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.8c3.4 3.2 6.8 5.6 6.8 10.1a6.8 6.8 0 01-13.6 0c0-4.5 3.4-6.9 6.8-10.1zm0 5.4c-1.8 1.9-3.3 3.3-3.3 5.4a3.3 3.3 0 006.6 0c0-2.1-1.5-3.5-3.3-5.4z"/></svg>',
+  /* ASCENDANT — a stack of chevrons, climbing. */
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2l6.6 6.3-2.4 2.3L12 7l-4.2 3.8-2.4-2.3z"/><path d="M12 9.3l6.6 6.3-2.4 2.3L12 14.1l-4.2 3.8-2.4-2.3z"/><rect x="9.5" y="19.2" width="5" height="2.4"/></svg>',
+  /* CELESTIAL — a star over its own orbit. */
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.2 5.5.3-4.3 3.4 1.5 5.3L12 13l-4.6 3.2 1.5-5.3L4.6 7.5l5.5-.3z"/><path d="M5.6 17.8a7.2 7.2 0 0012.8 0h-2.4a4.9 4.9 0 01-8 0z"/></svg>',
+  /* ETERNAL — the hourglass that never empties. */
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.4 2.6h13.2v3.1c0 2.9-3.1 4.6-4.4 6.3 1.3 1.7 4.4 3.4 4.4 6.3v3.1H5.4v-3.1c0-2.9 3.1-4.6 4.4-6.3-1.3-1.7-4.4-3.4-4.4-6.3z"/><rect x="8.4" y="4.5" width="7.2" height="1.5" fill="#0a0d12"/><rect x="8.4" y="18" width="7.2" height="1.5" fill="#0a0d12"/></svg>',
 ];
 
 function paintCrest(node, info) {
@@ -9851,6 +9862,9 @@ function rankLossFor(tier, reload) {
   if (tier === 2) return reload ? -4 : -6;
   if (tier === 3) return reload ? -6 : -10;
   if (tier === 4) return reload ? -8 : -14;
+  // above Unreal the bill grows with the rank: a top-table finish is no
+  // longer enough to hold where you are
+  if (tier >= 8) return reload ? -22 : -50;
   return reload ? -12 : -18;
 }
 /* Ranked Reload runs its own ladder; the BR pool is only touched by BR queues. */
@@ -9860,7 +9874,9 @@ function setRankedRp(v) {
   if (isRankedReload()) profile.reloadRp = n;
   else profile.rankRp = n;
 }
-function rankBotTier() { return clamp((rankedRp() || 0) / RANK_TOTAL, 0, 1); }
+/* The lobby difficulty tops out where Unreal always did: the ranks above it are
+   past the old ceiling, so beyond Unreal you simply hold the hardest lobby. */
+function rankBotTier() { return clamp((rankedRp() || 0) / RANK_BASE_TOTAL, 0, 1); }
 
 /* =========================================================================
    SMALL UTILITIES
@@ -22137,8 +22153,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 3, patch: 0 };
-const VERSION_PREV = '9.2.1';
+const VERSION = { major: 9, minor: 4, patch: 0 };
+const VERSION_PREV = '9.3.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -22359,8 +22375,13 @@ const TOURNAMENTS = [
   { id: 'reloadrush', name: 'RELOAD RUSH', modes: ['reload', 'br'], tier: 1, prize: 2000, qualify: 5, field: 10 },
   { id: 'duoduel', name: 'DUO DUEL', modes: ['duos', 'reload'], tier: 2, prize: 3000, qualify: 4, field: 8 },
   { id: 'gunguantlet', name: 'GUN GAUNTLET', modes: ['gungame', 'duos'], tier: 3, prize: 4500, qualify: 3, field: 8 },
+  { id: 'diamondinvite', name: 'DIAMOND INVITATIONAL', modes: ['br', 'reload'], tier: 4, prize: 6000, qualify: 2, field: 8 },
   { id: 'eliteseries', name: 'ELITE SERIES', modes: ['br', 'duos', 'gungame'], tier: 5, prize: 8000, qualify: 2, field: 8 },
+  { id: 'championcircuit', name: 'CHAMPION CIRCUIT', modes: ['br', 'duos'], tier: 6, prize: 12000, qualify: 1, field: 8 },
   { id: 'unrealmasters', name: 'UNREAL MASTERS', modes: ['br', 'duos'], tier: 7, prize: 20000, qualify: 1, field: 8 },
+  { id: 'ascendantseries', name: 'ASCENDANT SERIES', modes: ['br', 'duos'], tier: 8, prize: 40000, qualify: 1, field: 8 },
+  { id: 'celestialcup', name: 'CELESTIAL CUP', modes: ['br', 'duos'], tier: 9, prize: 65000, qualify: 1, field: 8 },
+  { id: 'eternalchampionship', name: 'ETERNAL CHAMPIONSHIP', modes: ['br', 'duos', 'reload'], tier: 10, prize: 100000, qualify: 1, field: 8 },
 ];
 
 function tourneyDef(id) {
