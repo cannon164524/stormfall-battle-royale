@@ -17677,6 +17677,12 @@ function spawnBots(n) {
    ========================================================================= */
 const BOSS_NAMES = ['THE DROWNED KING', 'SALT MOTHER', 'WRECK WARDEN', 'TIDE COLOSSUS'];
 
+/* A boss soaks nine hundred points of damage, so it pays for that in the fight:
+   half the damage of a normal bot, and three times the spray. Both are applied
+   on top of whatever botFire would do for an ordinary bot. */
+const BOSS_DMG_MUL = 0.5;
+const BOSS_AIM_ERR_MUL = 3;
+
 function spawnBosses() {
   if (isOG() || isGunGame() || isAimTest() || isSandbox()) return;
   const spots = worldPOIs.slice();
@@ -17837,6 +17843,8 @@ function acquireTarget(b) {
 function botFire(b, target) {
   if (state.time < b.nextFire || state.time < b.reloadEnd) return;
   const def = WEAPONS[b.weapon.type];
+  // A boss hits for half. Everything this shot does reads from here.
+  const shot = def.dmg * (b.boss ? BOSS_DMG_MUL : 1);
   if (state.time < (b.heatLock || 0)) return;
   const d = b.pos.distanceTo(target.pos);
   const reach = def.range;
@@ -17874,7 +17882,7 @@ function botFire(b, target) {
     aimPoint.z += target.vel.z * lead;
     aimPoint.y += clamp(target.vel.y * lead, -1.2, 1.2);
   }
-  const err = (1 - b.skill) * 0.17 + 0.03;
+  const err = ((1 - b.skill) * 0.17 + 0.03) * (b.boss ? BOSS_AIM_ERR_MUL : 1);
   aimPoint.x += (Math.random() - 0.5) * err * d;
   aimPoint.y += (Math.random() - 0.5) * err * d * 0.6;
   aimPoint.z += (Math.random() - 0.5) * err * d;
@@ -17886,15 +17894,15 @@ function botFire(b, target) {
     const h = resolved || hit;
     if (h.kind === 'player') {
       const m = RARITY[b.weapon.rarity].mult;
-      hurtPlayer(def.dmg * m * botDmgMul() * anomalyDamageMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
+      hurtPlayer(shot * m * botDmgMul() * anomalyDamageMul() * (h.head ? def.hs * 0.7 : 1), b.name, false, eye);
     } else if (h.kind === 'bot' && h.bot) {
       const m = RARITY[b.weapon.rarity].mult;
-      damageBot(h.bot, def.dmg * m * botDmgMul() * botFightMul() * anomalyDamageMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
+      damageBot(h.bot, shot * m * botDmgMul() * botFightMul() * anomalyDamageMul() * (h.head ? def.hs : 1), b.name, h.head, h.point, b);
     } else if (h.kind === 'world' && h.col) {
-      damageCollider(h.col, def.dmg * 0.55 * anomalyDamageMul());
+      damageCollider(h.col, shot * 0.55 * anomalyDamageMul());
     } else if (h.kind === 'vehicle') {
       const m = RARITY[b.weapon.rarity].mult;
-      damageVehicle(h.vehicle, def.dmg * m * botDmgMul() * anomalyDamageMul(), b.name, h.point);
+      damageVehicle(h.vehicle, shot * m * botDmgMul() * anomalyDamageMul(), b.name, h.point);
     }
   };
   if (bSpeed) {
