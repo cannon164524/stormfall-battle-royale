@@ -9534,14 +9534,15 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.1.0</b>
+        <b id="wnVersion">v9.2.0</b>
         <span id="wnLevel">MAJOR UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.0.0</div>
+        <div class="wnHist" id="wnHist">FROM v9.1.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE MINIGUN</b> — one new gun in the pools, and it is deliberately broken: eleven hundred rounds a minute with a hundred and fifty in the belt. It always lands Common, so the rarity roll cannot soften it and nobody can hold a better one.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE SEASON HAS AN END</b> — a countdown under the deploy row runs to Wednesday 25 November, 10:50 AM PST. When it reaches zero the doors shut on their own, mid-match or not, and the gate returns saying the season is over.</div></li>
+      <li><span class="wnTag">02</span><div><b>A DRIVER IN THE BOAT</b> — a hull taken by a bot now keeps the bot standing at the wheel, with its name on a plate above the boat. An occupied boat never reads as an empty one again.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9551,10 +9552,10 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
 <div id="seasonClosed" class="hide" role="dialog" aria-modal="true">
   <div class="scCard">
     <div class="scWord">STORMFALL</div>
-    <div class="scKicker">SEASON 9</div>
-    <div class="scTitle">IT'S TIME FOR A NEW ERA OF STORMFALL.</div>
+    <div class="scKicker" id="scKicker">SEASON 9</div>
+    <div class="scTitle" id="scTitle">IT'S TIME FOR A NEW ERA OF STORMFALL.</div>
     <div class="scClock" id="scClock">—</div>
-    <div class="scNote">DOORS OPEN MONDAY 23 NOVEMBER<br>8:30 AM PST</div>
+    <div class="scNote" id="scNote">DOORS OPEN MONDAY 23 NOVEMBER<br>8:30 AM PST</div>
   </div>
 </div>
 
@@ -12170,6 +12171,19 @@ function addVehicle(x, y, z, yaw) {
   bar.renderOrder = 12;
   dynGroup.add(bar);
 
+  // the name plate above the wheel: a hull with a bot in it never reads empty
+  const plateCv = document.createElement('canvas');
+  plateCv.width = 256;
+  plateCv.height = 72;
+  const plateTex = new THREE.CanvasTexture(plateCv);
+  const plate = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.4, 1.24),
+    new THREE.MeshBasicMaterial({ map: plateTex, transparent: true, opacity: 0.96, depthWrite: false })
+  );
+  plate.visible = false;
+  plate.renderOrder = 13;
+  dynGroup.add(plate);
+
   const v = {
     group: g,
     yaw,
@@ -12183,9 +12197,37 @@ function addVehicle(x, y, z, yaw) {
     props: g.userData.props,
     bar,
     fill: barFill,
+    plate,
+    plateCv,
+    plateTex,
+    plateFor: '',
   };
   vehicles.push(v);
   return v;
+}
+
+/* The plate above a hull names the bot at the wheel, so a boat that has been
+   taken reads as taken from the shore. Redrawn only when the wheel changes. */
+function drawVehiclePlate(v, name) {
+  const cv = v.plateCv;
+  if (!cv) return;
+  const c = cv.getContext('2d');
+  if (!c) return;
+  const w = cv.width, h = cv.height;
+  c.clearRect(0, 0, w, h);
+  c.fillStyle = 'rgba(6,16,26,.86)';
+  c.fillRect(0, 0, w, h);
+  c.fillStyle = 'rgba(126,226,255,.5)';
+  c.fillRect(0, 0, w, 3);
+  c.textAlign = 'center';
+  c.fillStyle = '#eaf3ff';
+  c.font = '700 27px "Barlow Condensed", "Barlow Semi Condensed", Arial, sans-serif';
+  c.fillText(String(name || '').toUpperCase().slice(0, 20), w / 2, 42);
+  c.fillStyle = 'rgba(194,255,61,.92)';
+  c.font = '700 16px "Barlow Condensed", "Barlow Semi Condensed", Arial, sans-serif';
+  c.fillText('AT THE WHEEL', w / 2, 63);
+  if (v.plateTex) v.plateTex.needsUpdate = true;
+  v.plateFor = name || '';
 }
 
 /* The bar sits above the hull while the boat is occupied or hurt, and reads the
@@ -12193,6 +12235,17 @@ function addVehicle(x, y, z, yaw) {
 function updateVehicleBar(v) {
   const bar = v.bar;
   if (!bar) return;
+  const wheel = v.driver && v.driver !== 'player' ? v.driver : null;
+  if (v.plate) {
+    v.plate.visible = !!wheel;
+    if (wheel) {
+      const p = v.group.position;
+      v.plate.position.set(p.x, p.y + 4.1, p.z);
+      v.plate.quaternion.copy(camera.quaternion);
+      const name = wheel.name || 'A DRIVER';
+      if (v.plateFor !== name) drawVehiclePlate(v, name);
+    }
+  }
   bar.visible = !!v.driver || v.hp < v.maxHp;
   if (!bar.visible) return;
   const p = v.group.position;
@@ -12405,10 +12458,16 @@ function driveBotBoat(v, dt) {
   const throttle = Math.abs(diff) < 0.9 ? 1 : 0.3;
   stepBoat(v, dt, throttle, steer, VEHICLE_TOP * 0.85);
   if (!v.group.parent) { b.boat = null; return; }
-  b.pos.set(v.group.position.x, v.group.position.y, v.group.position.z);
+  const bp = v.group.position;
+  // the driver stands on the deck, not in the water the hull sits in
+  b.pos.set(bp.x, bp.y + 0.9, bp.z);
   b.vel.set(0, 0, 0);
   b.yaw = v.yaw;
-  if (b.rig) b.rig.group.visible = false;
+  if (b.rig) {
+    b.rig.group.visible = true;
+    b.rig.group.position.copy(b.pos);
+    b.rig.group.rotation.y = v.yaw;
+  }
   if (goal && Math.hypot(dx, dz) < 12) botLeaveBoat(b);
 }
 
@@ -12420,9 +12479,13 @@ function botTryBoat(b) {
   if (!v || v.driver) return;
   v.driver = b;
   b.boat = v;
-  b.pos.copy(v.group.position);
+  b.pos.set(v.group.position.x, v.group.position.y + 0.9, v.group.position.z);
   b.vel.set(0, 0, 0);
-  if (b.rig) b.rig.group.visible = false;
+  if (b.rig) {
+    b.rig.group.visible = true;
+    b.rig.group.position.copy(b.pos);
+    b.rig.group.rotation.y = v.yaw;
+  }
 }
 
 function botLeaveBoat(b) {
@@ -12487,6 +12550,11 @@ function destroyVehicle(v, source) {
     if (v.bar.parent) v.bar.parent.remove(v.bar);
     disposeTree(v.bar);
   }
+  if (v.plate) {
+    if (v.plate.parent) v.plate.parent.remove(v.plate);
+    disposeTree(v.plate);
+  }
+  if (v.plateTex) v.plateTex.dispose();
   shockwaveFX(pos, 9);
   impactFX(pos);
   shake(0.45);
@@ -21934,8 +22002,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 1, patch: 0 };
-const VERSION_PREV = '9.0.0';
+const VERSION = { major: 9, minor: 2, patch: 0 };
+const VERSION_PREV = '9.1.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -21954,14 +22022,17 @@ function setVersionUI() {
 }
 
 /* ---------------- launch gate ----------------
-   The game is locked until Season 9 opens: 08:30 PST on Monday 23 November
-   2026, one fixed instant so every clock agrees. Until then the gate is the
-   only thing on screen, and the moment the instant passes it lifts by itself
-   without a reload. */
+   Season 9 opens at 08:30 PST on Monday 23 November 2026 and closes at 10:50
+   PST on Wednesday 25 November, both fixed instants so every clock agrees.
+   Before the open the gate is the only thing on screen and lifts by itself;
+   when the close lands it comes back for good, until the next season. */
 const LAUNCH_AT = new Date('2026-11-23T08:30:00-08:00').getTime();
+const CLOSE_AT = new Date('2026-11-25T10:50:00-08:00').getTime();
 
 function launchMsLeft() { return LAUNCH_AT - Date.now(); }
-function seasonIsClosed() { return launchMsLeft() > 0; }   // locked before launch
+function closeMsLeft() { return CLOSE_AT - Date.now(); }
+function seasonEnded() { return closeMsLeft() <= 0; }        // shut after the close
+function seasonIsClosed() { return launchMsLeft() > 0 || seasonEnded(); }
 
 function fmtCountdown(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -21973,21 +22044,37 @@ function fmtCountdown(ms) {
   return d + 'D ' + pad(h) + 'H ' + pad(m) + 'M ' + pad(s) + 'S';
 }
 
+/* The lobby line counts down in minutes, so it only repaints once a minute. */
+function fmtShort(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const pad = (n) => (n < 10 ? '0' + n : String(n));
+  return d + 'D ' + pad(h) + 'H ' + pad(m) + 'M';
+}
+
 function updateSeasonTimer() {
-  const ms = launchMsLeft();
+  const opens = launchMsLeft();
+  const closes = closeMsLeft();
+  const ended = closes <= 0;
   const clock = document.getElementById('scClock');
-  if (clock) clock.textContent = ms > 0 ? fmtCountdown(ms) : 'THE DOORS ARE OPEN';
+  if (clock) {
+    clock.textContent = ended ? 'CLOSED'
+      : opens > 0 ? fmtCountdown(opens)
+      : 'CLOSES IN ' + fmtCountdown(closes);
+  }
   const el = document.getElementById('seasonTimer');
   if (!el) return;
-  if (ms <= 0) {
-    if (el.dataset.done !== '1') {
-      el.dataset.done = '1';
-      el.innerHTML = 'SEASON 9 · LIVE';
-    }
-    return;
+  let text;
+  if (ended) {
+    text = 'SEASON 9 · CLOSED';
+  } else if (opens > 0) {
+    const totalH = Math.floor(opens / 3600000);
+    text = 'SEASON 9 OPENS IN <b>' + Math.floor(totalH / 24) + 'D ' + (totalH % 24) + 'H</b>';
+  } else {
+    text = 'SEASON 9 CLOSES IN <b>' + fmtShort(closes) + '</b>';
   }
-  const totalH = Math.floor(ms / 3600000);
-  const text = 'SEASON 9 OPENS IN <b>' + Math.floor(totalH / 24) + 'D ' + (totalH % 24) + 'H</b>';
   if (el.dataset.t !== text) {
     el.dataset.t = text;
     el.innerHTML = text;
@@ -21995,6 +22082,17 @@ function updateSeasonTimer() {
 }
 
 function showSeasonClosed() {
+  const ended = seasonEnded();
+  const kicker = document.getElementById('scKicker');
+  if (kicker) kicker.textContent = ended ? 'SEASON 9 · CLOSED' : 'SEASON 9';
+  const title = document.getElementById('scTitle');
+  if (title) title.textContent = ended ? 'THE SEASON IS OVER.' : "IT'S TIME FOR A NEW ERA OF STORMFALL.";
+  const note = document.getElementById('scNote');
+  if (note) {
+    note.innerHTML = ended
+      ? 'THE NEXT SEASON LANDS ON THIS SCREEN FIRST'
+      : 'DOORS OPEN MONDAY 23 NOVEMBER<br>8:30 AM PST';
+  }
   const el = document.getElementById('seasonClosed');
   if (el) el.classList.remove('hide');
   const menu = document.getElementById('menu');
@@ -22007,17 +22105,23 @@ function showSeasonClosed() {
   if (wn) wn.classList.add('hide');
 }
 
-/* One tick a second drives both the gate clock and the lobby countdown, and
-   lifts the gate on its own when the launch instant passes. */
+/* One tick a second drives both clocks, lifts the gate when the open passes,
+   and raises it again for good when the close lands — even mid-match. */
 function tickLaunchGate() {
   updateSeasonTimer();
-  if (!seasonIsClosed()) {
-    const el = document.getElementById('seasonClosed');
-    if (el && !el.classList.contains('hide')) {
-      el.classList.add('hide');
-      const menu = document.getElementById('menu');
-      if (menu) menu.classList.remove('hide');
+  const el = document.getElementById('seasonClosed');
+  if (seasonIsClosed()) {
+    if (!el || !el.classList.contains('hide')) return;
+    if (state.phase === 'play' || state.phase === 'drop') {
+      try { backToMenu(); } catch (e) { /* the card covers whatever is left */ }
     }
+    showSeasonClosed();
+    return;
+  }
+  if (el && !el.classList.contains('hide')) {
+    el.classList.add('hide');
+    const menu = document.getElementById('menu');
+    if (menu) menu.classList.remove('hide');
   }
 }
 
