@@ -1648,168 +1648,53 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 
 /* =========================================================================
    UI 2.0 — "FORGED" — amber and teal on oxidised steel
+   COLOUR RESTORE restates every colour below on the same selectors, so the
+   amber is gone. What is left in this block is only what no later pass ever
+   restated: the tab metrics, the mode button's left rule and radii, and the
+   clip-path / radius resets that the flat look still depends on.
    ========================================================================= */
-:root {
-  --bg:#06070a;
-  --panel:#0d1015;
-  --line:rgba(255,255,255,.085);
-  --ink:#f4f6f9;
-  --ink-dim:rgba(244,246,249,.52);
-  --accent:#ffb03a;
-  --accent2:#5eead4;
-  --gold:#ffd166;
-  --danger:#ff5470;
-}
-#menu {
-  background:
-    radial-gradient(90% 60% at 12% 0%, rgba(255,140,40,.15), transparent 60%),
-    radial-gradient(80% 60% at 100% 100%, rgba(0,200,190,.13), transparent 60%),
-    linear-gradient(180deg,#07080c,#05060a 70%);
-}
-#menu::before { opacity:.5; background:repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 4px); }
-#menu::after { background:linear-gradient(180deg, transparent, rgba(0,0,0,.6)); }
-.logo {
-  font-style:normal; letter-spacing:.02em;
-  background:linear-gradient(180deg,#fff 20%,#ffcb73 70%,#ff8a1e);
-  -webkit-background-clip:text; background-clip:text;
-  filter:drop-shadow(0 6px 20px rgba(255,150,40,.35));
-}
-.tagline { color:rgba(244,246,249,.4); letter-spacing:.62em; }
+:root { --accent2:#5eead4; }
+.logo { font-style:normal; letter-spacing:.02em; }
 .tabs { gap:6px; }
-.tab {
-  font-size:11px; letter-spacing:.18em; padding:7px 12px;
-  border-bottom:0; border:1px solid transparent; color:rgba(244,246,249,.42); border-radius:2px;
-}
-.tab:hover { color:#fff; background:rgba(255,255,255,.05); }
-.tab.active { color:#0a0c10; background:var(--accent); border-color:var(--accent); text-shadow:none; box-shadow:0 0 20px rgba(255,176,58,.3); }
-.verTag { color:var(--accent2); border-color:rgba(94,234,212,.35); background:rgba(94,234,212,.08); }
-.cashTag { border-color:rgba(255,176,58,.45); background:rgba(255,176,58,.12); }
-.vbTag { border-color:rgba(94,234,212,.4); background:rgba(94,234,212,.1); }
-.cashCoin { background:radial-gradient(circle at 34% 28%,#fff0c2,#ff9f16 70%); }
-.vbCoin { background:radial-gradient(circle at 34% 28%,#d8fffa,#1fb6a6 70%); color:#04201d; }
-.modeBtn {
-  background:linear-gradient(180deg, rgba(22,26,33,.95), rgba(10,12,17,.95));
-  border:1px solid var(--line); border-left:3px solid rgba(255,255,255,.12);
-  clip-path:none; border-radius:3px;
-}
-.modeBtn:hover { transform:translateY(-2px); border-color:rgba(255,255,255,.22); }
-.modeBtn.active {
-  background:linear-gradient(180deg, rgba(58,38,10,.95), rgba(22,15,6,.95));
-  border-color:rgba(255,176,58,.55); border-left-color:var(--accent);
-  box-shadow:0 10px 30px rgba(255,140,20,.18);
-}
-.modeBtn.active .modeKicker { color:var(--gold); }
+.tab { font-size:11px; letter-spacing:.18em; padding:7px 12px; }
+.tab.active { border-color:var(--accent); }
+.modeBtn { border-left:3px solid rgba(255,255,255,.12); clip-path:none; border-radius:3px; }
+.modeBtn:hover { transform:translateY(-2px); }
+.modeBtn.active { border-left-color:var(--accent); }
 .modeName { font-style:normal; letter-spacing:.03em; }
 .modeTick { border-color:rgba(255,255,255,.2); }
 .modeBtn.active .modeTick { border-color:var(--accent); box-shadow:0 0 10px rgba(255,176,58,.8); }
 .modeBtn.active .modeTick::after { background:var(--accent); }
-.seatPanel, .sidePanel {
-  background:linear-gradient(180deg, rgba(16,19,25,.9), rgba(8,10,14,.92));
-  border:1px solid var(--line); clip-path:none; border-radius:3px;
-}
-.stepBtn { border-color:rgba(255,255,255,.16); background:rgba(255,255,255,.05); color:var(--ink); }
-#botRange { background:linear-gradient(90deg, var(--accent), rgba(255,176,58,.2)); }
-#botRange::-webkit-slider-thumb { box-shadow:0 0 0 3px rgba(255,176,58,.28), 0 0 12px rgba(255,176,58,.7); }
-.reloadRules span { border-color:var(--line); background:rgba(255,255,255,.03); }
-.reloadRules b { color:var(--accent2); }
-kbd { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.12); color:#fff; }
-.pocketOpt { background:rgba(12,15,20,.9); }
-.pocketOpt.sel { border-color:var(--accent); background:rgba(255,176,58,.14); color:#fff; box-shadow:0 0 14px rgba(255,176,58,.2); }
-.modChip.on { color:#0a0c10; border-color:var(--accent); background:var(--accent); box-shadow:0 0 16px rgba(255,176,58,.3); }
-.optChip.on { color:#04201d; border-color:var(--accent2); background:var(--accent2); box-shadow:0 0 14px rgba(94,234,212,.3); }
-.playerCard { background:rgba(12,15,20,.9); border-color:var(--line); clip-path:none; border-radius:3px; }
-#playBtn {
-  background:linear-gradient(180deg,#ffc861,#ff8a1e); color:#14100a; text-shadow:none;
-  clip-path:none; border-radius:4px;
-  box-shadow:0 14px 34px rgba(255,140,30,.3), inset 0 -4px 0 rgba(120,50,0,.22);
-}
-#playBtn:hover { filter:brightness(1.06); box-shadow:0 16px 40px rgba(255,150,40,.42), inset 0 -4px 0 rgba(120,50,0,.22); }
+.seatPanel, .sidePanel { clip-path:none; border-radius:3px; }
+.reloadRules span { border-color:var(--line); }
+.playerCard { clip-path:none; border-radius:3px; }
+#playBtn { clip-path:none; border-radius:4px; }
 .mpTitle { font-style:normal; letter-spacing:.02em; }
-.mpKicker, .mpMeta { color:var(--accent2); }
 .mpBack, .mpAction, .cardBtn, .exBtn, .mpInput, .mpArea, .mpCodeBox, .mpBlock, .card, .tier, .compRow, .passBar { border-radius:3px; }
-.card { background:linear-gradient(180deg, rgba(20,24,31,.96), rgba(9,11,15,.98)); border-color:var(--line); clip-path:none; }
-.card:hover { border-color:rgba(255,255,255,.2); }
-.card.equipped { border-color:rgba(255,176,58,.6); box-shadow:inset 0 0 0 1px rgba(255,176,58,.3); }
-.cardBtn { border-color:rgba(255,255,255,.16); background:rgba(255,255,255,.04); color:var(--ink); }
-.cardBtn.buy { background:linear-gradient(180deg,#ffc861,#ff8a1e); color:#14100a; }
-.cardBtn.ghost { margin-top:4px; background:transparent; color:rgba(244,246,249,.55); border-color:rgba(255,255,255,.14); }
-.mpBack { background:rgba(255,255,255,.04); border-color:var(--line); }
-.mpBack:hover { border-color:rgba(255,176,58,.5); }
-.mpAction { border-color:rgba(255,176,58,.4); background:rgba(255,176,58,.12); color:#ffe4b8; }
-.mpBlock { background:rgba(12,15,20,.85); border-color:var(--line); }
-.mpTab.active { border-color:rgba(255,176,58,.55); background:rgba(255,176,58,.15); }
-.buyBig { background:linear-gradient(180deg,#ffd166,#e08800); color:#1a1204; }
-.tier.done { border-color:rgba(255,176,58,.4); background:linear-gradient(160deg, rgba(52,36,10,.9), rgba(14,11,6,.95)); }
-.tier.ready { border-color:var(--gold); }
-.exBtn { background:linear-gradient(180deg, rgba(20,24,31,.96), rgba(9,11,15,.98)); border-color:var(--line); }
-.exBtn b { color:var(--gold); }
-.rankCrest, .rrCrest { background:linear-gradient(160deg,#ffe6ab,#ff9f1c); color:#20160a; }
-.compRow.me { border-color:rgba(255,176,58,.55); background:rgba(255,176,58,.12); }
-.compPayout { color:var(--gold); }
-.tmChip.on { border-color:var(--accent); background:rgba(255,176,58,.18); }
-#modeBadge { border-color:var(--line); color:rgba(244,246,249,.55); background:rgba(8,10,14,.7); border-radius:2px; }
-#modeBadge b { color:var(--accent); }
-#stormInfo { background:linear-gradient(180deg, rgba(40,14,46,.9), rgba(8,6,14,.92)); border-color:rgba(190,120,255,.3); clip-path:none; border-radius:2px; }
-#stormBarFill { background:linear-gradient(90deg,#a35bff,#ff7ad9); }
-.mapFrame { background:linear-gradient(180deg, rgba(14,17,23,.94), rgba(6,8,12,.96)); border-color:var(--line); clip-path:none; border-radius:3px; }
-.metaCell { background:rgba(10,12,17,.85); border-color:var(--line); border-radius:2px; }
-#quitBtn { border-color:var(--line); background:rgba(10,12,17,.8); }
-#quitBtn:hover { border-color:var(--accent); }
-.feedRow { background:linear-gradient(90deg, rgba(10,12,17,.94), rgba(10,12,17,.15)); border-left-color:var(--danger); border-radius:2px; }
-.feedRow.you { border-left-color:var(--accent); }
-.feedRow b { color:var(--gold); }
-#crosshair i, #crosshair b { background:var(--accent); }
-#hitmarker i { background:var(--accent); }
-#hitmarker.kill i { background:var(--danger); }
-.bar { background:rgba(6,8,12,.85); border-color:rgba(255,255,255,.16); border-radius:2px; }
-.bar.shield > i { background:linear-gradient(180deg,#9ef2ff,#22b7c8); }
-.bar.health > i { background:linear-gradient(180deg,#c8ff9a,#4bd94b); }
-.bar.health.low > i { background:linear-gradient(180deg,#ffb48f,#e8432f); }
-.bar.shield.over { border-color:rgba(94,234,212,.7); box-shadow:0 0 16px rgba(94,234,212,.25); }
-#livesRow i { background:linear-gradient(180deg,#ffd08a,#ff9a1f); box-shadow:0 0 8px rgba(255,180,60,.6); }
-.mat { background:rgba(9,12,17,.8); border-color:var(--line); }
-#pocketSlot { background:linear-gradient(180deg, rgba(20,24,30,.95), rgba(8,10,14,.96)); border-color:rgba(94,195,255,.35); }
-#teamPanel .tpRow { background:rgba(8,10,14,.78); border-color:var(--line); }
-.ptsRow { background:linear-gradient(90deg, rgba(8,12,18,.25), rgba(8,12,18,.94)); }
-#spectate { background:linear-gradient(180deg, rgba(8,10,16,.92), rgba(4,6,10,.94)); border-color:var(--line); }
+.card { clip-path:none; }
+.cardBtn.ghost { margin-top:4px; }
+#modeBadge { border-radius:2px; }
+#stormInfo { clip-path:none; border-radius:2px; }
+.mapFrame { clip-path:none; border-radius:3px; }
+.metaCell { border-radius:2px; }
+.feedRow { border-radius:2px; }
+.bar { border-radius:2px; }
 #stormWarn { background:rgba(140,20,40,.88); border-color:rgba(255,90,110,.75); }
-#prompt { background:rgba(6,10,16,.9); border-color:var(--line); border-radius:2px; }
-#useBar i { background:linear-gradient(90deg,var(--accent),#ff7a1f); }
-.buildPiece { background:rgba(8,10,14,.85); border-color:var(--line); }
-.buildPiece.sel { border-color:var(--accent); box-shadow:0 0 16px rgba(255,176,58,.3); }
-#end { background:radial-gradient(70% 60% at 50% 38%, rgba(60,34,4,.72), rgba(3,5,9,.97)); }
-.endTitle { font-style:normal; letter-spacing:-1px; background:linear-gradient(180deg,#fff6dd,#ffc244 60%,#ff8a1e); }
-.endPlace { color:var(--accent2); }
-#againBtn { background:linear-gradient(180deg,#ffc861,#ff8a1e); color:#14100a; clip-path:none; border-radius:4px; }
-#playAgainBtn { background:linear-gradient(180deg,#7ff5e2,#12b7a3); color:#03201c; clip-path:none; border-radius:4px; }
-.respBox { background:linear-gradient(180deg, rgba(12,14,20,.94), rgba(5,6,10,.96)); border-color:rgba(255,90,110,.32); clip-path:none; border-radius:4px; }
-.respTitle { color:var(--danger); font-style:normal; }
-.respSub { color:var(--accent2); }
-.wnCard { background:linear-gradient(180deg, rgba(14,17,23,.98), rgba(6,8,12,.99)); border-color:rgba(255,176,58,.3); clip-path:none; border-radius:4px; }
-.wnTitle { font-style:normal; background:linear-gradient(180deg,#fff,#ffc873); -webkit-background-clip:text; background-clip:text; }
-.wnSub, .wnVer span { color:var(--accent2); }
-.wnTag { color:var(--accent); border-color:rgba(255,176,58,.35); background:rgba(255,176,58,.1); }
-#wnClose { background:linear-gradient(180deg,#ffc861,#ff8a1e); color:#14100a; clip-path:none; border-radius:4px; }
-.invPanel { background:linear-gradient(180deg, rgba(14,17,23,.98), rgba(5,6,10,.99)); border-color:var(--line); clip-path:none; border-radius:4px; }
-.invSlot { background:linear-gradient(180deg, rgba(24,28,35,.95), rgba(9,11,15,.97)); }
-.invSlot.active { box-shadow:0 0 0 1px rgba(255,176,58,.5); }
-.invSlot.held { border-color:var(--gold); box-shadow:0 0 18px rgba(255,200,80,.4); }
-.revCard, .rrCard { background:linear-gradient(180deg, rgba(14,17,23,.98), rgba(5,6,10,.99)); border-color:rgba(255,176,58,.32); clip-path:none; border-radius:4px; }
-.revTitle { background:linear-gradient(180deg,#fff6dd,#ffc244 60%,#ff8a1e); }
-.revKicker, .rrKicker { color:var(--accent2); }
-.revBtn, #rrClose { background:linear-gradient(180deg,#ffc861,#ff8a1e); color:#14100a; clip-path:none; border-radius:4px; }
-.rrDelta { background:linear-gradient(180deg,#d9ffe4,#37d96a); }
-.rrBar > i { background:linear-gradient(90deg,var(--accent),#37d96a); }
-.rrBanner { background:linear-gradient(180deg,#ffe38a,#e0a012); }
-#loading { background:radial-gradient(90% 80% at 50% 12%, rgba(70,40,6,.55), rgba(3,4,8,.98)); }
-.loadLogo { font-style:normal; background:linear-gradient(180deg,#fff 30%,#ffc873); -webkit-background-clip:text; background-clip:text; }
-.loadFill { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
-.slot { background:linear-gradient(180deg, rgba(22,26,33,.94), rgba(8,10,14,.96)); border-color:rgba(255,255,255,.12); border-radius:2px; }
-.slot.active {
-  border-color:var(--accent);
-  background:linear-gradient(180deg, rgba(56,40,14,.95), rgba(16,12,6,.95));
-  box-shadow:0 0 0 1px rgba(255,176,68,.45), 0 10px 22px rgba(0,0,0,.5);
-}
+#prompt { border-radius:2px; }
+.endTitle { font-style:normal; letter-spacing:-1px; }
+#againBtn { clip-path:none; border-radius:4px; }
+#playAgainBtn { clip-path:none; border-radius:4px; }
+.respBox { clip-path:none; border-radius:4px; }
+.respTitle { font-style:normal; }
+.wnCard { clip-path:none; border-radius:4px; }
+.wnTitle { font-style:normal; }
+.wnVer span { color:var(--accent2); }
+#wnClose { clip-path:none; border-radius:4px; }
+.invPanel { clip-path:none; border-radius:4px; }
+.revCard, .rrCard { clip-path:none; border-radius:4px; }
+.revBtn, #rrClose { clip-path:none; border-radius:4px; }
+.loadLogo { font-style:normal; }
+.slot { border-radius:2px; }
 
 /* =========================================================================
    UI 3.0 — structure and motion pass (new layout, not just colour)
