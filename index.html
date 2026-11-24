@@ -9539,16 +9539,15 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.2.1</b>
-        <span id="wnLevel">SMALL UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.2.0</div>
+        <b id="wnVersion">v9.3.0</b>
+        <span id="wnLevel">MAJOR UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.2.1</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE MINIGUN RUNS HOT</b> — no magazine and no reload: eleven hundred rounds a minute until the cells lock, then one second on R vents the whole bank.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE AMMO DIAL IS BACK</b> — the strip beside the reticle shows for every weapon again: the magazine on a gun that reloads, the heat on the minigun.</div></li>
-      <li><span class="wnTag">03</span><div><b>A FALL LOOKS LIKE A FALL</b> — dying to fall damage no longer topples you like a bullet did: you land face down, flatten out, and go through the ground with dust and a thud.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE GLIDER IS YOURS TO PULL</b> — nothing opens for you any more. SPACE opens it, SPACE again cuts it, and the prompt under the reticle carries your altitude the whole way down.</div></li>
+      <li><span class="wnTag">02</span><div><b>NO GLIDER, NO MERCY</b> — a closed glider means a hard landing, and it comes out of health, never shield: nothing up to 18 m/s, 96 at terminal velocity. Water is hard water and does the same.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12826,6 +12825,7 @@ function leaveBus(auto) {
   player.inBus = false;
   player.pos.set(p.x, p.y - 0.6, p.z);
   player.dropping = true;
+  player.glider = false;
   player.onGround = false;
   player.vel.set(bus.dir.x * 8, -4, bus.dir.z * 8);
   if (player.rig) {
@@ -16359,6 +16359,8 @@ function playerDie(killer) {
   }
   player.reloading = false;
   const fell = killer === 'The Fall';
+  player.glider = false;
+  hideGliderCanopy();
   if (player.rig) {
     player.rig.group.rotation.x = 0;
     spawnCorpse(player.rig, fell ? 'fall' : 'topple');
@@ -16645,6 +16647,7 @@ function respawnPlayer() {
   player.nextGrapple = 0;
   player.alive = true;
   player.dropping = true;
+  player.glider = false;
   player.onGround = false;
   player.respawnAt = 0;
   player.heat = 0;
@@ -19531,6 +19534,41 @@ function killPulse() {
 /* =========================================================================
    PLAYER / DROP UPDATE
    ========================================================================= */
+const GLIDE_FALL = 14;      // the descent an open glider holds, in m/s
+
+/* The canopy that opens over the player: a bowed plane, visible only while the
+   glider is out. It is never opened for you — SPACE does that. */
+let gliderCanopy = null;
+function gliderCanopyMesh() {
+  if (gliderCanopy) return gliderCanopy;
+  const geo = new THREE.PlaneGeometry(3.8, 1.7, 8, 2);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    pos.setZ(i, -Math.abs(x) * 0.16);
+    pos.setY(i, y - Math.abs(x) * 0.06);
+  }
+  geo.computeVertexNormals();
+  gliderCanopy = new THREE.Mesh(
+    geo,
+    new THREE.MeshBasicMaterial({ color: 0xc2ff3d, side: THREE.DoubleSide, transparent: true, opacity: 0.92 })
+  );
+  gliderCanopy.visible = false;
+  dynGroup.add(gliderCanopy);
+  return gliderCanopy;
+}
+function drawGliderCanopy(p) {
+  const m = gliderCanopyMesh();
+  m.visible = !!player.glider;
+  if (!m.visible) return;
+  m.position.set(p.x, p.y + 2.9, p.z);
+  m.rotation.set(-0.18, player.yaw, 0, 'YXZ');
+}
+function hideGliderCanopy() {
+  if (gliderCanopy) gliderCanopy.visible = false;
+}
+
 function updateDrop(dt) {
   const p = player.pos;
   const fx2 = Math.sin(player.yaw), fz2 = Math.cos(player.yaw);
@@ -19540,12 +19578,28 @@ function updateDrop(dt) {
   const len = Math.hypot(mx, mz);
   if (len > 1) { mx /= len; mz /= len; }
 
-  const glide = p.y < 58;
+  // The glider is never pulled for you: SPACE opens it, SPACE again cuts it,
+  // and a body that reaches the ground without one pays for it in health.
+  if (input.jump) {
+    input.jump = false;
+    player.glider = !player.glider;
+    if (player.glider) {
+      player.vel.y = Math.max(player.vel.y, -GLIDE_FALL);
+      toast('GLIDER OUT', 'sub');
+      sfx('switch');
+    } else {
+      toast('GLIDER CUT', 'sub');
+      sfx('reload');
+    }
+  }
+  const glide = !!player.glider;
   const hSpeed = glide ? 17 : 32;
   const k = 1 - Math.exp(-2.6 * dt);
   player.vel.x = lerp(player.vel.x, mx * hSpeed, k);
   player.vel.z = lerp(player.vel.z, mz * hSpeed, k);
-  player.vel.y = glide ? -14 : Math.max(-58, player.vel.y - 42 * (gravityNow() / GRAVITY) * dt);
+  player.vel.y = glide
+    ? Math.max(-GLIDE_FALL, player.vel.y - 26 * dt)
+    : Math.max(-58, player.vel.y - 42 * (gravityNow() / GRAVITY) * dt);
 
   p.x += player.vel.x * dt;
   p.z += player.vel.z * dt;
@@ -19554,13 +19608,27 @@ function updateDrop(dt) {
   const r = Math.hypot(p.x, p.z);
   if (r > 305) { p.x *= 305 / r; p.z *= 305 / r; }
 
-  // water breaks the fall: you splash and swim, you do not stand on the floor
+  drawGliderCanopy(p);
+
+  // water breaks the fall: you splash and swim, you do not stand on the floor —
+  // but it is hard water: arrive without a glider and it hurts just the same
   if (p.y <= WATER_Y - 0.45 && waterDepthAt(p.x, p.z) > 1.2) {
+    const impact = Math.max(0, -player.vel.y);
     p.y = WATER_Y - 0.35;
     player.vel.set(0, 0, 0);
     player.dropping = false;
+    player.glider = false;
+    hideGliderCanopy();
     player.onGround = false;
     player.swimming = true;
+    if (impact > GLIDE_FALL + 4) {
+      const fall = Math.min(100, (impact - (GLIDE_FALL + 4)) * 2.4);
+      shake(clamp(impact / 110, 0.12, 0.45));
+      toast('NO GLIDER · HARD SPLASH', 'sub');
+      sfx('crash');
+      hurtPlayer(fall, 'The Fall', false, p.clone());
+      return;
+    }
     toast('SPLASH', 'sub');
     sfx('land');
     return;
@@ -19568,12 +19636,28 @@ function updateDrop(dt) {
 
   const g = groundHeightAt(p.x, p.z, p.y, Math.max(STEP_UP, -player.vel.y * dt + 0.05));
   if (p.y <= g) {
+    // The impact is read before the velocity is cleared: an open glider touches
+    // down at 14, a body with no glider arrives at up to 58.
+    const impact = Math.max(0, -player.vel.y);
     p.y = g;
     player.vel.set(0, 0, 0);
     player.dropping = false;
+    player.glider = false;
+    hideGliderCanopy();
     player.onGround = true;
-    toast('LANDED', 'sub');
-    sfx('land');
+    if (impact > GLIDE_FALL + 4) {
+      const fall = Math.min(100, (impact - (GLIDE_FALL + 4)) * 2.4);
+      camRig.landDip = clamp(impact * 0.05, 0, 0.8);
+      shake(clamp(impact / 110, 0.12, 0.45));
+      impactFX(new THREE.Vector3(p.x, p.y + 0.2, p.z));
+      toast('NO GLIDER · HARD LANDING', 'sub');
+      sfx('crash');
+      hurtPlayer(fall, 'The Fall', false, p.clone());
+      if (!player.alive) return;
+    } else {
+      toast('LANDED', 'sub');
+      sfx('land');
+    }
     // one long gun waiting near the landing spot, once per match
     if (!state.landGunSeeded && !isGunGame()) {
       state.landGunSeeded = true;
@@ -20562,6 +20646,11 @@ function updateHUD() {
     promptText = (bus && state.time < bus.lockEnd)
       ? '<b>HOLD ON</b> · DOORS IN ' + Math.max(0, Math.ceil(bus.lockEnd - state.time)) + 's'
       : '<b>SPACE</b> JUMP';
+  } else if (player.dropping) {
+    const alt = Math.max(0, Math.round(player.pos.y - terrainHeight(player.pos.x, player.pos.z)));
+    promptText = player.glider
+      ? '<b>SPACE</b> CUT GLIDER · <b>' + alt + '</b> M'
+      : '<b>SPACE</b> PULL GLIDER · <b>' + alt + '</b> M';
   } else if (player.driving) {
     // a car has no ammo counter, so the prompt line carries the speed instead
     promptText = '<b>' + Math.round(Math.abs(player.driving.speed) * 1.94) + '</b> KN · <b>E</b> TO GET OUT';
@@ -21307,6 +21396,7 @@ function resetPlayerForMatch() {
   player.alive = true;
   player.onGround = false;
   player.dropping = true;
+  player.glider = false;
   player.driving = null;
   player.inBus = false;
   player.swimming = false;
@@ -22047,8 +22137,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 2, patch: 1 };
-const VERSION_PREV = '9.2.0';
+const VERSION = { major: 9, minor: 3, patch: 0 };
+const VERSION_PREV = '9.2.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
