@@ -9584,15 +9584,16 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.01PT</b>
-        <span id="wnLevel">PLAYTEST OPEN</span>
-        <div class="wnHist" id="wnHist">FROM v10.0.0</div>
+        <b id="wnVersion">v10.02PT</b>
+        <span id="wnLevel">PLAYTEST UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v10.01PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE PLAYTEST SIGNS ITSELF AGAIN</b> — the build reads v10.01PT: the PLAYTEST mark is back beside the version in the top bar, both menu headers carry it, the hero says Season 10, and the notes card is PLAYTEST UPDATES again.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE SEA MOVES</b> — the water is a level now. It climbs through the match to 2.4 m, and the low causeways go under as it comes in. A playtest build is never gated, so this one is playable now.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE SEA HAS CURRENTS</b> — three bands of moving water out in the open push a swimmer along and drift a hull nobody is driving. Swim across them, not with them.</div></li>
+      <li><span class="wnTag">02</span><div><b>UNDERTOW</b> — three holes in the sea floor hold you under and bill you 4.5 every half second. Get out of the ring, or do not swim in.</div></li>
+      <li><span class="wnTag">03</span><div><b>RAISE A LEVEE</b> — <b>E</b> on the water ahead of you costs 60 wood: ten posts go in and the tide is held out of a 14 m circle, so a low road stays walkable while the rest goes under. Four a match.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10049,7 +10050,7 @@ const TIDE_MARKS = [
 const tide = { offset: 0, max: 0, rate: 0, live: false };
 
 /* The sea's surface at a point; everything else measures from here. */
-function waterSurfaceAt(x, z) { return WATER_Y + tide.offset; }
+function waterSurfaceAt(x, z) { return WATER_Y + tide.offset + leveeBias(x, z); }
 
 /* Work out what the sea does this match: still in the fast and stormless
    modes, climbing everywhere else. */
@@ -10080,6 +10081,194 @@ function updateTide(dt) {
 
 /* Water is a surface you swim on, not a floor you walk on. */
 function waterDepthAt(x, z) { return waterSurfaceAt(x, z) - terrainHeight(x, z); }
+
+/* =========================================================================
+   SEASON 10 · THE SEA HAS CURRENTS
+   The tide is one thing; the water under it moves. Three bands of current
+   carry a swimmer and drift an unmanned hull, three undertows hold you under
+   and bill you every half second, and a levee raised on a spit holds the tide
+   out of the circle it encloses.
+   ========================================================================= */
+const CURRENTS = [
+  { x: 118, z: -46, r: 34, ang: 0.6, speed: 2.4 },
+  { x: -96, z: 96, r: 30, ang: 2.1, speed: 2.0 },
+  { x: 24, z: 150, r: 28, ang: 4.4, speed: 2.2 },
+];
+const UNDERTOWS = [
+  { x: -150, z: -60, r: 11 },
+  { x: 60, z: 120, r: 10 },
+  { x: 150, z: -140, r: 12 },
+];
+const LEVEE_COST = 60;        // wood for one levee
+const LEVEE_RADIUS = 14;      // metres of sea it holds out
+const LEVEE_POSTS = 10;
+const LEVEE_MAX = 4;
+let currents = [];            // live this match, each on water found by sampling
+let undertows = [];
+const levees = [];
+
+/* A patch of open water, found by sampling, so nothing lands on an island. */
+function deepSpotNear(x, z, spread, minDepth) {
+  for (let t = 0; t < 40; t++) {
+    const a = Math.random() * TAU;
+    const d = Math.random() * spread;
+    const px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d;
+    if (Math.hypot(px, pz) > 300) continue;
+    if (waterDepthAt(px, pz) < minDepth) continue;
+    return { x: px, z: pz };
+  }
+  return null;
+}
+
+/* What the water does this match. The fast, the stormless and the labs have
+   still water, and a levee never outlives the match it was raised in. */
+function setSeaMotionForMatch() {
+  currents = [];
+  undertows = [];
+  for (let i = 0; i < levees.length; i++) {
+    const L = levees[i];
+    if (L.root && L.root.parent) L.root.parent.remove(L.root);
+  }
+  levees.length = 0;
+  if (isBlitz() || isSandbox() || isGunGame() || isRumble() || isOG() || isAimTest()) return;
+  for (let i = 0; i < CURRENTS.length; i++) {
+    const c = CURRENTS[i];
+    const spot = deepSpotNear(c.x, c.z, 90, 3);
+    if (!spot) continue;
+    currents.push({ x: spot.x, z: spot.z, r: c.r, dx: Math.cos(c.ang), dz: Math.sin(c.ang), speed: c.speed });
+  }
+  for (let i = 0; i < UNDERTOWS.length; i++) {
+    const u = UNDERTOWS[i];
+    const spot = deepSpotNear(u.x, u.z, 90, 4);
+    if (!spot) continue;
+    undertows.push({ x: spot.x, z: spot.z, r: u.r });
+  }
+}
+
+function currentAt(x, z) {
+  for (let i = 0; i < currents.length; i++) {
+    const c = currents[i];
+    if (Math.hypot(x - c.x, z - c.z) < c.r) return c;
+  }
+  return null;
+}
+
+function undertowAt(x, z) {
+  for (let i = 0; i < undertows.length; i++) {
+    const u = undertows[i];
+    if (Math.hypot(x - u.x, z - u.z) < u.r) return u;
+  }
+  return null;
+}
+
+/* A levee holds the sea out of its circle: inside it the surface sits where
+   the waterline was while the tide climbs outside. The physics reads this
+   exactly; the water plane itself stays flat, so the drained patch is only
+   approximate to look at. */
+function leveeBias(x, z) {
+  let held = 0;
+  for (let i = 0; i < levees.length; i++) {
+    const L = levees[i];
+    const d = Math.hypot(x - L.x, z - L.z);
+    if (d >= L.r) continue;
+    const t = 1 - d / L.r;
+    const e = t * t * (3 - 2 * t);
+    held = Math.max(held, tide.offset * e);
+  }
+  return -held;
+}
+
+/* Raise one on the water ahead of you, if there is any there to hold back. */
+function nearestLeveeSpot() {
+  if (!player.alive || player.swimming || player.dropping || player.knocked) return null;
+  if (player.driving || player.inBus) return null;
+  if (levees.length >= LEVEE_MAX || tide.offset < 0.05) return null;
+  const fx = Math.sin(player.yaw), fz = Math.cos(player.yaw);
+  const reach = [4, 6.5, 9];
+  for (let i = 0; i < reach.length; i++) {
+    const x = player.pos.x + fx * reach[i];
+    const z = player.pos.z + fz * reach[i];
+    const depth = waterDepthAt(x, z);
+    if (depth < 1.2 || depth > 8) continue;
+    let taken = false;
+    for (let j = 0; j < levees.length; j++) {
+      if (Math.hypot(levees[j].x - x, levees[j].z - z) < LEVEE_RADIUS) { taken = true; break; }
+    }
+    if (taken) continue;
+    return { x, z };
+  }
+  return null;
+}
+
+function raiseLevee(spot) {
+  const s = spot || nearestLeveeSpot();
+  if (!s) return;
+  if (levees.length >= LEVEE_MAX) { toast('THAT IS EVERY LEVEE THIS MATCH', 'sub'); sfx('reload'); return; }
+  if (player.wood < LEVEE_COST) { toast('NEED ' + LEVEE_COST + ' WOOD FOR A LEVEE', 'sub'); sfx('reload'); return; }
+  player.wood -= LEVEE_COST;
+  const root = new THREE.Group();
+  const postMat = mat(0x4a3524, true);
+  const postGeo = new THREE.BoxGeometry(0.34, 2.8, 0.34);
+  const deckGeo = new THREE.BoxGeometry(1.9, 0.16, 0.5);
+  for (let i = 0; i < LEVEE_POSTS; i++) {
+    const a = (i / LEVEE_POSTS) * TAU;
+    const post = new THREE.Mesh(postGeo, postMat);
+    post.position.set(Math.cos(a) * LEVEE_RADIUS, 0.9, Math.sin(a) * LEVEE_RADIUS);
+    post.rotation.y = a;
+    root.add(post);
+    const deck = new THREE.Mesh(deckGeo, postMat);
+    deck.position.set(Math.cos(a) * LEVEE_RADIUS, 2.2, Math.sin(a) * LEVEE_RADIUS);
+    deck.rotation.y = a + Math.PI / 2;
+    root.add(deck);
+  }
+  root.position.set(s.x, waterSurfaceAt(s.x, s.z), s.z);
+  propsGroup.add(root);
+  levees.push({ x: s.x, z: s.z, r: LEVEE_RADIUS, root });
+  sfx('build');
+  toast('LEVEE UP · THE TIDE IS HELD OUT', 'sub');
+  refreshHotbar();
+}
+
+/* An unmanned hull is carried by whatever current it is sitting in. */
+function applyBoatCurrent(v, dt) {
+  const p = v.group.position;
+  const cur = currentAt(p.x, p.z);
+  if (!cur) return;
+  const nx = p.x + cur.dx * cur.speed * dt;
+  const nz = p.z + cur.dz * cur.speed * dt;
+  if (terrainHeight(nx, nz) > -0.7) return;    // it would run aground
+  p.x = nx;
+  p.z = nz;
+}
+
+/* Currents and undertows, once a frame, right after the player has moved. */
+function updateSeaMotion(dt) {
+  if (state.phase !== 'play' && state.phase !== 'drop') return;
+  if (!player.alive || player.inBus || player.dropping || player.driving) return;
+  if (!player.swimming) { player.undertow = 0; return; }
+  const pos = player.pos;
+  const cur = currentAt(pos.x, pos.z);
+  if (cur) {
+    pos.x += cur.dx * cur.speed * dt;
+    pos.z += cur.dz * cur.speed * dt;
+    resolveCollisions(pos, pos.y, PLAYER_R, 1.7);
+    if (state.time > (player.driftAt || 0)) {
+      player.driftAt = state.time + 14;
+      toast('A CURRENT HAS YOU · SWIM ACROSS IT', 'sub');
+    }
+  }
+  const hole = undertowAt(pos.x, pos.z);
+  if (!hole) { player.undertow = 0; return; }
+  // it holds you under, and it takes a bill every half second
+  pos.y -= 3.2 * dt;
+  player.vel.x *= 1 - 0.9 * dt;
+  player.vel.z *= 1 - 0.9 * dt;
+  player.undertow = (player.undertow || 0) + dt;
+  if (player.undertow >= 0.5) {
+    player.undertow = 0;
+    hurtPlayer(4.5, 'The Undertow', false, pos.clone());
+  }
+}
 
 /* =========================================================================
    RENDERER / SCENE / CAMERA / LIGHTS
@@ -12702,6 +12891,7 @@ function updateVehicles(dt) {
       continue;
     }
     v.speed = lerp(v.speed, 0, 1 - Math.exp(-2.4 * dt));
+    applyBoatCurrent(v, dt);
     for (let w = 0; w < v.props.length; w++) v.props[w].rotation.z += v.speed * dt * 5;
     vehicleRam(v);
     updateVehicleBar(v);
@@ -20885,9 +21075,15 @@ function updateHUD() {
       promptText = player.channel ? '<b>REBOOTING MATE…</b>' : '<b>E</b> REBOOT MATES';
     } else {
       const chest = nearestChest(3.2);
+      const shore = chest ? null : nearestLeveeSpot();
       if (chest) {
         interactTarget = { type: 'chest', obj: chest };
         promptText = '<b>E</b> OPEN CHEST';
+      } else if (shore) {
+        interactTarget = { type: 'levee', obj: shore };
+        promptText = player.wood >= LEVEE_COST
+          ? '<b>E</b> RAISE LEVEE · <b>' + LEVEE_COST + '</b> WOOD'
+          : 'NEED <b>' + LEVEE_COST + '</b> WOOD FOR A LEVEE';
       } else {
         const vm = nearestVending(player.pos, 3.4);
         if (vm) {
@@ -21324,6 +21520,7 @@ function interact() {
   if (vendOpen) { closeVending(); return; }
   if (interactTarget) {
     if (interactTarget.type === 'chest') openChest(interactTarget.obj);
+    else if (interactTarget.type === 'levee') raiseLevee(interactTarget.obj);
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
     else if (interactTarget.type === 'dig') digSprite(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
@@ -21337,6 +21534,8 @@ function interact() {
   if (van) { startChannel('reboot', van); return; }
   const chest = nearestChest(3.2);
   if (chest) { openChest(chest); return; }
+  const shore = nearestLeveeSpot();
+  if (shore) { raiseLevee(shore); return; }
   const vm = nearestVending(player.pos, 3.4);
   if (vm) { buyVending(vm); return; }
   const l = nearestLoot(3.2);
@@ -21872,6 +22071,7 @@ function startMatch() {
   paintTerrain(mapTheme());
   populateWorld();
   setTideForMatch();
+  setSeaMotionForMatch();
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
   resetStorm();
@@ -22353,8 +22553,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 1 };
-const VERSION_PREV = '10.0.0';
+const VERSION = { season: 10, release: 2 };
+const VERSION_PREV = '10.01PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -24547,6 +24747,7 @@ function animate(now) {
   // the storm waits for the field: it does not tick while the lobby fills or the bus flies
   if (state.phase !== 'staging' && state.phase !== 'bus') updateStorm(dt);
   updateTide(dt);
+  updateSeaMotion(dt);
   updateAnomaly(dt);
   updateVehicles(dt);
   updateBossBars();
@@ -25952,6 +26153,13 @@ function motdShow(data) {
   const body = String(data.body || '').slice(0, 600);
   if (!title && !body) { card.classList.add('hide'); return; }
   const running = versionString();
+  // A playtest build only shows a message that belongs to its own season: the
+  // shared Gist still carries the official build's announcement until it is
+  // rewritten, and a cached copy of it would outlive the launch.
+  if (IS_PLAYTEST) {
+    const m = /^s(\d+)-/i.exec(String(data.id || ''));
+    if (m && parseInt(m[1], 10) < VERSION.season) { card.classList.add('hide'); return; }
+  }
   if (data.minVersion && motdVersionCmp(running, data.minVersion) < 0) { card.classList.add('hide'); return; }
   if (data.maxVersion && motdVersionCmp(running, data.maxVersion) > 0) { card.classList.add('hide'); return; }
   const id = data.id === undefined || data.id === null ? '' : String(data.id);
