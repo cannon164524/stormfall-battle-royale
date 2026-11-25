@@ -9054,6 +9054,24 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
           <span class="modeFoot"><b>13</b> OG GUNS · NAVY BUILD</span>
           <span class="modeTick"></span>
         </button>
+        <button class="modeBtn" data-mode="tiderace">
+          <span class="modeKicker new">NEW</span>
+          <span class="modeName">TIDE RACE</span>
+          <span class="modeFoot">NO STORM · SEA RISES <b>FAST</b></span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="riptide">
+          <span class="modeKicker new">NEW</span>
+          <span class="modeName">RIPTIDE</span>
+          <span class="modeFoot">START ABOARD · OPEN WATER</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="relic">
+          <span class="modeKicker new">NEW</span>
+          <span class="modeName">RELIC RUN</span>
+          <span class="modeFoot">ONE RELIC · BANK IT TO WIN</span>
+          <span class="modeTick"></span>
+        </button>
       </div>
     </div>
 
@@ -9658,17 +9676,16 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 10 PLAYTEST</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.02PT</b>
+        <b id="wnVersion">v10.04PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.01PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.03PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THREE HULLS</b> — the skiff is fast and thin, the sloop is the boat you know, and the barge takes a magazine without caring. They spawn mixed.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE PASSENGER SEAT</b> — climb aboard a boat a bot is driving and you ride in the stern with your gun out, instead of swimming after it.</div></li>
-      <li><span class="wnTag">03</span><div><b>RIVAL SKIPPERS</b> — a bot treading water will race you to a free hull and take it, whether or not you were closer.</div></li>
-      <li><span class="wnTag">04</span><div><b>BUS ROUTES</b> — three authored lines instead of a random heading. Pick NORTHERN, EASTERN or SOUTHERN in the lobby before you deploy.</div></li>
+      <li><span class="wnTag">01</span><div><b>TIDE RACE</b> — no storm at all. The sea climbs nine metres in the first two minutes, and whatever is left dry is where the match is decided.</div></li>
+      <li><span class="wnTag">02</span><div><b>RIPTIDE</b> — you spawn already at the tiller, the storm moves from the first second, and all the loot is out on the islets.</div></li>
+      <li><span class="wnTag">03</span><div><b>RELIC RUN</b> — one relic out on the coast. Take it and you are marked for everyone; carry it to an extraction site and hold it for five seconds to win outright.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9892,6 +9909,26 @@ const MODE_DEFS = {
     adjustable: true,
     queue: (n) => n + ' TARGETS · EVERY ROUND TRAVELS',
   },
+  tiderace: {
+    name: 'TIDE RACE', short: 'TIDE', kicker: 'RISING SEA',
+    desc: 'No storm. The sea climbs nine metres in the first two minutes and keeps going. Whatever is left dry at the end of it is where you win.',
+    rules: ['NO STORM', 'SEA RISES <b>FAST</b>', 'LAST DRY FOOT'],
+    adjustable: true,
+    queue: (n) => n + ' OPPONENTS · RISING SEA',
+  },
+  riptide: {
+    name: 'RIPTIDE', short: 'RIPTIDE', kicker: 'BOATS ONLY',
+    desc: 'You start already aboard. The storm moves from the first second, the loot sits out on the islets, and every fight happens with a gunwale in the way.',
+    rules: ['ALREADY ABOARD', 'OPEN WATER', 'FAST STORM'],
+    queue: () => 'START ABOARD · OPEN WATER',
+  },
+  relic: {
+    name: 'RELIC RUN', short: 'RELIC', kicker: 'DIG AND CARRY',
+    desc: 'One relic is out on the coast. Take it, and every player can see where you are. Bank it at an extraction site to win outright — or outlast everybody instead.',
+    rules: ['ONE RELIC', 'YOU ARE MARKED <b>HOLDING IT</b>', 'BANK IT TO WIN'],
+    adjustable: true,
+    queue: (n) => n + ' OPPONENTS · ONE RELIC',
+  },
   og: {
     name: 'OG', short: 'OG', kicker: 'PLAYTEST',
     desc: 'The game as it first shipped: the navy day-one build, the original thirteen guns on the green island, hitscan marksman rifles and all. No sprites, boons, vending machines or boats. Drop, loot, outlast.',
@@ -9916,12 +9953,15 @@ function isRanked() { return state.mode === 'ranked' || state.mode === 'rankeddu
 function isBlitz() { return state.mode === 'blitz'; }
 const AIM_TEST_SPEED = 320;   // m/s every round travels at in Aim Mechanic Testing
 function isAimTest() { return state.mode === 'aimtest'; }
+function isTideRace() { return state.mode === TIDE_RACE_MODE; }
+function isRiptide() { return state.mode === 'riptide'; }
+function isRelicRun() { return state.mode === 'relic'; }
 function respawnMode() { return state.mode === 'reload' || state.mode === 'rankedreload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
-function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox' || state.mode === 'gungame'; }
-function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
+function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox' || state.mode === 'gungame' || state.mode === TIDE_RACE_MODE; }
+function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble' || state.mode === 'riptide'; }
 /* Modes that open on the battle bus. The labs skip it, so you can shoot and
-   build the moment they load. */
-function usesBus() { return state.mode !== 'aimtest' && state.mode !== 'sandbox'; }
+   build the moment they load, and Riptide starts you in a hull instead. */
+function usesBus() { return state.mode !== 'aimtest' && state.mode !== 'sandbox' && state.mode !== 'riptide'; }
 const SIPHON_AMOUNT = 100;
 function siphonActive() { return isRanked() || !!state.tourneyId; }
 function mod(key) { return !!state.mods[key]; }
@@ -12048,35 +12088,86 @@ function buyVending(vm, index) {
   toast('BOUGHT ' + (RARITY[slot.rarity].name + ' ' + WEAPONS[slot.type].name).toUpperCase(), 'sub');
 }
 
-function addChest(x, z, y) {
+function addChest(x, z, y, deep) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(0x17242b, true));
+  const shell = deep ? 0x4a1c1c : 0x17242b;
+  const lidCol = deep ? 0xa8402c : 0x24444c;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(shell, true));
   body.position.y = 0.35;
   body.castShadow = true;
   g.add(body);
 
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.28, 1.0), mat(0x24444c, true));
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.28, 1.0), mat(lidCol, true));
   lid.position.set(0, 0.76, 0);
   lid.castShadow = true;
   g.add(lid);
 
   const glow = new THREE.Mesh(
     new THREE.BoxGeometry(1.3, 0.04, 0.8),
-    new THREE.MeshBasicMaterial({ color: 0x6dffd8, transparent: true, opacity: 0.9 })
+    new THREE.MeshBasicMaterial({ color: deep ? 0xff9a5c : 0x6dffd8, transparent: true, opacity: 0.9 })
   );
   glow.position.y = 0.74;
   g.add(glow);
 
   const beam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.35, 0.55, 6, 8, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0x4ff0d0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide })
+    new THREE.CylinderGeometry(0.35, 0.55, deep ? 14 : 6, 8, 1, true),
+    new THREE.MeshBasicMaterial({ color: deep ? 0xff7a4a : 0x4ff0d0, transparent: true, opacity: deep ? 0.22 : 0.16, depthWrite: false, side: THREE.DoubleSide })
   );
-  beam.position.y = 3.2;
+  beam.position.y = deep ? 7 : 3.2;
   g.add(beam);
 
   g.position.set(x, y, z);
+  if (deep) g.scale.setScalar(1.4);
   propsGroup.add(g);
-  chests.push({ x, z, y, opened: false, mesh: g, lid, glow, beam });
+  chests.push({ x, z, y, deep: !!deep, opened: false, mesh: g, lid, glow, beam });
+}
+
+/* Deep chests: one or two a match, held down by a timed channel rather than a
+   press of E. The payout is a vault, not a pick. */
+const DEEP_CHANNEL_TIME = 4.5;
+
+function spawnDeepChests() {
+  let placed = 0;
+  for (let i = 0; i < 500 && placed < 2; i++) {
+    const a = Math.random() * TAU;
+    const r = 40 + Math.random() * 200;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    const y = terrainHeight(x, z);
+    if (y < 1.2 || y > 42) continue;          // on real land, not a cliff ledge
+    if (waterDepthAt(x, z) > 0.5) continue;
+    if (!siteFreeAt(x, z, 4)) continue;
+    addChest(x, z, y, true);
+    placed++;
+  }
+}
+
+/* The relic: one object, out on real ground, worth a match if you can carry it
+   to an extraction site. It pays nobody else anything. */
+function spawnRelic() {
+  for (let i = 0; i < 500; i++) {
+    const a = Math.random() * TAU;
+    const r = 30 + Math.random() * 190;
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    const y = terrainHeight(x, z);
+    if (y < 1.5 || y > 42) continue;
+    if (waterDepthAt(x, z) > 0.5) continue;
+    if (!siteFreeAt(x, z, 3)) continue;
+    spawnLoot(x, y + 0.8, z, { kind: 'relic' });
+    return;
+  }
+}
+
+function openDeepChest(c) {
+  if (!c || c.opened) return;
+  openChest(c);                                // the ordinary table first
+  const extra = [rollChestWeapon(), rollChestWeapon(), makeBoon(pick(MEDALLIONS))];
+  const a0 = Math.random() * TAU;
+  for (let i = 0; i < extra.length; i++) {
+    const a = a0 + (i * TAU) / extra.length;
+    spawnLoot(c.x + Math.cos(a) * 1.4, c.y + 0.7, c.z + Math.sin(a) * 1.4, extra[i]);
+  }
+  showRareFind(extra[2], 'MEDALLION', 'DEEP CHEST · ONE OF A SET');
+  toast('DEEP CHEST OPEN', 'THE VAULT IS ON THE GROUND');
 }
 
 /* ---- world placement: buildings claim their real footprint so nothing
@@ -14603,6 +14694,51 @@ const BOON_TYPES = ['radar', 'regen', 'boots', 'plate', 'scav', 'synth'];
 /* Medallions never roll either: a boss leaves one behind when it falls. */
 const MEDALLIONS = ['med_tide', 'med_storm', 'med_hunt', 'med_shell'];
 
+/* Two-piece sets: wear both halves and the pair does something neither does. */
+const MEDAL_SETS = {
+  tide: {
+    name: 'THE TIDE SET', members: ['med_tide', 'med_storm'],
+    desc: 'SWIM A THIRD FASTER · THE UNDERTOW CANNOT HOLD YOU',
+  },
+  hunt: {
+    name: 'THE HUNT SET', members: ['med_hunt', 'med_shell'],
+    desc: 'A FURTHER TEN PERCENT OFF EVERYTHING THAT LANDS ON YOU',
+  },
+};
+
+function hasSet(id) {
+  const s = MEDAL_SETS[id];
+  if (!s) return false;
+  for (let i = 0; i < s.members.length; i++) if (!hasBoon(s.members[i])) return false;
+  return true;
+}
+
+/* Salvage: break a dropped gun down for wood, with a small chance at a boon. */
+function nearestDroppedWeapon(radius) {
+  let best = null, bd = radius;
+  for (const l of loot) {
+    if (l.dead || !l.item || l.item.kind !== 'weapon') continue;
+    const d = Math.hypot(l.x - player.pos.x, l.z - player.pos.z);
+    if (d < bd && Math.abs(l.y - player.pos.y) < 3.5) { bd = d; best = l; }
+  }
+  return best;
+}
+
+function salvageWeapon(l) {
+  if (!l || l.dead || !l.item || l.item.kind !== 'weapon') return;
+  l.dead = true;
+  if (l.mesh && l.mesh.parent) l.mesh.parent.remove(l.mesh);
+  const wood = 18 + (l.item.rarity || 0) * 9;
+  player.wood = Math.min(999, player.wood + wood);
+  sfx('build');
+  toast('SALVAGED · +' + wood + ' WOOD', 'sub');
+  if (Math.random() < 0.12) {
+    spawnLoot(l.x, l.y + 0.3, l.z, makeBoon(pick(BOON_TYPES)));
+    toast('SOMETHING WAS STILL IN IT', 'sub');
+  }
+  refreshHotbar();
+}
+
 function makeBoon(type) {
   const key = BOONS[type] ? type : 'radar';
   return { kind: 'boon', type: key, name: BOONS[key].name };
@@ -15842,6 +15978,14 @@ function nearestLoot(radius) {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
+  if (l.item.kind === 'relic') {
+    l.dead = true;
+    if (l.mesh && l.mesh.parent) l.mesh.parent.remove(l.mesh);
+    player.relic = true;
+    sfx('unlock');
+    toast('THE RELIC IS YOURS', 'BANK IT AT AN EXTRACTION SITE OR OUTLAST THEM ALL');
+    return;
+  }
   if (l.item.kind === 'token') {
     l.dead = true;
     if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
@@ -16549,6 +16693,12 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   if (!fromStorm && hasBoon('plate')) d *= 0.85;
   if (!fromStorm && hasBoon('med_shell')) d *= 0.75;
   if (fromStorm && hasBoon('med_storm')) d *= 0.5;
+  if (!fromStorm && hasSet('hunt')) d *= 0.90;
+  // taking a hit breaks a deep chest channel
+  if (player.channel && player.channel.type === 'deep') {
+    player.channel = null;
+    toast('CHANNEL BROKEN', 'sub');
+  }
   let shieldPart = 0;
   let healthPart = 0;
   player.lastDamage = state.time;
@@ -19900,10 +20050,12 @@ function updatePlayer(dt) {
 
   if (player.channel) {
     const c = player.channel;
-    const away = c.van ? Math.hypot(player.pos.x - c.van.x, player.pos.z - c.van.z) : 0;
-    if (input.fwd || input.right || input.jump || away > 4.5) {
+    const anchor = c.van || c.chest;
+    const away = anchor ? Math.hypot(player.pos.x - anchor.x, player.pos.z - anchor.z) : 0;
+    const stray = c.type === 'deep' ? 1.7 : 4.5;
+    if (input.fwd || input.right || input.jump || away > stray) {
       player.channel = null;
-      toast('REBOOT CANCELLED', 'sub');
+      toast(c.type === 'deep' ? 'CHANNEL BROKEN' : 'REBOOT CANCELLED', 'sub');
     } else if (state.time >= c.end) {
       finishChannel();
     }
@@ -19952,6 +20104,7 @@ function updatePlayer(dt) {
   // in water you swim: slow, low, and no sprint
   player.swimming = player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
   if (player.swimming) speed = 5.2;
+  if (player.swimming && hasSet('tide')) speed *= 1.3;
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -20054,9 +20207,9 @@ function updatePlayer(dt) {
         player.undertowName = uw.name;
         toast('CAUGHT IN ' + uw.name + ' · SWIM CLEAR', 'sub');
       }
-      // it pulls you under and it bites while it has you
+      // it pulls you under and it bites while it has you — unless you wear the tide set
       player.pos.y = Math.max(terrainHeight(player.pos.x, player.pos.z) + 0.2, player.pos.y - 3.2 * dt);
-      hurtPlayer(uw.dps * dt, 'The Undertow', true);
+      if (!hasSet('tide')) hurtPlayer(uw.dps * dt, 'The Undertow', true);
     } else {
       player.undertowName = null;
     }
@@ -20119,14 +20272,29 @@ function finishChannel() {
   if (!c) return;
   if (c.type === 'reboot') rebootMate();
   if (c.type === 'extract') extractSprite();
+  if (c.type === 'deep') openDeepChest(c.chest);
+  if (c.type === 'relicbank') endMatch(true, '');
+}
 }
 
-function startChannel(type, van) {
+function startChannel(type, target) {
   if (player.channel) return;
-  const dur = type === 'extract' ? EXTRACT_TIME : REBOOT_TIME;
-  player.channel = { type, van: van || null, start: state.time, end: state.time + dur };
+  const dur = type === 'extract' ? EXTRACT_TIME
+    : type === 'deep' ? DEEP_CHANNEL_TIME
+    : type === 'relicbank' ? 5
+    : REBOOT_TIME;
+  player.channel = {
+    type,
+    van: (type === 'reboot' || type === 'relicbank') ? (target || null) : null,
+    chest: type === 'deep' ? (target || null) : null,
+    start: state.time,
+    end: state.time + dur,
+  };
   sfx('reload');
-  toast(type === 'extract' ? 'EXTRACTING SPRITE…' : 'REBOOTING MATE…', 'sub');
+  if (type === 'extract') toast('EXTRACTING SPRITE…', 'sub');
+  else if (type === 'deep') toast('HOLDING THE DEEP CHEST…', 'sub');
+  else if (type === 'relicbank') toast('BANKING THE RELIC…', 'sub');
+  else toast('REBOOTING MATE…', 'sub');
 }
 
 /* Banking a Sprite is what makes it permanent. Winning with one counts too. */
@@ -20880,6 +21048,10 @@ function updateHUD() {
         ? Math.round(clamp((player.channel.end - state.time) / EXTRACT_TIME, 0, 1) * 100) + '%'
         : '';
       promptText = pct ? '<b>EXTRACTING SPRITE…</b> ' + pct : '<b>E</b> EXTRACT SPRITE';
+    } else if (player.relic && nearestExtractSite(player.pos, EXTRACT_RANGE)) {
+      const rsite = nearestExtractSite(player.pos, EXTRACT_RANGE);
+      interactTarget = { type: 'relicbank', obj: rsite };
+      promptText = '<b>E</b> BANK THE RELIC · WIN THE MATCH';
     } else if (van) {
       interactTarget = { type: 'van', obj: van };
       promptText = player.channel ? '<b>REBOOTING MATE…</b>' : '<b>E</b> REBOOT MATES';
@@ -20887,7 +21059,11 @@ function updateHUD() {
       const chest = nearestChest(3.2);
       if (chest) {
         interactTarget = { type: 'chest', obj: chest };
-        promptText = '<b>E</b> OPEN CHEST';
+        promptText = chest.deep
+          ? (player.channel && player.channel.type === 'deep'
+            ? '<b>HOLDING…</b> ' + Math.round(clamp((player.channel.end - state.time) / DEEP_CHANNEL_TIME, 0, 1) * 100) + '%'
+            : '<b>E</b> HOLD · DEEP CHEST')
+          : '<b>E</b> OPEN CHEST';
       } else {
         const vm = nearestVending(player.pos, 3.4);
         if (vm) {
@@ -20912,7 +21088,7 @@ function updateHUD() {
               interactTarget = { type: 'loot', obj: l };
               const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
                 : itemLabel(l.item);
-              promptText = '<b>E</b> PICK UP ' + nm.toUpperCase();
+              promptText = '<b>E</b> PICK UP ' + nm.toUpperCase() + ' · <b>X</b> SALVAGE';
             }
           }
         }
@@ -21328,11 +21504,15 @@ function interact() {
   if (car) { boardVehicle(car); return; }
   if (vendOpen) { closeVending(); return; }
   if (interactTarget) {
-    if (interactTarget.type === 'chest') openChest(interactTarget.obj);
+    if (interactTarget.type === 'chest') {
+      if (interactTarget.obj.deep) startChannel('deep', interactTarget.obj);
+      else openChest(interactTarget.obj);
+    }
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
     else if (interactTarget.type === 'dig') digSprite(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
     else if (interactTarget.type === 'extract') interactWithSite(interactTarget.obj);
+    else if (interactTarget.type === 'relicbank') startChannel('relicbank', interactTarget.obj);
     else if (interactTarget.type === 'vending') openVending(interactTarget.obj);
     else if (interactTarget.type === 'levee') raiseLevee(interactTarget.obj);
     return;
@@ -21396,6 +21576,15 @@ window.addEventListener('keydown', (e) => {
   if (e.code !== 'Escape') return;
   const el = document.getElementById('rankRecap');
   if (el && !el.classList.contains('hide')) closeRankedRecap();
+});
+
+/* Salvage sits on its own key, so picking up and breaking down never collide. */
+window.addEventListener('keydown', (e) => {
+  if (keyCapture) return;
+  if (e.code !== 'KeyX' || e.repeat) return;
+  if (state.phase !== 'play' || !player.alive || player.driving || player.inBus) return;
+  const l = nearestDroppedWeapon(3.4);
+  if (l) salvageWeapon(l);
 });
 
 window.addEventListener('keydown', (e) => {
@@ -21878,12 +22067,14 @@ function startMatch() {
   resetDeathCine();
   paintTerrain(mapTheme());
   populateWorld();
+  spawnDeepChests();
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
   resetStorm();
   setTideForMatch();
   placeWaterFeatures();
   resetPlayerForMatch();
+  player.relic = false;
   player.pocketType = profile.pocket || 'shock';
   player.pocketCd = 0;
   createPlayerRig();
@@ -21891,6 +22082,15 @@ function startMatch() {
   assignTeams();
   positionFighters();
   spawnVehicles();
+  // Riptide drops you in the water with a tiller in your hand.
+  if (isRiptide() && vehicles.length) {
+    const v = vehicles[0];
+    player.pos.set(v.group.position.x, v.group.position.y + 0.6, v.group.position.z);
+    player.dropping = false;
+    player.onGround = false;
+    boardVehicle(v);
+  }
+  if (isRelicRun()) spawnRelic();
   spawnBosses();
   // A drop seeds its long gun when the player lands; a ground start seeds it here.
   state.landGunSeeded = false;
@@ -22361,8 +22561,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 2 };
-const VERSION_PREV = '10.01PT';
+const VERSION = { season: 10, release: 4 };
+const VERSION_PREV = '10.03PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
