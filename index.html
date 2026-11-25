@@ -313,6 +313,48 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 }
 .np.off.knocked .npName { border-color:rgba(255,90,110,.6); }
 
+/* ---------------- the last foe: an edge chevron, or a marker over them ----
+   One marker per enemy left in the duel. Off screen it clamps to a rounded
+   rectangle around the crosshair and the chevron turns to point at them; in
+   view the chevron hangs over the name, so the last two never lose each
+   other. Flat, like the rest of the HUD: no glow, one hairline. */
+#lastFoe { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.lf {
+  position:absolute; transform:translate(-50%,-50%); white-space:nowrap;
+  display:flex; align-items:center; gap:7px;
+}
+.lf .lfArrow {
+  display:block; width:0; height:0;
+  border-top:7px solid transparent; border-bottom:7px solid transparent;
+  border-left:11px solid var(--lime);
+  transform-origin:50% 50%;
+  transition:transform .1s linear;
+}
+.lf .lfText { display:block; text-align:left; }
+.lf .lfName {
+  display:block; font-family:var(--label); font-size:9.5px; font-weight:700;
+  letter-spacing:.16em; color:#eaf8ff;
+}
+.lf .lfDist {
+  display:block; font-family:var(--label); font-size:8px; font-weight:700;
+  letter-spacing:.18em; color:var(--lime); font-variant-numeric:tabular-nums;
+}
+.lf.off .lfName {
+  background:rgba(8,16,28,.82); border:1px solid rgba(194,255,61,.4);
+  padding:3px 7px; color:#eaffd2;
+}
+.lf.in { flex-direction:column; gap:2px; }
+.lf.in .lfArrow {
+  border-left:7px solid transparent; border-right:7px solid transparent;
+  border-top:9px solid var(--lime); border-bottom:0;
+}
+.lf.in .lfText { text-align:center; }
+.lf.in .lfName { text-shadow:0 1px 4px rgba(0,0,0,.95); }
+/* at the right-hand edge the name goes the other side of the chevron, so it
+   never runs off the screen it is there to save */
+.lf.left { flex-direction:row-reverse; }
+.lf.left .lfText { text-align:right; }
+
 #dmgDirs { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
 .dmgDir {
   position:absolute; left:50%; top:50%; width:0; height:0;
@@ -5874,7 +5916,7 @@ body.death-ui #weaponCluster, body.death-ui #vitals, body.death-ui #mats,
 body.death-ui #matsBig, body.death-ui #crosshair, body.death-ui #hitmarker,
 body.death-ui #buildHud, body.death-ui #prompt, body.death-ui #useBar,
 body.death-ui #questLine, body.death-ui #modeBadge, body.death-ui #teamPanel,
-body.death-ui #tourneyHud, body.death-ui #spectate {
+body.death-ui #tourneyHud, body.death-ui #spectate, body.death-ui #lastFoe {
   display:none !important;
 }
 
@@ -8741,6 +8783,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <div id="dmgDirs"></div>
   <div id="hurtVig"></div>
   <div id="nameplates"></div>
+  <div id="lastFoe" class="hide"></div>
 
   <div id="buildHud">
     <div class="buildPiece sel" data-piece="wall">WALL</div>
@@ -9539,15 +9582,14 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.4.0</b>
+        <b id="wnVersion">v9.5.0</b>
         <span id="wnLevel">MAJOR UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.3.0</div>
+        <div class="wnHist" id="wnHist">FROM v9.4.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THREE RANKS PAST UNREAL</b> — Ascendant, Celestial and Eternal sit above the old ceiling, and each costs more than the whole climb before it: 520, 780 and 1,100 RP, with a −34 to −50 RP bill for a game that ends outside the top five.</div></li>
-      <li><span class="wnTag">02</span><div><b>FIVE MORE TOURNAMENTS</b> — Diamond Invitational, Champion Circuit, Ascendant Series, Celestial Cup and Eternal Championship, one per rank up the new ladder, to a $100,000 top prize. Every one pays only the winner.</div></li>
+      <li><span class="wnTag">01</span><div><b>POINT AT THE LAST FOE</b> — when a match is down to you and one other, an arrow finds them: a lime chevron at the screen edge with their name and distance when they are behind you, and a marker over them once they are in view. In Duos the last pair is marked mate by mate.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -20458,6 +20500,97 @@ function updateNameplates() {
   }
 }
 
+const lastFoeEl = document.getElementById('lastFoe');
+const lastFoeEls = [];
+let lastFoeKey = '';
+
+/* Which modes end with one foe left, and who that is. Rumble, Gun Game,
+   Sandbox, the OG build and the aim test never come down to a duel. In Duos
+   the count is of enemy teams, so the last pair is marked mate by mate. */
+function lastFoeTargets() {
+  if (!player.alive || state.ended) return null;
+  if (state.phase !== 'play' && state.phase !== 'drop') return null;
+  if (isRumble() || isSandbox() || isGunGame() || isOG() || isAimTest()) return null;
+  const foes = bots.filter((b) => !b.boss && b.team !== player.team);
+  if (isReloadDuos() || isDuos()) {
+    const teams = new Set();
+    for (const b of foes) if (!b.out) teams.add(b.team);
+    if (teams.size !== 1) return null;
+    const team = teams.values().next().value;
+    return foes.filter((b) => b.team === team && !b.out);
+  }
+  // Reload counts who is alive now: a foe waiting to respawn does not hold
+  // the arrow on screen, and it comes back with them.
+  const live = foes.filter((b) => b.alive);
+  return live.length === 1 ? live : null;
+}
+
+/* The last foe is never lost: off screen the chevron clamps to the edge and
+   turns to point at them; in view it hangs over them with the distance. */
+function updateLastFoe() {
+  if (!lastFoeEl) return;
+  const foes = lastFoeTargets();
+  if (!foes || !foes.length) {
+    if (!lastFoeEl.classList.contains('hide')) lastFoeEl.classList.add('hide');
+    return;
+  }
+  lastFoeEl.classList.remove('hide');
+  const key = foes.map((f) => f.name).join('|');
+  if (key !== lastFoeKey) {
+    lastFoeKey = key;
+    for (let i = 0; i < lastFoeEls.length; i++) lastFoeEls[i].el.remove();
+    lastFoeEls.length = 0;
+    for (let i = 0; i < foes.length; i++) {
+      const el = document.createElement('div');
+      el.className = 'lf';
+      el.innerHTML = '<i class="lfArrow"></i><span class="lfText">' +
+        '<span class="lfName"></span><span class="lfDist"></span></span>';
+      lastFoeEl.appendChild(el);
+      lastFoeEls.push({
+        m: foes[i], el, arrow: el.querySelector('.lfArrow'),
+        name: el.querySelector('.lfName'), dist: el.querySelector('.lfDist'),
+      });
+    }
+  }
+
+  const W = window.innerWidth, H = window.innerHeight;
+  const cx = W / 2, cy = H / 2;
+  const hx = cx - 64, hy = cy - 52;
+
+  for (let i = 0; i < lastFoeEls.length; i++) {
+    const t = lastFoeEls[i], m = t.m;
+    const head = new THREE.Vector3(m.pos.x, m.pos.y + 2.12, m.pos.z);
+    const v = head.clone().project(camera);
+    const vs = head.clone().applyMatrix4(camera.matrixWorldInverse);
+    const dist = Math.round(player.pos.distanceTo(m.pos));
+    let off = false, px, py, ang = 0;
+
+    if (vs.z < -0.4 && Math.abs(v.x) < 0.92 && Math.abs(v.y) < 0.9) {
+      px = (v.x * 0.5 + 0.5) * W;
+      py = (-v.y * 0.5 + 0.5) * H;
+    } else {
+      off = true;
+      let dx = vs.x, dy = -vs.y;
+      if (vs.z >= -0.4) { dx = -dx; dy = -dy; }
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-4) { dx = 0; dy = 1; } else { dx /= len; dy /= len; }
+      const sx = Math.abs(dx) > 1e-3 ? hx / Math.abs(dx) : 1e6;
+      const sy = Math.abs(dy) > 1e-3 ? hy / Math.abs(dy) : 1e6;
+      const s = Math.min(sx, sy);
+      px = cx + dx * s;
+      py = cy + dy * s;
+      ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    }
+
+    t.el.style.left = px.toFixed(1) + 'px';
+    t.el.style.top = py.toFixed(1) + 'px';
+    t.el.className = 'lf' + (off ? ' off' : ' in') + (off && px > cx ? ' left' : '');
+    t.arrow.style.transform = 'rotate(' + ang.toFixed(1) + 'deg)';
+    t.name.textContent = (m.knocked ? m.name + ' · DOWN' : m.name).toUpperCase();
+    t.dist.textContent = (off ? '▸ ' : '') + Math.min(999, dist) + 'M';
+  }
+}
+
 function fmtTime(sec) {
   sec = Math.max(0, Math.ceil(sec));
   const m = Math.floor(sec / 60);
@@ -22153,8 +22286,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 4, patch: 0 };
-const VERSION_PREV = '9.3.0';
+const VERSION = { major: 9, minor: 5, patch: 0 };
+const VERSION_PREV = '9.4.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -24300,6 +24433,7 @@ function animate(now) {
   updateKnock(dt);
   updateCamera(dt);
   updateNameplates();
+  updateLastFoe();
   updateRenderDistance(dt);
   // The reticle writes CSS every update, which forces a style pass; 30 Hz is
   // plenty and leaves the frame to the world.
