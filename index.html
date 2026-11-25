@@ -8937,7 +8937,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.0.0</div>
+      <div class="verTag" id="verTag">v10.01PT</div>
     </div>
   </div>
 
@@ -9645,23 +9645,18 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <div class="wnCard">
     <div class="wnTop">
       <div>
-        <div class="wnTitle">WHAT'S NEW</div>
-        <div class="wnSub">STORMFALL · SEASON 9</div>
+        <div class="wnTitle">PLAYTEST UPDATES</div>
+        <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.0.0</b>
-        <span id="wnLevel">SEASON LAUNCH</span>
-        <div class="wnHist" id="wnHist">FROM v8.4.9</div>
+        <b id="wnVersion">v10.01PT</b>
+        <span id="wnLevel">PLAYTEST UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.0.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE DROWNED COAST</b> — a new island: five isles on a ring, joined by sandbars, with open water and a swim in every rotation.</div></li>
-      <li><span class="wnTag">02</span><div><b>BOATS</b> — six hulls out on the water. Take one, open the throttle, and the bow does the damage.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE BATTLE BUS</b> — every match opens in a pre-game lobby, then a balloon-lifted bus crosses the island. Jump when you like; the end of the line throws everyone off.</div></li>
-      <li><span class="wnTag">04</span><div><b>BOSSES AND MEDALLIONS</b> — named bruisers hold the named places, marked with a red skull. Put one down and it leaves a mythic and a medallion that grants an ability.</div></li>
-      <li><span class="wnTag">05</span><div><b>THE WATER ARSENAL</b> — fourteen new weapons, from the Tide Pistol to the Deepwater Rifle, with mythic and exotic versions of four of them.</div></li>
-      <li><span class="wnTag">06</span><div><b>A NEW INTERFACE</b> — new type, new plates, a rebuilt mode picker and a reworked in-game HUD.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE SEA MOVES</b> — the water is a level now. It climbs 2.4 m over about four minutes of a match, so the causeways go under and the low roads close, with a call-out at each step. Boats float on the live surface, and swimming starts from it. Still in Blitz, Rumble, Gun Game, Sandbox, OG and Aim Test.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10086,8 +10081,53 @@ function terrainHeight(x, z) {
   return h - edge * edge * 26;
 }
 
+/* =========================================================================
+   SEASON 10 · THE SEA MOVES
+   The water is a level now, not a constant: it climbs through the match and the
+   low roads go under. One offset drives the surface, the water mesh and every
+   depth test, so the physics and the map agree.
+   ========================================================================= */
+const TIDE_MAX = 2.4;              // metres above the old waterline
+const TIDE_RATE = 0.011;           // m/s: about four minutes to the top
+const TIDE_MARKS = [
+  { at: 0.6, text: 'THE TIDE IS COMING IN' },
+  { at: 1.4, text: 'THE CAUSEWAYS ARE GOING UNDER' },
+  { at: 2.4, text: 'HIGH WATER · THE LOW ROADS ARE GONE' },
+];
+const tide = { offset: 0, max: 0, rate: 0, live: false };
+
+/* The sea's surface at a point; everything else measures from here. */
+function waterSurfaceAt(x, z) { return WATER_Y + tide.offset; }
+
+/* Work out what the sea does this match: still in the fast and stormless
+   modes, climbing everywhere else. */
+function setTideForMatch() {
+  tide.offset = 0;
+  tide.live = false;
+  tide.max = 0;
+  tide.rate = 0;
+  if (waterMesh) waterMesh.position.y = WATER_Y;
+  if (isBlitz() || isSandbox() || isGunGame() || isRumble() || isOG() || isAimTest()) return;
+  tide.max = TIDE_MAX;
+  tide.rate = TIDE_RATE;
+  tide.live = true;
+}
+
+/* One call-out each time the sea takes a little more of the map. */
+function updateTide(dt) {
+  if (!tide.live || tide.offset >= tide.max) return;
+  if (state.phase !== 'play' && state.phase !== 'drop') return;
+  const before = tide.offset;
+  tide.offset = Math.min(tide.max, tide.offset + tide.rate * dt);
+  if (waterMesh) waterMesh.position.y = WATER_Y + tide.offset;
+  for (let i = 0; i < TIDE_MARKS.length; i++) {
+    const m = TIDE_MARKS[i];
+    if (before < m.at && tide.offset >= m.at) toast(m.text, 'sub');
+  }
+}
+
 /* Water is a surface you swim on, not a floor you walk on. */
-function waterDepthAt(x, z) { return WATER_Y - terrainHeight(x, z); }
+function waterDepthAt(x, z) { return waterSurfaceAt(x, z) - terrainHeight(x, z); }
 
 /* =========================================================================
    RENDERER / SCENE / CAMERA / LIGHTS
@@ -12482,8 +12522,8 @@ function stepBoat(v, dt, throttle, steer, top) {
   } else if (struck) {
     v.speed *= 0.2;
   }
-  // it floats: the hull rides the water line, with a slow swell under it
-  pos.y = WATER_Y - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
+  // it floats: the hull rides the live water line, with a slow swell under it
+  pos.y = waterSurfaceAt(pos.x, pos.z) - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
   v.group.rotation.set(0, v.yaw, 0, 'YXZ');
 
   for (let i = 0; i < v.props.length; i++) v.props[i].rotation.z += v.speed * dt * 5;
@@ -19668,7 +19708,7 @@ function updatePlayer(dt) {
   if (adminOn('speed')) speed *= 2.4;
   if (hasBoon('boots')) speed *= 1.12;
   // in water you swim: slow, low, and no sprint
-  player.swimming = player.pos.y < WATER_Y + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
+  player.swimming = player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
   if (player.swimming) speed = 5.2;
 
   const moving = (mx !== 0 || mz !== 0);
@@ -19744,7 +19784,7 @@ function updatePlayer(dt) {
   const swimDepth = waterDepthAt(player.pos.x, player.pos.z);
   player.swimming = swimDepth > 1.15 && player.pos.y < WATER_Y + 0.1;
   if (player.swimming) {
-    const surf = WATER_Y - 0.35;
+    const surf = waterSurfaceAt(player.pos.x, player.pos.z) - 0.35;
     if (player.pos.y < surf) {
       player.pos.y = Math.min(surf, player.pos.y + Math.max(1.8, -player.vel.y) * dt * 1.5);
       player.vel.y = 0;
@@ -21556,6 +21596,7 @@ function startMatch() {
   resetDeathCine();
   paintTerrain(mapTheme());
   populateWorld();
+  setTideForMatch();
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
   resetStorm();
@@ -22028,19 +22069,21 @@ function setMode(m) {
 }
 
 /* ---------------- versioning ----------------
-   MAJOR . MINOR . PATCH — this is the official build now.
-   MAJOR is the season number: Season 9 ships on 9.x, and 9.0.0 is the launch.
-   - minor goes up for a big update (9.0.0 -> 9.1.0)
-   - patch goes up for a small one (9.0.0 -> 9.0.1)
-   The numbers are plain and never roll over: 9.9.0 is followed by 9.10.0.
-   VERSION_PREV is always the version string this build replaced, and the
-   notes card is rewritten with every release so it shows only that update.
+   SEASON . RELEASE PT — 10.01PT, 10.02PT, 10.03PT…
+   This branch is the Season 10 playtest: the major is the season, the second
+   number is the playtest release and it moves on every change, and the PT
+   suffix marks a build that is never the official one. A PT build skips the
+   launch gate, so the playtest stays playable while the official build waits
+   behind its Monday 08:30 PST gate. main is still 9.0.0.
+   VERSION_PREV is always the version string this build replaced.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 0, patch: 0 };
-const VERSION_PREV = '8.4.9';
+const VERSION = { season: 10, release: 1 };
+const VERSION_PREV = '9.0.0';
+const IS_PLAYTEST = true;
 
 function versionString() {
-  return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
+  const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
+  return VERSION.season + '.' + rel + 'PT';
 }
 
 function setVersionUI() {
@@ -22051,8 +22094,7 @@ function setVersionUI() {
   const hist = document.getElementById('wnHist');
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
-  if (lvl) lvl.textContent = (VERSION.minor === 0 && VERSION.patch === 0) ? 'SEASON LAUNCH'
-    : VERSION.patch === 0 ? 'MAJOR UPDATE' : 'SMALL UPDATE';
+  if (lvl) lvl.textContent = IS_PLAYTEST ? 'PLAYTEST UPDATE' : 'SEASON LAUNCH';
 }
 
 /* ---------------- launch gate ----------------
@@ -22063,7 +22105,8 @@ function setVersionUI() {
 const LAUNCH_AT = new Date('2026-11-23T08:30:00-08:00').getTime();
 
 function launchMsLeft() { return LAUNCH_AT - Date.now(); }
-function seasonIsClosed() { return launchMsLeft() > 0; }   // locked before launch
+/* A playtest build is never gated: the launch gate belongs to the official one. */
+function seasonIsClosed() { return !IS_PLAYTEST && launchMsLeft() > 0; }
 
 function fmtCountdown(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -22081,6 +22124,14 @@ function updateSeasonTimer() {
   if (clock) clock.textContent = ms > 0 ? fmtCountdown(ms) : 'THE DOORS ARE OPEN';
   const el = document.getElementById('seasonTimer');
   if (!el) return;
+  if (IS_PLAYTEST) {
+    const t = 'SEASON 10 PLAYTEST · <b>v' + versionString() + '</b>';
+    if (el.dataset.t !== t) {
+      el.dataset.t = t;
+      el.innerHTML = t;
+    }
+    return;
+  }
   if (ms <= 0) {
     if (el.dataset.done !== '1') {
       el.dataset.done = '1';
@@ -24167,6 +24218,7 @@ function animate(now) {
   updateNet(dt);
   // the storm waits for the field: it does not tick while the lobby fills or the bus flies
   if (state.phase !== 'staging' && state.phase !== 'bus') updateStorm(dt);
+  updateTide(dt);
   updateAnomaly(dt);
   updateVehicles(dt);
   updateBossBars();
