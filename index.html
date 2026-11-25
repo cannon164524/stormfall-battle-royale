@@ -10031,8 +10031,53 @@ function terrainHeight(x, z) {
   return h - edge * edge * 26;
 }
 
+/* =========================================================================
+   SEASON 10 · THE SEA MOVES
+   The water is a level now, not a constant: it climbs through the match and the
+   low roads go under. One offset drives the surface, the water mesh and every
+   depth test, so the physics and the map agree.
+   ========================================================================= */
+const TIDE_MAX = 2.4;              // metres above the old waterline
+const TIDE_RATE = 0.011;           // m/s: about four minutes to the top
+const TIDE_MARKS = [
+  { at: 0.6, text: 'THE TIDE IS COMING IN' },
+  { at: 1.4, text: 'THE CAUSEWAYS ARE GOING UNDER' },
+  { at: 2.4, text: 'HIGH WATER · THE LOW ROADS ARE GONE' },
+];
+const tide = { offset: 0, max: 0, rate: 0, live: false };
+
+/* The sea's surface at a point; everything else measures from here. */
+function waterSurfaceAt(x, z) { return WATER_Y + tide.offset; }
+
+/* Work out what the sea does this match: still in the fast and stormless
+   modes, climbing everywhere else. */
+function setTideForMatch() {
+  tide.offset = 0;
+  tide.live = false;
+  tide.max = 0;
+  tide.rate = 0;
+  if (waterMesh) waterMesh.position.y = WATER_Y;
+  if (isBlitz() || isSandbox() || isGunGame() || isRumble() || isOG() || isAimTest()) return;
+  tide.max = TIDE_MAX;
+  tide.rate = TIDE_RATE;
+  tide.live = true;
+}
+
+/* One call-out each time the sea takes a little more of the map. */
+function updateTide(dt) {
+  if (!tide.live || tide.offset >= tide.max) return;
+  if (state.phase !== 'play' && state.phase !== 'drop') return;
+  const before = tide.offset;
+  tide.offset = Math.min(tide.max, tide.offset + tide.rate * dt);
+  if (waterMesh) waterMesh.position.y = WATER_Y + tide.offset;
+  for (let i = 0; i < TIDE_MARKS.length; i++) {
+    const m = TIDE_MARKS[i];
+    if (before < m.at && tide.offset >= m.at) toast(m.text, 'sub');
+  }
+}
+
 /* Water is a surface you swim on, not a floor you walk on. */
-function waterDepthAt(x, z) { return WATER_Y - terrainHeight(x, z); }
+function waterDepthAt(x, z) { return waterSurfaceAt(x, z) - terrainHeight(x, z); }
 
 /* =========================================================================
    RENDERER / SCENE / CAMERA / LIGHTS
@@ -12481,7 +12526,7 @@ function stepBoat(v, dt, throttle, steer, top) {
     v.speed *= 0.2;
   }
   // it floats: the hull rides the water line, with a slow swell under it
-  pos.y = WATER_Y - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
+  pos.y = waterSurfaceAt(pos.x, pos.z) - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
   v.group.rotation.set(0, v.yaw, 0, 'YXZ');
 
   for (let i = 0; i < v.props.length; i++) v.props[i].rotation.z += v.speed * dt * 5;
@@ -19822,7 +19867,7 @@ function updatePlayer(dt) {
   if (adminOn('speed')) speed *= 2.4;
   if (hasBoon('boots')) speed *= 1.12;
   // in water you swim: slow, low, and no sprint
-  player.swimming = player.pos.y < WATER_Y + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
+  player.swimming = player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
   if (player.swimming) speed = 5.2;
 
   const moving = (mx !== 0 || mz !== 0);
@@ -19898,7 +19943,7 @@ function updatePlayer(dt) {
   const swimDepth = waterDepthAt(player.pos.x, player.pos.z);
   player.swimming = swimDepth > 1.15 && player.pos.y < WATER_Y + 0.1;
   if (player.swimming) {
-    const surf = WATER_Y - 0.35;
+    const surf = waterSurfaceAt(player.pos.x, player.pos.z) - 0.35;
     if (player.pos.y < surf) {
       player.pos.y = Math.min(surf, player.pos.y + Math.max(1.8, -player.vel.y) * dt * 1.5);
       player.vel.y = 0;
@@ -21824,6 +21869,7 @@ function startMatch() {
   resetDeathCine();
   paintTerrain(mapTheme());
   populateWorld();
+  setTideForMatch();
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
   resetStorm();
@@ -22304,8 +22350,9 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 5, patch: 1 };
-const VERSION_PREV = '9.5.0';
+const VERSION = { major: 10, minor: 0, patch: 0 };
+const VERSION_PREV = '9.5.1';
+const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -22334,7 +22381,7 @@ const CLOSE_AT = new Date('2026-11-25T10:50:00-08:00').getTime();
 function launchMsLeft() { return LAUNCH_AT - Date.now(); }
 function closeMsLeft() { return CLOSE_AT - Date.now(); }
 function seasonEnded() { return closeMsLeft() <= 0; }        // shut after the close
-function seasonIsClosed() { return launchMsLeft() > 0 || seasonEnded(); }
+function seasonIsClosed() { return !IS_PLAYTEST && (launchMsLeft() > 0 || seasonEnded()); }
 
 function fmtCountdown(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -24477,6 +24524,7 @@ function animate(now) {
   updateNet(dt);
   // the storm waits for the field: it does not tick while the lobby fills or the bus flies
   if (state.phase !== 'staging' && state.phase !== 'bus') updateStorm(dt);
+  updateTide(dt);
   updateAnomaly(dt);
   updateVehicles(dt);
   updateBossBars();
