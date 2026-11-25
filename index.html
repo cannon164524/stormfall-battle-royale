@@ -9645,23 +9645,20 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <div class="wnCard">
     <div class="wnTop">
       <div>
-        <div class="wnTitle">WHAT'S NEW</div>
-        <div class="wnSub">STORMFALL · SEASON 9</div>
+        <div class="wnTitle">PLAYTEST UPDATES</div>
+        <div class="wnSub">STORMFALL · SEASON 10 PLAYTEST</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.0.0</b>
-        <span id="wnLevel">SEASON LAUNCH</span>
-        <div class="wnHist" id="wnHist">FROM v8.4.9</div>
+        <b id="wnVersion">v10.01PT</b>
+        <span id="wnLevel">PLAYTEST UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.0.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE DROWNED COAST</b> — a new island: five isles on a ring, joined by sandbars, with open water and a swim in every rotation.</div></li>
-      <li><span class="wnTag">02</span><div><b>BOATS</b> — six hulls out on the water. Take one, open the throttle, and the bow does the damage.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE BATTLE BUS</b> — every match opens in a pre-game lobby, then a balloon-lifted bus crosses the island. Jump when you like; the end of the line throws everyone off.</div></li>
-      <li><span class="wnTag">04</span><div><b>BOSSES AND MEDALLIONS</b> — named bruisers hold the named places, marked with a red skull. Put one down and it leaves a mythic and a medallion that grants an ability.</div></li>
-      <li><span class="wnTag">05</span><div><b>THE WATER ARSENAL</b> — fourteen new weapons, from the Tide Pistol to the Deepwater Rifle, with mythic and exotic versions of four of them.</div></li>
-      <li><span class="wnTag">06</span><div><b>A NEW INTERFACE</b> — new type, new plates, a rebuilt mode picker and a reworked in-game HUD.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE TIDE</b> — the sea rises through a match, and it keeps rising. Sandbars go under first, then the low islands, so the map is a different shape every few minutes.</div></li>
+      <li><span class="wnTag">02</span><div><b>CURRENTS AND UNDERTOW</b> — three flow bands pull swimmers across the channels, and three holes will drag you down and bite until you swim clear.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE LEVEE</b> — stand on a spit beside deep water with sixty wood and press E. Ten posts hold the tide out of a circle, so you can drain a channel and walk it.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9743,6 +9740,31 @@ const PLAYER_R = 0.42;
 const EYE = 1.58;
 const TERRAIN_FLOOR = WATER_Y - 1.0;
 const WORLD_EDGE = 362;         // deep ocean, well past the walkable shoreline
+
+/* ---------------- the sea has a tide (Season 10) ----------------
+   WATER_Y stays the datum every prop and every metre of terrain was built
+   against — nothing moves. The SURFACE is what rises: WATER_Y plus the tide,
+   plus whatever a levee is holding back. Everything in the game that asks
+   "is this deep water?" already goes through waterDepthAt, so the tide has to
+   exist in exactly one place. */
+const TIDE_MAX = 2.4;          // metres the sea climbs in an ordinary match
+const TIDE_RATE = 0.011;       // metres a second at that climb (about four minutes)
+const TIDE_RACE_MAX = 9.0;     // Tide Race floods far higher, and from the start
+const TIDE_RACE_RATE = 0.075;
+const TIDE_RACE_MODE = 'tiderace';
+const LEVEE_RADIUS = 14;       // how far one levee holds the water out
+const LEVEE_COST = 60;         // wood
+const SWIM_SURF = 0.35;        // how deep a body sits under the surface
+const TIDE_MARKS = [
+  { at: 0.7, text: 'THE TIDE IS COMING IN' },
+  { at: 1.5, text: 'THE CAUSEWAYS ARE GOING UNDER' },
+  { at: 2.3, text: 'THE SEA IS AT ITS PEAK' },
+];
+
+const tide = { offset: 0, live: false, max: TIDE_MAX, rate: TIDE_RATE };
+const levees = [];             // { x, z } — raised by the player, hold water back
+const CURRENTS = [];           // flow bands, placed in open water each match
+const UNDERTOWS = [];          // holes that take you down if you stop swimming
 
 const state = {
   phase: 'menu',         // menu | drop | play | over
@@ -10086,8 +10108,177 @@ function terrainHeight(x, z) {
   return h - edge * edge * 26;
 }
 
-/* Water is a surface you swim on, not a floor you walk on. */
-function waterDepthAt(x, z) { return WATER_Y - terrainHeight(x, z); }
+/* Water is a surface you swim on, not a floor you walk on.
+   Season 10: that surface moves. leveeBias keeps it down in a circle around a
+   levee, so a player can drain a channel and hold it drained. */
+function leveeBias(x, z) {
+  if (!levees.length) return 0;
+  for (let i = 0; i < levees.length; i++) {
+    const L = levees[i];
+    const d = Math.hypot(x - L.x, z - L.z);
+    if (d < LEVEE_RADIUS) {
+      // full hold at the levee itself, fading to nothing at its rim
+      const hold = tide.offset * (1 - d / LEVEE_RADIUS);
+      if (hold > 0) return -hold;
+    }
+  }
+  return 0;
+}
+
+/* The sea's surface height at a point, in world metres. */
+function waterSurfaceAt(x, z) { return WATER_Y + tide.offset + leveeBias(x, z); }
+
+function waterDepthAt(x, z) { return waterSurfaceAt(x, z) - terrainHeight(x, z); }
+
+/* ---------------- tide, currents, undertow ---------------- */
+
+/* One call-out each time the sea takes a little more of the map. */
+function updateTide(dt) {
+  if (!tide.live || tide.offset >= tide.max) return;
+  if (state.phase !== 'play' && state.phase !== 'drop') return;
+  const before = tide.offset;
+  tide.offset = Math.min(tide.max, tide.offset + tide.rate * dt);
+  if (waterMesh) waterMesh.position.y = WATER_Y + tide.offset;
+  for (let i = 0; i < TIDE_MARKS.length; i++) {
+    const m = TIDE_MARKS[i];
+    if (before < m.at && tide.offset >= m.at) toast(m.text, 'sub');
+  }
+}
+
+/* Pick the flow bands and the holes in open water, so they never land on an
+   island: a candidate has to be deep itself and deep all around it. */
+function placeWaterFeatures() {
+  CURRENTS.length = 0;
+  UNDERTOWS.length = 0;
+  const spot = (minDepth, spread) => {
+    for (let tries = 0; tries < 240; tries++) {
+      const a = Math.random() * TAU;
+      const r = 40 + Math.random() * 235;
+      const x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (waterDepthAt(x, z) < minDepth) continue;
+      if (waterDepthAt(x + spread, z) < 4 || waterDepthAt(x - spread, z) < 4) continue;
+      if (waterDepthAt(x, z + spread) < 4 || waterDepthAt(x, z - spread) < 4) continue;
+      return { x, z };
+    }
+    return null;
+  };
+  const curNames = ['THE WESTWARD PULL', 'THE EBB', 'LANTERN DRIFT'];
+  for (let i = 0; i < curNames.length; i++) {
+    const p = spot(7, 22);
+    if (!p) continue;
+    const a = Math.random() * TAU;
+    CURRENTS.push({
+      x: p.x, z: p.z, r: 42 + Math.random() * 16,
+      dx: Math.cos(a), dz: Math.sin(a), force: 1.9, name: curNames[i],
+    });
+  }
+  const underNames = ['THE BLACK WELL', 'THE SUCK', 'THE MOUTH'];
+  for (let i = 0; i < underNames.length; i++) {
+    const p = spot(10, 12);
+    if (!p) continue;
+    UNDERTOWS.push({ x: p.x, z: p.z, r: 11 + Math.random() * 4, name: underNames[i], dps: 9 });
+  }
+}
+
+function inCurrent(x, z) {
+  for (let i = 0; i < CURRENTS.length; i++) {
+    const c = CURRENTS[i];
+    const d = Math.hypot(x - c.x, z - c.z);
+    if (d < c.r) return { band: c, keep: 1 - d / c.r };
+  }
+  return null;
+}
+
+function inUndertow(x, z) {
+  for (let i = 0; i < UNDERTOWS.length; i++) {
+    const u = UNDERTOWS[i];
+    if (Math.hypot(x - u.x, z - u.z) < u.r) return u;
+  }
+  return null;
+}
+
+/* A boat with nobody in it drifts with the band it is sitting in. */
+function applyBoatCurrent(v, dt) {
+  if (!CURRENTS.length) return;
+  const pos = v.group.position;
+  const cur = inCurrent(pos.x, pos.z);
+  if (!cur) return;
+  const push = cur.keep * cur.band.force * dt;
+  const nx = pos.x + cur.band.dx * push;
+  const nz = pos.z + cur.band.dz * push;
+  if (terrainHeight(nx, nz) > -0.7) return;   // the shallows stop it like the land does
+  pos.x = nx;
+  pos.z = nz;
+}
+
+/* Work out what the sea is doing this match. */
+function setTideForMatch() {
+  tide.offset = 0;
+  tide.live = false;
+  levees.length = 0;
+  if (waterMesh) waterMesh.position.y = WATER_Y;
+  if (state.mode === TIDE_RACE_MODE) {
+    tide.max = TIDE_RACE_MAX;
+    tide.rate = TIDE_RACE_RATE;
+    tide.live = true;
+    return;
+  }
+  // the fast and the stormless modes keep a still sea, so their timings hold
+  if (isBlitz() || isSandbox() || isGunGame() || isRumble() || isOG() || isAimTest()) {
+    tide.max = 0;
+    tide.rate = 0;
+    return;
+  }
+  tide.max = TIDE_MAX;
+  tide.rate = TIDE_RATE;
+  tide.live = true;
+}
+
+/* ---------------- the levee ----------------
+   A ring of posts driven into a spit of land beside deep water. It holds the
+   tide out of a fourteen-metre circle, so the water falls there and the
+   channel beside it can be walked. */
+function nearestLeveeSpot() {
+  if (player.wood < LEVEE_COST) return null;
+  const x = player.pos.x, z = player.pos.z;
+  if (terrainHeight(x, z) < 0.4) return null;        // must be standing on land
+  let wet = false;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU;
+    if (waterDepthAt(x + Math.cos(a) * 6, z + Math.sin(a) * 6) > 1.8) { wet = true; break; }
+  }
+  if (!wet) return null;                              // nothing to hold back
+  for (let i = 0; i < levees.length; i++) {
+    if (Math.hypot(x - levees[i].x, z - levees[i].z) < LEVEE_RADIUS) return null;
+  }
+  return { x, z };
+}
+
+function raiseLevee(spot) {
+  if (!spot) return;
+  player.wood = Math.max(0, player.wood - LEVEE_COST);
+  levees.push({ x: spot.x, z: spot.z });
+  const post = mat(0x6b4a2e, true);
+  const cap = mat(0x9a7048, true);
+  const g = new THREE.Group();
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * TAU;
+    const px = spot.x + Math.cos(a) * 8.4;
+    const pz = spot.z + Math.sin(a) * 8.4;
+    const gy = Math.max(terrainHeight(px, pz), WATER_Y - 0.6);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.34, 2.4, 0.34), post);
+    m.position.set(px, gy + 1.1, pz);
+    g.add(m);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.16), cap);
+    c.position.set(px, gy + 2.1, pz);
+    c.rotation.y = a;
+    g.add(c);
+  }
+  propsGroup.add(g);
+  refreshHotbar();
+  sfx('build');
+  toast('LEVEE RAISED · THE WATER HOLDS', 'sub');
+}
 
 /* =========================================================================
    RENDERER / SCENE / CAMERA / LIGHTS
@@ -11186,7 +11377,7 @@ function makePirateHut(x, z, rot, rng, dims) {
 
 /* A pier out into the shallows: planks on posts, and a chest at the end. */
 function makeDock(x, z, rot, rng) {
-  const y = Math.max(terrainHeight(x, z), WATER_Y);
+  const y = Math.max(terrainHeight(x, z), waterSurfaceAt(x, z));
   const len = 16 + rng() * 8;
   const deckY = y + 0.4;
   const g = new THREE.Group();
@@ -11249,7 +11440,7 @@ function seawardRot(x, z) {
    masts and sails, cannon along both sides, and boarding stairs off the stern
    that step down to the sand. With `wreck` set it is a broken hulk instead. */
 function makeGalleon(x, z, rot, rng, wreck) {
-  const base = Math.max(terrainHeight(x, z), WATER_Y) - (wreck ? 1.4 : 0.5);
+  const base = Math.max(terrainHeight(x, z), waterSurfaceAt(x, z)) - (wreck ? 1.4 : 0.5);
   const hw = 11, hb = 4;
   const deckY = base + (wreck ? 3.4 : 4.0);
   const cs = Math.cos(rot), sn = Math.sin(rot);
@@ -12363,7 +12554,7 @@ function spawnVehicles() {
     const z = Math.sin(ang) * rad;
     if (Math.hypot(x, z) > 305) continue;
     if (!vehicleSpotFree(x, z)) continue;
-    addVehicle(x, WATER_Y - 0.12, z, Math.random() * TAU);
+    addVehicle(x, waterSurfaceAt(x, z) - 0.12, z, Math.random() * TAU);
   }
 }
 
@@ -12416,7 +12607,7 @@ function exitVehicle() {
   resolveCollisions(player.pos, player.pos.y, PLAYER_R, 1.7);
   if (waterDepthAt(player.pos.x, player.pos.z) > 1.15) {
     // stepping off a boat leaves you swimming, not standing on the sea floor
-    player.pos.y = WATER_Y - 0.35;
+    player.pos.y = waterSurfaceAt(player.pos.x, player.pos.z) - SWIM_SURF;
     player.swimming = true;
     player.onGround = false;
   } else {
@@ -12483,7 +12674,7 @@ function stepBoat(v, dt, throttle, steer, top) {
     v.speed *= 0.2;
   }
   // it floats: the hull rides the water line, with a slow swell under it
-  pos.y = WATER_Y - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
+  pos.y = waterSurfaceAt(pos.x, pos.z) - 0.12 + Math.sin(state.time * 1.4 + v.yaw * 2) * 0.07;
   v.group.rotation.set(0, v.yaw, 0, 'YXZ');
 
   for (let i = 0; i < v.props.length; i++) v.props[i].rotation.z += v.speed * dt * 5;
@@ -12642,6 +12833,7 @@ function updateVehicles(dt) {
       continue;
     }
     v.speed = lerp(v.speed, 0, 1 - Math.exp(-2.4 * dt));
+    applyBoatCurrent(v, dt);
     for (let w = 0; w < v.props.length; w++) v.props[w].rotation.z += v.speed * dt * 5;
     vehicleRam(v);
     updateVehicleBar(v);
@@ -17963,8 +18155,8 @@ function updateBot(b, dt) {
     b.pos.y += b.vel.y * dt;
     const g = groundHeightAt(b.pos.x, b.pos.z, b.pos.y, Math.max(STEP_UP, -b.vel.y * dt + 0.05));
     // a bot that comes down over deep water floats instead of sinking
-    if (waterDepthAt(b.pos.x, b.pos.z) > 1.2 && b.pos.y <= WATER_Y - 0.4) {
-      b.pos.y = WATER_Y - 0.35;
+    if (waterDepthAt(b.pos.x, b.pos.z) > 1.2 && b.pos.y <= waterSurfaceAt(b.pos.x, b.pos.z) - 0.4) {
+      b.pos.y = waterSurfaceAt(b.pos.x, b.pos.z) - SWIM_SURF;
       b.vel.y = 0;
       b.dropping = false;
       b.goal = chooseBotGoal(b);
@@ -18123,7 +18315,7 @@ function updateBot(b, dt) {
     if (b.knock.lengthSq() < 1.5) b.knock = null;
   }
   b.pos.y = groundHeightAt(b.pos.x, b.pos.z, b.pos.y);
-  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && b.pos.y < WATER_Y - 0.35) b.pos.y = WATER_Y - 0.35;
+  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && b.pos.y < waterSurfaceAt(b.pos.x, b.pos.z) - SWIM_SURF) b.pos.y = waterSurfaceAt(b.pos.x, b.pos.z) - SWIM_SURF;
 
   const r = Math.hypot(b.pos.x, b.pos.z);
   if (r > 320) { b.pos.x *= 320 / r; b.pos.z *= 320 / r; }
@@ -18162,7 +18354,7 @@ function updateBotCrawl(b, dt) {
   b.pos.z += moveZ * 1.5 * dt;
   resolveCollisions(b.pos, b.pos.y, 0.45, 1.7);
   b.pos.y = groundHeightAt(b.pos.x, b.pos.z, b.pos.y);
-  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && b.pos.y < WATER_Y - 0.35) b.pos.y = WATER_Y - 0.35;
+  if (waterDepthAt(b.pos.x, b.pos.z) > 1.15 && b.pos.y < waterSurfaceAt(b.pos.x, b.pos.z) - SWIM_SURF) b.pos.y = waterSurfaceAt(b.pos.x, b.pos.z) - SWIM_SURF;
   if (b.rig) {
     b.rig.group.position.copy(b.pos);
     b.rig.group.rotation.y = b.yaw;
@@ -19544,8 +19736,8 @@ function updateDrop(dt) {
   if (r > 305) { p.x *= 305 / r; p.z *= 305 / r; }
 
   // water breaks the fall: you splash and swim, you do not stand on the floor
-  if (p.y <= WATER_Y - 0.45 && waterDepthAt(p.x, p.z) > 1.2) {
-    p.y = WATER_Y - 0.35;
+  if (p.y <= waterSurfaceAt(p.x, p.z) - 0.45 && waterDepthAt(p.x, p.z) > 1.2) {
+    p.y = waterSurfaceAt(p.x, p.z) - SWIM_SURF;
     player.vel.set(0, 0, 0);
     player.dropping = false;
     player.onGround = false;
@@ -19668,7 +19860,7 @@ function updatePlayer(dt) {
   if (adminOn('speed')) speed *= 2.4;
   if (hasBoon('boots')) speed *= 1.12;
   // in water you swim: slow, low, and no sprint
-  player.swimming = player.pos.y < WATER_Y + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
+  player.swimming = player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
   if (player.swimming) speed = 5.2;
 
   const moving = (mx !== 0 || mz !== 0);
@@ -19742,14 +19934,45 @@ function updatePlayer(dt) {
 
   // deep water floats you at the surface instead of the sea floor
   const swimDepth = waterDepthAt(player.pos.x, player.pos.z);
-  player.swimming = swimDepth > 1.15 && player.pos.y < WATER_Y + 0.1;
+  player.swimming = swimDepth > 1.15 && player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.1;
   if (player.swimming) {
-    const surf = WATER_Y - 0.35;
+    const surf = waterSurfaceAt(player.pos.x, player.pos.z) - SWIM_SURF;
     if (player.pos.y < surf) {
       player.pos.y = Math.min(surf, player.pos.y + Math.max(1.8, -player.vel.y) * dt * 1.5);
       player.vel.y = 0;
     }
     player.onGround = false;
+
+    // Season 10: the channels move, and some of them want you under.
+    const cur = inCurrent(player.pos.x, player.pos.z);
+    if (cur) {
+      const push = cur.keep * cur.band.force * dt;
+      const nx = player.pos.x + cur.band.dx * push;
+      const nz = player.pos.z + cur.band.dz * push;
+      if (waterDepthAt(nx, nz) > 1.0) { player.pos.x = nx; player.pos.z = nz; }
+      if (player.currentName !== cur.band.name) {
+        player.currentName = cur.band.name;
+        toast(cur.band.name, 'sub');
+      }
+    } else {
+      player.currentName = null;
+    }
+
+    const uw = inUndertow(player.pos.x, player.pos.z);
+    if (uw) {
+      if (player.undertowName !== uw.name) {
+        player.undertowName = uw.name;
+        toast('CAUGHT IN ' + uw.name + ' · SWIM CLEAR', 'sub');
+      }
+      // it pulls you under and it bites while it has you
+      player.pos.y = Math.max(terrainHeight(player.pos.x, player.pos.z) + 0.2, player.pos.y - 3.2 * dt);
+      hurtPlayer(uw.dps * dt, 'The Undertow', true);
+    } else {
+      player.undertowName = null;
+    }
+  } else {
+    player.currentName = null;
+    player.undertowName = null;
   }
 
   // Soft world edge: the shoreline is walkable, only the deep ocean stops you.
@@ -20588,7 +20811,12 @@ function updateHUD() {
             interactTarget = { type: 'dig', obj: dig };
             promptText = '<b>E</b> DIG FOR A SPRITE';
           } else {
-            const l = nearestLoot(3.2);
+            const levee = nearestLeveeSpot();
+            if (levee) {
+              interactTarget = { type: 'levee', obj: levee };
+              promptText = '<b>E</b> RAISE LEVEE · ' + LEVEE_COST + ' WOOD';
+            } else {
+              const l = nearestLoot(3.2);
             if (l) {
               interactTarget = { type: 'loot', obj: l };
               const nm = l.item.kind === 'weapon' ? RARITY[l.item.rarity].name + ' ' + WEAPONS[l.item.type].name
@@ -21015,6 +21243,7 @@ function interact() {
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
     else if (interactTarget.type === 'extract') interactWithSite(interactTarget.obj);
     else if (interactTarget.type === 'vending') openVending(interactTarget.obj);
+    else if (interactTarget.type === 'levee') raiseLevee(interactTarget.obj);
     return;
   }
   const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
@@ -21025,6 +21254,8 @@ function interact() {
   if (chest) { openChest(chest); return; }
   const vm = nearestVending(player.pos, 3.4);
   if (vm) { buyVending(vm); return; }
+  const levee = nearestLeveeSpot();
+  if (levee) { raiseLevee(levee); return; }
   const l = nearestLoot(3.2);
   if (l) pickupLoot(l);
 }
@@ -21559,6 +21790,8 @@ function startMatch() {
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
   resetStorm();
+  setTideForMatch();
+  placeWaterFeatures();
   resetPlayerForMatch();
   player.pocketType = profile.pocket || 'shock';
   player.pocketCd = 0;
@@ -22027,20 +22260,22 @@ function setMode(m) {
   refreshRank();
 }
 
-/* ---------------- versioning ----------------
-   MAJOR . MINOR . PATCH — this is the official build now.
-   MAJOR is the season number: Season 9 ships on 9.x, and 9.0.0 is the launch.
-   - minor goes up for a big update (9.0.0 -> 9.1.0)
-   - patch goes up for a small one (9.0.0 -> 9.0.1)
-   The numbers are plain and never roll over: 9.9.0 is followed by 9.10.0.
+/* ---------------- versioning: SEASON . RELEASE PT ----------------
+   This is the Season 10 playtest build, not the live game.
+   - the first number is the season, so every Season 10 build reads 10.xxPT
+   - the second is the playtest release and it moves on every change, big or
+     small: 10.01PT, 10.02PT, and straight on past 10.99PT to 10.100PT
+   - the PT suffix is what separates this build from the official game. A PT
+     build is never locked: the launch gate only holds the official build.
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 0, patch: 0 };
-const VERSION_PREV = '8.4.9';
+const VERSION = { season: 10, release: 1 };
+const VERSION_PREV = '9.0.0';
 
 function versionString() {
-  return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
+  const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
+  return VERSION.season + '.' + rel + 'PT';
 }
 
 function setVersionUI() {
@@ -22051,8 +22286,7 @@ function setVersionUI() {
   const hist = document.getElementById('wnHist');
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
-  if (lvl) lvl.textContent = (VERSION.minor === 0 && VERSION.patch === 0) ? 'SEASON LAUNCH'
-    : VERSION.patch === 0 ? 'MAJOR UPDATE' : 'SMALL UPDATE';
+  if (lvl) lvl.textContent = 'PLAYTEST UPDATE';
 }
 
 /* ---------------- launch gate ----------------
@@ -22063,7 +22297,13 @@ function setVersionUI() {
 const LAUNCH_AT = new Date('2026-11-23T08:30:00-08:00').getTime();
 
 function launchMsLeft() { return LAUNCH_AT - Date.now(); }
-function seasonIsClosed() { return launchMsLeft() > 0; }   // locked before launch
+
+/* The gate holds the official build until Season 9's doors open. A playtest
+   build carries the PT suffix and is never held: it exists to be played now. */
+function seasonIsClosed() {
+  if (versionString().indexOf('PT') >= 0) return false;
+  return launchMsLeft() > 0;
+}
 
 function fmtCountdown(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -22076,6 +22316,15 @@ function fmtCountdown(ms) {
 }
 
 function updateSeasonTimer() {
+  // a playtest build never counts down to anything: it is here to be played
+  if (versionString().indexOf('PT') >= 0) {
+    const tag = document.getElementById('seasonTimer');
+    if (tag && tag.dataset.pt !== '1') {
+      tag.dataset.pt = '1';
+      tag.innerHTML = 'SEASON 10 · PLAYTEST BUILD';
+    }
+    return;
+  }
   const ms = launchMsLeft();
   const clock = document.getElementById('scClock');
   if (clock) clock.textContent = ms > 0 ? fmtCountdown(ms) : 'THE DOORS ARE OPEN';
@@ -24133,6 +24382,7 @@ function animate(now) {
   }
 
   state.time += dt;
+  updateTide(dt);
 
   if (state.phase === 'staging' && state.time >= state.stageEnd) startBus();
   if (bus) updateBus(dt);
