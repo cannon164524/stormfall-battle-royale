@@ -8365,6 +8365,83 @@ body.ui10 #menu .seatLabel {
 #contractList .ctBar { display:block; width:52px; height:3px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; }
 #contractList .ctBar b { display:block; height:100%; background:var(--ui-accent); }
 #contractList .ctDone { font-size:8px; font-style:normal; font-weight:700; letter-spacing:.1em; color:var(--ui-mint); }
+
+/* ---------------- playtest notes sheet ---------------- */
+body.ui10 #devNotesBtn {
+  border-radius:999px; background:#161d2a; border:1px solid var(--ui-line);
+  color:var(--ui-ink-2); font-family:var(--body); font-weight:700;
+  font-size:9px; letter-spacing:.12em; padding:7px 13px; clip-path:none;
+}
+body.ui10 #devNotesBtn:hover { color:var(--ui-ink); border-color:var(--ui-line-2); }
+#devNotesPanel {
+  position:fixed; inset:0; z-index:210;
+  display:flex; align-items:center; justify-content:center;
+  padding:16px;
+  background:#04070ce8;
+}
+#devNotesPanel.hide { display:none; }
+#devNotesPanel .dnCard {
+  width:min(760px,100%); max-height:88vh;
+  display:flex; flex-direction:column;
+  border:1px solid var(--ui-line-2, rgba(255,255,255,.13));
+  border-radius:24px; background:#10151f;
+  box-shadow:0 30px 70px -30px #000;
+  overflow:hidden;
+}
+#devNotesPanel .dnTop {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+  padding:18px 20px 14px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+#devNotesPanel .dnTitle {
+  font-family:'Sora',system-ui,sans-serif; font-weight:800;
+  font-size:22px; letter-spacing:-.02em; color:#f2f5fa; line-height:1;
+}
+#devNotesPanel .dnSub {
+  margin-top:7px; font-family:'Inter',system-ui,sans-serif;
+  font-size:8.5px; font-weight:700; letter-spacing:.14em; color:#5f6981;
+}
+#devNotesPanel .dnVer { text-align:right; flex:0 0 auto; }
+#devNotesPanel .dnVer b {
+  display:block; font-family:'Sora',system-ui,sans-serif; font-weight:700;
+  font-size:12px; color:#5fe3d0;
+}
+#devNotesPanel .dnVer span {
+  display:block; margin-top:4px; font-family:'Inter',system-ui,sans-serif;
+  font-size:7.5px; font-weight:700; letter-spacing:.1em; color:#5f6981;
+}
+#devNotesPanel .dnBody {
+  flex:1 1 auto; min-height:0; overflow-y:auto;
+  padding:16px 20px 20px;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.24) transparent;
+}
+#devNotesPanel .dnH {
+  margin:16px 0 7px; font-family:'Inter',system-ui,sans-serif;
+  font-size:9px; font-weight:700; letter-spacing:.16em; color:#5fe3d0;
+}
+#devNotesPanel .dnH:first-child { margin-top:0; }
+#devNotesPanel .dnP {
+  margin:0 0 8px; font-family:'Inter',system-ui,sans-serif;
+  font-size:11.5px; line-height:1.55; color:#9aa6b8;
+}
+#devNotesPanel ul { margin:0 0 6px; padding-left:16px; }
+#devNotesPanel li {
+  margin:0 0 6px; font-family:'Inter',system-ui,sans-serif;
+  font-size:11.5px; line-height:1.5; color:#9aa6b8;
+}
+#devNotesPanel li b { color:#f2f5fa; font-weight:600; }
+#devNotesPanel #dnClose {
+  margin:0 20px 18px; padding:12px 0;
+  border:0; border-radius:999px; background:#5fe3d0; color:#04221e;
+  font-family:'Sora',system-ui,sans-serif; font-weight:700;
+  font-size:11px; letter-spacing:.12em;
+}
+@media (max-width:560px) {
+  #devNotesPanel .dnTitle { font-size:18px; }
+  #devNotesPanel .dnTop { padding:14px 14px 12px; }
+  #devNotesPanel .dnBody { padding:12px 14px 16px; }
+  #devNotesPanel #dnClose { margin:0 14px 14px; }
+}
 body.ui10 #menu .modChip,
 body.ui10 #menu .pocketOpt {
   border-radius:999px; background:#161d2a; border:1px solid var(--ui-line);
@@ -8944,6 +9021,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="cashTag"><i class="cashCoin">$</i><b id="cashAmount">0</b></div>
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
+      <button id="devNotesBtn" type="button" title="Season 10 playtest notes">NOTES</button>
       <button id="adminEntry">ADMIN</button>
       <div class="verTag" id="verTag">v9.0.0</div>
     </div>
@@ -9689,18 +9767,34 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 10 PLAYTEST</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.05PT</b>
+        <b id="wnVersion">v10.06PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.04PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.05PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SPRITE EVOLUTIONS</b> — a sprite that reaches level five evolves, and from then on it earns a quarter more XP than a young one.</div></li>
-      <li><span class="wnTag">02</span><div><b>CONTRACTS</b> — three a day, in the lobby: twenty eliminations, five matches seen out, one crown. Finishing one pays battle pass XP.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE KILL CAM</b> — the world drops to a crawl as you go down, then eases back in a beat and a half.</div></li>
+      <li><span class="wnTag">01</span><div><b>PLAYTEST NOTES, IN THE BUILD</b> — a NOTES button in the top bar opens the Season 10 log: what each release added, what is only half done, and the three bugs nobody has touched. The scratchpad file cannot be read from the page, so the build carries its own copy.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
+  </div>
+</div>
+
+<!-- ========================== PLAYTEST NOTES ========================== -->
+<div id="devNotesPanel" class="hide" role="dialog" aria-modal="true" aria-labelledby="dnTitle">
+  <div class="dnCard">
+    <div class="dnTop">
+      <div>
+        <div class="dnTitle" id="dnTitle">PLAYTEST NOTES</div>
+        <div class="dnSub">STORMFALL · SEASON 10 · WHAT WAS BUILT AND WHAT IS NOT TRUSTED</div>
+      </div>
+      <div class="dnVer">
+        <b id="dnVersion">v10.06PT</b>
+        <span>SIXTEEN PROPOSED · ALL BUILT · FOUR IN PART</span>
+      </div>
+    </div>
+    <div class="dnBody" id="dnBody"></div>
+    <button id="dnClose" type="button">CLOSE</button>
   </div>
 </div>
 
@@ -14693,6 +14787,131 @@ function renderContracts() {
   }
   el.innerHTML = html;
 }
+
+/* ---------------- playtest notes ----------------
+   The Season 10 log lives in /scratchpad/season-10.md, which is outside the
+   repository and is never published, so the page cannot read it: this is the
+   copy the build carries. Keep the two in step by hand. */
+const DEV_NOTES = [
+  {
+    h: 'WHAT THIS BUILD IS',
+    p: 'Season 10 playtest, branch season-10, sixteen features built across five releases from 10.01PT to 10.05PT. The official build on main is untouched: it is still 9.0.0 behind its Monday 08:30 PST gate.',
+  },
+  {
+    h: 'RULES THAT STILL HOLD',
+    li: [
+      'One file: index.html. No build step, no dependencies, no external models, textures or audio.',
+      'A build carrying the PT suffix is never gated, so this one is playable while the official build stays locked.',
+      'Weapon stats still come from the shared Gist. <b>Nothing Season 10 adds may be released through that Gist</b> — a second Gist and a new WEAPON_STATS_URL comes first.',
+      'Sign-in is still shared Supabase and still broken. It was left alone.',
+    ],
+  },
+  {
+    h: '10.01PT — THE SEA MOVES',
+    li: [
+      '<b>Tide</b> — the sea climbs to +2.4 m over about four minutes. Off in Blitz, Rumble, Gun Game, Sandbox, OG and Aim Test.',
+      '<b>Currents</b> — three bands in open water push swimmers and drift unmanned boats.',
+      '<b>Undertow</b> — three holes pull you down and deal 9 damage a second until you swim clear.',
+      '<b>The levee</b> — 60 wood, raised with E beside deep water, holds the tide out of a 14 m circle.',
+    ],
+  },
+  {
+    h: '10.02PT — GETTING ABOUT',
+    li: [
+      '<b>Three hulls</b> — skiff 520 hp and fast, sloop 900, barge 1350 and slow.',
+      '<b>Passenger seat</b> — board a boat a bot is driving and ride in the stern with your gun out.',
+      '<b>Rival skippers</b> — a bot treading water will take a free hull out from under you.',
+      '<b>Bus routes</b> — NORTHERN, EASTERN or SOUTHERN, chosen in the lobby.',
+    ],
+  },
+  {
+    h: '10.03–10.04PT — LOOT AND MODES',
+    li: [
+      '<b>Deep chests</b> — hold E for 4.5 s; damage or drift breaks the channel. Two vault guns and a medallion.',
+      '<b>Medallion sets</b> — Tideheart + Storm Eye swim a third faster and shrug off the undertow; Hunter + Ironshell take another ten percent off.',
+      '<b>Salvage</b> — X over any dropped gun for wood, and a small chance of a boon.',
+      '<b>Tide Race</b> — no storm, the sea climbs nine metres, last dry foot wins.',
+      '<b>Riptide</b> — you start at the tiller with the storm already moving.',
+      '<b>Relic Run</b> — one relic on the coast; bank it at an extraction site to win outright.',
+    ],
+  },
+  {
+    h: '10.05PT — META',
+    li: [
+      '<b>Sprite evolutions</b> — level five marks a sprite evolved; it then earns a quarter more XP.',
+      '<b>Contracts</b> — three a day, paid in battle pass XP when you finish them.',
+      '<b>Kill cam</b> — the world drops to a crawl as you go down and eases back in a beat and a half.',
+    ],
+  },
+  {
+    h: 'NOT VERIFIED',
+    p: 'Nothing here has been run. The preview only proves the files were accepted, not that the page works. Load each new mode from the lobby and watch the tide before trusting any of it.',
+  },
+  {
+    h: 'IN PART, AND WHY',
+    li: [
+      '<b>Relic Run</b> — carrying the relic does not yet mark you on the minimap, although the mode text says it does.',
+      '<b>Riptide</b> — the lobby still fills with the normal bot count.',
+      '<b>The levee</b> — the tideline is exact in physics but the water plane stays flat, so a drained patch looks approximate.',
+      '<b>Kill cam</b> — slow motion only; the camera does not swing to your killer.',
+    ],
+  },
+  {
+    h: 'KNOWN BUGS, LEFT ALONE',
+    li: [
+      'setMode looks up #queueSub by id, but the element only has the class queueSub, so the description under the queue name never changes.',
+      'const SEASON is still 7 and is separate from VERSION.season, so the battle pass still thinks it is Season 7.',
+      'Several SEASON 7 strings remain in the shop, pass and MOTD copy.',
+    ],
+  },
+];
+
+function renderDevNotes() {
+  const body = document.getElementById('dnBody');
+  if (!body) return;
+  let html = '';
+  for (let i = 0; i < DEV_NOTES.length; i++) {
+    const sec = DEV_NOTES[i];
+    html += '<div class="dnH">' + sec.h + '</div>';
+    if (sec.p) html += '<p class="dnP">' + sec.p + '</p>';
+    if (sec.li) {
+      html += '<ul>';
+      for (let j = 0; j < sec.li.length; j++) html += '<li>' + sec.li[j] + '</li>';
+      html += '</ul>';
+    }
+  }
+  body.innerHTML = html;
+}
+
+function openDevNotes() {
+  renderDevNotes();
+  const v = document.getElementById('dnVersion');
+  if (v) v.textContent = 'v' + versionString();
+  const el = document.getElementById('devNotesPanel');
+  if (el) el.classList.remove('hide');
+  sfx('switch');
+}
+
+function closeDevNotes() {
+  const el = document.getElementById('devNotesPanel');
+  if (el) el.classList.add('hide');
+}
+
+const devNotesBtnEl = document.getElementById('devNotesBtn');
+if (devNotesBtnEl) devNotesBtnEl.addEventListener('click', openDevNotes);
+const dnCloseEl = document.getElementById('dnClose');
+if (dnCloseEl) dnCloseEl.addEventListener('click', closeDevNotes);
+const devNotesPanelEl = document.getElementById('devNotesPanel');
+if (devNotesPanelEl) {
+  devNotesPanelEl.addEventListener('click', (e) => {
+    if (e.target === devNotesPanelEl) closeDevNotes();
+  });
+}
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Escape') return;
+  const el = document.getElementById('devNotesPanel');
+  if (el && !el.classList.contains('hide')) { closeDevNotes(); e.preventDefault(); }
+});
 
 /* Keeps max health honest when a Sprite with the health power comes or goes. */
 function refreshSpriteHealth() {
@@ -22663,8 +22882,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 5 };
-const VERSION_PREV = '10.04PT';
+const VERSION = { season: 10, release: 6 };
+const VERSION_PREV = '10.05PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
