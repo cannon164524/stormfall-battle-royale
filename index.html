@@ -8854,7 +8854,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <div class="menuTop">
     <div class="brand">
       <div class="logo">STORMFALL</div>
-      <div class="tagline">SEASON <b>9</b></div>
+      <div class="tagline">SEASON <b>10</b></div>
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="play">PLAY</button>
@@ -8871,7 +8871,8 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
-      <div class="verTag" id="verTag">v9.0.0</div>
+      <div class="ptTag" id="ptTag">PLAYTEST</div>
+      <div class="verTag" id="verTag">v10.01PT</div>
     </div>
   </div>
 
@@ -8880,7 +8881,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="heroGlow"></div>
       <div class="heroFig" id="lobbyHeroFig"></div>
       <div class="heroMeta">
-        <span class="heroKicker">SEASON 9 PLAYTEST</span>
+        <span class="heroKicker" id="heroKicker">SEASON 10 PLAYTEST</span>
         <div class="heroName" id="lobbyHeroName">SPRITE RUNNER</div>
         <span class="heroTag">DROWNED COAST</span>
       </div>
@@ -8897,7 +8898,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
     </div>
     <div class="modeRow" id="modeRowEl">
       <div class="mpkHead">
-        <span class="mpkTitle">ALL GAME MODES</span>
+        <span class="mpkTitle">ALL GAME MODES<span class="ptTag">PLAYTEST</span></span>
         <button id="modesClose" type="button">CLOSE</button>
       </div>
       <div class="modeGroup">
@@ -9089,17 +9090,17 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <div class="queueMode" id="queueMode">SOLO — <span id="queueBots">24</span> OPPONENTS</div>
       <div class="queueSub" id="queueSub">Survive the storm. Take the crown.</div>
     </div>
-    <div class="seasonTimer" id="seasonTimer">SEASON 9 STARTS IN <b>—</b></div>
+    <div class="seasonTimer" id="seasonTimer">SEASON 10 PLAYTEST</div>
     <button id="playBtn">DEPLOY</button>
   </div>
 
   <section id="panelShop" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">STORE</div>
+        <div class="mpKicker">STORE<span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">ITEM SHOP</div>
       </div>
-      <div class="mpMeta">SEASON 9 · DROWNED COAST</div>
+      <div class="mpMeta">SEASON 10 · DROWNED COAST</div>
     </div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
@@ -9120,7 +9121,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <section id="panelPass" class="menuPanel hide">
     <div class="mpHead">
       <div>
-        <div class="mpKicker">SEASON 9</div>
+        <div class="mpKicker">SEASON 10<span class="ptTag">PLAYTEST</span></div>
         <div class="mpTitle">BATTLE PASS</div>
       </div>
       <div class="passState" id="passState">NOT OWNED</div>
@@ -9579,18 +9580,19 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   <div class="wnCard">
     <div class="wnTop">
       <div>
-        <div class="wnTitle">WHAT'S NEW</div>
-        <div class="wnSub">STORMFALL · SEASON 9</div>
+        <div class="wnTitle">PLAYTEST UPDATES</div>
+        <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.5.1</b>
-        <span id="wnLevel">SMALL UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.5.0</div>
+        <b id="wnVersion">v10.01PT</b>
+        <span id="wnLevel">PLAYTEST OPEN</span>
+        <div class="wnHist" id="wnHist">FROM v10.0.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE LAST FOE, FIXED</b> — the pointer rides the edge of the screen instead of a small box on the crosshair, the marker over them floats above the head and no longer keeps the angle it last pointed, and both clear when the duel ends, so a fresh match cannot point at a body that is gone.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE PLAYTEST SIGNS ITSELF AGAIN</b> — the build reads v10.01PT: the PLAYTEST mark is back beside the version in the top bar, both menu headers carry it, the hero says Season 10, and the notes card is PLAYTEST UPDATES again.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE SEA MOVES</b> — the water is a level now. It climbs through the match to 2.4 m, and the low causeways go under as it comes in. A playtest build is never gated, so this one is playable now.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -22342,20 +22344,26 @@ function setMode(m) {
 }
 
 /* ---------------- versioning ----------------
-   MAJOR . MINOR . PATCH — this is the official build now.
-   MAJOR is the season number: Season 9 ships on 9.x, and 9.0.0 is the launch.
-   - minor goes up for a big update (9.0.0 -> 9.1.0)
-   - patch goes up for a small one (9.0.0 -> 9.0.1)
-   The numbers are plain and never roll over: 9.9.0 is followed by 9.10.0.
+   SEASON . RELEASE PT — this is a playtest build, not the official one.
+   - season is the season number: everything Season 10 ships reads 10.x
+   - release moves on EVERY change, major or minor, padded to two digits, and
+     counts past 9.99 rather than rolling over: 10.09PT is followed by 10.10PT.
+   A build carrying the PT suffix is never gated: seasonIsClosed() returns
+   false for it, so the playtest is playable while the official build waits.
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 10, minor: 0, patch: 0 };
-const VERSION_PREV = '9.5.1';
+const VERSION = { season: 10, release: 1 };
+const VERSION_PREV = '10.0.0';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
+function releaseString() {
+  return VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
+}
+
 function versionString() {
-  return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
+  const s = VERSION.season + '.' + releaseString();
+  return IS_PLAYTEST ? s + 'PT' : s;
 }
 
 function setVersionUI() {
@@ -22366,8 +22374,9 @@ function setVersionUI() {
   const hist = document.getElementById('wnHist');
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
-  if (lvl) lvl.textContent = (VERSION.minor === 0 && VERSION.patch === 0) ? 'SEASON LAUNCH'
-    : VERSION.patch === 0 ? 'MAJOR UPDATE' : 'SMALL UPDATE';
+  if (lvl) lvl.textContent = VERSION.release === 1 ? 'PLAYTEST OPEN' : 'PLAYTEST UPDATE';
+  const kicker = document.getElementById('heroKicker');
+  if (kicker) kicker.textContent = 'SEASON ' + VERSION.season + ' PLAYTEST';
 }
 
 /* ---------------- launch gate ----------------
@@ -22404,6 +22413,19 @@ function fmtShort(ms) {
 }
 
 function updateSeasonTimer() {
+  // A playtest build is never gated, so the line over DEPLOY names the build
+  // rather than counting down to a launch that has already happened.
+  if (IS_PLAYTEST) {
+    const line = document.getElementById('seasonTimer');
+    if (line) {
+      const text = 'SEASON ' + VERSION.season + ' PLAYTEST · <b>v' + versionString() + '</b>';
+      if (line.dataset.t !== text) {
+        line.dataset.t = text;
+        line.innerHTML = text;
+      }
+    }
+    return;
+  }
   const opens = launchMsLeft();
   const closes = closeMsLeft();
   const ended = closes <= 0;
@@ -25900,10 +25922,10 @@ function boot() {
    Schema: { id, tag, title, body, link, linkText, minVersion, maxVersion }. */
 const MOTD_URL = 'https://gist.githubusercontent.com/cannon164524/53e30ebd0b724394a72dd6729b454936/raw/announcement.json';
 const MOTD_DEFAULT = {
-  id: 's9-drowned-coast',
+  id: 's10-the-sea-moves',
   tag: 'MESSAGE OF THE DAY',
-  title: 'THE DROWNED COAST',
-  body: 'The sea took the old coast. Five islands are all that is left, with open water between them and a swim in every rotation. Line up on the new water arsenal and watch the chests: one in twenty hides a deep pearl, and only a win with it in your boons pays out the whole item shop.',
+  title: 'SEASON 10 · THE SEA MOVES',
+  body: 'The water is a level now. It climbs through a match, the causeways go under, and the low road becomes a swim. This is the Season 10 playtest build: nothing here is final, and every release is listed on the notes card at boot.',
   link: ''
 };
 const MOTD_CACHE_KEY = 'stormfall.motd.last';
