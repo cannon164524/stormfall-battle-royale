@@ -5419,7 +5419,7 @@ body.perf #againBtn, body.perf #playAgainBtn, body.perf #rrClose, body.perf .rev
   background:var(--hudLime);
 }
 #modeBadge::after {
-  content:'S6'; margin-left:2px; padding-left:9px;
+  content:var(--seasonTag, 'S10'); margin-left:2px; padding-left:9px;
   border-left:1px solid var(--hudLine);
   color:var(--hudDim); letter-spacing:.16em;
 }
@@ -8889,7 +8889,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.03PT</div>
+      <div class="verTag" id="verTag">v10.04PT</div>
     </div>
   </div>
 
@@ -9609,17 +9609,16 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.03PT</b>
+        <b id="wnVersion">v10.04PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.02PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.03PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THREE HULLS</b> — a <b>SKIFF</b> (520, quickest), a <b>SLOOP</b> (900), and a <b>BARGE</b> (1350, slowest and the most room). Every boat parked around the islands is now one of the three.</div></li>
-      <li><span class="wnTag">02</span><div><b>RIDE ALONG</b> — <b>E</b> on a hull a bot is steering and you stand in the stern, hands free: you can fire from there, and <b>E</b> gets you off without taking the wheel off the skipper.</div></li>
-      <li><span class="wnTag">03</span><div><b>RIVAL SKIPPERS</b> — bots go for a hull from 15 m now, not 9, and say so when one is taken near you.</div></li>
-      <li><span class="wnTag">04</span><div><b>BUS LINES</b> — pick NORTHERN, EASTERN or SOUTHERN in the lobby and the bus crosses on that line; ANY keeps the old random crossing.</div></li>
+      <li><span class="wnTag">01</span><div><b>DEEP CHESTS</b> — five coral-framed chests sitting on the sea floor where the water is over three metres. <b>HOLD E</b> for 4.5 s: moving, taking a hit or swimming off loses it, and it pays the ordinary table plus two vault guns and a medallion.</div></li>
+      <li><span class="wnTag">02</span><div><b>MEDALLION SETS</b> — wear both halves and the pair pays on top of each one. <b>TIDE</b> (Tideheart + Storm Eye): swim 30% faster and take no undertow damage. <b>HUNT</b> (Hunter + Ironshell): 10% off everything that hits you.</div></li>
+      <li><span class="wnTag">03</span><div><b>SALVAGE</b> — <b>X</b> over a gun on the ground breaks it down for wood, more the rarer it is, and one in eight gives up a boon instead. The bind is in SETTINGS.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10292,7 +10291,8 @@ function updateSeaMotion(dt) {
   player.undertow = (player.undertow || 0) + dt;
   if (player.undertow >= 0.5) {
     player.undertow = 0;
-    hurtPlayer(4.5, 'The Undertow', false, pos.clone());
+    // the tide set wears both halves of the sea: it pays no undertow damage
+    if (!hasSet('tide')) hurtPlayer(4.5, 'The Undertow', false, pos.clone());
   }
 }
 
@@ -12054,35 +12054,38 @@ function buyVending(vm, index) {
   toast('BOUGHT ' + (RARITY[slot.rarity].name + ' ' + WEAPONS[slot.type].name).toUpperCase(), 'sub');
 }
 
-function addChest(x, z, y) {
+/* A chest on the shore, or a deep one on the sea floor: coral-framed, a size
+   up, and opened on a held channel rather than at a touch. */
+function addChest(x, z, y, deep) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(0x17242b, true));
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.7, 0.95), mat(deep ? 0x3a2417 : 0x17242b, true));
   body.position.y = 0.35;
   body.castShadow = true;
   g.add(body);
 
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.28, 1.0), mat(0x24444c, true));
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.28, 1.0), mat(deep ? 0x71401f : 0x24444c, true));
   lid.position.set(0, 0.76, 0);
   lid.castShadow = true;
   g.add(lid);
 
   const glow = new THREE.Mesh(
     new THREE.BoxGeometry(1.3, 0.04, 0.8),
-    new THREE.MeshBasicMaterial({ color: 0x6dffd8, transparent: true, opacity: 0.9 })
+    new THREE.MeshBasicMaterial({ color: deep ? 0xffa45c : 0x6dffd8, transparent: true, opacity: 0.9 })
   );
   glow.position.y = 0.74;
   g.add(glow);
 
   const beam = new THREE.Mesh(
     new THREE.CylinderGeometry(0.35, 0.55, 6, 8, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0x4ff0d0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide })
+    new THREE.MeshBasicMaterial({ color: deep ? 0xff8a4d : 0x4ff0d0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide })
   );
   beam.position.y = 3.2;
   g.add(beam);
 
+  if (deep) g.scale.setScalar(1.4);
   g.position.set(x, y, z);
   propsGroup.add(g);
-  chests.push({ x, z, y, opened: false, mesh: g, lid, glow, beam });
+  chests.push({ x, z, y, deep: !!deep, opened: false, mesh: g, lid, glow, beam });
 }
 
 /* ---- world placement: buildings claim their real footprint so nothing
@@ -12256,6 +12259,21 @@ function populateWorld() {
     const y = terrainHeight(x, z);
     if (y < 2) continue;
     addChest(x, z, y);
+  }
+
+  // Five deep chests on the sea floor, where the water is over three metres:
+  // the sea took them with the coast, and they pay for the swim.
+  if (!isOG()) {
+    for (let i = 0, placed = 0; i < 120 && placed < 5; i++) {
+      const ang = rng() * TAU;
+      const rad = 45 + rng() * 215;
+      const x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+      const y = terrainHeight(x, z);
+      if (WATER_Y - y < 3) continue;
+      if (Math.hypot(x, z) > 300) continue;
+      addChest(x, z, y, true);
+      placed++;
+    }
   }
 
   if (isKnockMode()) buildRebootVans();
@@ -14725,6 +14743,19 @@ const BOON_TYPES = ['radar', 'regen', 'boots', 'plate', 'scav', 'synth'];
 /* Medallions never roll either: a boss leaves one behind when it falls. */
 const MEDALLIONS = ['med_tide', 'med_storm', 'med_hunt', 'med_shell'];
 
+/* Two medallions that only pay when you wear both of them. */
+const MEDAL_SETS = {
+  tide: { name: 'TIDE SET', needs: ['med_tide', 'med_storm'], desc: 'SWIM FASTER · NO UNDERTOW DAMAGE' },
+  hunt: { name: 'HUNT SET', needs: ['med_hunt', 'med_shell'], desc: '-10% DAMAGE TAKEN' },
+};
+
+function hasSet(id) {
+  const s = MEDAL_SETS[id];
+  if (!s) return false;
+  for (let i = 0; i < s.needs.length; i++) if (!hasBoon(s.needs[i])) return false;
+  return true;
+}
+
 function makeBoon(type) {
   const key = BOONS[type] ? type : 'radar';
   return { kind: 'boon', type: key, name: BOONS[key].name };
@@ -15962,6 +15993,38 @@ function nearestLoot(radius) {
   return best;
 }
 
+/* The nearest gun lying on the ground, for breaking down rather than taking. */
+function nearestGunLoot(radius) {
+  let best = null, bd = radius;
+  for (const l of loot) {
+    if (l.dead || !l.item || l.item.kind !== 'weapon') continue;
+    const d = Math.hypot(l.x - player.pos.x, l.z - player.pos.z);
+    if (d < bd && Math.abs(l.y - player.pos.y) < 3.5) { bd = d; best = l; }
+  }
+  return best;
+}
+
+/* X over a gun on the ground breaks it down: more wood the rarer it is, and
+   one in eight gives up a boon instead of a plank. */
+function salvageGun() {
+  if (state.phase !== 'play' || !player.alive) return;
+  if (player.dropping || player.knocked || player.driving || player.inBus) return;
+  const l = nearestGunLoot(3.2);
+  if (!l) { toast('NO GUN TO SALVAGE', 'sub'); sfx('reload'); return; }
+  const wood = Math.round((12 + (l.item.rarity || 0) * 14) * (hasBoon('scav') ? 1.5 : 1));
+  player.wood = Math.min(999, player.wood + wood);
+  let boon = '';
+  if (Math.random() < 0.12) {
+    const type = pick(BOON_TYPES);
+    if (addBoon(type)) boon = BOONS[type].name;
+  }
+  l.dead = true;
+  if (l.mesh && l.mesh.parent) l.mesh.parent.remove(l.mesh);
+  sfx('build');
+  toast('SALVAGED · +' + wood + ' WOOD' + (boon ? ' · ' + boon.toUpperCase() : ''), 'sub');
+  refreshHotbar();
+}
+
 function pickupLoot(l) {
   if (!l || l.dead) return;
   if (l.item.kind === 'token') {
@@ -16670,7 +16733,14 @@ function hurtPlayer(dmg, sourceName, fromStorm, fromPos) {
   let d = dmg;
   if (!fromStorm && hasBoon('plate')) d *= 0.85;
   if (!fromStorm && hasBoon('med_shell')) d *= 0.75;
+  // both halves of the hunt pay together on top of each medallion alone
+  if (!fromStorm && hasSet('hunt')) d *= 0.9;
   if (fromStorm && hasBoon('med_storm')) d *= 0.5;
+  // a hit taken while a deep chest is coming open loses it
+  if (player.channel && player.channel.type === 'deep') {
+    player.channel = null;
+    toast('DEEP CHEST LOST', 'sub');
+  }
   let shieldPart = 0;
   let healthPart = 0;
   // A fall is the ground, not a bullet: it takes health only and never shield,
@@ -20150,10 +20220,13 @@ function updatePlayer(dt) {
 
   if (player.channel) {
     const c = player.channel;
+    // a deep chest is opened where it lies: stepping away further than its
+    // own reach loses it
+    const range = c.type === 'deep' ? 1.7 : 4.5;
     const away = c.van ? Math.hypot(player.pos.x - c.van.x, player.pos.z - c.van.z) : 0;
-    if (input.fwd || input.right || input.jump || away > 4.5) {
+    if (input.fwd || input.right || input.jump || away > range) {
       player.channel = null;
-      toast('REBOOT CANCELLED', 'sub');
+      toast(c.type === 'deep' ? 'DEEP CHEST LOST' : 'REBOOT CANCELLED', 'sub');
     } else if (state.time >= c.end) {
       finishChannel();
     }
@@ -20201,7 +20274,7 @@ function updatePlayer(dt) {
   if (hasBoon('boots')) speed *= 1.12;
   // in water you swim: slow, low, and no sprint
   player.swimming = player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.15 && waterDepthAt(player.pos.x, player.pos.z) > 1.15;
-  if (player.swimming) speed = 5.2;
+  if (player.swimming) speed = 5.2 * (hasSet('tide') ? 1.3 : 1);
 
   const moving = (mx !== 0 || mz !== 0);
   const accel = player.onGround ? (moving ? 22 : 17) : 6.5;
@@ -20338,14 +20411,36 @@ function finishChannel() {
   if (!c) return;
   if (c.type === 'reboot') rebootMate();
   if (c.type === 'extract') extractSprite();
+  if (c.type === 'deep') openDeepChest(c.van);
 }
+
+const DEEP_CHANNEL_TIME = 4.5;
 
 function startChannel(type, van) {
   if (player.channel) return;
-  const dur = type === 'extract' ? EXTRACT_TIME : REBOOT_TIME;
+  const dur = type === 'extract' ? EXTRACT_TIME
+    : type === 'deep' ? DEEP_CHANNEL_TIME : REBOOT_TIME;
   player.channel = { type, van: van || null, start: state.time, end: state.time + dur };
   sfx('reload');
-  toast(type === 'extract' ? 'EXTRACTING SPRITE…' : 'REBOOTING MATE…', 'sub');
+  toast(type === 'extract' ? 'EXTRACTING SPRITE…'
+    : type === 'deep' ? 'OPENING A DEEP CHEST…' : 'REBOOTING MATE…', 'sub');
+}
+
+/* The sea pays more than the shore: the ordinary table, two vault guns and a
+   medallion, all out of the same chest. */
+function openDeepChest(c) {
+  if (!c || c.opened) return;
+  openChest(c);
+  const drops = [];
+  for (let i = 0; i < 2; i++) drops.push(makeWeapon(lootWeaponType(), R_ASCENDANT));
+  drops.push(makeBoon(pick(MEDALLIONS)));
+  for (let i = 0; i < drops.length; i++) {
+    const a = (i * TAU) / drops.length + Math.PI / 3;
+    spawnLoot(c.x + Math.cos(a) * 1.5, c.y + 0.6, c.z + Math.sin(a) * 1.5, drops[i]);
+  }
+  showRareFind(drops[drops.length - 1], 'DEEP CHEST', 'A MEDALLION OUT OF THE SEA FLOOR');
+  toast('DEEP CHEST OPENED · THE SEA PAYS', 'sub');
+  sfx('chest');
 }
 
 /* Banking a Sprite is what makes it permanent. Winning with one counts too. */
@@ -21224,8 +21319,15 @@ function updateHUD() {
       const chest = nearestChest(3.2);
       const shore = chest ? null : nearestLeveeSpot();
       if (chest) {
-        interactTarget = { type: 'chest', obj: chest };
-        promptText = '<b>E</b> OPEN CHEST';
+        interactTarget = { type: chest.deep ? 'deep' : 'chest', obj: chest };
+        if (chest.deep) {
+          const pct = (player.channel && player.channel.type === 'deep')
+            ? Math.round(clamp((player.channel.end - state.time) / DEEP_CHANNEL_TIME, 0, 1) * 100) + '%'
+            : '';
+          promptText = pct ? '<b>OPENING DEEP CHEST…</b> ' + pct : '<b>HOLD E</b> DEEP CHEST';
+        } else {
+          promptText = '<b>E</b> OPEN CHEST';
+        }
       } else if (shore) {
         interactTarget = { type: 'levee', obj: shore };
         promptText = player.wood >= LEVEE_COST
@@ -21605,6 +21707,7 @@ const KEY_ACTIONS = [
   { id: 'pocket', label: 'POCKET ITEM', def: 'KeyF' },
   { id: 'heal', label: 'QUICK HEAL', def: 'KeyH' },
   { id: 'drop', label: 'DROP ITEM', def: 'KeyG' },
+  { id: 'salvage', label: 'SALVAGE A GUN', def: 'KeyX' },
   { id: 'inventory', label: 'INVENTORY', def: 'KeyI' },
 ];
 let keyCapture = null;
@@ -21669,6 +21772,7 @@ function interact() {
   if (vendOpen) { closeVending(); return; }
   if (interactTarget) {
     if (interactTarget.type === 'chest') openChest(interactTarget.obj);
+    else if (interactTarget.type === 'deep') startChannel('deep', interactTarget.obj);
     else if (interactTarget.type === 'levee') raiseLevee(interactTarget.obj);
     else if (interactTarget.type === 'ride') boardAsPassenger(interactTarget.obj);
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
@@ -21683,7 +21787,10 @@ function interact() {
   const van = mateNeedsReboot() ? nearestVan(player.pos, 3.6) : null;
   if (van) { startChannel('reboot', van); return; }
   const chest = nearestChest(3.2);
-  if (chest) { openChest(chest); return; }
+  if (chest) {
+    if (chest.deep) startChannel('deep', chest); else openChest(chest);
+    return;
+  }
   const shore = nearestLeveeSpot();
   if (shore) { raiseLevee(shore); return; }
   const vm = nearestVending(player.pos, 3.4);
@@ -21792,6 +21899,7 @@ window.addEventListener('keydown', (e) => {
   if (act === 'reload') startReload();
   if (act === 'interact') interact();
   if (act === 'build') toggleBuild();
+  if (act === 'salvage') salvageGun();
 
   const digit = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'].indexOf(e.code);
   if (digit >= 0) {
@@ -22706,8 +22814,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 3 };
-const VERSION_PREV = '10.02PT';
+const VERSION = { season: 10, release: 4 };
+const VERSION_PREV = '10.03PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -22730,6 +22838,8 @@ function setVersionUI() {
   if (lvl) lvl.textContent = VERSION.release === 1 ? 'PLAYTEST OPEN' : 'PLAYTEST UPDATE';
   const kicker = document.getElementById('heroKicker');
   if (kicker) kicker.textContent = 'SEASON ' + VERSION.season + ' PLAYTEST';
+  // the season tag on the in-game mode badge reads the same number
+  document.body.style.setProperty('--seasonTag', '"S' + VERSION.season + '"');
 }
 
 /* ---------------- launch gate ----------------
