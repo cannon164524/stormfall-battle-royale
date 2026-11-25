@@ -8357,6 +8357,14 @@ body.ui10 #menu .seatLabel {
   font-family:var(--body); font-weight:700; font-size:10px;
   letter-spacing:.12em; color:var(--ui-ink-3);
 }
+/* contracts sit in the lobby column beside the bus routes */
+#contractList { display:flex; flex-direction:column; gap:6px; }
+#contractList .ctRow { display:flex; align-items:center; gap:8px; font-family:var(--body); }
+#contractList .ctName { flex:1 1 auto; font-size:10px; letter-spacing:.06em; color:var(--ui-ink-2); }
+#contractList .ctNum { font-size:10px; font-weight:700; color:var(--ui-ink); }
+#contractList .ctBar { display:block; width:52px; height:3px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; }
+#contractList .ctBar b { display:block; height:100%; background:var(--ui-accent); }
+#contractList .ctDone { font-size:8px; font-style:normal; font-weight:700; letter-spacing:.1em; color:var(--ui-mint); }
 body.ui10 #menu .modChip,
 body.ui10 #menu .pocketOpt {
   border-radius:999px; background:#161d2a; border:1px solid var(--ui-line);
@@ -9101,6 +9109,11 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         </div>
       </div>
 
+      <div class="seatPanel" id="contractPanel">
+        <div class="seatLabel">CONTRACTS · TODAY</div>
+        <div id="contractList"></div>
+      </div>
+
       <div class="seatPanel" id="busPanel">
         <div class="seatLabel">BUS ROUTE</div>
         <div class="pocketPick" id="busPick">
@@ -9676,16 +9689,16 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 10 PLAYTEST</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.04PT</b>
+        <b id="wnVersion">v10.05PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.03PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.04PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>TIDE RACE</b> — no storm at all. The sea climbs nine metres in the first two minutes, and whatever is left dry is where the match is decided.</div></li>
-      <li><span class="wnTag">02</span><div><b>RIPTIDE</b> — you spawn already at the tiller, the storm moves from the first second, and all the loot is out on the islets.</div></li>
-      <li><span class="wnTag">03</span><div><b>RELIC RUN</b> — one relic out on the coast. Take it and you are marked for everyone; carry it to an extraction site and hold it for five seconds to win outright.</div></li>
+      <li><span class="wnTag">01</span><div><b>SPRITE EVOLUTIONS</b> — a sprite that reaches level five evolves, and from then on it earns a quarter more XP than a young one.</div></li>
+      <li><span class="wnTag">02</span><div><b>CONTRACTS</b> — three a day, in the lobby: twenty eliminations, five matches seen out, one crown. Finishing one pays battle pass XP.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE KILL CAM</b> — the world drops to a crawl as you go down, then eases back in a beat and a half.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -14606,10 +14619,79 @@ function spriteGainXP(id, amount) {
   profile.sprites = profile.sprites || {};
   const rec = profile.sprites[id] || (profile.sprites[id] = { xp: 0 });
   const before = spriteLevel(id);
-  rec.xp = Math.max(0, (rec.xp || 0) + amount);
+  // an evolved sprite keeps learning a quarter faster than a young one
+  const gain = rec.evolved ? Math.round(amount * 1.25) : amount;
+  rec.xp = Math.max(0, (rec.xp || 0) + gain);
   const after = spriteLevel(id);
+  if (after >= 5 && !rec.evolved) {
+    rec.evolved = true;
+    saveProfile();
+    sfx('unlock');
+    toast(SPRITES[id].name.toUpperCase() + ' EVOLVED', 'IT LEARNS A QUARTER FASTER FROM HERE');
+    return;
+  }
   saveProfile();
   if (after > before && after === 5) toast(SPRITES[id].name.toUpperCase() + ' MASTERED', 'sub');
+}
+
+/* ---------------- contracts: three a day, counted at the end of a match ---- */
+const CONTRACT_DEFS = [
+  { id: 'kills', name: 'CUT DOWN 20', kind: 'kills', target: 20, xp: 90 },
+  { id: 'matches', name: 'SEE FIVE MATCHES OUT', kind: 'matches', target: 5, xp: 60 },
+  { id: 'wins', name: 'TAKE A CROWN', kind: 'wins', target: 1, xp: 150 },
+];
+
+function contractDay() { return Math.floor(Date.now() / 86400000); }
+
+function ensureContracts() {
+  const day = contractDay();
+  if (!profile.contracts || profile.contracts.day !== day) {
+    profile.contracts = {
+      day,
+      list: CONTRACT_DEFS.map((d) => ({ id: d.id, progress: 0, done: false })),
+    };
+    saveProfile();
+  }
+  return profile.contracts;
+}
+
+function progressContracts(kind, n) {
+  if (!n) return;
+  const box = ensureContracts();
+  let changed = false;
+  for (let i = 0; i < box.list.length; i++) {
+    const c = box.list[i];
+    if (c.done) continue;
+    const def = CONTRACT_DEFS[i];
+    if (!def || def.kind !== kind) continue;
+    c.progress = Math.min(def.target, c.progress + n);
+    if (c.progress >= def.target) {
+      c.done = true;
+      profile.bpXp = (profile.bpXp || 0) + def.xp;
+      toast('CONTRACT COMPLETE · ' + def.name, '+' + def.xp + ' BATTLE PASS XP');
+      sfx('purchase');
+    }
+    changed = true;
+  }
+  if (changed) { saveProfile(); renderContracts(); }
+}
+
+function renderContracts() {
+  const el = document.getElementById('contractList');
+  if (!el) return;
+  const box = ensureContracts();
+  let html = '';
+  for (let i = 0; i < box.list.length; i++) {
+    const c = box.list[i];
+    const def = CONTRACT_DEFS[i];
+    if (!def) continue;
+    const pct = Math.round((c.progress / def.target) * 100);
+    html += '<div class="ctRow"><span class="ctName">' + def.name + '</span>' +
+      '<span class="ctNum">' + c.progress + '/' + def.target + '</span>' +
+      '<i class="ctBar"><b style="width:' + pct + '%"></b></i>' +
+      (c.done ? '<em class="ctDone">DONE</em>' : '') + '</div>';
+  }
+  el.innerHTML = html;
 }
 
 /* Keeps max health honest when a Sprite with the health power comes or goes. */
@@ -14849,6 +14931,7 @@ function itemLabel(item) {
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
   if (item.kind === 'token') return 'Deep Pearl';
+  if (item.kind === 'relic') return 'The Relic';
   return 'Item';
 }
 function itemMeta(item) {
@@ -14862,6 +14945,7 @@ function itemMeta(item) {
   return '';
 }
 function itemColorHex(item) {
+  if (item && item.kind === 'relic') return 0xffd479;
   return parseInt(itemColor(item).slice(1), 16);
 }
 
@@ -15658,6 +15742,16 @@ const LOOT_MAX = 150;      // hard cap so a long match can never pile up models
 /* Real 3D models for floor loot instead of plain cubes. */
 function buildLootModel(item) {
   const g = new THREE.Group();
+
+  // the relic is drawn here rather than falling through to the default block
+  if (item.kind === 'relic') {
+    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.38, 0), mat(0xffd479, true));
+    g.add(core);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.03, 6, 24), mat(0xfff3cf, true));
+    ring.rotation.x = Math.PI / 2;
+    g.add(ring);
+    return g;
+  }
 
   if (item.kind === 'weapon') {
     const built = buildWeaponModel(item.type);
@@ -22258,6 +22352,11 @@ function endMatch(win, killerName) {
 
   const placement = placementNow(!!win);
 
+  // contracts count at the end of a match, so nothing has to be wired mid-fight
+  progressContracts('matches', 1);
+  progressContracts('kills', player.kills || 0);
+  if (win) progressContracts('wins', 1);
+
   let tourRes = null;
   if (state.tourneyId) {
     syncTourPlacement(placement);
@@ -22371,6 +22470,9 @@ function beginCine() {
 
 function startDeathCine(killerName, placement, total, rankRecap) {
   state.deathCine = true;
+  // the kill cam: the world drops to a crawl for a beat as you go down, and the
+  // existing ramp in animate() brings it back without a timer of its own
+  state.timeScale = 0.3;
   document.getElementById('dcTitle').textContent = 'ELIMINATED';
   document.getElementById('dcCrest').innerHTML = '';
   document.getElementById('dcConfetti').innerHTML = '';
@@ -22561,8 +22663,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 4 };
-const VERSION_PREV = '10.03PT';
+const VERSION = { season: 10, release: 5 };
+const VERSION_PREV = '10.04PT';
 
 function versionString() {
   const rel = VERSION.release < 10 ? '0' + VERSION.release : String(VERSION.release);
@@ -22578,6 +22680,8 @@ function setVersionUI() {
   if (hist) hist.textContent = 'FROM v' + VERSION_PREV;
   const lvl = document.getElementById('wnLevel');
   if (lvl) lvl.textContent = 'PLAYTEST UPDATE';
+  // the lobby may not exist yet the first time this runs
+  try { renderContracts(); } catch (e) { /* profile still loading */ }
 }
 
 /* ---------------- launch gate ----------------
