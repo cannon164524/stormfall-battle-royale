@@ -8633,6 +8633,23 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
    the magazine on a gun that reloads and the heat on the minigun. This sits at
    the end of the sheet so it wins over every pass that hid it. */
 #ammoGauge { display:block !important; }
+
+/* Season 10 · the bus lines, picked in the lobby. Flat, hairline, no radius:
+   one chip per authored crossing, and ANY keeps the old random one. */
+#routeRow {
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+  margin:9px auto 0; width:100%; max-width:600px;
+}
+#routeRow .routeLabel {
+  font-family:var(--body); font-size:8px; font-weight:800; letter-spacing:.2em;
+  color:var(--ink-dim); margin-right:2px;
+}
+#routeRow .routeChip {
+  font-family:var(--body); font-size:9px; font-weight:700; letter-spacing:.12em;
+  padding:5px 9px; color:var(--ink-dim); background:none;
+  border:1px solid var(--line); border-radius:0; cursor:pointer;
+}
+#routeRow .routeChip.on { color:#fff; border-color:var(--coral); }
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8872,7 +8889,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.01PT</div>
+      <div class="verTag" id="verTag">v10.03PT</div>
     </div>
   </div>
 
@@ -8997,6 +9014,14 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <b id="mbMode">BATTLE ROYALE</b>
       <span class="mbHint">CHANGE MODE</span>
     </button>
+
+    <div id="routeRow">
+      <span class="routeLabel">BUS LINE</span>
+      <button class="routeChip on" data-route="" type="button">ANY</button>
+      <button class="routeChip" data-route="north" type="button">NORTHERN</button>
+      <button class="routeChip" data-route="east" type="button">EASTERN</button>
+      <button class="routeChip" data-route="south" type="button">SOUTHERN</button>
+    </div>
 
     <div class="lobbyFoot">
       <div class="seatPanel" id="botSeatEl">
@@ -9584,16 +9609,17 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.02PT</b>
+        <b id="wnVersion">v10.03PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.01PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.02PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE SEA HAS CURRENTS</b> — three bands of moving water out in the open push a swimmer along and drift a hull nobody is driving. Swim across them, not with them.</div></li>
-      <li><span class="wnTag">02</span><div><b>UNDERTOW</b> — three holes in the sea floor hold you under and bill you 4.5 every half second. Get out of the ring, or do not swim in.</div></li>
-      <li><span class="wnTag">03</span><div><b>RAISE A LEVEE</b> — <b>E</b> on the water ahead of you costs 60 wood: ten posts go in and the tide is held out of a 14 m circle, so a low road stays walkable while the rest goes under. Four a match.</div></li>
+      <li><span class="wnTag">01</span><div><b>THREE HULLS</b> — a <b>SKIFF</b> (520, quickest), a <b>SLOOP</b> (900), and a <b>BARGE</b> (1350, slowest and the most room). Every boat parked around the islands is now one of the three.</div></li>
+      <li><span class="wnTag">02</span><div><b>RIDE ALONG</b> — <b>E</b> on a hull a bot is steering and you stand in the stern, hands free: you can fire from there, and <b>E</b> gets you off without taking the wheel off the skipper.</div></li>
+      <li><span class="wnTag">03</span><div><b>RIVAL SKIPPERS</b> — bots go for a hull from 15 m now, not 9, and say so when one is taken near you.</div></li>
+      <li><span class="wnTag">04</span><div><b>BUS LINES</b> — pick NORTHERN, EASTERN or SOUTHERN in the lobby and the bus crosses on that line; ANY keeps the old random crossing.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -12396,8 +12422,19 @@ const VEHICLE_TOP = 25;        // m/s, about 90 km/h before the boost
 const VEHICLE_BOOST = 31;
 const VEHICLE_REVERSE = 9;
 const VEHICLE_RAM_MIN = 6.5;   // under this the nose only bumps
-const VEHICLE_HP = 900;        // roughly thirty rifle rounds, or a stack of crashes
+const VEHICLE_HP = 900;        // the sloop's hull: the skiff and the barge carry their own
 const VEHICLE_SEATS = 6;       // how many are parked for a match
+/* =========================================================================
+   SEASON 10 · THREE HULLS
+   A light skiff, the sloop everything used to be, and a barge: the faster a
+   hull goes the less it takes, so which one you find where you land matters.
+   ========================================================================= */
+const HULL_TIERS = {
+  skiff: { name: 'SKIFF', hp: 520, top: 30, boost: 36, scale: 0.88 },
+  sloop: { name: 'SLOOP', hp: 900, top: 25, boost: 31, scale: 1 },
+  barge: { name: 'BARGE', hp: 1350, top: 19, boost: 24, scale: 1.16 },
+};
+const HULL_ROLL = ['skiff', 'skiff', 'sloop', 'sloop', 'sloop', 'barge'];
 
 function buildVehicle() {
   const g = new THREE.Group();
@@ -12449,8 +12486,11 @@ function buildVehicle() {
   return g;
 }
 
-function addVehicle(x, y, z, yaw) {
+function addVehicle(x, y, z, yaw, hull) {
+  const tierKey = HULL_TIERS[hull] ? hull : 'sloop';
+  const tier = HULL_TIERS[tierKey];
   const g = buildVehicle();
+  g.scale.setScalar(tier.scale);
   dynGroup.add(g);
   g.position.set(x, y, z);
   g.rotation.set(0, yaw, 0, 'YXZ');
@@ -12487,12 +12527,17 @@ function addVehicle(x, y, z, yaw) {
 
   const v = {
     group: g,
+    hull: tierKey,
+    tier,
     yaw,
     speed: 0,
     dir: new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)),
-    hp: VEHICLE_HP,
-    maxHp: VEHICLE_HP,
+    hp: tier.hp,
+    maxHp: tier.hp,
+    top: tier.top,
+    boost: tier.boost,
     driver: null,
+    rider: null,
     wheels: g.userData.wheels,
     fronts: g.userData.fronts,
     props: g.userData.props,
@@ -12597,7 +12642,7 @@ function spawnVehicles() {
     const z = Math.sin(ang) * rad;
     if (Math.hypot(x, z) > 305) continue;
     if (!vehicleSpotFree(x, z)) continue;
-    addVehicle(x, WATER_Y - 0.12, z, Math.random() * TAU);
+    addVehicle(x, WATER_Y - 0.12, z, Math.random() * TAU, pick(HULL_ROLL));
   }
 }
 
@@ -12634,11 +12679,64 @@ function boardVehicle(v) {
   toast('BOAT · W/S THROTTLE · A/D TO TURN · E TO GET OUT', 'sub');
 }
 
+/* A hull with a bot at the wheel, close enough to ask for a ride. */
+function nearestRideBoat(pos, range) {
+  let best = null, bd = range || 4.6;
+  for (let i = 0; i < vehicles.length; i++) {
+    const v = vehicles[i];
+    if (!v.driver || v.driver === 'player' || v.hp <= 0) continue;
+    const p = v.group.position;
+    const d = Math.hypot(pos.x - p.x, pos.z - p.z);
+    if (d < bd && Math.abs(pos.y - p.y) < 3.2) { bd = d; best = v; }
+  }
+  return best;
+}
+
+/* Ride along: the skipper keeps the wheel and you stand in the stern, hands
+   free. E gets you out, and stepping off leaves the wheel where it was. */
+function boardAsPassenger(v) {
+  if (!v || !v.driver || v.driver === 'player') return;
+  player.driving = v;
+  player.rider = true;
+  v.rider = 'player';
+  player.dropping = false;
+  player.knocked = false;
+  player.onGround = false;
+  player.vel.set(0, 0, 0);
+  player.reloading = false;
+  player.using = null;
+  player.channel = null;
+  player.yaw = v.yaw;
+  aimDown = false;
+  buildState.active = false;
+  if (player.rig) player.rig.group.visible = true;
+  camRig.ready = false;
+  sfx('engine');
+  toast('RIDING ALONG · HANDS FREE · E TO GET OUT', 'sub');
+}
+
+/* A passenger stands at the stern, so the skipper's hull carries you. */
+function positionRider(v) {
+  const bp = v.group.position;
+  player.pos.set(bp.x - Math.sin(v.yaw) * 1.7, bp.y + 0.75, bp.z - Math.cos(v.yaw) * 1.7);
+  player.vel.set(0, 0, 0);
+  player.yaw = v.yaw;
+  player.onGround = true;
+  if (player.rig) {
+    player.rig.group.visible = true;
+    player.rig.group.position.copy(player.pos);
+    player.rig.group.rotation.y = v.yaw;
+  }
+}
+
 function exitVehicle() {
   const v = player.driving;
   player.driving = null;
+  player.rider = false;
   if (!v) return;
-  v.driver = null;
+  // stepping off as a passenger leaves the skipper at the wheel
+  if (v.rider === 'player') v.rider = null;
+  else v.driver = null;
   v.speed *= 0.25;
   // step out on the right-hand side, and let the world push you clear
   const rx = -Math.cos(v.yaw), rz = Math.sin(v.yaw);
@@ -12731,7 +12829,7 @@ function driveVehicle(v, dt) {
   // input.fwd / input.right carry the keyboard and the touch stick alike
   const throttle = clamp(input.fwd, -1, 1);
   const steer = -clamp(input.right, -1, 1);
-  const top = (input.sprint || keyHeld('sprint')) ? VEHICLE_BOOST : VEHICLE_TOP;
+  const top = (input.sprint || keyHeld('sprint')) ? (v.boost || VEHICLE_BOOST) : (v.top || VEHICLE_TOP);
   stepBoat(v, dt, throttle, steer, top);
   if (!player.driving) return;              // wrecked under us this frame
   const pos = v.group.position;
@@ -12757,7 +12855,7 @@ function driveBotBoat(v, dt) {
   const diff = ((want - v.yaw + Math.PI) % TAU + TAU) % TAU - Math.PI;
   const steer = clamp(diff * 1.6, -1, 1);
   const throttle = Math.abs(diff) < 0.9 ? 1 : 0.3;
-  stepBoat(v, dt, throttle, steer, VEHICLE_TOP * 0.85);
+  stepBoat(v, dt, throttle, steer, (v.top || VEHICLE_TOP) * 0.85);
   if (!v.group.parent) { b.boat = null; return; }
   const bp = v.group.position;
   // the driver stands on the deck, not in the water the hull sits in
@@ -12772,11 +12870,12 @@ function driveBotBoat(v, dt) {
   if (goal && Math.hypot(dx, dz) < 12) botLeaveBoat(b);
 }
 
-/* Bots swim to a free hull and take it. */
+/* Bots swim to a free hull and take it: a rival skipper will contest one from
+   further out than before, and it says so when it takes one near you. */
 function botTryBoat(b) {
   if (!b || b.boss || b.boat || !b.alive || b.dropping || b.knocked) return;
   if (waterDepthAt(b.pos.x, b.pos.z) < 1.15) return;
-  const v = nearestVehicle(b.pos, 9);
+  const v = nearestVehicle(b.pos, 15);
   if (!v || v.driver) return;
   v.driver = b;
   b.boat = v;
@@ -12787,6 +12886,8 @@ function botTryBoat(b) {
     b.rig.group.position.copy(b.pos);
     b.rig.group.rotation.y = v.yaw;
   }
+  const near = Math.hypot(v.group.position.x - player.pos.x, v.group.position.z - player.pos.z);
+  if (near < 45) toast('A SKIPPER TOOK A ' + v.tier.name, 'sub');
 }
 
 function botLeaveBoat(b) {
@@ -12839,12 +12940,13 @@ function destroyVehicle(v, source) {
   if (idx < 0) return;
   vehicles.splice(idx, 1);
   const pos = v.group.position.clone();
-  const mine = v.driver === 'player';
+  const mine = v.driver === 'player' || v.rider === 'player';
   if (v.driver && v.driver !== 'player') {
     v.driver.boat = null;
     if (v.driver.rig) v.driver.rig.group.visible = true;
   }
   if (mine) player.driving = null;
+  if (v.rider === 'player') { v.rider = null; player.rider = false; }
   if (v.group.parent) v.group.parent.remove(v.group);
   disposeTree(v.group);
   if (v.bar) {
@@ -12888,6 +12990,7 @@ function updateVehicles(dt) {
     }
     if (v.driver) {          // a bot at the wheel
       driveBotBoat(v, dt);
+      if (v.rider === 'player' && player.rider && player.driving === v) positionRider(v);
       continue;
     }
     v.speed = lerp(v.speed, 0, 1 - Math.exp(-2.4 * dt));
@@ -12936,6 +13039,43 @@ const BUS_LOCK = 3;         // doors stay shut this long after the ride starts
 const BUS_SPEED = 32;       // m/s along the line
 const BUS_ALT = 118;
 let bus = null;
+
+/* Three authored lines, picked in the lobby: the bus crosses the island on
+   the line you asked for instead of one drawn at random. An empty choice
+   keeps the old random crossing. */
+const BUS_ROUTES = [
+  { id: 'north', name: 'NORTHERN LINE', ang: 0.35, off: 62 },
+  { id: 'east', name: 'EASTERN LINE', ang: 1.95, off: -74 },
+  { id: 'south', name: 'SOUTHERN LINE', ang: 3.72, off: 26 },
+];
+let busRoute = null;
+
+function setBusRoute(id) {
+  busRoute = null;
+  for (let i = 0; i < BUS_ROUTES.length; i++) {
+    if (BUS_ROUTES[i].id === id) busRoute = BUS_ROUTES[i];
+  }
+  const chips = document.querySelectorAll('#routeRow .routeChip');
+  for (let i = 0; i < chips.length; i++) {
+    const on = (chips[i].dataset.route || '') === (busRoute ? busRoute.id : '');
+    chips[i].classList.toggle('on', on);
+  }
+  const row = document.getElementById('routeRow');
+  if (row) row.classList.toggle('hide', !usesBus());
+}
+
+/* One listener for the whole strip: the chips are drawn in the markup, so a
+   single delegated handler covers every one of them. */
+const routeRowEl = document.getElementById('routeRow');
+if (routeRowEl) {
+  routeRowEl.addEventListener('click', (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest('.routeChip') : null;
+    if (!btn) return;
+    setBusRoute(btn.dataset.route || '');
+    sfx('switch');
+    toast(busRoute ? 'BUS LINE · ' + busRoute.name : 'BUS LINE · ANY LINE', 'sub');
+  });
+}
 
 function buildBus() {
   const g = new THREE.Group();
@@ -13043,8 +13183,9 @@ function beginStaging() {
    offset a little either way so the crossing differs every match, and leaves
    out of the far side. Bots ride it too and peel off at their own point. */
 function startBus() {
-  const ang = Math.random() * TAU;
-  const off = rand(-110, 110);
+  // a line picked in the lobby, or the old crossing drawn at random
+  const ang = busRoute ? busRoute.ang + rand(-0.1, 0.1) : Math.random() * TAU;
+  const off = busRoute ? busRoute.off + rand(-16, 16) : rand(-110, 110);
   const nx = -Math.sin(ang), nz = Math.cos(ang);
   const R = 360;
   const sx = -Math.cos(ang) * R + nx * off;
@@ -16251,7 +16392,7 @@ function bloomCap(w) {
 }
 
 function playerFire() {
-  if (player.driving) return;   // both hands on the wheel
+  if (player.driving && !player.rider) return;   // both hands on the wheel: a passenger keeps theirs
   if (!player.alive || player.dropping || player.knocked) return;
   if (player.using || player.reloading) return;
   const it = currentItem();
@@ -21044,6 +21185,9 @@ function updateHUD() {
   let promptText = '';
   const carNear = (!player.driving && player.alive && !player.dropping && !player.knocked)
     ? nearestVehicle(player.pos, 4.2) : null;
+  // a hull a bot is driving: ask for a ride rather than take the wheel
+  const rideNear = (!player.driving && !carNear && player.alive && !player.dropping && !player.knocked)
+    ? nearestRideBoat(player.pos, 4.6) : null;
   if (state.phase === 'staging') {
     promptText = '<b>PRE-GAME LOBBY</b> · BUS IN ' + Math.max(0, Math.ceil((state.stageEnd || 0) - state.time)) + 's';
   } else if (player.inBus) {
@@ -21061,6 +21205,9 @@ function updateHUD() {
   } else if (carNear) {
     interactTarget = { type: 'vehicle', obj: carNear };
     promptText = '<b>E</b> BOARD';
+  } else if (rideNear) {
+    interactTarget = { type: 'ride', obj: rideNear };
+    promptText = '<b>E</b> RIDE ALONG · HANDS FREE';
   } else if (player.alive && !player.dropping && !player.knocked) {
     const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
     const van = site ? null : (mateNeedsReboot() ? nearestVan(player.pos, 3.6) : null);
@@ -21517,10 +21664,13 @@ function interact() {
   if (!player.alive || player.dropping || player.knocked) return;
   const car = nearestVehicle(player.pos, 4.6);
   if (car) { boardVehicle(car); return; }
+  const ride = nearestRideBoat(player.pos, 4.6);
+  if (ride) { boardAsPassenger(ride); return; }
   if (vendOpen) { closeVending(); return; }
   if (interactTarget) {
     if (interactTarget.type === 'chest') openChest(interactTarget.obj);
     else if (interactTarget.type === 'levee') raiseLevee(interactTarget.obj);
+    else if (interactTarget.type === 'ride') boardAsPassenger(interactTarget.obj);
     else if (interactTarget.type === 'loot') pickupLoot(interactTarget.obj);
     else if (interactTarget.type === 'dig') digSprite(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
@@ -21811,6 +21961,7 @@ function resetPlayerForMatch() {
   player.dropping = true;
   player.glider = false;
   player.driving = null;
+  player.rider = false;
   player.inBus = false;
   player.swimming = false;
   player.team = 0;
@@ -22540,6 +22691,8 @@ function setMode(m) {
   if (mb) mb.textContent = def.name.toUpperCase();
   const menuEl = document.getElementById('menu');
   if (menuEl) menuEl.classList.remove('modesOpen');
+  // the bus lines are only worth picking in a mode that opens on the bus
+  setBusRoute(busRoute ? busRoute.id : '');
   refreshRank();
 }
 
@@ -22553,8 +22706,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 2 };
-const VERSION_PREV = '10.01PT';
+const VERSION = { season: 10, release: 3 };
+const VERSION_PREV = '10.02PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -24629,7 +24782,7 @@ function autoPickup() {
 }
 
 function handleCombatInput() {
-  if (!player.alive || player.dropping || player.knocked || player.driving || player.inBus ||
+  if (!player.alive || player.dropping || player.knocked || (player.driving && !player.rider) || player.inBus ||
       invOpen || vendOpen) { input.fireJust = false; return; }
   if (buildState.active) {
     if (input.fireJust) placeBuild();
@@ -26075,6 +26228,9 @@ function boot() {
   renderOpts();
   applyOpts();
   renderKeybinds();
+  // the version chip and the notes stamp are written here at boot, not only
+  // when the card first opens: a returning player never sees that card
+  setVersionUI();
   renderControlHints();
   renderAdmin();
   renderCompetitive();
