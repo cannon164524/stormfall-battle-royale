@@ -314,10 +314,10 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 .np.off.knocked .npName { border-color:rgba(255,90,110,.6); }
 
 /* ---------------- the last foe: an edge chevron, or a marker over them ----
-   One marker per enemy left in the duel. Off screen it clamps to a rounded
-   rectangle around the crosshair and the chevron turns to point at them; in
-   view the chevron hangs over the name, so the last two never lose each
-   other. Flat, like the rest of the HUD: no glow, one hairline. */
+   One marker per enemy left in the duel. Off screen the chevron rides the
+   edge of the screen and turns to point at them; in view it hangs above
+   them, so the last two never lose each other. Flat, like the rest of the
+   HUD: no glow, one hairline. */
 #lastFoe { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
 .lf {
   position:absolute; transform:translate(-50%,-50%); white-space:nowrap;
@@ -325,10 +325,9 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
 }
 .lf .lfArrow {
   display:block; width:0; height:0;
-  border-top:7px solid transparent; border-bottom:7px solid transparent;
-  border-left:11px solid var(--lime);
+  border-top:9px solid transparent; border-bottom:9px solid transparent;
+  border-left:13px solid var(--lime);
   transform-origin:50% 50%;
-  transition:transform .1s linear;
 }
 .lf .lfText { display:block; text-align:left; }
 .lf .lfName {
@@ -343,10 +342,12 @@ kbd{font-family:var(--label);font-size:10px;font-weight:700;letter-spacing:.08em
   background:rgba(8,16,28,.82); border:1px solid rgba(194,255,61,.4);
   padding:3px 7px; color:#eaffd2;
 }
-.lf.in { flex-direction:column; gap:2px; }
+/* the marker over them floats above the head instead of sitting on their
+   face, where it covered the very thing it was pointing at */
+.lf.in { flex-direction:column; gap:2px; transform:translate(-50%,-150%); }
 .lf.in .lfArrow {
   border-left:7px solid transparent; border-right:7px solid transparent;
-  border-top:9px solid var(--lime); border-bottom:0;
+  border-top:10px solid var(--lime); border-bottom:0;
 }
 .lf.in .lfText { text-align:center; }
 .lf.in .lfName { text-shadow:0 1px 4px rgba(0,0,0,.95); }
@@ -9582,14 +9583,14 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.5.0</b>
-        <span id="wnLevel">MAJOR UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.4.0</div>
+        <b id="wnVersion">v9.5.1</b>
+        <span id="wnLevel">SMALL UPDATE</span>
+        <div class="wnHist" id="wnHist">FROM v9.5.0</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>POINT AT THE LAST FOE</b> — when a match is down to you and one other, an arrow finds them: a lime chevron at the screen edge with their name and distance when they are behind you, and a marker over them once they are in view. In Duos the last pair is marked mate by mate.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE LAST FOE, FIXED</b> — the pointer rides the edge of the screen instead of a small box on the crosshair, the marker over them floats above the head and no longer keeps the angle it last pointed, and both clear when the duel ends, so a fresh match cannot point at a body that is gone.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -20508,11 +20509,11 @@ let lastFoeKey = '';
    Sandbox, the OG build and the aim test never come down to a duel. In Duos
    the count is of enemy teams, so the last pair is marked mate by mate. */
 function lastFoeTargets() {
-  if (!player.alive || state.ended) return null;
+  if (!player.alive || player.inBus || state.ended) return null;
   if (state.phase !== 'play' && state.phase !== 'drop') return null;
   if (isRumble() || isSandbox() || isGunGame() || isOG() || isAimTest()) return null;
   const foes = bots.filter((b) => !b.boss && b.team !== player.team);
-  if (isReloadDuos() || isDuos()) {
+  if (isDuos()) {
     const teams = new Set();
     for (const b of foes) if (!b.out) teams.add(b.team);
     if (teams.size !== 1) return null;
@@ -20531,6 +20532,13 @@ function updateLastFoe() {
   if (!lastFoeEl) return;
   const foes = lastFoeTargets();
   if (!foes || !foes.length) {
+    // the markers are torn down with the duel: a new match reuses the same
+    // rival names, and a stale bot would leave the arrow on a body that is gone
+    if (lastFoeEls.length) {
+      for (let i = 0; i < lastFoeEls.length; i++) lastFoeEls[i].el.remove();
+      lastFoeEls.length = 0;
+    }
+    lastFoeKey = '';
     if (!lastFoeEl.classList.contains('hide')) lastFoeEl.classList.add('hide');
     return;
   }
@@ -20552,13 +20560,21 @@ function updateLastFoe() {
       });
     }
   }
+  // rebind every frame: the name can outlive the bot it belonged to
+  for (let i = 0; i < lastFoeEls.length; i++) {
+    if (lastFoeEls[i].m !== foes[i]) lastFoeEls[i].m = foes[i];
+  }
 
   const W = window.innerWidth, H = window.innerHeight;
   const cx = W / 2, cy = H / 2;
-  const hx = cx - 64, hy = cy - 52;
+  // the pointer rides the edge of the screen, not a box around the crosshair:
+  // that box sat on the reticle and covered what it was pointing at
+  const hx = Math.max(40, cx - Math.max(56, W * 0.14));
+  const hy = Math.max(40, cy - Math.max(56, H * 0.18));
 
   for (let i = 0; i < lastFoeEls.length; i++) {
     const t = lastFoeEls[i], m = t.m;
+    if (!m) continue;
     const head = new THREE.Vector3(m.pos.x, m.pos.y + 2.12, m.pos.z);
     const v = head.clone().project(camera);
     const vs = head.clone().applyMatrix4(camera.matrixWorldInverse);
@@ -20585,9 +20601,11 @@ function updateLastFoe() {
     t.el.style.left = px.toFixed(1) + 'px';
     t.el.style.top = py.toFixed(1) + 'px';
     t.el.className = 'lf' + (off ? ' off' : ' in') + (off && px > cx ? ' left' : '');
-    t.arrow.style.transform = 'rotate(' + ang.toFixed(1) + 'deg)';
+    // the turn belongs to the edge marker only: left on an in-view marker it
+    // tilted the downward chevron at whatever angle it last pointed
+    t.arrow.style.transform = off ? 'rotate(' + ang.toFixed(1) + 'deg)' : '';
     t.name.textContent = (m.knocked ? m.name + ' · DOWN' : m.name).toUpperCase();
-    t.dist.textContent = (off ? '▸ ' : '') + Math.min(999, dist) + 'M';
+    t.dist.textContent = Math.min(999, dist) + 'M';
   }
 }
 
@@ -22286,8 +22304,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 5, patch: 0 };
-const VERSION_PREV = '9.4.0';
+const VERSION = { major: 9, minor: 5, patch: 1 };
+const VERSION_PREV = '9.5.0';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
