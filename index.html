@@ -8664,6 +8664,26 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
 #contractList .ctRow.done, #contractList .ctRow.done b { color:var(--coral); }
 #contractList .ctBar { flex:none; width:46px; height:3px; background:rgba(255,255,255,.12); }
 #contractList .ctBar i { display:block; height:100%; background:var(--coral); }
+
+/* Season 10 · the breath meter. It only shows while you are in the sea or
+   still getting your wind back: a thin hairline bar under the health, cooling
+   blue that turns coral as it empties. Flat, no radius, like every plate. */
+#vitals .bar.breath {
+  height:9px !important; margin-top:0;
+  background:rgba(4,14,24,.82) !important;
+  border:1px solid rgba(126,226,255,.34) !important; border-radius:0 !important;
+}
+#vitals .bar.breath > i {
+  background:linear-gradient(90deg,#9ff6ff,#2fb4ff) !important;
+}
+#vitals .bar.breath > b { line-height:8px !important; font-size:8px !important; letter-spacing:.08em; }
+#vitals .bar.breath.low { border-color:rgba(255,90,90,.7) !important; }
+#vitals .bar.breath.low > i { background:linear-gradient(90deg,#ffb08f,#e8432f) !important; animation:breathPulse .55s ease-in-out infinite; }
+@keyframes breathPulse { 50% { opacity:.5; } }
+
+/* nothing but the card is on screen while the death or win card is up: the
+   event banner is the one piece that is absolutely placed over the title */
+body.death-ui #eventBanner { display:none !important; }
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8827,6 +8847,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
     <div id="livesRow" class="hide"><i></i><i></i><i></i></div>
     <div class="bar shield"><i id="shieldFill"></i><i id="overFill"></i><b id="shieldNum">0</b></div>
     <div class="bar health"><i id="hpFill"></i><b id="hpNum">100</b></div>
+    <div class="bar breath hide" id="breathBar"><i id="breathFill"></i><b id="breathNum">18</b></div>
     <div id="pvName">YOU</div>
   </div>
 
@@ -8903,7 +8924,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.06PT</div>
+      <div class="verTag" id="verTag">v10.10PT</div>
     </div>
   </div>
 
@@ -9650,16 +9671,17 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.06PT</b>
+        <b id="wnVersion">v10.10PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.05PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.09PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>SPRITES EVOLVE</b> — a Sprite that reaches level 5 evolves, and from then on every gain is a quarter again. The change is one flag on the record you already had, so nothing is lost.</div></li>
-      <li><span class="wnTag">02</span><div><b>DAILY CONTRACTS</b> — three a day, in the lobby column: <b>6</b> eliminations, <b>3</b> matches, <b>1</b> win. They pay battle-pass XP, so the pass climbs without the shop, and they reset on the day.</div></li>
-      <li><span class="wnTag">03</span><div><b>KILL CAM</b> — the world drops to a third speed when you go down and eases back over about a second and a half behind the card, so the shot that got you is still there to read.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE SEA COMES UP HIGHER</b> — the tide tops out at <b>5.4</b> m now, not 2.4, and climbs at 0.02 m/s, so it takes more of the island and the low roads go under. Tide Race runs to <b>12</b> m.</div></li>
+      <li><span class="wnTag">02</span><div><b>BREATH AND DROWNING</b> — a thin meter under the health bar counts <b>18</b> seconds in the sea and comes back at <b>4.5</b> a second on land. At nothing you take <b>6</b> a second until you get out.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE KILL CAM HOLDS</b> — when you go down the lens leaves your body and settles behind whoever got you at a third speed. If that bot falls before the card does, the lens keeps its last framing, and it stays above the rising sea so the shot is not all water.</div></li>
+      <li><span class="wnTag">04</span><div><b>THE CARD IS ALONE</b> — no toast, banner or rift-anomaly pill draws over the death or win card any more, and the top-left mode badge counts who is still alive live, not the lobby it started with.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9752,6 +9774,7 @@ const state = {
   mode: 'br',
   tourneyId: null,
   timeScale: 1,
+  killCam: null,
   tourPoints: 0,
   tourPlaceAwarded: 0,
   rpPoints: 0,
@@ -10127,12 +10150,19 @@ function terrainHeight(x, z) {
    low roads go under. One offset drives the surface, the water mesh and every
    depth test, so the physics and the map agree.
    ========================================================================= */
-const TIDE_MAX = 2.4;              // metres above the old waterline
-const TIDE_RATE = 0.011;           // m/s: about four minutes to the top
+const TIDE_MAX = 5.4;              // metres above the old waterline
+const TIDE_RATE = 0.02;             // m/s: about four and a half minutes to the top
+
+/* Season 10 · breath. The sea is cold: you can stay in it for BREATH_MAX
+   seconds before you start to drown, and it comes back at BREATH_REFILL a
+   second once you are out of the water. */
+const BREATH_MAX = 18;
+const BREATH_REFILL = 4.5;
+const DROWN_DPS = 6;
 const TIDE_MARKS = [
-  { at: 0.6, text: 'THE TIDE IS COMING IN' },
-  { at: 1.4, text: 'THE CAUSEWAYS ARE GOING UNDER' },
-  { at: 2.4, text: 'HIGH WATER · THE LOW ROADS ARE GONE' },
+  { at: 1.2, text: 'THE TIDE IS COMING IN' },
+  { at: 3.4, text: 'THE CAUSEWAYS ARE GOING UNDER' },
+  { at: 5.4, text: 'HIGH WATER · THE LOW ROADS ARE GONE' },
 ];
 const tide = { offset: 0, max: 0, rate: 0, live: false };
 
@@ -10150,8 +10180,8 @@ function setTideForMatch() {
   if (isBlitz() || isSandbox() || isGunGame() || isRumble() || isOG() || isAimTest()) return;
   // Tide Race: the sea does not stop coming in
   if (state.mode === 'tiderace') {
-    tide.max = 9;
-    tide.rate = 0.075;
+    tide.max = 12;
+    tide.rate = 0.1;
     tide.live = true;
     return;
   }
@@ -10372,6 +10402,33 @@ function updateSeaMotion(dt) {
     player.undertow = 0;
     // the tide set wears both halves of the sea: it pays no undertow damage
     if (!hasSet('tide')) hurtPlayer(4.5, 'The Undertow', false, pos.clone());
+  }
+}
+
+/* The sea drains your breath while you are in it; once it is gone you drown in
+   bills of DROWN_DPS every half second until you get out. Out of the water it
+   comes back at BREATH_REFILL a second, so a crossing has to be planned. */
+function updateBreath(dt) {
+  if (!player.alive || state.phase === 'menu' || state.phase === 'over') return;
+  if (player.breath === undefined) player.breath = BREATH_MAX;
+  const inSea = player.swimming && !player.driving && !player.inBus;
+  if (!inSea) {
+    player.breath = Math.min(BREATH_MAX, player.breath + BREATH_REFILL * dt);
+    player.drownAcc = 0;
+    player.drowning = false;
+    return;
+  }
+  player.breath = Math.max(0, player.breath - dt);
+  if (player.breath > 0) { player.drownAcc = 0; return; }
+  if (!player.drowning) {
+    player.drowning = true;
+    toast('OUT OF BREATH · YOU ARE DROWNING', 'sub');
+    shake(0.12);
+  }
+  player.drownAcc = (player.drownAcc || 0) + dt;
+  if (player.drownAcc >= 0.5) {
+    player.drownAcc = 0;
+    hurtPlayer(DROWN_DPS * 0.5, 'Drowning', false, player.pos.clone());
   }
 }
 
@@ -15012,6 +15069,7 @@ const player = {
   driving: null,
   inBus: false,
   swimming: false,
+  breath: 18, drowning: false, drownAcc: 0,
   inv: [null, null, null, null, null],
   boons: [],
   slot: 0,
@@ -19313,6 +19371,8 @@ let evBannerTimer = 0;
 function showEventBanner(title, sub, icon) {
   const el = document.getElementById('eventBanner');
   if (!el) return;
+  // the death or win card is the only thing on screen while it is up
+  if (state.deathCine) { el.classList.remove('on'); return; }
   clearTimeout(evBannerTimer);
   el.classList.add('on');
   const t = document.getElementById('evTitle');
@@ -20113,6 +20173,8 @@ function addFeed(killer, victim, mine) {
 
 const toastsEl = document.getElementById('toasts');
 function toast(text, cls) {
+  // nothing but the card belongs on screen while the death or win card is up
+  if (state.deathCine) return;
   const el = document.createElement('div');
   el.className = 'toast' + (cls ? ' ' + cls : '');
   el.textContent = text;
@@ -20132,6 +20194,7 @@ const ANN_ICONS = {
 
 function announce(opts) {
   if (!toastsEl) return;
+  if (state.deathCine) return;   // the card is the only thing on screen then
   const impact = opts.kind === 'kill' || opts.kind === 'knock';
   const el = document.createElement('div');
   el.className = 'ann ' + (opts.kind || '') + (impact ? ' impact' : '');
@@ -20649,7 +20712,51 @@ function angLerp(a, b, t) {
   return a + d * t;
 }
 
+/* Kill cam: the lens leaves your body and settles behind whoever got you, a
+   slow push-in on the angle the shot came from. With no killer (the storm, a
+   fall, drowning) it holds your last view while the world slows. */
+function updateKillCam(dt) {
+  const kc = state.killCam;
+  if (!kc) return;
+  kc.t = (kc.t || 0) + dt;
+  scopeAmount = 0;
+  camFov = lerp(camFov, 58, 1 - Math.exp(-4 * dt));
+  if (Math.abs(camera.fov - camFov) > 0.01) {
+    camera.fov = camFov;
+    camera.updateProjectionMatrix();
+  }
+  const b = kc.bot;
+  // the lens holds the last good framing if the killer goes down before the
+  // card does: an empty sea behind the card is worse than the same shot
+  if (b && b.alive && !b.out) {
+    if (!kc.lastPos) kc.lastPos = new THREE.Vector3();
+    kc.lastPos.copy(b.pos);
+    kc.lastYaw = b.yaw;
+  }
+  const p = kc.lastPos;
+  if (!p) return;
+  const yaw = kc.lastYaw || 0;
+  const ease = 1 - Math.pow(1 - clamp(kc.t / 1.1, 0, 1), 3);
+  const back = 7.6 - ease * 2.6;                   // push in as it settles
+  const want = new THREE.Vector3(
+    p.x - Math.sin(yaw) * back,
+    p.y + 2.8 - ease * 1.0,
+    p.z - Math.cos(yaw) * back
+  );
+  const floorY = Math.max(terrainHeight(want.x, want.z), TERRAIN_FLOOR) + 1.5;
+  if (want.y < floorY) want.y = floorY;
+  // the tide climbs in this build, so the lens also stays clear of the surface:
+  // a kill cam under the sea shows nothing but water
+  const seaY = waterSurfaceAt(want.x, want.z) + 1.3;
+  if (want.y < seaY) want.y = seaY;
+  if (!camRig.ready) { camRig.pos.copy(want); camRig.ready = true; }
+  else camRig.pos.lerp(want, 1 - Math.exp(-6 * dt));
+  camera.position.copy(camRig.pos);
+  camera.lookAt(p.x, p.y + 1.5, p.z);
+}
+
 function updateCamera(dt) {
+  if (state.killCam) { updateKillCam(dt); return; }
   if (player.inBus) { updateBusCamera(dt); return; }
   if (player.driving) { updateVehicleCamera(dt); return; }
   const aspect = camera.aspect || (window.innerWidth / Math.max(1, window.innerHeight));
@@ -21365,6 +21472,30 @@ function updateHUD() {
   elHpNum.textContent = Math.ceil(player.hp);
   elShieldNum.textContent = Math.ceil(totalShield);
   if (shieldBarEl) shieldBarEl.classList.toggle('over', (player.overshield || 0) > 0.5);
+
+  // the mode badge carries live numbers (tide, relic, blitz level, players
+  // left), so it is repainted here instead of only when the match starts
+  const badgeEl = document.getElementById('modeBadge');
+  if (badgeEl) {
+    const txt = badgeText();
+    if (badgeEl.dataset.t !== txt) {
+      badgeEl.dataset.t = txt;
+      badgeEl.innerHTML = txt;
+    }
+  }
+
+  // the breath meter only shows while you are in the sea or getting it back
+  const breathBarEl = document.getElementById('breathBar');
+  if (breathBarEl) {
+    const breath = player.breath === undefined ? BREATH_MAX : player.breath;
+    const frac = clamp(breath / BREATH_MAX, 0, 1);
+    breathBarEl.classList.toggle('hide', !player.swimming && frac >= 0.999);
+    const bFill = document.getElementById('breathFill');
+    if (bFill) bFill.style.width = (frac * 100).toFixed(1) + '%';
+    const bNum = document.getElementById('breathNum');
+    if (bNum) bNum.textContent = String(Math.ceil(breath));
+    breathBarEl.classList.toggle('low', frac < 0.34);
+  }
 
   if (pocketSlotEl) {
     const cd = Math.max(0, player.pocketCd || 0);
@@ -22245,6 +22376,9 @@ function resetPlayerForMatch() {
   player.rider = false;
   player.inBus = false;
   player.swimming = false;
+  player.breath = BREATH_MAX;
+  player.drowning = false;
+  player.drownAcc = 0;
   player.team = 0;
   player.knocked = false;
   player.bleed = 0;
@@ -22402,7 +22536,7 @@ function badgeText() {
   if (state.mode === 'riptide') return 'RIPTIDE · <b>ON THE WATER</b>';
   if (state.mode === 'relic') return 'RELIC RUN · <b>' + (player.relic ? 'CARRY IT OUT' : 'FIND THE RELIC') + '</b>';
   if (isBlitz()) return 'BLITZ · LV <b>' + (state.blitzLvl || 1) + '</b> · ' + (state.blitzXp || 0) + '/' + blitzNeed();
-  return 'SOLO · <b>' + (bots.length + 1) + '</b> PLAYERS';
+  return 'SOLO · <b>' + (bots.filter((b) => b.alive && !b.boss && !b.out).length + 1) + '</b> ALIVE';
 }
 
 /* ---- Blitz progression: kills and storm circles level you up, each level
@@ -22862,13 +22996,22 @@ function beginCine() {
 
 function startDeathCine(killerName, placement, total, rankRecap) {
   state.deathCine = true;
-  // kill cam: the world drops to a third speed and the ramp in animate eases
-  // it back over about a second and a half while the card comes up
+  // kill cam: the world drops to a third speed, and the lens follows whoever
+  // got you instead of holding your own last view
   state.timeScale = 0.3;
+  let killer = null;
+  const nm = String(killerName || '');
+  for (let i = 0; i < bots.length; i++) {
+    if (bots[i].name === nm) { killer = bots[i]; break; }
+  }
+  state.killCam = { bot: killer, t: 0 };
+  camRig.ready = false;
   document.getElementById('dcTitle').textContent = 'ELIMINATED';
   document.getElementById('dcCrest').innerHTML = '';
   document.getElementById('dcConfetti').innerHTML = '';
-  document.getElementById('dcHint').textContent = 'WATCHING THE LOBBY · BOTS KEEP FIGHTING';
+  document.getElementById('dcHint').textContent = killer
+    ? 'KILL CAM · THE SHOT THAT GOT YOU'
+    : 'WATCHING THE LOBBY · BOTS KEEP FIGHTING';
   document.getElementById('dcKiller').textContent =
     'BY ' + killerName.toUpperCase() + ' — PLACED #' + placement + ' OF ' + total;
   paintCineRank(rankRecap);
@@ -22922,6 +23065,9 @@ function startVictoryCine(subText, placement, total, rankRecap) {
 
 function resetDeathCine() {
   state.deathCine = false;
+  state.killCam = null;
+  state.timeScale = 1;
+  camRig.ready = false;
   dcTimers.forEach(clearTimeout);
   dcTimers = [];
   document.getElementById('deathCine').classList.remove('on', 'controls', 'win');
@@ -23057,8 +23203,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 6 };
-const VERSION_PREV = '10.05PT';
+const VERSION = { season: 10, release: 10 };
+const VERSION_PREV = '10.09PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -25186,7 +25332,11 @@ function animate(now) {
   lastT = now;
   const dtBase = clamp(isFinite(dtRaw) ? dtRaw : 0.016, 0, 0.05);
   const dt = dtBase * (state.timeScale || 1);
-  if (state.timeScale < 1) state.timeScale = Math.min(1, state.timeScale + dtBase * 0.5);
+  // the kill cam holds its slow speed for a moment before the world runs again
+  if (state.timeScale < 1) {
+    const ramp = (state.killCam && state.killCam.t < 1.9) ? 0 : dtBase * 0.5;
+    state.timeScale = Math.min(1, state.timeScale + ramp);
+  }
 
   // Adaptive resolution: only ever drops, at most three times per match, and
   // never during the first seconds while the world is still settling. Re- sizing
@@ -25254,6 +25404,7 @@ function animate(now) {
   if (state.phase !== 'staging' && state.phase !== 'bus') updateStorm(dt);
   updateTide(dt);
   updateSeaMotion(dt);
+  updateBreath(dt);
   updateAnomaly(dt);
   updateVehicles(dt);
   updateBossBars();
