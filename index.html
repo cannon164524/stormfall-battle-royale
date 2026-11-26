@@ -8924,7 +8924,7 @@ body.death-ui #eventBanner { display:none !important; }
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.15PT</div>
+      <div class="verTag" id="verTag">v10.16PT</div>
     </div>
   </div>
 
@@ -9671,16 +9671,15 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.15PT</b>
+        <b id="wnVersion">v10.16PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.14PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.15PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>ONLY YOUR KILLS TELL YOU</b> — a body you did not drop no longer names what came out of it: its rare find still lifts, but the card and the boss medallion card only show on your own kill.</div></li>
-      <li><span class="wnTag">02</span><div><b>A RARE DROP LIFTS, AND ONLY ONCE</b> — the item comes up out of the body through a lit beam and a halo before it lands, and the kill-time "elimination jackpot" card is gone, so one rare weapon shows one card.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE LAST FIGHT IS A DUEL</b> — once one opponent is left the storm holds its circle and stops billing, so the final kill is a shot instead of the storm.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE LAST ONE IS PULLED INTO THE CIRCLE</b> — when one opponent is left and they are outside the storm, they are teleported into the final ring with a pulse and a call-out, so the last fight is a shot and not the storm taking the last body.</div></li>
+      <li><span class="wnTag">02</span><div><b>ONLY YOUR KILLS TELL YOU</b> — a body you did not drop no longer names what came out of it; the rare card and the boss medallion card only show on your own kill.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -19348,6 +19347,7 @@ function resetStorm() {
   storm.shrinkTotal = STORM_PHASES[0].shrink * stormScale();
   storm.dps = 0;
   storm.tick = 0;
+  storm.pulled = false;
   storm.active = false;
   if (storm.visual) storm.visual.visible = false;
   if (storm.ring) storm.ring.visible = false;
@@ -19403,14 +19403,36 @@ function updateStorm(dt) {
   }
   if (!storm.active) return;
 
-  // The last fight is a duel, not a weather event: once one opponent is left
-  // the storm holds where it is and stops billing, so the final kill is a shot
-  // and not the storm (which is how most matches were ending).
-  let foes = 0;
-  for (let i = 0; i < bots.length; i++) {
-    if (bots[i].alive && !bots[i].out && !bots[i].boss) foes++;
+  // The last fight is a duel in the ring, not a death in the weather: when one
+  // opponent is left and they are out in the storm, they are pulled into the
+  // circle so the final kill is a shot and not the storm.
+  if (!storm.pulled && player.alive) {
+    let foes = 0, lastFoe = null;
+    for (let i = 0; i < bots.length; i++) {
+      const b = bots[i];
+      if (!b.alive || b.out || b.boss) continue;
+      foes++;
+      lastFoe = b;
+    }
+    if (foes <= 1 && lastFoe && outsideStorm(lastFoe.pos.x, lastFoe.pos.z)) {
+      storm.pulled = true;
+      const a = Math.random() * TAU;
+      const r = Math.max(2.5, storm.radius * 0.5);
+      const px = storm.center.x + Math.cos(a) * r;
+      const pz = storm.center.z + Math.sin(a) * r;
+      lastFoe.pos.set(px, Math.max(terrainHeight(px, pz), TERRAIN_FLOOR) + 0.12, pz);
+      lastFoe.vel.set(0, 0, 0);
+      lastFoe.dropping = false;
+      lastFoe.goal = null;
+      if (lastFoe.rig) {
+        lastFoe.rig.group.visible = true;
+        lastFoe.rig.group.position.copy(lastFoe.pos);
+      }
+      shockwaveFX(lastFoe.pos.clone(), 3.4);
+      toast('THE LAST ONE IS PULLED INTO THE CIRCLE', 'sub');
+      sfx('unlock');
+    }
   }
-  if (foes <= 1 && player.alive) { storm.dps = 0; return; }
 
   if (storm.state === 'waiting') {
     storm.timer -= dt;
@@ -23362,8 +23384,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 15 };
-const VERSION_PREV = '10.14PT';
+const VERSION = { season: 10, release: 16 };
+const VERSION_PREV = '10.15PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
