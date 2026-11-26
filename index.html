@@ -8684,6 +8684,17 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
 /* nothing but the card is on screen while the death or win card is up: the
    event banner is the one piece that is absolutely placed over the title */
 body.death-ui #eventBanner { display:none !important; }
+
+/* Season 10 · the item shop line: five outfits a day and the clock to the
+   12:55 refresh. One flat hairline strip under the panel head. */
+.mpRot {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin:2px 0 4px; padding:6px 10px;
+  border:1px solid var(--line); border-radius:0; background:none;
+  font-family:var(--body); font-size:9px; font-weight:700; letter-spacing:.18em;
+  color:var(--ink-dim);
+}
+.mpRot b { color:#fff; font-weight:700; letter-spacing:.1em; }
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8924,7 +8935,7 @@ body.death-ui #eventBanner { display:none !important; }
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.16PT</div>
+      <div class="verTag" id="verTag">v10.19PT</div>
     </div>
   </div>
 
@@ -9189,6 +9200,7 @@ body.death-ui #eventBanner { display:none !important; }
       </div>
       <div class="mpMeta">SEASON 10 · DROWNED COAST</div>
     </div>
+    <div class="mpRot"><span>NEW LINE IN</span><b id="shopTimer">—</b></div>
     <div class="mpScroll"><div class="cardGrid" id="shopGrid"></div></div>
     <div class="mpFoot"><button class="mpBack" data-back>BACK</button></div>
   </section>
@@ -9671,15 +9683,16 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.16PT</b>
+        <b id="wnVersion">v10.19PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.15PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.18PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE LAST ONE IS PULLED INTO THE CIRCLE</b> — when one opponent is left and they are outside the storm, they are teleported into the final ring with a pulse and a call-out, so the last fight is a shot and not the storm taking the last body.</div></li>
-      <li><span class="wnTag">02</span><div><b>ONLY YOUR KILLS TELL YOU</b> — a body you did not drop no longer names what came out of it; the rare card and the boss medallion card only show on your own kill.</div></li>
+      <li><span class="wnTag">01</span><div><b>THE ITEM SHOP TURNS DAILY</b> — five outfits on sale at a time, the line changing at <b>12:55 PM</b> local, starting from your own first 12:55 so the forty Season 10 outfits begin from the top. The countdown under the shop head is live on the lobby too now.</div></li>
+      <li><span class="wnTag">02</span><div><b>BIGGER LOBBIES PAY BETTER</b> — the rank bill is softer and the gains are higher as the lobby grows: at <b>30</b> players the loss is a fifth lighter and every gain a third bigger, and at <b>40</b> the loss is half while the gain is up by half again.</div></li>
+      <li><span class="wnTag">03</span><div><b>BOSSES ARE LIGHTER</b> — a boss carries <b>550</b> health with <b>50</b> shield and overshield now, not 900/100/100, and its shot does a <b>quarter</b> of a normal bot's damage instead of half. Still three times the spray, so it is still a fight.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10008,6 +10021,13 @@ function rankInfo(rp) {
     div: 1 + Math.min(2, Math.floor(within / (need / 3))),
     progress: clamp(within / need, 0, 1),
   };
+}
+
+/* The bigger the lobby, the softer the bill and the bigger the gain: a forty
+   player drop is worth more than a twenty player one, and costs less. */
+function lobbyRankBonus() {
+  const players = bots.length + 1;
+  return clamp((players - 20) / 20, 0, 1);   // 0 at twenty, 1 at forty
 }
 
 /* Bronze and Silver never lose RP; the penalty climbs with the ladder. */
@@ -18560,10 +18580,10 @@ function spawnBots(n) {
    ========================================================================= */
 const BOSS_NAMES = ['THE DROWNED KING', 'SALT MOTHER', 'WRECK WARDEN', 'TIDE COLOSSUS'];
 
-/* A boss soaks nine hundred points of damage, so it pays for that in the fight:
-   half the damage of a normal bot, and three times the spray. Both are applied
-   on top of whatever botFire would do for an ordinary bot. */
-const BOSS_DMG_MUL = 0.5;
+/* A boss soaks five hundred and fifty points of damage, so it pays for that in
+   the fight: a quarter of the damage of a normal bot, and three times the spray.
+   Both are applied on top of whatever botFire would do for an ordinary bot. */
+const BOSS_DMG_MUL = 0.25;
 const BOSS_AIM_ERR_MUL = 3;
 
 function spawnBosses() {
@@ -18584,9 +18604,9 @@ function spawnBosses() {
     b.boss = true;
     b.name = BOSS_NAMES[i % BOSS_NAMES.length];
     b.skill = 0.95;
-    b.hp = 900;
-    b.shield = 100;
-    b.overshield = 100;
+    b.hp = 550;
+    b.shield = 50;
+    b.overshield = 50;
     b.team = 1;
     b.mate = false;
     b.weapon = makeWeapon(pick(['mythic_deepwater', 'mythic_brine', 'exotic_geyser', 'mythic_tidepistol']), R_MYTHIC);
@@ -21634,6 +21654,7 @@ function updateMapName() {
 function updateHUD() {
   updateBlitzWheel();
   updateCompass();
+  updateShopTimer();
   updateMapName();
   updateAmmoDial();
   const hpPct = clamp(player.hp / player.maxHp, 0, 1) * 100;
@@ -23090,7 +23111,8 @@ function endMatch(win, killerName) {
     const perKill = reload ? 10 : 12;
     const beforeRp = rankedRp();
     const cutoff = reload ? 8 : 5;
-    const lossRp = rankLossFor(rankInfo(beforeRp).tier, reload);
+    const lossRp = Math.round(rankLossFor(rankInfo(beforeRp).tier, reload) *
+      (1 - 0.5 * lobbyRankBonus()));
     const killRp = player.kills * perKill;
     const rawGain = state.rpPoints + (state.rpPlaceAwarded === 0 && placement > cutoff ? lossRp : 0);
     setRankedRp(beforeRp + rawGain);
@@ -23384,8 +23406,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 16 };
-const VERSION_PREV = '10.15PT';
+const VERSION = { season: 10, release: 19 };
+const VERSION_PREV = '10.18PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -23595,10 +23617,108 @@ const SKINS = [
   { id: 'shop_ice', name: 'Ice Monarch', shirt: 0xcfefff, pants: 0x2a4a5a, skin: 0xf0c9a0, accent: 0x1a3040, rarity: 4, price: 1500 },
   { id: 'shop_cyber', name: 'Cyber Wraith', shirt: 0x9b5cff, pants: 0x18122a, skin: 0xb07a4a, accent: 0x2a1a4a, rarity: 4, price: 1500 },
   { id: 'shop_ronin', name: 'Ash Ronin', shirt: 0x6f7787, pants: 0x22262e, skin: 0xd8a878, accent: 0x3a3f4a, rarity: 2, price: 800 },
+  // Season 10 · DROWNED COAST — forty new outfits, sold five at a time
+  { id: 's10_01', name: 'Wreck Diver', shirt: 0x2b4a5e, pants: 0x101c24, skin: 0xd8a878, accent: 0x4ff0d0, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_02', name: 'Tide Warden', shirt: 0x2f8f9a, pants: 0x123236, skin: 0xf0c9a0, accent: 0x5ce1ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_03', name: 'Salt Ranger', shirt: 0x9fd8f0, pants: 0x1d3a4a, skin: 0xe8b98a, accent: 0x2a5a6a, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_04', name: 'Beacon Keeper', shirt: 0xffc844, pants: 0x3a2a08, skin: 0xb07a4a, accent: 0xff8a3d, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_05', name: 'Deep Mariner', shirt: 0x1f3a5e, pants: 0x0b1420, skin: 0xd8a878, accent: 0x7fe3ff, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_06', name: 'Coral King', shirt: 0xff8fa3, pants: 0x3a1a26, skin: 0xf0c9a0, accent: 0xffd451, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_07', name: 'Lantern Wraith', shirt: 0x3a3a52, pants: 0x14141e, skin: 0xd8cbb0, accent: 0xffb03d, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_08', name: 'Riptide', shirt: 0x39c6c0, pants: 0x0f2a2a, skin: 0xe8b98a, accent: 0xc6ff4a, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_09', name: 'Low Road', shirt: 0x4a3a2a, pants: 0x1a140e, skin: 0xb07a4a, accent: 0x8dff5a, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_10', name: 'Flood Watch', shirt: 0x2a6f9e, pants: 0x0f2438, skin: 0xf0c9a0, accent: 0xff5a6e, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_11', name: 'Causeway', shirt: 0x6b7a8a, pants: 0x22262e, skin: 0xd8a878, accent: 0xffc844, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_12', name: 'Kelp Shade', shirt: 0x2f5e3a, pants: 0x102018, skin: 0x9fd8a0, accent: 0x9fe8ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_13', name: 'Anchor Hand', shirt: 0x3a3a44, pants: 0x16161c, skin: 0xd8a878, accent: 0x5ce1ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_14', name: 'Brass Diver', shirt: 0xb08a3a, pants: 0x3a2a10, skin: 0xf0c9a0, accent: 0xfff0b0, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_15', name: 'Undertow', shirt: 0x1f2a3a, pants: 0x0b0f16, skin: 0xd8a878, accent: 0x6dffd8, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_16', name: 'Night Ferry', shirt: 0x2b2f5a, pants: 0x0f1120, skin: 0xb07a4a, accent: 0xffd23f, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_17', name: 'Dock Rat', shirt: 0x8a6a4a, pants: 0x2b2016, skin: 0xb07a4a, accent: 0xffc844, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_18', name: 'Bell Buoy', shirt: 0xff7a3d, pants: 0x3a1a08, skin: 0xe8b98a, accent: 0xfff0b0, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_19', name: 'Squall Line', shirt: 0x5b7cff, pants: 0x141a2e, skin: 0xd8a878, accent: 0x9fe8ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_20', name: 'Sea Glass', shirt: 0x9fe8d8, pants: 0x1d3a34, skin: 0xf0c9a0, accent: 0xff8fa3, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_21', name: 'Driftwood', shirt: 0x8a7a62, pants: 0x2b261e, skin: 0xd8a878, accent: 0xc6ff4a, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_22', name: 'Cabin Hand', shirt: 0x2f4a6a, pants: 0x101a24, skin: 0xe8b98a, accent: 0xffc844, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_23', name: 'Grog Master', shirt: 0xa04a2e, pants: 0x2b1408, skin: 0xd8a878, accent: 0xffd451, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_24', name: 'Spar Deck', shirt: 0x3a4a3e, pants: 0x141a16, skin: 0xf0c9a0, accent: 0x8dff5a, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_25', name: 'Powder Ghost', shirt: 0x2e3440, pants: 0x15181e, skin: 0xd8cbb0, accent: 0xff9f6a, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_26', name: 'Stern Watch', shirt: 0x1f4b5e, pants: 0x0d2028, skin: 0xd8a878, accent: 0x7fe3ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_27', name: 'Tidesman', shirt: 0x7f9fbf, pants: 0x222c38, skin: 0xe8b98a, accent: 0x5ce1ff, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_28', name: 'Wharf Cat', shirt: 0x4a4a2e, pants: 0x1a1a10, skin: 0xb07a4a, accent: 0xffd23f, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_29', name: 'Deep Six', shirt: 0x14181c, pants: 0x0a0c0f, skin: 0xd8cbb0, accent: 0xff5a6e, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_30', name: 'Silt Walker', shirt: 0x5e5242, pants: 0x201a14, skin: 0x9fd8c0, accent: 0x9fe8ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_31', name: 'Moon Shoal', shirt: 0x3a3a5e, pants: 0x14142a, skin: 0xf0c9a0, accent: 0xd8f4ff, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_32', name: 'Saltmarsh', shirt: 0x6a7a4a, pants: 0x242a18, skin: 0xd8a878, accent: 0xffc844, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_33', name: 'Galleon Hand', shirt: 0x6b4a2e, pants: 0x2b1c10, skin: 0xf0c9a0, accent: 0xe8dcc0, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_34', name: 'Bilge Rat', shirt: 0x3a4a5e, pants: 0x141a24, skin: 0xb07a4a, accent: 0x8dff5a, rarity: 2, price: 800, newDrop: true },
+  { id: 's10_35', name: 'Highwater', shirt: 0x2f7fd8, pants: 0x10203a, skin: 0xe8b98a, accent: 0x4ff0d0, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_36', name: 'Wrack Line', shirt: 0x8a94a6, pants: 0x1c2028, skin: 0xd8a878, accent: 0xff8fa3, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_37', name: 'Reef Warden', shirt: 0x1fa08a, pants: 0x0d2a24, skin: 0x9fd8c0, accent: 0xc6ff4a, rarity: 4, price: 1500, newDrop: true },
+  { id: 's10_38', name: 'Blue Peter', shirt: 0x3a6ed8, pants: 0x121e2e, skin: 0xf0c9a0, accent: 0xfff0b0, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_39', name: 'Shackle', shirt: 0x2b2f3a, pants: 0x0f1116, skin: 0xd8a878, accent: 0xff5a6e, rarity: 3, price: 1200, newDrop: true },
+  { id: 's10_40', name: 'Long Watch', shirt: 0x4a5a68, pants: 0x161a20, skin: 0xb07a4a, accent: 0x7fe3ff, rarity: 4, price: 1500, newDrop: true },
 ];
 
-/* The shop is a rotation now: only this season's featured outfits are on sale. */
-const SHOP_ITEMS = SKINS.filter((s) => s.price && s.fresh);
+/* ---- the item shop line ----
+   Only five outfits are on sale at a time. The forty new ones come up in order,
+   five a day; once they are out the older ones return in a mix that is
+   reshuffled every day. The line changes at 12:55 PM local, not at midnight. */
+const SHOP_SLOTS = 5;
+const SHOP_REFRESH_HOUR = 12;
+const SHOP_REFRESH_MIN = 55;
+
+function shopRefreshAt(now) {
+  const d = new Date(now);
+  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(),
+    SHOP_REFRESH_HOUR, SHOP_REFRESH_MIN, 0, 0);
+  if (t.getTime() <= now) t.setDate(t.getDate() + 1);
+  return t.getTime();
+}
+
+/* The day of the last 12:55 that passed: one line per day, never a reroll. */
+function shopCycle(now) {
+  return Math.floor((shopRefreshAt(now) - 86400000) / 86400000);
+}
+
+function shopLine(now) {
+  const newOnes = SKINS.filter((s) => s.price && s.newDrop);
+  const returns = SKINS.filter((s) => s.price && !s.newDrop);
+  const day = shopCycle(now);
+  // The first 12:55 a profile ever sees is its day one, so the new line starts
+  // from the top for everyone instead of from wherever a fixed epoch left it.
+  if (!profile.shopEpoch) { profile.shopEpoch = day; saveProfile(); }
+  const rel = ((day - profile.shopEpoch) % 200 + 200) % 200;
+  const newDays = Math.ceil(newOnes.length / SHOP_SLOTS);
+  const line = [];
+  if (rel < newDays) {
+    // the new outfits, five a day in order
+    for (let i = 0; i < SHOP_SLOTS; i++) {
+      const s = newOnes[rel * SHOP_SLOTS + i];
+      if (s) line.push(s);
+    }
+    if (line.length >= SHOP_SLOTS) return line;
+    // the last of the new ones: the rest of the row is filled from the returns
+    const filler = returns.slice();
+    const rng = mulberry32(9000 + day);
+    for (let i = filler.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const t = filler[i]; filler[i] = filler[j]; filler[j] = t;
+    }
+    for (let i = 0; i < filler.length && line.length < SHOP_SLOTS; i++) {
+      if (line.indexOf(filler[i]) < 0) line.push(filler[i]);
+    }
+    return line;
+  }
+  // out of new ones: the older outfits come back, reshuffled daily
+  const pool = returns.slice();
+  const rng = mulberry32(7000 + rel);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+  }
+  return pool.slice(0, SHOP_SLOTS);
+}
 
 const BP_TIERS = [
   { xp: 250, type: 'vb', amount: 100, name: '100 V-BUCKS' },
@@ -24102,8 +24222,11 @@ function awardTourPoints(n, label, detail) {
 
 function awardRankPoints(n, label, detail) {
   if (!isRanked() || !n) return;
-  state.rpPoints += n;
-  showPointsCard(n, label, detail, 'rp');
+  // a full lobby pays more per kill: half again at forty players, a fifth at
+  // thirty, nothing extra at twenty
+  const gain = Math.max(1, Math.round(n * (1 + 0.5 * lobbyRankBonus())));
+  state.rpPoints += gain;
+  showPointsCard(gain, label, detail, 'rp');
   if (thPtsEl) thPtsEl.textContent = String(rankedRp() + state.rpPoints);
   bumpPointsHud();
   sfx('pickup');
@@ -24121,8 +24244,9 @@ function updateTourPlacement() {
 
 /* Reload places lower but ranks faster: 60 RP for the win, 20 for a top five. */
 function rankPlaceTarget(place) {
-  if (isRankedReload()) return place === 1 ? 60 : place <= 5 ? 20 : 0;
-  return place === 1 ? 75 : place <= 5 ? 20 : 0;
+  const bonus = 1 + 0.5 * lobbyRankBonus();
+  if (isRankedReload()) return Math.round((place === 1 ? 60 : place <= 5 ? 20 : 0) * bonus);
+  return Math.round((place === 1 ? 75 : place <= 5 ? 20 : 0) * bonus);
 }
 
 function updateRankPlacement() {
@@ -24852,11 +24976,41 @@ function openSpritePick(onDone) {
   };
 }
 
+/* The clock under the shop head, and the swap when the line runs out. */
+let shopCycleShown = null;
+
+function updateShopTimer() {
+  const now = Date.now();
+  const left = Math.max(0, shopRefreshAt(now) - now);
+  const el = document.getElementById('shopTimer');
+  if (el) {
+    const total = Math.floor(left / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const pad = (n) => (n < 10 ? '0' + n : String(n));
+    const txt = (h > 0 ? h + 'H ' : '') + pad(m) + 'M ' + pad(s) + 'S';
+    if (el.textContent !== txt) el.textContent = txt;
+  }
+  const c = shopCycle(now);
+  if (shopCycleShown === null) { shopCycleShown = c; return; }
+  if (shopCycleShown === c) return;
+  // 12:55 has passed: the next five are on sale
+  shopCycleShown = c;
+  renderShop();
+  sfx('reload');
+  toast('ITEM SHOP · A NEW LINE IS IN', 'sub');
+}
+
+/* The shop clock runs on the lobby as well as in a match, so the line turns
+   over while the menus are open and the countdown is never a frozen dash. */
+setInterval(updateShopTimer, 500);
+
 function renderShop() {
   const grid = document.getElementById('shopGrid');
   if (!grid) return;
   grid.innerHTML = '';
-  const pool = SHOP_ITEMS.slice().sort((a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0));
+  const pool = shopLine(Date.now());
   for (let i = 0; i < pool.length; i++) {
     const sk = pool[i];
     const owned = ownsSkin(sk.id);
@@ -24866,7 +25020,7 @@ function renderShop() {
       '<div class="rarBar" style="background:' + RARITY[sk.rarity].color + '"></div>' +
       miniHTML(sk) +
       '<div class="cName">' + sk.name + '</div>' +
-      '<div class="cType">' + (sk.fresh ? '<span class="cNew">NEW</span>' : '') + RARITY[sk.rarity].name + ' OUTFIT</div>' +
+      '<div class="cType">' + (sk.newDrop ? '<span class="cNew">NEW</span>' : '') + RARITY[sk.rarity].name + ' OUTFIT</div>' +
       '<div class="cFoot"><button class="cardBtn ' + (owned ? '' : 'buy') + '"' +
       (owned ? ' disabled' : '') + '>' + (owned ? 'OWNED' : 'BUY · ' + sk.price) + '</button></div>';
     if (!owned) d.querySelector('button').addEventListener('click', () => buySkin(sk.id));
