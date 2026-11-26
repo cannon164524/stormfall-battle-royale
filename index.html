@@ -8695,6 +8695,14 @@ body.death-ui #eventBanner { display:none !important; }
   color:var(--ink-dim);
 }
 .mpRot b { color:#fff; font-weight:700; letter-spacing:.1em; }
+
+/* Season 10 · the wallet holds three thousand: the chip reads CAP at the top */
+.topRight .vbTag .capTag {
+  margin-left:5px; padding-left:5px;
+  border-left:1px solid var(--line);
+  font-family:var(--body); font-size:8px; font-weight:800; letter-spacing:.12em;
+  color:var(--coral);
+}
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8931,11 +8939,11 @@ body.death-ui #eventBanner { display:none !important; }
     </nav>
     <div class="topRight">
       <div class="cashTag"><i class="cashCoin">$</i><b id="cashAmount">0</b></div>
-      <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b></div>
+      <div class="vbTag"><i class="vbCoin">V</i><b id="vbAmount">0</b><span class="capTag hide" id="vbCap">CAP</span></div>
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.19PT</div>
+      <div class="verTag" id="verTag">v10.20PT</div>
     </div>
   </div>
 
@@ -9683,16 +9691,15 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.19PT</b>
+        <b id="wnVersion">v10.20PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.18PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.19PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE ITEM SHOP TURNS DAILY</b> — five outfits on sale at a time, the line changing at <b>12:55 PM</b> local, starting from your own first 12:55 so the forty Season 10 outfits begin from the top. The countdown under the shop head is live on the lobby too now.</div></li>
-      <li><span class="wnTag">02</span><div><b>BIGGER LOBBIES PAY BETTER</b> — the rank bill is softer and the gains are higher as the lobby grows: at <b>30</b> players the loss is a fifth lighter and every gain a third bigger, and at <b>40</b> the loss is half while the gain is up by half again.</div></li>
-      <li><span class="wnTag">03</span><div><b>BOSSES ARE LIGHTER</b> — a boss carries <b>550</b> health with <b>50</b> shield and overshield now, not 900/100/100, and its shot does a <b>quarter</b> of a normal bot's damage instead of half. Still three times the spray, so it is still a fight.</div></li>
+      <li><span class="wnTag">01</span><div><b>THREE THOUSAND V-BUCKS, NO MORE</b> — the wallet caps at <b>3000</b>: a payment that would pass it is held at the top, and the chip beside the balance reads <b>CAP</b> while it sits there. Bought, earned from the pass or won, it all lands under the same ceiling.</div></li>
+      <li><span class="wnTag">02</span><div><b>THE DEEP PEARL IS A TREASURE</b> — one chest in <b>fifty</b> hides it now, not one in twenty. Still only a win with it in your boons pays the shop.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -14778,9 +14785,9 @@ function makeGrappler() {
   return { kind: 'grappler', type: 'grappler', count: GRAPPLER_USES, name: 'Grappler' };
 }
 
-/* A chest in twenty holds the deep pearl. Picking it up puts it in your boon
+/* A chest in fifty holds the deep pearl. Picking it up puts it in your boon
    slots — it only pays out if you go on to win that match with it. */
-const DEEP_PEARL_CHANCE = 0.05;
+const DEEP_PEARL_CHANCE = 0.02;
 function makeToken() {
   return { kind: 'token', name: 'Deep Pearl' };
 }
@@ -16422,7 +16429,7 @@ function openChest(c, extra) {
   }
   if (!isOG() && Math.random() < 0.25) drops.push(makeGrappler());
   if (!isOG()) drops.push(makeGold(Math.round(50 * anomalyGoldMul())));
-  // One chest in twenty hides the season's deep pearl.
+  // One chest in fifty hides the season's deep pearl.
   if (!isOG() && Math.random() < DEEP_PEARL_CHANCE) drops.push(makeToken());
   if (extra) for (let i = 0; i < extra.length; i++) drops.push(extra[i]);
 
@@ -23406,8 +23413,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 19 };
-const VERSION_PREV = '10.18PT';
+const VERSION = { season: 10, release: 20 };
+const VERSION_PREV = '10.19PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -23773,6 +23780,8 @@ function tourneyPrizeFor(def, mode) {
 
 /* Bump this id to wipe every account's V-Bucks once, on next load. */
 const VB_RESET_ID = 'wipe-6.5.3';
+/* The wallet holds three thousand and no more: the chip reads CAP at the top. */
+const VB_CAP = 3000;
 
 function defaultProfile() {
   return {
@@ -23842,6 +23851,7 @@ function loadProfileFrom(p) {
 }
 
 let profile = loadProfile();
+if (profile.vbucks > VB_CAP) profile.vbucks = VB_CAP;
 
 /* One-time wipe: every account starts this build with an empty V-Bucks balance. */
 if (profile.vbReset !== VB_RESET_ID) {
@@ -23872,6 +23882,8 @@ function refreshWallet() {
   refreshCash();
   const el = document.getElementById('vbAmount');
   if (el) el.textContent = String(profile.vbucks);
+  const capEl = document.getElementById('vbCap');
+  if (capEl) capEl.classList.toggle('hide', profile.vbucks < VB_CAP);
   const buy = document.getElementById('buyPassBtn');
   if (buy) {
     if (profile.battlePass) {
@@ -24409,7 +24421,7 @@ function buyVbucksWithCash(i) {
   if (!o) return;
   if ((profile.cash || 0) < o.cash) { toast('NOT ENOUGH CASH', 'sub'); sfx('reload'); return; }
   profile.cash -= o.cash;
-  profile.vbucks += o.vb;
+  profile.vbucks = Math.min(VB_CAP, profile.vbucks + o.vb);
   saveProfile();
   refreshWallet();
   renderCompetitive();
@@ -25147,7 +25159,7 @@ function claimBpTiers() {
     profile.claimed.push(i);
     changed = true;
     if (t.type === 'vb') {
-      profile.vbucks += t.amount;
+      profile.vbucks = Math.min(VB_CAP, profile.vbucks + t.amount);
     } else if (t.type === 'skin' && !ownsSkin(t.id)) {
       profile.owned.push(t.id);
     }
