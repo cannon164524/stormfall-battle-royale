@@ -8943,7 +8943,7 @@ body.death-ui #eventBanner { display:none !important; }
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.20PT</div>
+      <div class="verTag" id="verTag">v10.21PT</div>
     </div>
   </div>
 
@@ -9691,15 +9691,14 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.20PT</b>
+        <b id="wnVersion">v10.21PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.19PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.20PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THREE THOUSAND V-BUCKS, NO MORE</b> — the wallet caps at <b>3000</b>: a payment that would pass it is held at the top, and the chip beside the balance reads <b>CAP</b> while it sits there. Bought, earned from the pass or won, it all lands under the same ceiling.</div></li>
-      <li><span class="wnTag">02</span><div><b>THE DEEP PEARL IS A TREASURE</b> — one chest in <b>fifty</b> hides it now, not one in twenty. Still only a win with it in your boons pays the shop.</div></li>
+      <li><span class="wnTag">01</span><div><b>A BALANCE OVER THREE THOUSAND LANDS AT THREE THOUSAND</b> — the cap was only applied to the profile saved on this device, so an account with 17200 V-Bucks kept it when the account was adopted. Every profile, the account's included, is now clamped on load: over the ceiling reads <b>3000</b> and shows the <b>CAP</b> chip.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -23413,8 +23412,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 20 };
-const VERSION_PREV = '10.19PT';
+const VERSION = { season: 10, release: 21 };
+const VERSION_PREV = '10.20PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -23817,7 +23816,9 @@ function loadProfileFrom(p) {
   try {
     if (p && typeof p === 'object') {
       {
-        base.vbucks = Math.max(0, Math.floor(p.vbucks || 0));
+        // the wallet holds three thousand wherever a profile is loaded from,
+        // the account's included, so a balance over the cap lands at the cap
+        base.vbucks = clamp(Math.floor(p.vbucks || 0), 0, VB_CAP);
         base.owned = Array.isArray(p.owned) ? p.owned : ['default'];
         base.equipped = p.equipped || 'default';
         base.pocket = p.pocket || 'shock';
