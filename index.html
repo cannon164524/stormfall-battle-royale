@@ -8924,7 +8924,7 @@ body.death-ui #eventBanner { display:none !important; }
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.12PT</div>
+      <div class="verTag" id="verTag">v10.13PT</div>
     </div>
   </div>
 
@@ -9671,16 +9671,14 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.12PT</b>
+        <b id="wnVersion">v10.13PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.11PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.12PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>RARE CHESTS CRACK OPEN</b> — a chest holding something rare (an ascendant, mythic or exotic gun, a deep pearl, or a medallion out of a deep chest) no longer pops at a touch. The whole chest shakes and the lid grinds up over <b>2.6</b> s, and the find — with its pop-up card — only lands once the lid is open.</div></li>
-      <li><span class="wnTag">02</span><div><b>COMMON CHESTS ARE STILL QUICK</b> — a chest with nothing rare in it opens at a touch, as before, so a normal drop is not a wait.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE BREATH METER STAYS ON</b> — swimming and the meter now read the live surface, so the tide no longer makes it blink and the breath counts down to drowning.</div></li>
+      <li><span class="wnTag">01</span><div><b>RARE DROPS LIFT, THEY DO NOT POP</b> — a body carrying something rare (a relic, a Sprite, an ascendant or better gun, a deep pearl, a medallion) now pulses where it fell and lifts the item up over a beat, with its rare-find card; a common drop still lands at once. The same timing now runs for a rare chest's own find.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -15999,6 +15997,45 @@ function clearLoot() {
   loot.length = 0;
 }
 
+/* Something rare that falls out of a body does not pop: it lifts out of the
+   corpse with a pulse of light, and only lands — with its card — after a beat.
+   A common drop still lands at once. */
+const RARE_DROP_DELAY = 1.15;
+const pendingDrops = [];
+
+function dropLoot(items, x, y, z) {
+  let rare = false;
+  for (let i = 0; i < items.length; i++) if (chestDropIsRare(items[i])) rare = true;
+  if (!rare) {
+    for (let i = 0; i < items.length; i++) {
+      spawnLoot(x + rand(-1.3, 1.3), y + 0.3, z + rand(-1.3, 1.3), items[i]);
+    }
+    return;
+  }
+  const at = new THREE.Vector3(x, y + 0.8, z);
+  impactFX(at);
+  shockwaveFX(at, 3.4);
+  sfx('unlock');
+  pendingDrops.push({ at: state.time + RARE_DROP_DELAY, items, x, y, z });
+}
+
+/* Once a frame: a rare drop lifts out of the body it came from. */
+function updatePendingDrops() {
+  for (let i = pendingDrops.length - 1; i >= 0; i--) {
+    const p = pendingDrops[i];
+    if (state.time < p.at) continue;
+    pendingDrops.splice(i, 1);
+    for (let j = 0; j < p.items.length; j++) {
+      spawnLoot(p.x + rand(-1.3, 1.3), p.y + 0.3, p.z + rand(-1.3, 1.3), p.items[j]);
+    }
+    for (let j = 0; j < p.items.length; j++) {
+      if (!chestDropIsRare(p.items[j])) continue;
+      showRareFind(p.items[j], 'RARE DROP', 'IT CAME UP OUT OF THE BODY');
+      break;
+    }
+  }
+}
+
 /* ---- Relic Run: one relic on the crown cay, banked at an extraction site ---- */
 const RELIC_BANK_TIME = 5;
 
@@ -17157,11 +17194,11 @@ function playerDie(killer) {
     player.relic = false;
     const hudEl = document.getElementById('hud');
     if (hudEl) hudEl.classList.remove('relic');
-    spawnLoot(player.pos.x, player.pos.y + 0.6, player.pos.z, makeRelic());
+    dropLoot([makeRelic()], player.pos.x, player.pos.y + 0.6, player.pos.z);
   }
   // A Sprite you never banked falls out of your bag where you died.
   if (player.spriteId && !player.spriteExtracted) {
-    spawnLoot(player.pos.x, player.pos.y + 0.6, player.pos.z, makeSpritePod(player.spriteId));
+    dropLoot([makeSpritePod(player.spriteId)], player.pos.x, player.pos.y + 0.6, player.pos.z);
     player.spriteId = '';
     player.spriteExtracted = false;
   }
@@ -18030,9 +18067,8 @@ function dropBotLoot(b) {
   } else if (Math.random() < 0.6) {
     items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   }
-  for (const it of items) {
-    spawnLoot(b.pos.x + rand(-1.3, 1.3), b.pos.y + 0.3, b.pos.z + rand(-1.3, 1.3), it);
-  }
+  // a body holding something rare lifts it out over a beat instead of popping it
+  dropLoot(items, b.pos.x, b.pos.y, b.pos.z);
 }
 
 /* =========================================================================
@@ -22715,6 +22751,7 @@ function startMatch() {
   bullets.length = 0;
   tracerPool.length = 0;
   fx.length = 0;
+  pendingDrops.length = 0;
   clearWorld();
   resetDeathCine();
   paintTerrain(mapTheme());
@@ -23282,8 +23319,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 12 };
-const VERSION_PREV = '10.11PT';
+const VERSION = { season: 10, release: 13 };
+const VERSION_PREV = '10.12PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -25488,6 +25525,7 @@ function animate(now) {
   updateVehicles(dt);
   updateBossBars();
   updateChests(dt);
+  updatePendingDrops(dt);
   updateGrenades(dt);
   updatePocketEffects(dt);
   updateRespawns();
