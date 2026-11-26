@@ -8924,7 +8924,7 @@ body.death-ui #eventBanner { display:none !important; }
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.10PT</div>
+      <div class="verTag" id="verTag">v10.12PT</div>
     </div>
   </div>
 
@@ -9671,17 +9671,16 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.10PT</b>
+        <b id="wnVersion">v10.12PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.09PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.11PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE SEA COMES UP HIGHER</b> — the tide tops out at <b>5.4</b> m now, not 2.4, and climbs at 0.02 m/s, so it takes more of the island and the low roads go under. Tide Race runs to <b>12</b> m.</div></li>
-      <li><span class="wnTag">02</span><div><b>BREATH AND DROWNING</b> — a thin meter under the health bar counts <b>18</b> seconds in the sea and comes back at <b>4.5</b> a second on land. At nothing you take <b>6</b> a second until you get out.</div></li>
-      <li><span class="wnTag">03</span><div><b>THE KILL CAM HOLDS</b> — when you go down the lens leaves your body and settles behind whoever got you at a third speed. If that bot falls before the card does, the lens keeps its last framing, and it stays above the rising sea so the shot is not all water.</div></li>
-      <li><span class="wnTag">04</span><div><b>THE CARD IS ALONE</b> — no toast, banner or rift-anomaly pill draws over the death or win card any more, and the top-left mode badge counts who is still alive live, not the lobby it started with.</div></li>
+      <li><span class="wnTag">01</span><div><b>RARE CHESTS CRACK OPEN</b> — a chest holding something rare (an ascendant, mythic or exotic gun, a deep pearl, or a medallion out of a deep chest) no longer pops at a touch. The whole chest shakes and the lid grinds up over <b>2.6</b> s, and the find — with its pop-up card — only lands once the lid is open.</div></li>
+      <li><span class="wnTag">02</span><div><b>COMMON CHESTS ARE STILL QUICK</b> — a chest with nothing rare in it opens at a touch, as before, so a normal drop is not a wait.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE BREATH METER STAYS ON</b> — swimming and the meter now read the live surface, so the tide no longer makes it blink and the breath counts down to drowning.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -10407,11 +10406,20 @@ function updateSeaMotion(dt) {
 
 /* The sea drains your breath while you are in it; once it is gone you drown in
    bills of DROWN_DPS every half second until you get out. Out of the water it
-   comes back at BREATH_REFILL a second, so a crossing has to be planned. */
+   comes back at BREATH_REFILL a second, so a crossing has to be planned.
+   Read the water itself, not player.swimming: that is recomputed twice a frame
+   (once for speed, once for the float) and the tide could disagree with it,
+   which made the meter blink and the breath recharge in the gaps. */
+function playerInSea() {
+  if (!player.alive || player.inBus || player.driving) return false;
+  const p = player.pos;
+  return waterDepthAt(p.x, p.z) > 1.15 && p.y < waterSurfaceAt(p.x, p.z) + 0.45;
+}
+
 function updateBreath(dt) {
   if (!player.alive || state.phase === 'menu' || state.phase === 'over') return;
   if (player.breath === undefined) player.breath = BREATH_MAX;
-  const inSea = player.swimming && !player.driving && !player.inBus;
+  const inSea = playerInSea();
   if (!inSea) {
     player.breath = Math.min(BREATH_MAX, player.breath + BREATH_REFILL * dt);
     player.drownAcc = 0;
@@ -12917,7 +12925,7 @@ function exitVehicle() {
   resolveCollisions(player.pos, player.pos.y, PLAYER_R, 1.7);
   if (waterDepthAt(player.pos.x, player.pos.z) > 1.15) {
     // stepping off a boat leaves you swimming, not standing on the sea floor
-    player.pos.y = WATER_Y - 0.35;
+    player.pos.y = waterSurfaceAt(player.pos.x, player.pos.z) - 0.35;
     player.swimming = true;
     player.onGround = false;
   } else {
@@ -16289,14 +16297,20 @@ function rollChestWeapon() {
   return makeWeapon(lootWeaponType(), rarityRoll(0.18));
 }
 
-function openChest(c) {
+/* A chest holding something rare does not just pop open: the lid grinds up
+   while the whole chest shakes, and only once it is open does the find land on
+   screen. A common chest still opens at a touch. */
+const RARE_OPEN_TIME = 2.6;
+
+function chestDropIsRare(d) {
+  return d.kind === 'token' ||
+    (d.kind === 'boon' && BOONS[d.type] && BOONS[d.type].medal) ||
+    (d.kind === 'weapon' && d.rarity >= R_ASCENDANT);
+}
+
+function openChest(c, extra) {
   if (!c || c.opened) return;
   c.opened = true;
-  c.lid.rotation.x = -1.1;
-  c.lid.position.z = -0.42;
-  c.lid.position.y = 0.86;
-  c.glow.material.opacity = 0.12;
-  c.beam.material.opacity = 0.03;
 
   // The chest table, fixed: one weapon, then a heal 50% or a boon 50% (never
   // both), a grappler 25%, and fifty gold. Nothing else is dropped.
@@ -16316,28 +16330,97 @@ function openChest(c) {
   if (!isOG()) drops.push(makeGold(Math.round(50 * anomalyGoldMul())));
   // One chest in twenty hides the season's deep pearl.
   if (!isOG() && Math.random() < DEEP_PEARL_CHANCE) drops.push(makeToken());
+  if (extra) for (let i = 0; i < extra.length; i++) drops.push(extra[i]);
 
+  let rare = false;
+  for (let i = 0; i < drops.length; i++) if (chestDropIsRare(drops[i])) rare = true;
+  if (!rare) { finishChestOpen(c, drops, gun); return; }
+
+  // the lid stays shut for now: updateChests grinds it open while the whole
+  // chest shakes, and the find only lands once it is fully open
+  c.opening = { t: 0, drops, gun };
+  if (c.beam) c.beam.material.opacity = 0.4;
+  if (c.glow) c.glow.material.opacity = 1;
+  sfx('reload');
+  toast('SOMETHING IS IN THE CHEST…', 'sub');
+}
+
+/* What is inside lands here, however the chest got open. */
+function finishChestOpen(c, drops, gun) {
   const a0 = Math.random() * TAU;
   for (let i = 0; i < drops.length; i++) {
     const a = a0 + (i * TAU) / drops.length;
     const r = 1.0 + (i % 2) * 0.25;
     spawnLoot(c.x + Math.cos(a) * r, c.y + 0.6, c.z + Math.sin(a) * r, drops[i]);
   }
-  if (gun.rarity >= R_ASCENDANT) {
-    showRareFind(gun, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
+
+  // the lid is fully up, the glow is out and the chest sits straight again
+  if (c.lid) {
+    c.lid.rotation.x = -1.1;
+    c.lid.position.z = -0.42;
+    c.lid.position.y = 0.86;
   }
-  for (let i = 0; i < drops.length; i++) {
-    if (drops[i].kind === 'token') {
-      showRareFind(drops[i], 'DEEP PEARL', 'PICK IT UP AND WIN TO CLAIM THE SHOP');
-      break;
+  if (c.mesh) {
+    c.mesh.position.set(c.x, c.y, c.z);
+    c.mesh.rotation.z = 0;
+  }
+  if (c.glow) c.glow.material.opacity = 0.12;
+  if (c.beam) c.beam.material.opacity = 0.03;
+
+  if (c.deep) {
+    showRareFind(drops[drops.length - 1], 'DEEP CHEST', 'A MEDALLION OUT OF THE SEA FLOOR');
+    toast('DEEP CHEST OPENED · THE SEA PAYS', 'sub');
+  } else {
+    if (gun.rarity >= R_ASCENDANT) {
+      showRareFind(gun, 'RARE CHEST FIND', 'GRAB IT BEFORE IT VANISHES');
     }
+    for (let i = 0; i < drops.length; i++) {
+      if (drops[i].kind === 'token') {
+        showRareFind(drops[i], 'DEEP PEARL', 'PICK IT UP AND WIN TO CLAIM THE SHOP');
+        break;
+      }
+    }
+    toast('CHEST OPENED', 'sub');
   }
 
   const woodMul = hasBoon('scav') ? 1.5 : 1;
   player.wood = Math.min(999, player.wood + Math.round(randInt(30, 60) * woodMul));
   sfx('chest');
-  toast('CHEST OPENED', 'sub');
   refreshHotbar();
+}
+
+/* Once a frame: a rare chest shakes itself open, and the lid only gives way in
+   the second half, so the pop-up never lands before the lid is up. */
+function updateChests(dt) {
+  for (let i = 0; i < chests.length; i++) {
+    const c = chests[i];
+    const o = c.opening;
+    if (!o) continue;
+    o.t += dt;
+    const p = clamp(o.t / RARE_OPEN_TIME, 0, 1);
+    const lid = clamp((p - 0.5) / 0.5, 0, 1);
+    const e = lid * lid * (3 - 2 * lid);
+    if (c.lid) {
+      c.lid.rotation.x = -1.1 * e;
+      c.lid.position.z = -0.42 * e;
+      c.lid.position.y = 0.76 + 0.1 * e;
+    }
+    const amt = 0.055 * (1 - p) + 0.02;
+    if (c.mesh) {
+      c.mesh.position.set(
+        c.x + Math.sin(state.time * 47) * amt,
+        c.y + Math.abs(Math.sin(state.time * 33)) * amt * 0.8,
+        c.z + Math.cos(state.time * 41) * amt
+      );
+      c.mesh.rotation.z = Math.sin(state.time * 51) * amt * 0.5;
+    }
+    if (c.beam) c.beam.material.opacity = 0.16 + 0.4 * (1 - p);
+    if (c.glow) c.glow.material.opacity = 0.85 + Math.sin(state.time * 40) * 0.15;
+    if (p >= 1) {
+      c.opening = null;
+      finishChestOpen(c, o.drops, o.gun);
+    }
+  }
 }
 
 function nearestChest(radius) {
@@ -20342,9 +20425,9 @@ function updateDrop(dt) {
 
   // water breaks the fall: you splash and swim, you do not stand on the floor —
   // but it is hard water: arrive without a glider and it hurts just the same
-  if (p.y <= WATER_Y - 0.45 && waterDepthAt(p.x, p.z) > 1.2) {
+  if (p.y <= waterSurfaceAt(p.x, p.z) - 0.45 && waterDepthAt(p.x, p.z) > 1.2) {
     const impact = Math.max(0, -player.vel.y);
-    p.y = WATER_Y - 0.35;
+    p.y = waterSurfaceAt(p.x, p.z) - 0.35;
     player.vel.set(0, 0, 0);
     player.dropping = false;
     player.glider = false;
@@ -20568,9 +20651,10 @@ function updatePlayer(dt) {
     player.onGround = false;
   }
 
-  // deep water floats you at the surface instead of the sea floor
+  // deep water floats you at the surface instead of the sea floor: measured
+  // against the live surface, or the tide alone would turn swimming off
   const swimDepth = waterDepthAt(player.pos.x, player.pos.z);
-  player.swimming = swimDepth > 1.15 && player.pos.y < WATER_Y + 0.1;
+  player.swimming = swimDepth > 1.15 && player.pos.y < waterSurfaceAt(player.pos.x, player.pos.z) + 0.1;
   if (player.swimming) {
     const surf = waterSurfaceAt(player.pos.x, player.pos.z) - 0.35;
     if (player.pos.y < surf) {
@@ -20653,20 +20737,14 @@ function startChannel(type, van) {
 }
 
 /* The sea pays more than the shore: the ordinary table, two vault guns and a
-   medallion, all out of the same chest. */
+   medallion, all out of the same chest. The medallion makes it a rare chest,
+   so the lid grinds open before anything lands. */
 function openDeepChest(c) {
   if (!c || c.opened) return;
-  openChest(c);
-  const drops = [];
-  for (let i = 0; i < 2; i++) drops.push(makeWeapon(lootWeaponType(), R_ASCENDANT));
-  drops.push(makeBoon(pick(MEDALLIONS)));
-  for (let i = 0; i < drops.length; i++) {
-    const a = (i * TAU) / drops.length + Math.PI / 3;
-    spawnLoot(c.x + Math.cos(a) * 1.5, c.y + 0.6, c.z + Math.sin(a) * 1.5, drops[i]);
-  }
-  showRareFind(drops[drops.length - 1], 'DEEP CHEST', 'A MEDALLION OUT OF THE SEA FLOOR');
-  toast('DEEP CHEST OPENED · THE SEA PAYS', 'sub');
-  sfx('chest');
+  const extra = [];
+  for (let i = 0; i < 2; i++) extra.push(makeWeapon(lootWeaponType(), R_ASCENDANT));
+  extra.push(makeBoon(pick(MEDALLIONS)));
+  openChest(c, extra);
 }
 
 /* Banking a Sprite is what makes it permanent. Winning with one counts too. */
@@ -21484,12 +21562,13 @@ function updateHUD() {
     }
   }
 
-  // the breath meter only shows while you are in the sea or getting it back
+  // the breath meter shows while you are in the sea or getting it back, read
+  // from the water itself so it cannot blink with player.swimming
   const breathBarEl = document.getElementById('breathBar');
   if (breathBarEl) {
     const breath = player.breath === undefined ? BREATH_MAX : player.breath;
     const frac = clamp(breath / BREATH_MAX, 0, 1);
-    breathBarEl.classList.toggle('hide', !player.swimming && frac >= 0.999);
+    breathBarEl.classList.toggle('hide', !playerInSea() && frac >= 0.999);
     const bFill = document.getElementById('breathFill');
     if (bFill) bFill.style.width = (frac * 100).toFixed(1) + '%';
     const bNum = document.getElementById('breathNum');
@@ -23203,8 +23282,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 10 };
-const VERSION_PREV = '10.09PT';
+const VERSION = { season: 10, release: 12 };
+const VERSION_PREV = '10.11PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -25408,6 +25487,7 @@ function animate(now) {
   updateAnomaly(dt);
   updateVehicles(dt);
   updateBossBars();
+  updateChests(dt);
   updateGrenades(dt);
   updatePocketEffects(dt);
   updateRespawns();
