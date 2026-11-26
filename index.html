@@ -9583,14 +9583,14 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · SEASON 9</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v9.5.1</b>
+        <b id="wnVersion">v9.5.2</b>
         <span id="wnLevel">SMALL UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v9.5.0</div>
+        <div class="wnHist" id="wnHist">FROM v9.5.1</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>THE LAST FOE, FIXED</b> — the pointer rides the edge of the screen instead of a small box on the crosshair, the marker over them floats above the head and no longer keeps the angle it last pointed, and both clear when the duel ends, so a fresh match cannot point at a body that is gone.</div></li>
+      <li><span class="wnTag">01</span><div><b>SEASON X HAS A DATE</b> — the closed screen now counts down to Monday 30 November, 8:30 AM PST, instead of saying the season is over and leaving it there: the clock runs to Season X and the card names the date under it.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -22304,8 +22304,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { major: 9, minor: 5, patch: 1 };
-const VERSION_PREV = '9.5.0';
+const VERSION = { major: 9, minor: 5, patch: 2 };
+const VERSION_PREV = '9.5.1';
 
 function versionString() {
   return VERSION.major + '.' + VERSION.minor + '.' + VERSION.patch;
@@ -22324,17 +22324,28 @@ function setVersionUI() {
 }
 
 /* ---------------- launch gate ----------------
-   Season 9 opens at 08:30 PST on Monday 23 November 2026 and closes at 10:50
-   PST on Wednesday 25 November, both fixed instants so every clock agrees.
+   Season 9 opens at 08:30 PST on Monday 23 November 2026, closes at 10:50
+   PST on Wednesday 25 November, and Season X arrives at 08:30 PST on Monday
+   30 November — all fixed instants, so every clock agrees.
    Before the open the gate is the only thing on screen and lifts by itself;
-   when the close lands it comes back for good, until the next season. */
+   when the close lands it comes back for good and counts Season X down. */
 const LAUNCH_AT = new Date('2026-11-23T08:30:00-08:00').getTime();
 const CLOSE_AT = new Date('2026-11-25T10:50:00-08:00').getTime();
+const NEXT_SEASON_AT = new Date('2026-11-30T08:30:00-08:00').getTime();
 
 function launchMsLeft() { return LAUNCH_AT - Date.now(); }
 function closeMsLeft() { return CLOSE_AT - Date.now(); }
+function nextSeasonMsLeft() { return NEXT_SEASON_AT - Date.now(); }
 function seasonEnded() { return closeMsLeft() <= 0; }        // shut after the close
 function seasonIsClosed() { return launchMsLeft() > 0 || seasonEnded(); }
+
+/* What the closed card says under the clock: the date Season X lands, and
+   what it says once that instant has passed without a build behind it. */
+function seasonClosedNote() {
+  return nextSeasonMsLeft() > 0
+    ? 'SEASON X ARRIVES<br>MONDAY 30 NOVEMBER · 8:30 AM PST'
+    : 'SEASON X LANDS ON THIS SCREEN FIRST';
+}
 
 function fmtCountdown(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -22359,12 +22370,26 @@ function fmtShort(ms) {
 function updateSeasonTimer() {
   const opens = launchMsLeft();
   const closes = closeMsLeft();
+  const next = nextSeasonMsLeft();
   const ended = closes <= 0;
   const clock = document.getElementById('scClock');
   if (clock) {
-    clock.textContent = ended ? 'CLOSED'
+    // closed, the big clock counts Season X down instead of saying CLOSED
+    clock.textContent = ended
+      ? (next > 0 ? fmtCountdown(next) : 'SEASON X · LANDING')
       : opens > 0 ? fmtCountdown(opens)
       : 'CLOSES IN ' + fmtCountdown(closes);
+  }
+  if (ended) {
+    // the note names the date and keeps up as the countdown reaches zero
+    const note = document.getElementById('scNote');
+    if (note) {
+      const t = seasonClosedNote();
+      if (note.dataset.t !== t) {
+        note.dataset.t = t;
+        note.innerHTML = t;
+      }
+    }
   }
   const el = document.getElementById('seasonTimer');
   if (!el) return;
@@ -22391,9 +22416,9 @@ function showSeasonClosed() {
   if (title) title.textContent = ended ? 'THE SEASON IS OVER.' : "IT'S TIME FOR A NEW ERA OF STORMFALL.";
   const note = document.getElementById('scNote');
   if (note) {
-    note.innerHTML = ended
-      ? 'THE NEXT SEASON LANDS ON THIS SCREEN FIRST'
-      : 'DOORS OPEN MONDAY 23 NOVEMBER<br>8:30 AM PST';
+    const text = ended ? seasonClosedNote() : 'DOORS OPEN MONDAY 23 NOVEMBER<br>8:30 AM PST';
+    note.dataset.t = text;
+    note.innerHTML = text;
   }
   const el = document.getElementById('seasonClosed');
   if (el) el.classList.remove('hide');
