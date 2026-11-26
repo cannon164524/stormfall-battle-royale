@@ -8924,7 +8924,7 @@ body.death-ui #eventBanner { display:none !important; }
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.13PT</div>
+      <div class="verTag" id="verTag">v10.15PT</div>
     </div>
   </div>
 
@@ -9671,14 +9671,16 @@ body.death-ui #eventBanner { display:none !important; }
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.13PT</b>
+        <b id="wnVersion">v10.15PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.12PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.14PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>RARE DROPS LIFT, THEY DO NOT POP</b> — a body carrying something rare (a relic, a Sprite, an ascendant or better gun, a deep pearl, a medallion) now pulses where it fell and lifts the item up over a beat, with its rare-find card; a common drop still lands at once. The same timing now runs for a rare chest's own find.</div></li>
+      <li><span class="wnTag">01</span><div><b>ONLY YOUR KILLS TELL YOU</b> — a body you did not drop no longer names what came out of it: its rare find still lifts, but the card and the boss medallion card only show on your own kill.</div></li>
+      <li><span class="wnTag">02</span><div><b>A RARE DROP LIFTS, AND ONLY ONCE</b> — the item comes up out of the body through a lit beam and a halo before it lands, and the kill-time "elimination jackpot" card is gone, so one rare weapon shows one card.</div></li>
+      <li><span class="wnTag">03</span><div><b>THE LAST FIGHT IS A DUEL</b> — once one opponent is left the storm holds its circle and stops billing, so the final kill is a shot instead of the storm.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -16003,7 +16005,7 @@ function clearLoot() {
 const RARE_DROP_DELAY = 1.15;
 const pendingDrops = [];
 
-function dropLoot(items, x, y, z) {
+function dropLoot(items, x, y, z, mine) {
   let rare = false;
   for (let i = 0; i < items.length; i++) if (chestDropIsRare(items[i])) rare = true;
   if (!rare) {
@@ -16016,22 +16018,58 @@ function dropLoot(items, x, y, z) {
   impactFX(at);
   shockwaveFX(at, 3.4);
   sfx('unlock');
-  pendingDrops.push({ at: state.time + RARE_DROP_DELAY, items, x, y, z });
+  // it lifts out of the body: a lit stone climbing through a beam, so the drop
+  // reads as one thing coming out rather than a card appearing from nowhere
+  const fx = new THREE.Group();
+  const gem = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.3, 0),
+    new THREE.MeshBasicMaterial({ color: 0xffd451, transparent: true, opacity: 0.9, depthWrite: false })
+  );
+  fx.add(gem);
+  const beam = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16, 0.36, 3.4, 8, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0xffd451, transparent: true, opacity: 0.24, depthWrite: false, side: THREE.DoubleSide })
+  );
+  beam.position.y = 1.6;
+  fx.add(beam);
+  const halo = new THREE.Mesh(
+    new THREE.RingGeometry(0.3, 0.55, 20),
+    new THREE.MeshBasicMaterial({ color: 0xffd451, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false })
+  );
+  halo.rotation.x = -Math.PI / 2;
+  fx.add(halo);
+  fx.position.set(x, y + 0.4, z);
+  dynGroup.add(fx);
+  pendingDrops.push({ at: state.time + RARE_DROP_DELAY, items, x, y, z, fx, gem, mine: !!mine });
 }
 
 /* Once a frame: a rare drop lifts out of the body it came from. */
 function updatePendingDrops() {
   for (let i = pendingDrops.length - 1; i >= 0; i--) {
     const p = pendingDrops[i];
+    if (p.fx) {
+      const k = clamp(1 - (p.at - state.time) / RARE_DROP_DELAY, 0, 1);
+      p.fx.position.y = p.y + 0.4 + k * 1.7;     // it comes up out of the body
+      if (p.gem) {
+        p.gem.position.y = 0.4 + k * 1.2;
+        p.gem.rotation.y += 0.14;
+        p.gem.scale.setScalar(1 + Math.sin(state.time * 9) * 0.12);
+      }
+    }
     if (state.time < p.at) continue;
     pendingDrops.splice(i, 1);
+    if (p.fx && p.fx.parent) p.fx.parent.remove(p.fx);
     for (let j = 0; j < p.items.length; j++) {
       spawnLoot(p.x + rand(-1.3, 1.3), p.y + 0.3, p.z + rand(-1.3, 1.3), p.items[j]);
     }
-    for (let j = 0; j < p.items.length; j++) {
-      if (!chestDropIsRare(p.items[j])) continue;
-      showRareFind(p.items[j], 'RARE DROP', 'IT CAME UP OUT OF THE BODY');
-      break;
+    // the card is yours only: another body's rare find lifts, but it does not
+    // tell you what it was
+    if (p.mine) {
+      for (let j = 0; j < p.items.length; j++) {
+        if (!chestDropIsRare(p.items[j])) continue;
+        showRareFind(p.items[j], 'RARE DROP', 'IT CAME UP OUT OF THE BODY');
+        break;
+      }
     }
   }
 }
@@ -17301,10 +17339,6 @@ function killBot(b, killerName) {
       ? !bots.some((x) => x.team !== player.team && !x.out && !x.boss)
       : !bots.some((x) => x.alive && !x.boss);
     if (!lastOpponent) showResultCard('kill', b.name.toUpperCase());
-    const rareGun = b.weapon && b.weapon.kind === 'weapon' && b.weapon.rarity >= R_ASCENDANT;
-    if (rareGun && !lastOpponent) {
-      showRareFind(b.weapon, 'ELIMINATION JACKPOT', 'TAKE IT OFF ' + b.name.toUpperCase() + ' · DROPPED WHERE THEY FELL');
-    }
     killPulse();
     sfx('elim');
     awardBpXp(100);
@@ -17330,7 +17364,7 @@ function killBot(b, killerName) {
   }
 
   if (state.teamMode) addTeamScore(1 - b.team);
-  dropBotLoot(b);
+  dropBotLoot(b, killerName === 'You');
 
   if (isRumble()) {
     b.out = false;
@@ -18050,7 +18084,7 @@ function damageBot(b, amount, attackerName, head, point, attacker) {
   } else if (state.phase !== 'staging' && b.skill > 0.45 && !mod('nobuild') && Math.random() < 0.4) botBuild(b);
 }
 
-function dropBotLoot(b) {
+function dropBotLoot(b, mine) {
   const w = b.weapon;
   // A dropped gun arrives loaded: whatever the bot burned through is refilled
   // to the magazine the weapon ships with, so a pickup never lands half empty
@@ -18061,14 +18095,14 @@ function dropBotLoot(b) {
     // a boss leaves exactly what it carried: one mythic, and one medallion
     const med = makeBoon(pick(MEDALLIONS));
     spawnLoot(b.pos.x + rand(-0.7, 0.7), b.pos.y + 0.6, b.pos.z + rand(-0.7, 0.7), med);
-    showRareFind(med, 'MEDALLION', 'BOSS DROP · ' + BOONS[med.type].name.toUpperCase());
+    if (mine) showRareFind(med, 'MEDALLION', 'BOSS DROP · ' + BOONS[med.type].name.toUpperCase());
     items.push(makeGold(250));
     toast('BOSS DOWN · ' + b.name, 'sub');
   } else if (Math.random() < 0.6) {
     items.push(makeHeal(pick(['bandage', 'mini', 'shield', 'slurp']), 1));
   }
   // a body holding something rare lifts it out over a beat instead of popping it
-  dropLoot(items, b.pos.x, b.pos.y, b.pos.z);
+  dropLoot(items, b.pos.x, b.pos.y, b.pos.z, !!mine);
 }
 
 /* =========================================================================
@@ -19368,6 +19402,15 @@ function updateStorm(dt) {
     storm.ring.scale.set(R, R, R);
   }
   if (!storm.active) return;
+
+  // The last fight is a duel, not a weather event: once one opponent is left
+  // the storm holds where it is and stops billing, so the final kill is a shot
+  // and not the storm (which is how most matches were ending).
+  let foes = 0;
+  for (let i = 0; i < bots.length; i++) {
+    if (bots[i].alive && !bots[i].out && !bots[i].boss) foes++;
+  }
+  if (foes <= 1 && player.alive) { storm.dps = 0; return; }
 
   if (storm.state === 'waiting') {
     storm.timer -= dt;
@@ -23319,8 +23362,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 13 };
-const VERSION_PREV = '10.12PT';
+const VERSION = { season: 10, release: 15 };
+const VERSION_PREV = '10.14PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
