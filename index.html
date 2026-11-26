@@ -8650,6 +8650,20 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
   border:1px solid var(--line); border-radius:0; cursor:pointer;
 }
 #routeRow .routeChip.on { color:#fff; border-color:var(--coral); }
+
+/* Season 10 · the day's three contracts, in the lobby column. One row each:
+   the name, the count, and a hairline progress bar. */
+#contractList { display:flex; flex-direction:column; gap:6px; margin-top:7px; }
+#contractList:empty { display:none; }
+#contractList .ctRow {
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--body); font-size:9.5px; font-weight:600; letter-spacing:.1em;
+  color:var(--ink-dim);
+}
+#contractList .ctRow b { color:#fff; font-weight:700; margin-left:auto; }
+#contractList .ctRow.done, #contractList .ctRow.done b { color:var(--coral); }
+#contractList .ctBar { flex:none; width:46px; height:3px; background:rgba(255,255,255,.12); }
+#contractList .ctBar i { display:block; height:100%; background:var(--coral); }
 </style>
 </head>
 <body class="ui9 ui10">
@@ -8889,7 +8903,7 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
       <button id="accEntry" type="button">SIGN IN</button>
       <button id="adminEntry">ADMIN</button>
       <div class="ptTag" id="ptTag">PLAYTEST</div>
-      <div class="verTag" id="verTag">v10.04PT</div>
+      <div class="verTag" id="verTag">v10.06PT</div>
     </div>
   </div>
 
@@ -9007,6 +9021,28 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
           <span class="modeTick"></span>
         </button>
       </div>
+
+      <div class="modeGroup">
+        <div class="modeGroupLabel">SEASON 10 · THE SEA MOVES</div>
+        <button class="modeBtn" data-mode="tiderace">
+          <span class="modeKicker new">NO STORM</span>
+          <span class="modeName">TIDE RACE</span>
+          <span class="modeFoot">THE TIDE TO <b>9</b> M · NO STORM</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="riptide">
+          <span class="modeKicker new">ON THE WATER</span>
+          <span class="modeName">RIPTIDE</span>
+          <span class="modeFoot">A HULL AT SPAWN · DOUBLE CURRENTS</span>
+          <span class="modeTick"></span>
+        </button>
+        <button class="modeBtn" data-mode="relic">
+          <span class="modeKicker new">CARRY IT OUT</span>
+          <span class="modeName">RELIC RUN</span>
+          <span class="modeFoot">BANK IT FOR <b>5s</b> · NO STORM</span>
+          <span class="modeTick"></span>
+        </button>
+      </div>
     </div>
 
     <button id="modeBar" type="button">
@@ -9074,6 +9110,11 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
           </div>
         </div>
         <div class="rankBar"><i id="rankFill"></i></div>
+      </div>
+
+      <div class="seatPanel" id="contractPanel">
+        <div class="seatLabel">DAILY CONTRACTS</div>
+        <div id="contractList"></div>
       </div>
 
       <div class="sidePanel">
@@ -9609,16 +9650,16 @@ body.ui11 #rareFind[data-tier="ascendant"] .rfSub {
         <div class="wnSub">STORMFALL · PLAYTEST NOTES</div>
       </div>
       <div class="wnVer">
-        <b id="wnVersion">v10.04PT</b>
+        <b id="wnVersion">v10.06PT</b>
         <span id="wnLevel">PLAYTEST UPDATE</span>
-        <div class="wnHist" id="wnHist">FROM v10.03PT</div>
+        <div class="wnHist" id="wnHist">FROM v10.05PT</div>
       </div>
     </div>
     <div class="wnDivider"></div>
     <ul class="wnList">
-      <li><span class="wnTag">01</span><div><b>DEEP CHESTS</b> — five coral-framed chests sitting on the sea floor where the water is over three metres. <b>HOLD E</b> for 4.5 s: moving, taking a hit or swimming off loses it, and it pays the ordinary table plus two vault guns and a medallion.</div></li>
-      <li><span class="wnTag">02</span><div><b>MEDALLION SETS</b> — wear both halves and the pair pays on top of each one. <b>TIDE</b> (Tideheart + Storm Eye): swim 30% faster and take no undertow damage. <b>HUNT</b> (Hunter + Ironshell): 10% off everything that hits you.</div></li>
-      <li><span class="wnTag">03</span><div><b>SALVAGE</b> — <b>X</b> over a gun on the ground breaks it down for wood, more the rarer it is, and one in eight gives up a boon instead. The bind is in SETTINGS.</div></li>
+      <li><span class="wnTag">01</span><div><b>SPRITES EVOLVE</b> — a Sprite that reaches level 5 evolves, and from then on every gain is a quarter again. The change is one flag on the record you already had, so nothing is lost.</div></li>
+      <li><span class="wnTag">02</span><div><b>DAILY CONTRACTS</b> — three a day, in the lobby column: <b>6</b> eliminations, <b>3</b> matches, <b>1</b> win. They pay battle-pass XP, so the pass climbs without the shop, and they reset on the day.</div></li>
+      <li><span class="wnTag">03</span><div><b>KILL CAM</b> — the world drops to a third speed when you go down and eases back over about a second and a half behind the card, so the shot that got you is still there to read.</div></li>
     </ul>
     <button id="wnClose" disabled>CLOSE IN 5</button>
   </div>
@@ -9823,6 +9864,27 @@ const MODE_DEFS = {
     adjustable: true,
     queue: (n) => n + ' OPPONENTS · OG RULES',
   },
+  tiderace: {
+    name: 'TIDE RACE', short: 'TIDE RACE', kicker: 'SEASON 10',
+    desc: 'No storm at all: the sea comes in for nine metres and does not stop. Take the high ground, hold it, and outlast everyone who did not.',
+    rules: ['NO STORM', 'THE TIDE TO <b>9</b> M', 'LAST ONE STANDING'],
+    adjustable: true,
+    queue: (n) => n + ' OPPONENTS · THE TIDE TO 9 M',
+  },
+  riptide: {
+    name: 'RIPTIDE', short: 'RIPTIDE', kicker: 'ON THE WATER',
+    desc: 'No bus: you start on the ground with a hull under you and the sea is the map. More currents than any other mode, at double the push.',
+    rules: ['GROUND START', 'A HULL AT SPAWN', 'DOUBLE CURRENTS'],
+    adjustable: true,
+    queue: (n) => n + ' OPPONENTS · START ON A HULL',
+  },
+  relic: {
+    name: 'RELIC RUN', short: 'RELIC', kicker: 'CARRY IT OUT',
+    desc: 'One relic lies on the crown cay. Carry it to an extraction site and bank it for five seconds to take the match — every other hand wants it, and it drops where you fall.',
+    rules: ['ONE RELIC', 'BANK IT FOR <b>5s</b>', 'NO STORM'],
+    adjustable: true,
+    queue: (n) => n + ' OPPONENTS · BANK THE RELIC',
+  },
 };
 const MODE_KEYS = Object.keys(MODE_DEFS);
 
@@ -9841,11 +9903,11 @@ function isBlitz() { return state.mode === 'blitz'; }
 const AIM_TEST_SPEED = 320;   // m/s every round travels at in Aim Mechanic Testing
 function isAimTest() { return state.mode === 'aimtest'; }
 function respawnMode() { return state.mode === 'reload' || state.mode === 'rankedreload' || state.mode === 'reloadduos' || state.mode === 'rumble' || state.mode === 'gungame'; }
-function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox' || state.mode === 'gungame'; }
-function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble'; }
-/* Modes that open on the battle bus. The labs skip it, so you can shoot and
-   build the moment they load. */
-function usesBus() { return state.mode !== 'aimtest' && state.mode !== 'sandbox'; }
+function noStorm() { return state.mode === 'rumble' || state.mode === 'sandbox' || state.mode === 'gungame' || state.mode === 'tiderace' || state.mode === 'relic'; }
+function groundStart() { return state.mode === 'blitz' || state.mode === 'rumble' || state.mode === 'riptide'; }
+/* Modes that open on the battle bus. The labs and Riptide skip it, so you can
+   shoot and build the moment they load. */
+function usesBus() { return state.mode !== 'aimtest' && state.mode !== 'sandbox' && state.mode !== 'riptide'; }
 const SIPHON_AMOUNT = 100;
 function siphonActive() { return isRanked() || !!state.tourneyId; }
 function mod(key) { return !!state.mods[key]; }
@@ -10086,6 +10148,13 @@ function setTideForMatch() {
   tide.rate = 0;
   if (waterMesh) waterMesh.position.y = WATER_Y;
   if (isBlitz() || isSandbox() || isGunGame() || isRumble() || isOG() || isAimTest()) return;
+  // Tide Race: the sea does not stop coming in
+  if (state.mode === 'tiderace') {
+    tide.max = 9;
+    tide.rate = 0.075;
+    tide.live = true;
+    return;
+  }
   tide.max = TIDE_MAX;
   tide.rate = TIDE_RATE;
   tide.live = true;
@@ -10167,6 +10236,16 @@ function setSeaMotionForMatch() {
     const spot = deepSpotNear(u.x, u.z, 90, 4);
     if (!spot) continue;
     undertows.push({ x: spot.x, z: spot.z, r: u.r });
+  }
+  // Riptide is the water mode: three more bands, and all of them push harder
+  if (state.mode === 'riptide') {
+    for (let i = 0; i < currents.length; i++) currents[i].speed *= 2;
+    for (let i = 0; i < 3; i++) {
+      const spot = deepSpotNear(rand(-250, 250), rand(-250, 250), 70, 3);
+      if (!spot) continue;
+      const a = Math.random() * TAU;
+      currents.push({ x: spot.x, z: spot.z, r: 30, dx: Math.cos(a), dz: Math.sin(a), speed: 3.4 });
+    }
   }
 }
 
@@ -12747,6 +12826,21 @@ function positionRider(v) {
   }
 }
 
+/* Riptide: the nearest hull is put under you at spawn, because the sea is
+   the map in this one. */
+function riptideStart() {
+  let best = null, bd = 1e9;
+  for (let i = 0; i < vehicles.length; i++) {
+    const v = vehicles[i];
+    const d = Math.hypot(v.group.position.x - player.pos.x, v.group.position.z - player.pos.z);
+    if (d < bd) { bd = d; best = v; }
+  }
+  if (!best) return;
+  player.pos.set(best.group.position.x, best.group.position.y + 0.6, best.group.position.z);
+  player.vel.set(0, 0, 0);
+  boardVehicle(best);
+}
+
 function exitVehicle() {
   const v = player.driving;
   player.driving = null;
@@ -14655,10 +14749,17 @@ function spriteGainXP(id, amount) {
   profile.sprites = profile.sprites || {};
   const rec = profile.sprites[id] || (profile.sprites[id] = { xp: 0 });
   const before = spriteLevel(id);
-  rec.xp = Math.max(0, (rec.xp || 0) + amount);
+  // An evolved sprite learns faster: every gain from here is a quarter again.
+  const gain = rec.evolved ? Math.round(amount * 1.25) : amount;
+  rec.xp = Math.max(0, (rec.xp || 0) + gain);
   const after = spriteLevel(id);
+  if (after >= 5 && !rec.evolved) {
+    rec.evolved = true;
+    toast(SPRITES[id].name.toUpperCase() + ' EVOLVED · XP GAIN +25%', 'sub');
+  } else if (after > before && after === 5) {
+    toast(SPRITES[id].name.toUpperCase() + ' MASTERED', 'sub');
+  }
   saveProfile();
-  if (after > before && after === 5) toast(SPRITES[id].name.toUpperCase() + ' MASTERED', 'sub');
 }
 
 /* Keeps max health honest when a Sprite with the health power comes or goes. */
@@ -14853,6 +14954,7 @@ function itemColor(item) {
   if (item.kind === 'boon') return BOONS[item.type].color;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].color;
   if (item.kind === 'token') return '#ffd451';
+  if (item.kind === 'relic') return '#ffe066';
   return '#c9c9c9';
 }
 function itemLabel(item) {
@@ -14866,6 +14968,7 @@ function itemLabel(item) {
   if (item.kind === 'boon') return BOONS[item.type].name;
   if (item.kind === 'sprite') return SPRITES[item.spriteId].name + ' Sprite';
   if (item.kind === 'token') return 'Deep Pearl';
+  if (item.kind === 'relic') return 'The Relic';
   return 'Item';
 }
 function itemMeta(item) {
@@ -14876,6 +14979,7 @@ function itemMeta(item) {
   if (item.kind === 'boon') return 'BOON · ' + BOONS[item.type].desc;
   if (item.kind === 'sprite') return 'SPRITE · ' + SPRITES[item.spriteId].desc;
   if (item.kind === 'token') return 'WIN THE MATCH TO CLAIM IT';
+  if (item.kind === 'relic') return 'BANK IT AT AN EXTRACTION SITE';
   return '';
 }
 function itemColorHex(item) {
@@ -15755,6 +15859,14 @@ function buildLootModel(item) {
       bone.rotation.z = 0.3 + (i ? -0.75 : 0.75);
       g.add(bone);
     }
+  } else if (item.kind === 'relic') {
+    // a cut stone standing on a ring, held up off the ground
+    const stone = new THREE.Mesh(new THREE.IcosahedronGeometry(0.32, 0), mat(0xffe066, true));
+    stone.position.y = 0.24;
+    g.add(stone);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.05, 8, 24), mat(0xfff3b0, true));
+    band.rotation.x = Math.PI / 2;
+    g.add(band);
   } else {
     const box = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.24, 0.3), mat(0x4a5568, true));
     g.add(box);
@@ -15775,7 +15887,7 @@ function spawnLoot(x, y, z, item) {
   model.position.y = 0.45;
   g.add(model);
 
-  const special = item.kind === 'token' ||
+  const special = item.kind === 'token' || item.kind === 'relic' ||
     (item.kind === 'boon' && BOONS[item.type] && BOONS[item.type].medal) ||
     (item.kind === 'weapon' && item.rarity >= R_ASCENDANT);
   let halo = null;
@@ -15807,7 +15919,7 @@ function spawnLoot(x, y, z, item) {
 
   g.position.set(x, y, z);
   dynGroup.add(g);
-  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: (item.kind === 'token' || (item.kind === 'boon' && BOONS[item.type] && BOONS[item.type].medal)) ? 900 : LOOT_LIFE + rand(0, 8), dead: false });
+  loot.push({ x, y, z, item, mesh: g, box: model, ring, beam, halo, special, t: rand(0, 6), age: 0, life: (item.kind === 'token' || item.kind === 'relic' || (item.kind === 'boon' && BOONS[item.type] && BOONS[item.type].medal)) ? 900 : LOOT_LIFE + rand(0, 8), dead: false });
   while (loot.length > LOOT_MAX) {
     const old = loot.shift();
     if (!old) break;
@@ -15819,6 +15931,36 @@ function spawnLoot(x, y, z, item) {
 function clearLoot() {
   for (const l of loot) if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
   loot.length = 0;
+}
+
+/* ---- Relic Run: one relic on the crown cay, banked at an extraction site ---- */
+const RELIC_BANK_TIME = 5;
+
+function makeRelic() {
+  return { kind: 'relic', name: 'The Relic' };
+}
+
+function spawnRelic() {
+  for (let t = 0; t < 80; t++) {
+    const a = Math.random() * TAU;
+    const rad = Math.random() * 44;
+    const x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+    const y = terrainHeight(x, z);
+    if (y < 8) continue;
+    spawnLoot(x, y, z, makeRelic());
+    return;
+  }
+}
+
+/* Banking it ends the run: this is the whole win condition of the mode. */
+function bankRelic() {
+  if (!player.relic) return;
+  player.relic = false;
+  const hud = document.getElementById('hud');
+  if (hud) hud.classList.remove('relic');
+  sfx('win');
+  toast('RELIC BANKED · THE RUN IS YOURS', '');
+  endMatch(true, 'The Relic');
 }
 
 function lootWeaponType() {
@@ -16027,6 +16169,17 @@ function salvageGun() {
 
 function pickupLoot(l) {
   if (!l || l.dead) return;
+  if (l.item.kind === 'relic') {
+    // one relic a match: it goes on your back, not in the bag
+    l.dead = true;
+    if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
+    if (player.relic) { toast('YOU ALREADY CARRY THE RELIC', 'sub'); return; }
+    player.relic = true;
+    sfx('unlock');
+    toast('THE RELIC IS YOURS · BANK IT AT AN EXTRACTION SITE', '');
+    document.getElementById('hud').classList.add('relic');
+    return;
+  }
   if (l.item.kind === 'token') {
     l.dead = true;
     if (l.mesh.parent) l.mesh.parent.remove(l.mesh);
@@ -16858,6 +17011,13 @@ function playerDie(killer) {
   player.reviveT = 0;
   player.channel = null;
   player.using = null;
+  // The relic is carried, not banked: it drops where the carrier does.
+  if (player.relic) {
+    player.relic = false;
+    const hudEl = document.getElementById('hud');
+    if (hudEl) hudEl.classList.remove('relic');
+    spawnLoot(player.pos.x, player.pos.y + 0.6, player.pos.z, makeRelic());
+  }
   // A Sprite you never banked falls out of your bag where you died.
   if (player.spriteId && !player.spriteExtracted) {
     spawnLoot(player.pos.x, player.pos.y + 0.6, player.pos.z, makeSpritePod(player.spriteId));
@@ -20412,6 +20572,7 @@ function finishChannel() {
   if (c.type === 'reboot') rebootMate();
   if (c.type === 'extract') extractSprite();
   if (c.type === 'deep') openDeepChest(c.van);
+  if (c.type === 'relic') bankRelic();
 }
 
 const DEEP_CHANNEL_TIME = 4.5;
@@ -20419,11 +20580,13 @@ const DEEP_CHANNEL_TIME = 4.5;
 function startChannel(type, van) {
   if (player.channel) return;
   const dur = type === 'extract' ? EXTRACT_TIME
-    : type === 'deep' ? DEEP_CHANNEL_TIME : REBOOT_TIME;
+    : type === 'deep' ? DEEP_CHANNEL_TIME
+    : type === 'relic' ? RELIC_BANK_TIME : REBOOT_TIME;
   player.channel = { type, van: van || null, start: state.time, end: state.time + dur };
   sfx('reload');
   toast(type === 'extract' ? 'EXTRACTING SPRITE…'
-    : type === 'deep' ? 'OPENING A DEEP CHEST…' : 'REBOOTING MATE…', 'sub');
+    : type === 'deep' ? 'OPENING A DEEP CHEST…'
+    : type === 'relic' ? 'BANKING THE RELIC…' : 'REBOOTING MATE…', 'sub');
 }
 
 /* The sea pays more than the shore: the ordinary table, two vault guns and a
@@ -21304,9 +21467,16 @@ function updateHUD() {
     interactTarget = { type: 'ride', obj: rideNear };
     promptText = '<b>E</b> RIDE ALONG · HANDS FREE';
   } else if (player.alive && !player.dropping && !player.knocked) {
-    const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
-    const van = site ? null : (mateNeedsReboot() ? nearestVan(player.pos, 3.6) : null);
-    if (site) {
+    const relicSite = (player.relic && state.mode === 'relic') ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
+    const site = relicSite ? null : ((player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null);
+    const van = (relicSite || site) ? null : (mateNeedsReboot() ? nearestVan(player.pos, 3.6) : null);
+    if (relicSite) {
+      interactTarget = { type: 'relicbank', obj: relicSite };
+      const pctR = (player.channel && player.channel.type === 'relic')
+        ? Math.round(clamp((player.channel.end - state.time) / RELIC_BANK_TIME, 0, 1) * 100) + '%'
+        : '';
+      promptText = pctR ? '<b>BANKING THE RELIC…</b> ' + pctR : '<b>E</b> BANK THE RELIC';
+    } else if (site) {
       interactTarget = { type: 'extract', obj: site };
       const pct = (player.channel && player.channel.type === 'extract')
         ? Math.round(clamp((player.channel.end - state.time) / EXTRACT_TIME, 0, 1) * 100) + '%'
@@ -21779,9 +21949,12 @@ function interact() {
     else if (interactTarget.type === 'dig') digSprite(interactTarget.obj);
     else if (interactTarget.type === 'van') startChannel('reboot', interactTarget.obj);
     else if (interactTarget.type === 'extract') interactWithSite(interactTarget.obj);
+    else if (interactTarget.type === 'relicbank') startChannel('relic', interactTarget.obj);
     else if (interactTarget.type === 'vending') openVending(interactTarget.obj);
     return;
   }
+  const relicSite = (player.relic && state.mode === 'relic') ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
+  if (relicSite) { startChannel('relic', relicSite); return; }
   const site = (player.spriteId && !player.spriteExtracted) ? nearestExtractSite(player.pos, EXTRACT_RANGE) : null;
   if (site) { interactWithSite(site); return; }
   const van = mateNeedsReboot() ? nearestVan(player.pos, 3.6) : null;
@@ -22078,6 +22251,7 @@ function resetPlayerForMatch() {
   player.reviveT = 0;
   player.out = false;
   player.channel = null;
+  player.relic = false;
   player.slot = 0;
   player.gunLevel = 0;
   player.inv = makeStartingInventory();
@@ -22224,6 +22398,9 @@ function badgeText() {
   if (isRanked()) return 'RANKED · <b>' + rankInfo(profile.rankRp || 0).name + '</b>';
   if (isSandbox()) return 'SANDBOX · <b>CREATIVE</b>';
   if (isAimTest()) return 'AIM TEST · <b>0</b> BLOOM · ALL ROUNDS TRAVEL';
+  if (state.mode === 'tiderace') return 'TIDE RACE · <b>' + tide.offset.toFixed(1) + '</b> M';
+  if (state.mode === 'riptide') return 'RIPTIDE · <b>ON THE WATER</b>';
+  if (state.mode === 'relic') return 'RELIC RUN · <b>' + (player.relic ? 'CARRY IT OUT' : 'FIND THE RELIC') + '</b>';
   if (isBlitz()) return 'BLITZ · LV <b>' + (state.blitzLvl || 1) + '</b> · ' + (state.blitzXp || 0) + '/' + blitzNeed();
   return 'SOLO · <b>' + (bots.length + 1) + '</b> PLAYERS';
 }
@@ -22333,6 +22510,8 @@ function startMatch() {
   setSeaMotionForMatch();
   scatterLoot(Math.random);
   if (!isGunGame()) seedLongGunLoot();
+  // Relic Run plants the one relic the match is played for
+  if (state.mode === 'relic') spawnRelic();
   resetStorm();
   resetPlayerForMatch();
   player.pocketType = profile.pocket || 'shock';
@@ -22343,6 +22522,8 @@ function startMatch() {
   positionFighters();
   spawnVehicles();
   spawnBosses();
+  // Riptide puts the nearest hull under you: no bus, no drop
+  if (state.mode === 'riptide') riptideStart();
   // A drop seeds its long gun when the player lands; a ground start seeds it here.
   state.landGunSeeded = false;
   if (!player.dropping && !isGunGame()) {
@@ -22498,6 +22679,61 @@ function showEndScreen(win) {
   }
 }
 
+/* ---- daily contracts: three, keyed to the day, counted as you play ----
+   They pay battle-pass XP, so the pass climbs without the shop. */
+const CONTRACT_DEFS = [
+  { id: 'kills', name: 'ELIMINATE', goal: 6, stat: 'kills', pay: 120 },
+  { id: 'matches', name: 'PLAY MATCHES', goal: 3, stat: 'matches', pay: 80 },
+  { id: 'wins', name: 'WIN A MATCH', goal: 1, stat: 'wins', pay: 200 },
+];
+
+function contractDay() { return Math.floor(Date.now() / 86400000); }
+
+function ensureContracts() {
+  const day = contractDay();
+  const c = profile.contracts;
+  if (!c || c.day !== day) {
+    profile.contracts = { day, kills: 0, matches: 0, wins: 0, paid: [] };
+    saveProfile();
+  }
+}
+
+function contractAdd(stat, n) {
+  if (!n) return;
+  ensureContracts();
+  const c = profile.contracts;
+  c[stat] = (c[stat] || 0) + n;
+  for (let i = 0; i < CONTRACT_DEFS.length; i++) {
+    const d = CONTRACT_DEFS[i];
+    if (d.stat !== stat) continue;
+    if (c[stat] < d.goal || c.paid.indexOf(d.id) >= 0) continue;
+    c.paid.push(d.id);
+    profile.bpXp = (profile.bpXp || 0) + d.pay;
+    toast('CONTRACT DONE · ' + d.name + ' · +' + d.pay + ' BP XP', 'sub');
+    setTimeout(claimBpTiers, 400);
+  }
+  saveProfile();
+  renderContracts();
+}
+
+function renderContracts() {
+  const el = document.getElementById('contractList');
+  if (!el) return;
+  ensureContracts();
+  const c = profile.contracts;
+  el.innerHTML = '';
+  for (let i = 0; i < CONTRACT_DEFS.length; i++) {
+    const d = CONTRACT_DEFS[i];
+    const have = Math.min(d.goal, c[d.stat] || 0);
+    const done = have >= d.goal;
+    const row = document.createElement('div');
+    row.className = 'ctRow' + (done ? ' done' : '');
+    row.innerHTML = '<span>' + d.name + '</span><b>' + have + '/' + d.goal + '</b>' +
+      '<span class="ctBar"><i style="width:' + Math.round((have / d.goal) * 100) + '%"></i></span>';
+    el.appendChild(row);
+  }
+}
+
 function endMatch(win, killerName) {
   if (state.ended) return;
   state.ended = true;
@@ -22592,6 +22828,10 @@ function endMatch(win, killerName) {
     }
     spriteGainXP(player.spriteId, player.kills * 40 + (win ? 150 : 0) + (placement <= 5 ? 60 : 0));
   }
+  // the day's contracts count what the match did, and pay the pass for it
+  contractAdd('matches', 1);
+  contractAdd('kills', player.kills || 0);
+  if (win) contractAdd('wins', 1);
   if (net.isHost && net.connected) netSend({ t: 'end', win: !!win, killer: killerName || 'The Storm' });
   // The ranked recap now lives inside the cinematic — only the unlock reveals
   // wait for the controls to settle.
@@ -22622,6 +22862,9 @@ function beginCine() {
 
 function startDeathCine(killerName, placement, total, rankRecap) {
   state.deathCine = true;
+  // kill cam: the world drops to a third speed and the ramp in animate eases
+  // it back over about a second and a half while the card comes up
+  state.timeScale = 0.3;
   document.getElementById('dcTitle').textContent = 'ELIMINATED';
   document.getElementById('dcCrest').innerHTML = '';
   document.getElementById('dcConfetti').innerHTML = '';
@@ -22814,8 +23057,8 @@ function setMode(m) {
    VERSION_PREV is always the version string this build replaced, and the
    notes card is rewritten with every release so it shows only that update.
    ------------------------------------------------- */
-const VERSION = { season: 10, release: 4 };
-const VERSION_PREV = '10.03PT';
+const VERSION = { season: 10, release: 6 };
+const VERSION_PREV = '10.05PT';
 const IS_PLAYTEST = true;   // a playtest build is never gated
 
 function releaseString() {
@@ -26344,6 +26587,7 @@ function boot() {
   renderControlHints();
   renderAdmin();
   renderCompetitive();
+  renderContracts();
   state.mods = Object.assign({}, profile.mods || {});
   switchTab('play');
   showLoading();
